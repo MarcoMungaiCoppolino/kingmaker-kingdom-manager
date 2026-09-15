@@ -1,0 +1,1134 @@
+[
+  {
+    "id": "tenement",
+    "name": "Casamenti",
+    "description": "I Casamenti sono baraccopoli costruite frettolosamente, con abitazioni multifamiliari strette tra loro, economiche e veloci da costruire.",
+    "cost_raw": "1 PR, 1 Legname",
+    "construction": {
+      "raw": "Industria CD 14"
+    },
+    "item_bonus": "",
+    "ruin": "+1 a una Rovina di vostra scelta",
+    "effects": "La prima volta che costruisci casamenti in un Turno di Regno, riduci Malcontento di 1.",
+    "consumption": "",
+    "kingdom_effects": [
+      {
+        "text": "La prima volta che costruisci casamenti in un Turno di Regno, riduci Malcontento di 1"
+      },
+      {
+        "text": "+1 a una Rovina di vostra scelta"
+      }
+    ]
+  },
+  {
+    "id": "rubble",
+    "name": "Macerie",
+    "description": "Un antiestetico cumulo di Macerie riempie questo lotto.",
+    "cost_raw": "-",
+    "item_bonus": "",
+    "ruin": "",
+    "effects": "Le macerie vengono create accidentalmente, ad esempio come risultato di alcuni eventi del regno o di un'attività Demolire fallita. Non è possibile costruire in un lotto con Macerie; queste devono essere rimosse tramite un'attività Demolire riuscita.",
+    "consumption": ""
+  },
+  {
+    "id": "tavern_dive",
+    "name": "Bettola",
+    "description": "Una Bettola è un rozzo locale di intrattenimento, ristorazione e consumo di alcolici.",
+    "cost_raw": "12 PR, 1 Legname",
+    "construction": {
+      "raw": "Commercio (Addestrato) CD 15"
+    },
+    "item_bonus": "",
+    "ruin": "",
+    "effects": "La prima volta che costruisci una taverna in un Turno di Regno, riduci Malcontento di 1 ma aumenta Crimine di 1.",
+    "consumption": "",
+    "kingdom_effects": [
+      {
+        "text": "La prima volta che costruisci una taverna in un Turno di Regno, riduci Malcontento di 1"
+      },
+      {
+        "text": "aumenta Crimine di 1"
+      }
+    ]
+  },
+  {
+    "id": "houses",
+    "name": "Case",
+    "description": "Le Case offrono ai cittadini un quartiere di abitazioni mono e multifamiliari.",
+    "cost_raw": "3 PR, 1 Legname",
+    "construction": {
+      "raw": "Industria CD 15"
+    },
+    "item_bonus": "",
+    "ruin": "",
+    "effects": "La prima volta che costruisci case in un Turno di Regno, riduci Malcontento di 1.",
+    "consumption": "",
+    "kingdom_effects": [
+      {
+        "text": "La prima volta che costruisci case in un Turno di Regno, riduci Malcontento di 1"
+      }
+    ]
+  },
+  {
+    "id": "cemetery",
+    "name": "Cimitero",
+    "description": "Un Cimitero riserva un appezzamento di terreno per la sepoltura dei defunti e può comprendere anche cripte in superficie o catacombe sotterranee.",
+    "cost_raw": "4 PR, 1 Pietra",
+    "construction": {
+      "raw": "Folklore CD 15"
+    },
+    "item_bonus": "",
+    "ruin": "",
+    "effects": "Dare ai cittadini un luogo dove seppellire e ricordare i loro cari defunti aiuta a mitigare il Malcontento ottenuto da eventi pericolosi. Se hai almeno un cimitero in un Insediamento, riduci di 1 il Malcontento ottenuto da qualsiasi evento pericoloso in quell'Insediamento (fino a un massimo di 4 per quattro cimiteri). La presenza di un cimitero fornisce effetti aggiuntivi durante alcuni eventi del regno.",
+    "consumption": ""
+  },
+  {
+    "id": "brewery",
+    "name": "Distilleria",
+    "description": "Una Distilleria è dedicata alla produzione di alcolici, siano essi birra, vino, o liquori. Questa struttura può rappresentare imbottigliatori, vigneti, o anche strutture che producono bevande analcoliche.",
+    "cost_raw": "6 PR, 2 Legname",
+    "construction": {
+      "raw": "Agricoltura CD 15"
+    },
+    "item_bonus": "+1 a Stabilire un Accordo Commerciale",
+    "ruin": "",
+    "effects": "Quando costruisci una distilleria, riduci Malcontento di 1, a patto di avere in quel momento meno di 4 distillerie nell'Insediamento.",
+    "consumption": "",
+    "kingdom_effects": [
+      {
+        "text": "Quando costruisci una distilleria, riduci Malcontento di 1, a patto di avere in quel momento meno di 4 distillerie nell'Insediamento"
+      }
+    ]
+  },
+  {
+    "id": "general_store",
+    "name": "Emporio",
+    "description": "",
+    "cost_raw": "8 PR, 1 Legname",
+    "construction": {
+      "raw": "Commercio CD 15"
+    },
+    "item_bonus": "",
+    "ruin": "",
+    "effects": "Un Insediamento privo di un emporio o di un mercato riduce di 2 il suo livello per determinare quali oggetti possono essere acquistati.",
+    "consumption": ""
+  },
+  {
+    "id": "herbalist",
+    "name": "Erbario",
+    "description": "Un Erbario è costituito da piccoli giardini medicinali curati da chi conosce le erbe e i loro usi per curare o danneggiare, oltre che da una vetrina per i clienti.",
+    "cost_raw": "10 PR, 1 Legname",
+    "construction": {
+      "raw": "Terre Selvagge CD 15"
+    },
+    "item_bonus": "+1 a Offrire Assistenza",
+    "ruin": "",
+    "effects": "",
+    "consumption": ""
+  },
+  {
+    "id": "granary",
+    "name": "Granaio",
+    "description": "Un Granaio è costituito da silo e magazzini per lo stoccaggio di cereali e altri alimenti conservati.",
+    "cost_raw": "12 PR, 2 Legname",
+    "construction": {
+      "raw": "Agricoltura CD 15"
+    },
+    "item_bonus": "",
+    "ruin": "",
+    "effects": "Ogni granaio nel tuo regno aumenta di 1 la capacità massima di Prodotti Cibo.",
+    "consumption": ""
+  },
+  {
+    "id": "inn",
+    "name": "Locanda",
+    "description": "Una Locanda offre un luogo sicuro e protetto per il riposo dei visitatori di un Insediamento.",
+    "cost_raw": "10 PR, 2 Legname",
+    "construction": {
+      "raw": "Commercio CD 15"
+    },
+    "item_bonus": "+1 ad Assoldare Avventurieri",
+    "ruin": "",
+    "effects": "",
+    "consumption": ""
+  },
+  {
+    "id": "wooden_wall",
+    "name": "Mura di Legno",
+    "description": "Le Mura di Legno costituiscono una valida difesa per un Insediamento.",
+    "cost_raw": "2 PR, 4 Legname",
+    "construction": {
+      "raw": "Difesa CD 15"
+    },
+    "item_bonus": "",
+    "ruin": "",
+    "effects": "Le mura di legno sono costruite lungo il confine del tuo Insediamento. La prima volta che costruisci delle mura di legno in un Insediamento, riduci Malcontento di 1. Quando costruisci delle mura di legno, scegli un confine sulla tua Griglia Urbana e spunta la casella appropriata.",
+    "consumption": "",
+    "kingdom_effects": [
+      {
+        "text": "La prima volta che costruisci delle mura di legno in un Insediamento, riduci Malcontento di 1"
+      }
+    ]
+  },
+  {
+    "id": "shrine",
+    "name": "Santuario",
+    "description": "Un Santuario è una piccola costruzione dedicata al culto di una Divinità o di una fede. Può essere frequentato da sacerdoti residenti o da clero in visita.",
+    "cost_raw": "8 PR, 2 Legname,1 Pietra",
+    "construction": {
+      "raw": "Folklore (Addestrato) CD 15"
+    },
+    "item_bonus": "+1 a Celebrare Festività",
+    "ruin": "",
+    "effects": "Considera il livello dell'Insediamento come un livello superiore a quello effettivo nel determinare quali oggetti di Magia Divina sono prontamente disponibili per l'acquisto nell'Insediamento. Questo effetto si cumula fino a tre volte, ma non si cumula con lo stesso effetto concesso da Templi o Cattedrali.",
+    "consumption": ""
+  },
+  {
+    "id": "library",
+    "name": "Biblioteca",
+    "description": "Una Biblioteca contiene collezioni di libri, pergamene, scritti e documenti utili alla ricerca. Alcune biblioteche sono specializzate in determinati argomenti, ma è meglio dare per scontato che queste biblioteche siano ben assortite per quanto riguarda i libri che trattano.",
+    "cost_raw": "6 PR, 4 Legname, 2 Pietra",
+    "construction": {
+      "raw": "Studio (Addestrato) CD 16"
+    },
+    "item_bonus": "+1 a Riposare e Rilassarsi usando prove di Studio",
+    "ruin": "",
+    "effects": "Quando ti trovi in un Insediamento con una biblioteca, ottieni un Bonus di Oggetto +1 alle prove di Sapienza effettuate per Ricordare Conoscenze nell'Investigare, oltre che per Ricercare e Decifrare Scritti.",
+    "consumption": ""
+  },
+  {
+    "id": "dump",
+    "name": "Discarica",
+    "description": "Una Discarica è un luogo centralizzato per lo smaltimento dei rifiuti, che spesso include una baracca in cui vive un custode.",
+    "cost_raw": "4 PR",
+    "construction": {
+      "raw": "Industria CD 16"
+    },
+    "item_bonus": "+1 per Demolire",
+    "ruin": "",
+    "effects": "Alcuni eventi hanno un impatto più pericoloso sugli Insediamenti che non hanno una discarica. Una discarica non può essere situata in un isolato con strutture Residenziali.",
+    "consumption": ""
+  },
+  {
+    "id": "mill",
+    "name": "Mulino",
+    "description": "Un Mulino macina il grano utilizzando la forza del vento, dell'acqua, o delle bestie da soma.",
+    "cost_raw": "6 PR, 2 Legname, 1 Pietra",
+    "construction": {
+      "raw": "Industria (Addestrato) CD 16"
+    },
+    "item_bonus": "+1 a Fare il Raccolto",
+    "ruin": "",
+    "effects": "Se un Insediamento include almeno un mulino costruito su un lotto adiacente a un Confine d'Acqua, la maggiore efficienza di questi mulini riduce il Consumo dell'Insediamento di 1 (fino a un minimo di 0).",
+    "consumption": ""
+  },
+  {
+    "id": "town_hall",
+    "name": "Municipio",
+    "description": "Un Municipio è un luogo pubblico per le riunioni cittadine e un deposito per la storia e i documenti della città.",
+    "cost_raw": "22 PR, 4 Legname, 4 Pietra",
+    "construction": {
+      "raw": "Difesa (Addestrato), Governare (Addestrato), Industria (Addestrato) o Magia (Addestrato) CD 16"
+    },
+    "item_bonus": "",
+    "ruin": "",
+    "effects": "La prima volta che costruisci un municipio in un Turno di Regno, riduci Malcontento di 1. Un municipio in una capitale permette ai PG leader di svolgere 3 attività di Governo durante la Fase Attività di un Turno di Regno, anziché solo 2.",
+    "consumption": "",
+    "kingdom_effects": [
+      {
+        "text": "La prima volta che costruisci un municipio in un Turno di Regno, riduci Malcontento di 1"
+      }
+    ]
+  },
+  {
+    "id": "orphanage",
+    "name": "Orfanotrofio",
+    "description": "Questa costruzione residenziale di grandi dimensioni ospita orfani o cittadini senza fissa dimora, ma può anche contribuire a fornire alloggi ai rifugiati, ma preferibilmente non tutti allo stesso tempo!",
+    "cost_raw": "6 PR, 2 Legname",
+    "construction": {
+      "raw": "Industria CD 16"
+    },
+    "item_bonus": "",
+    "ruin": "",
+    "effects": "La prima volta che costruisci un orfanotrofio in un Turno di Regno, riduci Malcontento di 1.",
+    "consumption": "",
+    "kingdom_effects": [
+      {
+        "text": "La prima volta che costruisci un orfanotrofio in un Turno di Regno, riduci Malcontento di 1"
+      }
+    ]
+  },
+  {
+    "id": "bridge",
+    "name": "Ponte",
+    "description": "I ponti danno agli Insediamenti che hanno Confini d'Acqua un collegamento con la terraferma (ma a discrezione del GM, un confine su un lago potrebbe non essere in grado di usare i ponti).",
+    "cost_raw": "6 PR, 1 Legname o 1 Pietra",
+    "construction": {
+      "raw": "Ingegneria CD 16"
+    },
+    "item_bonus": "",
+    "ruin": "",
+    "effects": "Un ponte permette a un Insediamento su un'isola di fornire Influenza, annulla la penalità a Commercio per gli Insediamenti sulle isole (vedi Confini di Terra) e consente di attraversare facilmente il Confine d'Acqua associato (vedi Navigazione in una Griglia Urbana). I ponti possono essere costruiti solo sui Confini d'Acqua. Quando si costruisce un ponte, spuntare la casella \"Ponte\" su uno dei Confini d'Acqua della propria Griglia Urbana per indicarne la posizione.",
+    "consumption": ""
+  },
+  {
+    "id": "jail",
+    "name": "Prigione",
+    "description": "Una Prigione è una struttura fortificata che ospita criminali, prigionieri, o mostri pericolosi separati dal resto della società.",
+    "cost_raw": "14 PR, 4 Legname, 2 Minerali, 4 Pietra",
+    "construction": {
+      "raw": "Difesa CD 16"
+    },
+    "item_bonus": "+1 a Sedare Malcontento con Intrigo",
+    "ruin": "",
+    "effects": "La prima volta che costruisci una prigione in un Turno di Regno, riduci il Crimine di 1.",
+    "consumption": "",
+    "kingdom_effects": [
+      {
+        "text": "La prima volta che costruisci una prigione in un Turno di Regno, riduci il Crimine di 1"
+      }
+    ]
+  },
+  {
+    "id": "trade_shop",
+    "name": "Attività Commerciale",
+    "description": "UnAttività Commerciale è un negozio che si concentra sulla fornitura di servizi.",
+    "cost_raw": "10 PR, 2 Legname",
+    "construction": {
+      "raw": "Commercio (Addestrato) CD 18"
+    },
+    "item_bonus": "+1 ad Acquistare Prodotti",
+    "ruin": "",
+    "effects": "Quando costruisci unAttività Commerciale, indica il tipo di attività, ad esempio panetteria, falegnameria, sartoria e così via. Quando ti trovi in un Insediamento con unAttività Commerciale, ottieni un Bonus di Oggetto +1 a tutte le prove di Artigianato associate.",
+    "consumption": ""
+  },
+  {
+    "id": "barracks",
+    "name": "Caserma",
+    "description": "Le caserme si occupano di ospitare e addestrare guardie, milizie, soldati e forze militari.",
+    "cost_raw": "6 PR, 2 Legname, 1 Pietra",
+    "construction": {
+      "raw": "Difesa CD 16"
+    },
+    "item_bonus": "+1 a Guarire Esercito, Presidiare Esercito, o Reclutare Esercito",
+    "ruin": "",
+    "effects": "Le caserme aiutano a reclutare gli eserciti e i soldati a riprendersi dalla battaglia. La prima volta che si costruisce una caserma in un qualsiasi Insediamento, si riduce di 1 il Malcontento.",
+    "consumption": ""
+  },
+  {
+    "id": "tannery",
+    "name": "Conceria",
+    "description": "Una Conceria è una fabbrica dotata di scaffali, tini e strumenti per la preparazione di pelli e cuoio.",
+    "cost_raw": "6 PR, 2 Legname",
+    "construction": {
+      "raw": "Industria (Addestrato) CD 18"
+    },
+    "item_bonus": "+1 a Commerciare Prodotti",
+    "ruin": "",
+    "effects": "Una conceria non può condividere un isolato con alcuna struttura Residenziale, a eccezione di Casamenti.",
+    "consumption": ""
+  },
+  {
+    "id": "lumberyard",
+    "name": "Deposito di Legname",
+    "description": "Un Deposito di Legname è un'area aperta utilizzata per immagazzinare Legname. Il cantiere comprende anche una segheria per la trasformazione del Legname in legno da costruzione.",
+    "cost_raw": "16 PR, 5 Legname, 1 Minerali",
+    "construction": {
+      "raw": "Industria (Addestrato) CD 18"
+    },
+    "item_bonus": "+1 a Stabilire un Sito di Lavoro (campo di Legname)",
+    "ruin": "",
+    "effects": "Ogni deposito di legname nel tuo regno aumenta la capacità massima dei Prodotti Legname di 1. Un deposito di legname deve essere costruito in un lotto vicino a un Confine d'Acqua, sia per dare al deposito una fonte di energia per far funzionare le seghe per lavorare il Legname, ma soprattutto per facilitare la spedizione degli alberi al deposito.",
+    "consumption": ""
+  },
+  {
+    "id": "foundry",
+    "name": "Fonderia",
+    "description": "Una Fonderia è un impianto utilizzato per raffinare il minerale in metallo finito.",
+    "cost_raw": "16 PR, 5 Legname, 2 Minerali, 3 Pietra",
+    "construction": {
+      "raw": "Industria (Addestrato) CD 18"
+    },
+    "item_bonus": "+1 a Stabilire un Sito di Lavoro (miniera)",
+    "ruin": "",
+    "effects": "Lavorando il minerale in una fonderia, gli Insediamenti diventano più efficienti nell'immagazzinare i Prodotti del regno. Ogni fonderia nel tuo regno aumenta la capacità massima di Prodotti Minerali di 1. Una fonderia non può condividere un isolato con una struttura Residenziale.",
+    "consumption": ""
+  },
+  {
+    "id": "keep",
+    "name": "Fortezza",
+    "description": "Una Fortezza è una struttura difensiva dalle alte mura che protegge il cuore di un Insediamento. Include piazzali di allenamento e di smistamento, nonché un rifugio per i leader in caso di pericolo per l'Insediamento.",
+    "cost_raw": "32 PR, 8 Legname, 8 Pietra",
+    "construction": {
+      "raw": "Difesa (Addestrato) CD 18"
+    },
+    "item_bonus": "+1 a Addestrare Esercito, Disporre Esercito, o Presidiare Esercito",
+    "ruin": "",
+    "effects": "La prima volta che costruisci una fortezza in un Turno di Regno, riduci Malcontento di 1.",
+    "consumption": "",
+    "kingdom_effects": [
+      {
+        "text": "La prima volta che costruisci una fortezza in un Turno di Regno, riduci Malcontento di 1"
+      }
+    ]
+  },
+  {
+    "id": "smithy",
+    "name": "Fucina",
+    "description": "Una Fucina è composta da laboratori e forge.",
+    "cost_raw": "8 PR, 2 Legname, 1 Minerali, 1 Pietra",
+    "construction": {
+      "raw": "Industria (Addestrato) CD 18"
+    },
+    "item_bonus": "+1 a Commerciare Prodotti, +1 a Equipaggiare Esercito",
+    "ruin": "",
+    "effects": "Quando ti trovi in un Insediamento con una fucina, ottieni un Bonus di Oggetto +1 alle prove di Artigianato effettuate per lavorare il metallo.",
+    "consumption": ""
+  },
+  {
+    "id": "alchemy_laboratory",
+    "name": "Laboratorio Alchemico",
+    "description": "Un Laboratorio Alchemico serve come fabbrica per gli alchimisti e i loro apprendisti per la produzione di pozioni, elisir e ogni sorta di oggetti alchemici. Un laboratorio di un regno infame potrebbe essere specializzato anche in veleni.",
+    "cost_raw": "18 PR, 2 Minerali, 5 Pietra",
+    "construction": {
+      "raw": "Industria (Addestrato) CD 16"
+    },
+    "item_bonus": "+1 a Demolire",
+    "ruin": "",
+    "effects": "Considera il livello dell'Insediamento come un livello superiore a quello effettivo per determinare quali Oggetti Alchemici sono facilmente acquistabili nell'Insediamento. Questo effetto si cumula fino a tre volte.\nLe prove per Identificare Alchimia in qualsiasi Insediamento con almeno un laboratorio alchemico ottengono un Bonus di Oggetto +1.",
+    "consumption": ""
+  },
+  {
+    "id": "pier",
+    "name": "Molo",
+    "description": "Diversi moli in legno consentono un facile accesso alla pesca e offrono un comodo posto per l'ormeggio delle barche.",
+    "cost_raw": "16 PR, 2 Legname",
+    "construction": {
+      "raw": "Nautica CD 18"
+    },
+    "item_bonus": "+1 ad Andare a Pesca",
+    "ruin": "",
+    "effects": "Un molo deve essere costruito in un lotto adiacente a un Confine d'Acqua.",
+    "consumption": ""
+  },
+  {
+    "id": "monument",
+    "name": "Monumento",
+    "description": "Un Monumento è un'imponente struttura in pietra costruita per commemorare un evento storico, onorare un leader amato, commemorare una tragedia, o semplicemente servire come esposizione artistica.",
+    "cost_raw": "6 PR, 1 Pietra",
+    "construction": {
+      "raw": "Arti (Addestrato) CD 18"
+    },
+    "item_bonus": "+1 a Fare il Raccolto",
+    "ruin": "",
+    "effects": "La prima volta che costruisci un monumento in un Turno di Regno, riduci Malcontento di 1 e riduci di 1 una Rovina a tua scelta.",
+    "consumption": "",
+    "kingdom_effects": [
+      {
+        "text": "La prima volta che costruisci un monumento in un Turno di Regno, riduci Malcontento di 1"
+      },
+      {
+        "text": "riduci di 1 una Rovina a tua scelta"
+      }
+    ]
+  },
+  {
+    "id": "park",
+    "name": "Parco",
+    "description": "Un Parco è un appezzamento di terreno non edificato destinato all'uso pubblico. Questo lotto può essere lasciato così com'è, oppure il paesaggio può essere manipolato per ottenere un aspetto o un tipo di terreno specifico.",
+    "cost_raw": "5 PR",
+    "construction": {
+      "raw": "Terre Selvagge CD 18"
+    },
+    "item_bonus": "+1 a Riposare e Rilassarsi usando le prove di Terre Selvagge",
+    "ruin": "",
+    "effects": "La prima volta che si costruisce un parco in un Turno di Regno, riduci Malcontento di 1.",
+    "consumption": "",
+    "kingdom_effects": [
+      {
+        "text": "La prima volta che si costruisce un parco in un Turno di Regno, riduci Malcontento di 1"
+      }
+    ]
+  },
+  {
+    "id": "stockyard",
+    "name": "Recinto del Bestiame",
+    "description": "Un Recinto del Bestiame comprende diversi fienili e recinti utilizzati per ospitare il bestiame e prepararlo per la macellazione.",
+    "cost_raw": "20 PR, 4 Legname",
+    "construction": {
+      "raw": "Industria CD 18"
+    },
+    "item_bonus": "+1 a Radunare il Bestiame",
+    "ruin": "",
+    "effects": "Un Insediamento con almeno un recinto di bestiame riduce il suo Consumo di 1.",
+    "consumption": ""
+  },
+  {
+    "id": "festival_hall",
+    "name": "Salone per le Feste",
+    "description": "Una Salone per le Feste è un piccolo costruzione che offre agli artisti un luogo dove intrattenere e ai cittadini un posto dove riunirsi per le celebrazioni o semplicemente per rilassarsi.",
+    "cost_raw": "7 PR, 3 Legname",
+    "construction": {
+      "raw": "Arti CD 18"
+    },
+    "item_bonus": "+1 a Celebrare Festività",
+    "ruin": "",
+    "effects": "",
+    "consumption": ""
+  },
+  {
+    "id": "stable",
+    "name": "Stalla",
+    "description": "Una Stalla è costituita da un cortile e da strutture più piccole per ospitare, addestrare e vendere le cavalcature.",
+    "cost_raw": "10 PR, 2 Legname",
+    "construction": {
+      "raw": "Terre Selvagge (Addestrato) CD 18"
+    },
+    "item_bonus": "+1 a Stabilire un Accordo Commerciale",
+    "ruin": "",
+    "effects": "",
+    "consumption": ""
+  },
+  {
+    "id": "stonemason",
+    "name": "Tagliapietre",
+    "description": "Un Tagliapietre è un grande edificio utilizzato per immagazzinare e lavorare la pietra estratta per prepararla alla costruzione.",
+    "cost_raw": "16 PR, 2 Legname",
+    "construction": {
+      "raw": "Industria (Addestrato) CD 18"
+    },
+    "item_bonus": "+1 a Stabilire un Sito di Lavoro (cava)",
+    "ruin": "",
+    "effects": "Ogni tagliapietre nel tuo regno aumenta di 1 la capacità massima del Prodotto Pietra.",
+    "consumption": ""
+  },
+  {
+    "id": "tavern_popular",
+    "name": "Taverna Popolare",
+    "description": "Una Taverna Popolare è un locale rispettabile dove ci si può divertire, mangiare e bere.",
+    "cost_raw": "24 PR, 6 Legname, 2 Pietra",
+    "construction": {
+      "raw": "Commercio (Esperto) CD 18"
+    },
+    "item_bonus": "+1 ad Assoldare Avventurieri e Riposare e Rilassarsi usando Commercio",
+    "ruin": "",
+    "effects": "La prima volta che costruisci una Taverna Popolare in un Turno di Regno, riduci Malcontento di 2. Se tenti una prova di Esibizione per Guadagnare in un Insediamento con almeno una Taverna Popolare, ricevi un Bonus di Oggetto +1 alla prova. Tutte le prove di Raccogliere Informazioni in un Insediamento con almeno una Taverna Popolare ottengono un Bonus di Oggetto +1.",
+    "consumption": "",
+    "kingdom_effects": [
+      {
+        "text": "La prima volta che costruisci una Taverna Popolare in un Turno di Regno, riduci Malcontento di 2"
+      }
+    ]
+  },
+  {
+    "id": "watchtower",
+    "name": "Torre di Guardia",
+    "description": "Una Torre di Guardia serve come postazione di vedetta che garantisce all'Insediamento un preavviso su imminenti eventi pericolosi.",
+    "cost_raw": "12 PR, 4 Legname o 4 Pietra",
+    "construction": {
+      "raw": "Difesa (Addestrato) CD 18"
+    },
+    "item_bonus": "+1 alle prove per risolvere eventi che impattano sull'Insediamento",
+    "ruin": "",
+    "effects": "La prima volta che costruisci una Torre di Guardia in un Turno di Regno, riduci Malcontento di 1.",
+    "consumption": "",
+    "kingdom_effects": [
+      {
+        "text": "La prima volta che costruisci una Torre di Guardia in un Turno di Regno, riduci Malcontento di 1"
+      }
+    ]
+  },
+  {
+    "id": "specialized_artisan",
+    "name": "Artigiano Specializzato",
+    "description": "Questi negozi e case sono dedicati agli artigiani che creano gioielli, oggetti in vetro, macchinari e simili.",
+    "cost_raw": "10 PR, 4 Legname, 1 Lusso",
+    "construction": {
+      "raw": "Commercio (Esperto) CD 19"
+    },
+    "item_bonus": "+1 a Fabbricare Oggetti di Lusso",
+    "ruin": "",
+    "effects": "Quando ti trovi in un Insediamento con un artigiano specializzato, ottieni un Bonus di Oggetto +1 alle prove di Artigianato effettuate per realizzare merci specializzate come i gioielli.",
+    "consumption": ""
+  },
+  {
+    "id": "marketplace",
+    "name": "Mercato",
+    "description": "Un Mercato è un grande quartiere di negozi gestiti da venditori locali attorno a un'area aperta per i mercanti itineranti e gli agricoltori che possono vendere i loro prodotti.",
+    "cost_raw": "48 PR, 4 Legname",
+    "construction": {
+      "raw": "Commercio (Addestrato) CD 19"
+    },
+    "item_bonus": "+1 a Stabilire un Accordo Commerciale",
+    "ruin": "",
+    "effects": "Un paese privo di un Emporio o di un mercato riduce di 2 il suo livello effettivo per determinare quali oggetti possono essere acquistati.",
+    "consumption": ""
+  },
+  {
+    "id": "paved_streets",
+    "name": "Strade Lastricate",
+    "description": "Le strade in mattoni o in acciottolato velocizzano i trasporti e facilitano il passaggio di persone, mezzi di trasporto e veicoli.",
+    "cost_raw": "12 PR, 6 Pietra",
+    "construction": {
+      "raw": "Industria (Addestrato) CD 19"
+    },
+    "item_bonus": "",
+    "ruin": "",
+    "effects": "Un personaggio impiega solo 5 minuti per spostarsi da un lotto a un lotto adiacente in una Griglia Urbana quando si muove su strade lastricate. Quando costruisci strade lastricate, spunta la casella Strade Lastricate sulla Griglia Urbana.",
+    "consumption": ""
+  },
+  {
+    "id": "bank",
+    "name": "Banca",
+    "description": "Una Banca è un edificio sicuro per la custodia di valori, la concessione di prestiti e la raccolta e il trasferimento di depositi.",
+    "cost_raw": "28 PR, 4 Minerali, 6 Pietra",
+    "construction": {
+      "raw": "Commercio (Addestrato) CD 20"
+    },
+    "item_bonus": "+1 ad Attingere alla Tesoreria",
+    "ruin": "",
+    "effects": "L'attività di Governo Investimento di Capitali può essere utilizzata solo all'interno dell'area di influenza di un Insediamento con una banca.",
+    "consumption": ""
+  },
+  {
+    "id": "sacred_grove",
+    "name": "Boschetto Sacro",
+    "description": "Questa terra incontaminata è stata benedetta da Spiriti Primevi, Druidi amici del tuo Insediamento, o creature Fatate alleate.",
+    "cost_raw": "36 PR",
+    "construction": {
+      "raw": "Terre Selvagge (Addestrato) CD 20"
+    },
+    "item_bonus": "+1 a Sedare Malcontento usando Folklore",
+    "ruin": "",
+    "effects": "Considera il livello dell'Insediamento come un livello più alto del suo livello effettivo per determinare quali oggetti di Magia Primeva sono prontamente disponibili per l'acquisto nell'Insediamento. Questo effetto si cumula fino a tre volte.",
+    "consumption": ""
+  },
+  {
+    "id": "thieves_guild",
+    "name": "Gilda dei Ladri",
+    "description": "Il governo è a conoscenza dell'esistenza di questo gruppo, ma gli permette di continuare a svolgere la propria attività finché la gilda non oltrepassa i propri limiti.",
+    "cost_raw": "25 PR, 4 Legname",
+    "construction": {
+      "raw": "Intrigo (Addestrato) CD 20"
+    },
+    "item_bonus": "+1 a Infiltrarsi",
+    "ruin": "+1 a Crimine",
+    "effects": "Quando sei in un Insediamento con una gilda di ladri, ottieni un Bonus di Oggetto +1 a Falsificare.",
+    "consumption": "",
+    "kingdom_effects": [
+      {
+        "text": "+1 a Crimine"
+      }
+    ]
+  },
+  {
+    "id": "garrison",
+    "name": "Guarnigione",
+    "description": "Una Guarnigione è un complesso di caserme, piazzali di addestramento, depositi di armi per il mantenimento dell'esercito.",
+    "cost_raw": "28 PR, 6 Legname, 3 Pietra",
+    "construction": {
+      "raw": "Guerra (Addestrato) CD 20"
+    },
+    "item_bonus": "+1 a Addestrare Esercito o Equipaggiare Esercito",
+    "ruin": "",
+    "effects": "Una guarnigione aiuta a dotare gli eserciti di nuovi equipaggiamenti o ad addestrarli. Quando costruisci una guarnigione, riduci Malcontento di 1.",
+    "consumption": "",
+    "kingdom_effects": [
+      {
+        "text": "Quando costruisci una guarnigione, riduci Malcontento di 1"
+      }
+    ]
+  },
+  {
+    "id": "magical_streetlamps",
+    "name": "Lampioni Magici",
+    "description": "I Lampioni Magici sono torce sempre accese che sono state inserite nei lampioni lungo le strade. A scelta, queste luci magiche possono anche essere sfere di luce libere o altre forme di illuminazione insolite.",
+    "cost_raw": "20 PR",
+    "construction": {
+      "raw": "Magia (Esperto) CD 20"
+    },
+    "item_bonus": "",
+    "ruin": "",
+    "effects": "I lampioni magici forniscono l'illuminazione notturna a un'intera Griglia Urbana. Quando costruisci lampioni magici, spunta la casella lampioni magici sulla tua Griglia Urbana. La prima volta che costruisci lampioni magici in un Turno di Regno, riduci di 1 il Crimine.",
+    "consumption": ""
+  },
+  {
+    "id": "mansion",
+    "name": "Magione",
+    "description": "Questa grande Magione ospita una famiglia benestante.",
+    "cost_raw": "10 PR, 6 Legname, 6 di Lusso, 3 Pietra",
+    "construction": {
+      "raw": "Industria (Addestrato) CD 20"
+    },
+    "item_bonus": "+1 a Migliorare Stile di Vita",
+    "ruin": "",
+    "effects": "",
+    "consumption": ""
+  },
+  {
+    "id": "stone_wall",
+    "name": "Mura di Pietra",
+    "description": "Le Mura di Pietra forniscono solide difese ai confini di un Insediamento.",
+    "cost_raw": "4 PR, 8 Pietra",
+    "construction": {
+      "raw": "Difesa (Addestrato) CD 20"
+    },
+    "item_bonus": "",
+    "ruin": "",
+    "effects": "Le mura di pietra sono costruite lungo il confine del tuo Insediamento. La prima volta che costruisci delle mura di pietra in un Insediamento, riduci Malcontento di 1. Quando costruisci delle mura di pietra, scegli un confine sulla tua Griglia Urbana e spunta la casella appropriata; se si sta migliorando da Mura di Legno, si deseleziona quella casella.",
+    "consumption": "",
+    "kingdom_effects": [
+      {
+        "text": "La prima volta che costruisci delle mura di pietra in un Insediamento, riduci Malcontento di 1"
+      }
+    ]
+  },
+  {
+    "id": "museum",
+    "name": "Museo",
+    "description": "Un Museo espone opere d'arte, oggetti di rilievo culturale, bellezze del mondo naturale e altre meraviglie in un luogo dove i cittadini possono osservare e imparare.",
+    "cost_raw": "30 PR, 6 Legname, 2 Pietra",
+    "construction": {
+      "raw": "Esplorazione (Addestrato) CD 20"
+    },
+    "item_bonus": "+1 a Riposare e Rilassarsi usando Arti",
+    "ruin": "",
+    "effects": "Un Oggetto Magico di livello 6 o superiore che abbia una particolare importanza o un significativo valore storico o regionale (a discrezione del GM) può essere donato a un museo. Ogni volta che un oggetto di questo tipo viene donato, riduci Malcontento di 1. Se l'oggetto è successivamente rimosso dall'esposizione, aumenta Malcontento di 1.",
+    "consumption": "",
+    "kingdom_effects": [
+      {
+        "text": "Ogni volta che un oggetto di questo tipo viene donato, riduci Malcontento di 1"
+      },
+      {
+        "text": "Se l'oggetto è successivamente rimosso dall'esposizione, aumenta Malcontento di 1"
+      }
+    ]
+  },
+  {
+    "id": "guildhall",
+    "name": "Sede della Gilda",
+    "description": "Una Sede della Gilda è il quartier generale di una gilda commerciale o di un'organizzazione simile. Comprende uffici per i suoi capi e funzionari, laboratori per gli artigiani e una vetrina per i clienti. Le sedi delle gilde sono sempre specializzate in un certo tipo di commercio o attività, ma in genere solo le città più grandi ne hanno più di una. Gli Insediamenti più piccoli tendono a concentrarsi su un commercio specifico.",
+    "cost_raw": "34 PR, 8 Legname",
+    "construction": {
+      "raw": "Commercio (Esperto) CD 20"
+    },
+    "item_bonus": "+1 alle prove di abilità su Economia associate con l'attività in cui è specializzata la gilda",
+    "ruin": "",
+    "effects": "Quando costruisci una sede della gilda, indica il tipo di organizzazione (come panettieri, droghieri, fabbri, ecc.) per cui funge da quartier generale. Quando ti trovi in un Insediamento con una sede della gilda, ottieni un Bonus di Oggetto +1 a tutte le prove di Guadagnare o Riparare.",
+    "consumption": ""
+  },
+  {
+    "id": "arcanists_tower",
+    "name": "Torre dell'Arcanista",
+    "description": "La Torre dell'Arcanista è la casa e il laboratorio di un incantatore Arcano (di solito un Mago) e dei suoi apprendisti, servitori e studenti.",
+    "cost_raw": "30 PR, 6 Pietra",
+    "construction": {
+      "raw": "Magia (Addestrato) CD 20"
+    },
+    "item_bonus": "+1 a Sedare Malcontento con Magia",
+    "ruin": "",
+    "effects": "Considera il livello dell'Insediamento come un livello più alto del suo livello effettivo per determinare quali oggetti di Magia Arcana sono facilmente acquistabili nell'Insediamento. Questo effetto si cumula fino a tre volte.\nQuando ti trovi in un Insediamento con una torre dell'arcanista, ottieni un bonus di +1 ai tiri per Attingere Incantesimo Arcano o per Imparare un Incantesimo.",
+    "consumption": ""
+  },
+  {
+    "id": "luxury_store",
+    "name": "Bottega di Lusso",
+    "description": "Questa collezione di negozi è specializzata in prodotti costosi, rari ed esotici che si rivolgono ai ricchi.",
+    "cost_raw": "28 PR, 10 Legname,6 Lusso",
+    "construction": {
+      "raw": "Commercio (Esperto) CD 22"
+    },
+    "item_bonus": "+1 a Stabilire un Accordo Commerciale",
+    "ruin": "",
+    "effects": "",
+    "consumption": ""
+  },
+  {
+    "id": "secure_warehouse",
+    "name": "Magazzino Sicuro",
+    "description": "I magazzini sicuri sono utilizzati per conservare gli oggetti di valore.",
+    "cost_raw": "24 PR, 6 Legname, 4 Minerali, 6 Pietra",
+    "construction": {
+      "raw": "Industria (Esperto) CD 22"
+    },
+    "item_bonus": "+1 a Fabbricare Oggetti di Lusso",
+    "ruin": "",
+    "effects": "Ogni magazzino sicuro nel tuo regno aumenta di 1 la capacità massima di Prodotti di Lusso.",
+    "consumption": ""
+  },
+  {
+    "id": "illicit_market",
+    "name": "Mercato Nero",
+    "description": "Un Mercato Nero utilizza una facciata di negozi, case e altre costruzioni apparentemente innocenti per nascondere il fatto che tra le sue mura si svolge un commercio illegale e non regolamentato.",
+    "cost_raw": "50 PR, 5 Legname",
+    "construction": {
+      "raw": "Intrigo (Addestrato) CD 22"
+    },
+    "item_bonus": "+1 ad Affari Clandestini",
+    "ruin": "+1 Crimine",
+    "effects": "Tratta il livello dell'Insediamento come un livello più alto di quello effettivo per determinare quali oggetti sono prontamente disponibili per l'acquisto nell'Insediamento. Questo effetto è cumulabile fino a tre volte.",
+    "consumption": "",
+    "kingdom_effects": [
+      {
+        "text": "+1 Crimine"
+      }
+    ]
+  },
+  {
+    "id": "sewer_system",
+    "name": "Sistema Fognario",
+    "description": "Questo sistema igienico-sanitario sotterraneo aiuta a mantenere l'Insediamento pulito e privo di malattie.",
+    "cost_raw": "24 PR, 8 Legname, 8 Pietra",
+    "construction": {
+      "raw": "Ingegneria (Esperto) CD 23"
+    },
+    "item_bonus": "+1 ad Affari Clandestini",
+    "ruin": "",
+    "effects": "Un sistema fognario riduce il Consumo dell'Insediamento di 1. La presenza di un sistema fognario può anche influenzare alcuni eventi del regno. Quando costruisci un sistema fognario, devi spuntare la casella Sistema Fognario sulla Griglia Urbana (per le Metropoli, questa infrastruttura si applica automaticamente a tutte le sue Griglie Urbane).",
+    "consumption": ""
+  },
+  {
+    "id": "temple",
+    "name": "Tempio",
+    "description": "Un Tempio è un edificio dedicato al culto di una divinità o di una fede.",
+    "cost_raw": "32 PR, 6 Legname, 6 Pietra",
+    "construction": {
+      "raw": "Folklore (Addestrato) CD 23"
+    },
+    "item_bonus": "+1 a Celebrare Festività e Offrire Assistenza",
+    "ruin": "",
+    "effects": "La prima volta che costruisci un tempio in un Turno di Regno, riduci Malcontento di 2. Considera il livello dell'Insediamento come un livello più alto di quello effettivo per determinare quali oggetti di Magia Divina sono prontamente disponibili per l'acquisto nell'Insediamento. Questo effetto è cumulabile fino a tre volte, ma non è cumulabile con lo stesso effetto concesso da Santuari o Cattedrali.",
+    "consumption": "",
+    "kingdom_effects": [
+      {
+        "text": "La prima volta che costruisci un tempio in un Turno di Regno, riduci Malcontento di 2"
+      }
+    ]
+  },
+  {
+    "id": "embassy",
+    "name": "Ambasciata",
+    "description": "UnAmbasciata offre un luogo di soggiorno ai visitatori diplomatici del tuo regno e rafforza le relazioni internazionali.",
+    "cost_raw": "26 PR, 10 Legname, 6 Lusso, 4 Pietra",
+    "construction": {
+      "raw": "Politica CD 24"
+    },
+    "item_bonus": "+1 a Inviare un Delegato Diplomatico e Richiedere Aiuto Estero",
+    "ruin": "",
+    "effects": "",
+    "consumption": ""
+  },
+  {
+    "id": "magic_shop",
+    "name": "Bottega di Magia",
+    "description": "Questi negozi sono specializzati in Oggetti Magici e nel mettere in contatto gli acquirenti con i venditori di beni e servizi magici.",
+    "cost_raw": "44 PR, 8 Legname,6 di Lusso, 6 Pietra",
+    "construction": {
+      "raw": "Magia (Esperto) CD 24"
+    },
+    "item_bonus": "+1 a Soluzione Sovrannaturale",
+    "ruin": "",
+    "effects": "",
+    "consumption": ""
+  },
+  {
+    "id": "waterfront",
+    "name": "Zona Portuale",
+    "description": "Una Zona Portuale funge da vivace porto per il trasporto di passeggeri e merci via acqua. È supportata da strutture per la navigazione e cantieri navali, ma presenta anche passerelle per il traffico pedonale e per i pescatori che esercitano il loro mestiere.",
+    "cost_raw": "90 PR, 10 Legname",
+    "construction": {
+      "raw": "Nautica (Esperto) CD 24"
+    },
+    "item_bonus": "+1 ad Andare a Pesca, e Stabilire un Accordo Commerciale e Riposare e Rilassarsi usando Nautica",
+    "ruin": "",
+    "effects": "Una zona portuale deve essere costruita vicino a un Confine d'Acqua. Un Insediamento con almeno 1 Zona Portuale aumenta il suo livello effettivo di 1 per determinare il livello degli oggetti che possono essere acquistati nell'Insediamento; questo bonus si somma a bonus simili nell'Insediamento.",
+    "consumption": ""
+  },
+  {
+    "id": "arena",
+    "name": "Arena",
+    "description": "UnArena è una grande struttura pubblica, tradizionalmente aperta all'aria, circondata da posti a sedere e aree di osservazione. Viene utilizzata per organizzare gare di atletica, lotte gladiatorie, intrattenimenti e spettacoli elaborati.",
+    "cost_raw": "40 PR, 6 Legname, 12 Pietra",
+    "construction": {
+      "raw": "Guerra (Esperto) CD 26"
+    },
+    "item_bonus": "+2 a Celebrare Festività e alle prove di Guerra effettuate per Sedare Malcontento",
+    "ruin": "",
+    "effects": "Un'arena permette di Riaddestrare in modo più efficiente i talenti a tema combattimento mentre sei nell'Insediamento; per farlo bastano 5 giorni invece di una settimana di Pausa.",
+    "consumption": ""
+  },
+  {
+    "id": "castle",
+    "name": "Castello",
+    "description": "Un Castello è una struttura fortificata che spesso funge da sede del governo di un regno.",
+    "cost_raw": "54 PR, 12 Legname, 12 Pietra",
+    "construction": {
+      "raw": "Difesa (Esperto), Governare (Esperto), Industria (Esperto) o Magia (Esperto) CD 26"
+    },
+    "item_bonus": "+2 a Giuramento di Fedeltà, Inviare un Delegato Diplomatico, Nuova Direzione, e +2 a Guarire Esercito, Presidiare Esercito, o Reclutare Esercito",
+    "ruin": "",
+    "effects": "La prima volta che costruisci un castello in un Turno di Regno, riduci Malcontento di 1d4. Un castello in una capitale permette ai PG leader di svolgere 3 attività di Governo durante la Fase Attività di un Turno di Regno, anziché 2.",
+    "consumption": "",
+    "kingdom_effects": [
+      {
+        "text": "La prima volta che costruisci un castello in un Turno di Regno, riduci Malcontento di 1d4"
+      }
+    ]
+  },
+  {
+    "id": "hospital",
+    "name": "Ospedale",
+    "description": "Un Ospedale è una costruzione dedicata alla guarigione dei malati con mezzi sia magici che mondani.",
+    "cost_raw": "30 PR, 10 Legname, 6 Pietra",
+    "construction": {
+      "raw": "Difesa (Esperto) CD 26"
+    },
+    "item_bonus": "+1 a Offrire Assistenza e Sedare Malcontento",
+    "ruin": "",
+    "effects": "Quando ti trovi in un Insediamento con un ospedale, ottieni un Bonus di Oggetto +2 alle prove di Medicina per Curare Malattia e Curare Ferite.",
+    "consumption": ""
+  },
+  {
+    "id": "tavern_luxury",
+    "name": "Taverna di Lusso",
+    "description": "Una Taverna di Lusso è un locale di alta classe per l'intrattenimento, il mangiare e il bere. Può anche includere un palco incorporato per gli artisti.",
+    "cost_raw": "48 PR, 10 Legname, 8 Lusso, 8 Pietra",
+    "construction": {
+      "raw": "Commercio (Maestro) CD 26"
+    },
+    "item_bonus": "+2 ad Assoldare Avventurieri e Riposare e Rilassarsi usando Commercio",
+    "ruin": "",
+    "effects": "La prima volta che costruisci una Taverna di Lusso in un Turno di Regno, riduci Malcontento di 1d4+1. Se tenti una prova di Esibizione per Guadagnare in un Insediamento con almeno una Taverna di Lusso, ricevi un Bonus di Oggetto +2 alla prova. Tutte le prove di Raccogliere Informazioni in un Insediamento con almeno una Taverna di Lusso ottengono un Bonus di Oggetto +2.",
+    "consumption": "",
+    "kingdom_effects": [
+      {
+        "text": "La prima volta che costruisci una Taverna di Lusso in un Turno di Regno, riduci Malcontento di 1d4+1"
+      }
+    ]
+  },
+  {
+    "id": "theater",
+    "name": "Teatro",
+    "description": "Un Teatro è un luogo dove si tengono concerti, spettacoli teatrali e danze, ma può essere anche un luogo per dibattiti o altri eventi.",
+    "cost_raw": "24 PR, 8 Legname, 3 Pietra",
+    "construction": {
+      "raw": "Arti (Esperto) CD 26"
+    },
+    "item_bonus": "+2 a Celebrare Festività",
+    "ruin": "",
+    "effects": "La prima volta che costruisci un Teatro in un Turno di Regno, riduci Malcontento di 1. Mentre sei in un Insediamento con un Teatro, ottieni un Bonus di Oggetto +2 alle prove di Esibizione effettuate per Guadagnare.",
+    "consumption": "",
+    "kingdom_effects": [
+      {
+        "text": "La prima volta che costruisci un Teatro in un Turno di Regno, riduci Malcontento di 1"
+      }
+    ]
+  },
+  {
+    "id": "noble_villa",
+    "name": "Villa Nobiliare",
+    "description": "Questo maniero tentacolare ha un terreno lussuoso. Ospita una famiglia nobile e il suo personale e comprende diverse strutture di supporto più piccole, come alloggi per la servitù, stalle e villette per i custodi, oltre al maniero.",
+    "cost_raw": "24 PR, 10 Legname, 6 di Lusso, 8 Pietra",
+    "construction": {
+      "raw": "Politica (Esperto) CD 19"
+    },
+    "item_bonus": "+1 a Migliorare Stile di Vita e Sedare Malcontento usando Politica",
+    "ruin": "",
+    "effects": "La prima volta che costruisci una Villa Nobiliare in un Turno di Regno, riduci Malcontento di 2.",
+    "consumption": "",
+    "kingdom_effects": [
+      {
+        "text": "La prima volta che costruisci una Villa Nobiliare in un Turno di Regno, riduci Malcontento di 2"
+      }
+    ]
+  },
+  {
+    "id": "academy",
+    "name": "Accademia",
+    "description": "UnAccademia offre ai cittadini (e ai PG) un'istituzione in cui è possibile effettuare studi avanzati in molti campi, ricerche e riferimenti.",
+    "cost_raw": "52 PR, 12 Legname, 6 di Lusso, 12 Pietra",
+    "construction": {
+      "raw": "Studio (Esperto) CD 27"
+    },
+    "item_bonus": "+2 a Soluzione Creativa",
+    "ruin": "",
+    "effects": "Quando ti trovi in un Insediamento con unAccademia, ottieni un Bonus di Oggetto +2 alle prove di Sapienza per Ricordare Conoscenze nell'Investigare, a tutte le prove per Ricercare e per Decifrare Scritti.",
+    "consumption": ""
+  },
+  {
+    "id": "construction_yard",
+    "name": "Cantiere",
+    "description": "Un Cantiere supporta la costruzione di strutture fornendo un luogo centralizzato per raccogliere forniture e componenti artigianali per progetti più grandi.",
+    "cost_raw": "40 PR, 10 Legname, 10 Pietra",
+    "construction": {
+      "raw": "Ingegneria CD 27"
+    },
+    "item_bonus": "+1 a Costruire una Struttura e Riparare Reputazione (Decadenza)",
+    "ruin": "",
+    "effects": "",
+    "consumption": ""
+  },
+  {
+    "id": "printing_house",
+    "name": "Tipografia",
+    "description": "Una Tipografia offre ai tuoi cittadini, nonché agli stessi PG, un luogo dove creare giornali e libri.",
+    "cost_raw": "48 PR, 14 Legname, 12 di Lusso",
+    "construction": {
+      "raw": "Industria (Maestro) CD 27"
+    },
+    "item_bonus": "+2 a Migliorare Stile di Vita e Sedare Malcontento",
+    "ruin": "",
+    "effects": "Un PG in un insediamento dotato di tipografia ottiene Bonus di Oggetto +2 alle prove per Raccogliere Informazioni o per Ricercare qualsiasi argomento in una Biblioteca o struttura simile.",
+    "consumption": ""
+  },
+  {
+    "id": "military_academy",
+    "name": "Accademia Militare",
+    "description": "LAccademia Militare è dedicata allo studio della guerra e alla formazione di soldati e ufficiali d'élite.",
+    "cost_raw": "36 PR, 12 Legname, 6 Minerali, 10 Pietra",
+    "construction": {
+      "raw": "Guerra (Esperto) CD 30"
+    },
+    "item_bonus": "+2 a Giuramento di Fedeltà usando Guerra, +2 ad Addestrare Esercito",
+    "ruin": "",
+    "effects": "",
+    "consumption": ""
+  },
+  {
+    "id": "menagerie",
+    "name": "Serraglio",
+    "description": "Un Serraglio è un grande zoo che contiene numerosi recinti, esposizioni, vasche, o riserve aperte destinate a mostrare la fauna selvatica.",
+    "cost_raw": "26 PR, 14 Legname, 10 Minerali, 10 Pietra",
+    "construction": {
+      "raw": "Terre Selvagge (Esperto) CD 30"
+    },
+    "item_bonus": "+2 a Riposare e Rilassarsi usando Terre Selvagge",
+    "ruin": "",
+    "effects": "Un serraglio di solito contiene una selezione di Animali di livello 5 o inferiore. Se il tuo gruppo cattura una creatura vivente di livello 6 o superiore e può trasportarla in un Insediamento con un serraglio, puoi aggiungere quella creatura al serraglio purché il tuo livello di regno sia almeno di 4 punti superiore al livello della creatura. Ogni volta che una creatura di questo tipo viene aggiunta a un serraglio, guadagni 1 punto Fama o Infamia (a seconda dei casi) o riduci di 1 una Rovina a scelta.\nSolo le creature con modificatori di Intelligenza di -4 o -5 sono adatte a essere messe in un serraglio. Un regno guadagna 1 Malcontento all'inizio di un Turno di Regno per ogni creatura intelligente (qualsiasi essere con un modificatore di Intelligenza di -3 o superiore) esposta in un serraglio.",
+    "consumption": ""
+  },
+  {
+    "id": "occult_shop",
+    "name": "Bottega dell'Occulto",
+    "description": "Una Bottega dell'Occulto è di solito un negozio tentacolare e misterioso, specializzato nella compravendita di magia oscura e strane curiosità. Spesso offre accesso a servizi soprannaturali come la cartomanzia.",
+    "cost_raw": "68 PR, 12 Legname, 12 Lusso, 6 Pietra",
+    "construction": {
+      "raw": "Magia (Maestro) CD 32"
+    },
+    "item_bonus": "+2 a Pronosticare",
+    "ruin": "",
+    "effects": "Considera il livello dell'Insediamento come un livello superiore a quello effettivo per determinare quali Oggetti Magici sono prontamente disponibili per l'acquisto nell'Insediamento. Questo effetto si cumula fino a tre volte e si sovrappone ad altri negozi che funzionano in questo modo per categorie più specifiche di Oggetti Magici. Quando ti trovi in un Insediamento con una bottega dell'occulto, ottieni un Bonus di Oggetto +2 a tutte le prove per Ricercare materie esoteriche o Ricordare Conoscenze sulle stesse.",
+    "consumption": ""
+  },
+  {
+    "id": "gladiatorial_arena",
+    "name": "Arena Gladiatoria",
+    "description": "UnArena Gladiatoria è un campo all'aperto circondato da posti a sedere e aree di osservazione. Comprende anche ampie caserme sotterranee e strutture per l'allenamento dei gladiatori.",
+    "cost_raw": "58 PR, 10 Legname, 30 Pietra",
+    "construction": {
+      "raw": "Sapienza Bellica (Maestro) CD 34"
+    },
+    "item_bonus": "+3 alle prove per Assoldare Avventurieri, Celebrare Festività e alle prove di Guerra effettuate per Sedare Malcontento",
+    "ruin": "",
+    "effects": "UnArena Gladiatoria permette a un PG dell'insediamento di Riaddestrare i talenti legati al combattimento (a discrezione del GM) in modo più efficiente; per farlo occorrono solo 4 giorni anziché una settimana di pausa.",
+    "consumption": ""
+  },
+  {
+    "id": "cathedral",
+    "name": "Cattedrale",
+    "description": "Una Cattedrale funge da punto focale del culto spirituale nell'Insediamento e da sede del potere regionale di una religione. La maggior parte delle cattedrali sono stupefacenti opere d'arte e meraviglie architettoniche.",
+    "cost_raw": "58 PR, 20 Legname, 20 Pietra",
+    "construction": {
+      "raw": "Folklore (Maestro) CD 34"
+    },
+    "item_bonus": "+3 a Celebrare Festività, Offrire Assistenza, e Riparare Reputazione (Corruzione)",
+    "ruin": "",
+    "effects": "La prima volta che si costruisce una Cattedrale in un turno, si riduce Malcontento di 4. Mentre ti trovi in un Insediamento con una Cattedrale, ottieni un Bonus di Oggetto +3 ai tiri di Sapienza e Religione effettuati per Ricordare Conoscenze per Investigare e a tutti i tiri a tema fede effettuati per Ricercare. Tratta il livello dell'Insediamento come se fosse di tre livelli superiore al suo livello effettivo per determinare quali oggetti di Magia Divina sono disponibili per l'acquisto nell'Insediamento. Questo effetto non è cumulabile con l'effetto analogo garantito da Santuari o Templi.",
+    "consumption": "",
+    "kingdom_effects": [
+      {
+        "text": "La prima volta che si costruisce una Cattedrale in un turno, si riduce Malcontento di 4"
+      }
+    ]
+  },
+  {
+    "id": "palace",
+    "name": "Palazzo",
+    "description": "Un Palazzo è una grande e splendida sede di governo per i tuoi leader e altri funzionari politici.",
+    "cost_raw": "108 PR, 20 Legname, 12 Lusso, 15 Minerali, 20 Pietra",
+    "construction": {
+      "raw": "Difesa (Maestro), Governare (Maestro), Industria (Maestro), Magia (Maestro) CD 34"
+    },
+    "item_bonus": "+3 a Giuramento di Fedeltà, Inviare un Delegato Diplomatico, o Nuova Direzione, e +3 a Guarire Esercito Presidiare Esercito, o Reclutare Esercito",
+    "ruin": "",
+    "effects": "Un palazzo può essere costruito solo nella tua capitale. La prima volta che costruisci un palazzo, riduci Malcontento di 10.\nSe decidi di Trasferire la Capitale, un palazzo che rimane nella vecchia capitale funziona invece come una Villa Nobiliare che occupa 4 lotti (se si rappresenta questo fatto collocando due Ville Nobiliari in questi lotti, assicurarsi che costituiscano un'unica costruzione e non due strutture separate).\nUn palazzo in una capitale permette ai PG leader di intraprendere 3 attività di Governo durante la Fase Attività di un Turno di Regno, anziché solo 2. Inoltre, una volta che il tuo regno ha un Palazzo, un PG nel ruolo di governo Governante ottiene un Bonus di Oggetto +3 alle prove effettuate per risolvere le attività di Governo.",
+    "consumption": "",
+    "kingdom_effects": [
+      {
+        "text": "La prima volta che costruisci un palazzo, riduci Malcontento di 10"
+      }
+    ]
+  },
+  {
+    "id": "tavern_world_class",
+    "name": "Taverna Internazionale",
+    "description": "Una Taverna Internazionale è un locale Leggendario per l'intrattenimento, il mangiare e il bere. Ha almeno una sede per gli spettacoli, forse più di una.",
+    "cost_raw": "64 PR, 18 Legname, 15 Lusso, 15 Pietra",
+    "construction": {
+      "raw": "Commercio (Maestro) CD 34"
+    },
+    "item_bonus": "+3 ad Assoldare Avventurieri, Riparare Reputazione (Conflitto), e Riposare e Rilassarsi usando Commercio",
+    "ruin": "",
+    "effects": "La prima volta che costruisci una Taverna Internazionale in un Turno di Regno, riduci Malcontento di 2d4. Se tenti una prova di Esibizione per Guadagnare in un Insediamento con una Taverna Internazionale, ricevi un Bonus di Oggetto +3 alla prova. Tutte le prove di Raccogliere Informazioni in un Insediamento con una Taverna Internazionale ottengono un Bonus di Oggetto +3.",
+    "consumption": "",
+    "kingdom_effects": [
+      {
+        "text": "La prima volta che costruisci una Taverna Internazionale in un Turno di Regno, riduci Malcontento di 2d4"
+      }
+    ]
+  },
+  {
+    "id": "opera_house",
+    "name": "Teatro Lirico",
+    "description": "Un Teatro Lirico funziona bene come sede di opere liriche, spettacoli teatrali e concerti, ma comprende anche ampie strutture per aiutare la formazione di ogni tipo di attività bardica. Spesso un Teatro Lirico diventa un punto di riferimento grandioso, grazie ai suoi colori stravaganti o alla sua architettura accattivante.",
+    "cost_raw": "40 PR, 20 Legname, 18 di Lusso, 16 Pietra",
+    "construction": {
+      "raw": "Arti (Maestro) CD 34"
+    },
+    "item_bonus": "+3 a Celebrare Festività e Creare un Capolavoro",
+    "ruin": "",
+    "effects": "La prima volta che costruisci un Teatro Lirico in un Turno di Regno, riduci Malcontento di 4. Mentre sei in un Insediamento con un Teatro Lirico, ottieni un Bonus di Oggetto +3 alle prove di Esibizione per Guadagnare.",
+    "consumption": "",
+    "kingdom_effects": [
+      {
+        "text": "La prima volta che costruisci un Teatro Lirico in un Turno di Regno, riduci Malcontento di 4"
+      }
+    ]
+  },
+  {
+    "id": "university",
+    "name": "Università",
+    "description": "UnUniversità è una vasta istituzione di istruzione superiore.",
+    "cost_raw": "78 PR, 18 Legname, 18 Lusso, 18 Pietra",
+    "construction": {
+      "raw": "Studio (Maestro) CD 34"
+    },
+    "item_bonus": "+3 a Soluzione Creativa",
+    "ruin": "",
+    "effects": "Quando ti trovi in un Insediamento con un'università, ottieni un Bonus di Oggetto +3 alle prove di Ricordare Conoscenze per Investigare, alle prove per Ricercare e per Decifrare Scritti.",
+    "consumption": ""
+  },
+  {
+    "id": "mint",
+    "name": "Zecca",
+    "description": "Una Zecca consente al regno di produrre la propria moneta per incrementare l'economia. Può anche includere camere sotterranee fortificate che fungono da tesoreria.",
+    "cost_raw": "30 PR, 12 Legname, 20 Minerali, 16 Pietra",
+    "construction": {
+      "raw": "Commercio (Maestro) CD 34"
+    },
+    "item_bonus": "+3 a Investimento di Capitali, Riparare Reputazione (Crimine), e Riscuotere Tasse",
+    "ruin": "",
+    "effects": "",
+    "consumption": ""
+  }
+]

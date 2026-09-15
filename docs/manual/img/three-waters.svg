@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 300" width="820" height="300" font-family="system-ui, sans-serif"><title>Where the water is</title>
+<polygon points="190.0,95.0 190.0,195.0 103.4,245.0 16.8,195.0 16.8,95.0 103.4,45.0" fill="none" stroke="#8b949e" stroke-width="2.0" stroke-linejoin="round"/>
+<polygon points="363.2,95.0 363.2,195.0 276.6,245.0 190.0,195.0 190.0,95.0 276.6,45.0" fill="none" stroke="#8b949e" stroke-width="2.0" stroke-linejoin="round"/>
+<line x1="190.0" y1="95.0" x2="190.0" y2="195.0" stroke="#4a9fd8" stroke-width="6" stroke-linecap="round"/>
+<text x="190.0" y="30.0" text-anchor="middle" font-size="14" fill="#c9d1d9" font-weight="600">borders</text>
+<text x="190.0" y="270.0" text-anchor="middle" font-size="12" fill="#7d8590" font-weight="500">the water BETWEEN two hexes</text>
+<polygon points="556.6,95.0 556.6,195.0 470.0,245.0 383.4,195.0 383.4,95.0 470.0,45.0" fill="none" stroke="#8b949e" stroke-width="2.0" stroke-linejoin="round"/>
+<line x1="556.6" y1="195.0" x2="383.4" y2="95.0" stroke="#4a9fd8" stroke-width="6" stroke-linecap="round"/>
+<text x="470.0" y="30.0" text-anchor="middle" font-size="14" fill="#c9d1d9" font-weight="600">banks</text>
+<text x="470.0" y="270.0" text-anchor="middle" font-size="12" fill="#7d8590" font-weight="500">the water INSIDE a hex</text>
+<polygon points="786.6,95.0 786.6,195.0 700.0,245.0 613.4,195.0 613.4,95.0 700.0,45.0" fill="none" stroke="#8b949e" stroke-width="2.0" stroke-linejoin="round"/>
+<polygon points="743.3,170.0 700.0,195.0 656.7,170.0 656.7,120.0 700.0,95.0 743.3,120.0" fill="#4a9fd8" fill-opacity="0.35" stroke="#4a9fd8" stroke-width="4" stroke-linejoin="round"/>
+<text x="700.0" y="30.0" text-anchor="middle" font-size="14" fill="#c9d1d9" font-weight="600">lakes</text>
+<text x="700.0" y="270.0" text-anchor="middle" font-size="12" fill="#7d8590" font-weight="500">the water as an AREA</text>
+</svg>

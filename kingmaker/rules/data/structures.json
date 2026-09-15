@@ -1,0 +1,2493 @@
+[
+  {
+    "id": "tenement",
+    "level": 0,
+    "traits": [
+      "edifice",
+      "residential"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 1,
+      "lumber": 1,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 0,
+      "food": 0
+    },
+    "construction": {
+      "dc": 14,
+      "options": [
+        {
+          "skill": "industry",
+          "proficiency": "untrained"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [
+      "houses"
+    ],
+    "kingdom_effects": [
+      {
+        "kind": "unrest",
+        "sign": -1,
+        "quantity": "1"
+      },
+      {
+        "kind": "ruin_choice",
+        "sign": 1,
+        "quantity": "1"
+      }
+    ]
+  },
+  {
+    "id": "rubble",
+    "level": 0,
+    "traits": [
+      "yard"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 0,
+      "lumber": 0,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 0,
+      "food": 0
+    },
+    "construction": null,
+    "upgrade_of": [],
+    "upgrade_to": [],
+    "kingdom_effects": []
+  },
+  {
+    "id": "tavern_dive",
+    "level": 1,
+    "traits": [
+      "yard"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 12,
+      "lumber": 1,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 0,
+      "food": 0
+    },
+    "construction": {
+      "dc": 15,
+      "options": [
+        {
+          "skill": "trade",
+          "proficiency": "trained"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [
+      "tavern_popular"
+    ],
+    "kingdom_effects": [
+      {
+        "kind": "unrest",
+        "sign": -1,
+        "quantity": "1"
+      },
+      {
+        "kind": "ruin",
+        "ruin": "crime",
+        "sign": 1,
+        "quantity": "1"
+      }
+    ]
+  },
+  {
+    "id": "houses",
+    "level": 1,
+    "traits": [
+      "edifice",
+      "residential"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 3,
+      "lumber": 1,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 0,
+      "food": 0
+    },
+    "construction": {
+      "dc": 15,
+      "options": [
+        {
+          "skill": "industry",
+          "proficiency": "untrained"
+        }
+      ]
+    },
+    "upgrade_of": [
+      "tenement"
+    ],
+    "upgrade_to": [
+      "mansion",
+      "orphanage"
+    ],
+    "kingdom_effects": [
+      {
+        "kind": "unrest",
+        "sign": -1,
+        "quantity": "1"
+      }
+    ]
+  },
+  {
+    "id": "cemetery",
+    "level": 1,
+    "traits": [
+      "yard"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 4,
+      "lumber": 0,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 1,
+      "food": 0
+    },
+    "construction": {
+      "dc": 15,
+      "options": [
+        {
+          "skill": "folklore",
+          "proficiency": "untrained"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [],
+    "kingdom_effects": []
+  },
+  {
+    "id": "brewery",
+    "level": 1,
+    "traits": [
+      "edifice"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 6,
+      "lumber": 2,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 0,
+      "food": 0
+    },
+    "construction": {
+      "dc": 15,
+      "options": [
+        {
+          "skill": "agriculture",
+          "proficiency": "untrained"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [],
+    "kingdom_effects": [
+      {
+        "kind": "unrest",
+        "sign": -1,
+        "quantity": "1"
+      }
+    ]
+  },
+  {
+    "id": "general_store",
+    "level": 1,
+    "traits": [
+      "edifice"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 8,
+      "lumber": 1,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 0,
+      "food": 0
+    },
+    "construction": {
+      "dc": 15,
+      "options": [
+        {
+          "skill": "trade",
+          "proficiency": "untrained"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [
+      "luxury_store",
+      "marketplace"
+    ],
+    "kingdom_effects": []
+  },
+  {
+    "id": "herbalist",
+    "level": 1,
+    "traits": [
+      "edifice"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 10,
+      "lumber": 1,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 0,
+      "food": 0
+    },
+    "construction": {
+      "dc": 15,
+      "options": [
+        {
+          "skill": "wilderness",
+          "proficiency": "untrained"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [
+      "hospital"
+    ],
+    "kingdom_effects": []
+  },
+  {
+    "id": "granary",
+    "level": 1,
+    "traits": [
+      "edifice"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 12,
+      "lumber": 2,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 0,
+      "food": 0
+    },
+    "construction": {
+      "dc": 15,
+      "options": [
+        {
+          "skill": "agriculture",
+          "proficiency": "untrained"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [],
+    "kingdom_effects": []
+  },
+  {
+    "id": "inn",
+    "level": 1,
+    "traits": [
+      "edifice",
+      "residential"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 10,
+      "lumber": 2,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 0,
+      "food": 0
+    },
+    "construction": {
+      "dc": 15,
+      "options": [
+        {
+          "skill": "trade",
+          "proficiency": "untrained"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [],
+    "kingdom_effects": []
+  },
+  {
+    "id": "wooden_wall",
+    "level": 1,
+    "traits": [
+      "infrastructure"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 2,
+      "lumber": 4,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 0,
+      "food": 0
+    },
+    "construction": {
+      "dc": 15,
+      "options": [
+        {
+          "skill": "defense",
+          "proficiency": "untrained"
+        }
+      ]
+    },
+    "upgrade_of": [
+      "stone_wall"
+    ],
+    "upgrade_to": [],
+    "kingdom_effects": [
+      {
+        "kind": "unrest",
+        "sign": -1,
+        "quantity": "1"
+      }
+    ]
+  },
+  {
+    "id": "shrine",
+    "level": 1,
+    "traits": [
+      "edifice"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 8,
+      "lumber": 2,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 1,
+      "food": 0
+    },
+    "construction": {
+      "dc": 15,
+      "options": [
+        {
+          "skill": "folklore",
+          "proficiency": "trained"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [
+      "temple"
+    ],
+    "kingdom_effects": []
+  },
+  {
+    "id": "library",
+    "level": 2,
+    "traits": [
+      "edifice"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 6,
+      "lumber": 4,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 2,
+      "food": 0
+    },
+    "construction": {
+      "dc": 16,
+      "options": [
+        {
+          "skill": "scholarship",
+          "proficiency": "trained"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [
+      "academy"
+    ],
+    "kingdom_effects": []
+  },
+  {
+    "id": "dump",
+    "level": 2,
+    "traits": [
+      "yard"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 4,
+      "lumber": 0,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 0,
+      "food": 0
+    },
+    "construction": {
+      "dc": 16,
+      "options": [
+        {
+          "skill": "industry",
+          "proficiency": "untrained"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [],
+    "kingdom_effects": []
+  },
+  {
+    "id": "mill",
+    "level": 2,
+    "traits": [
+      "edifice"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 6,
+      "lumber": 2,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 1,
+      "food": 0
+    },
+    "construction": {
+      "dc": 16,
+      "options": [
+        {
+          "skill": "industry",
+          "proficiency": "trained"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [],
+    "kingdom_effects": []
+  },
+  {
+    "id": "town_hall",
+    "level": 2,
+    "traits": [
+      "edifice",
+      "building"
+    ],
+    "lots": 2,
+    "cost": {
+      "rp": 22,
+      "lumber": 4,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 4,
+      "food": 0
+    },
+    "construction": {
+      "dc": 16,
+      "options": [
+        {
+          "skill": "defense",
+          "proficiency": "trained"
+        },
+        {
+          "skill": "statecraft",
+          "proficiency": "trained"
+        },
+        {
+          "skill": "industry",
+          "proficiency": "trained"
+        },
+        {
+          "skill": "magic",
+          "proficiency": "trained"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [
+      "castle"
+    ],
+    "kingdom_effects": [
+      {
+        "kind": "unrest",
+        "sign": -1,
+        "quantity": "1"
+      }
+    ]
+  },
+  {
+    "id": "orphanage",
+    "level": 2,
+    "traits": [
+      "edifice",
+      "residential"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 6,
+      "lumber": 2,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 0,
+      "food": 0
+    },
+    "construction": {
+      "dc": 16,
+      "options": [
+        {
+          "skill": "industry",
+          "proficiency": "untrained"
+        }
+      ]
+    },
+    "upgrade_of": [
+      "houses"
+    ],
+    "upgrade_to": [],
+    "kingdom_effects": [
+      {
+        "kind": "unrest",
+        "sign": -1,
+        "quantity": "1"
+      }
+    ]
+  },
+  {
+    "id": "bridge",
+    "level": 2,
+    "traits": [
+      "infrastructure"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 6,
+      "lumber": 1,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 1,
+      "food": 0
+    },
+    "construction": {
+      "dc": 16,
+      "options": [
+        {
+          "skill": "engineering",
+          "proficiency": "untrained"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [],
+    "kingdom_effects": []
+  },
+  {
+    "id": "jail",
+    "level": 2,
+    "traits": [
+      "edifice"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 14,
+      "lumber": 4,
+      "luxuries": 0,
+      "ore": 2,
+      "stone": 4,
+      "food": 0
+    },
+    "construction": {
+      "dc": 16,
+      "options": [
+        {
+          "skill": "defense",
+          "proficiency": "untrained"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [],
+    "kingdom_effects": [
+      {
+        "kind": "ruin",
+        "ruin": "crime",
+        "sign": -1,
+        "quantity": "1"
+      }
+    ]
+  },
+  {
+    "id": "trade_shop",
+    "level": 3,
+    "traits": [
+      "edifice"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 10,
+      "lumber": 2,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 0,
+      "food": 0
+    },
+    "construction": {
+      "dc": 18,
+      "options": [
+        {
+          "skill": "trade",
+          "proficiency": "trained"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [
+      "guildhall"
+    ],
+    "kingdom_effects": []
+  },
+  {
+    "id": "barracks",
+    "level": 3,
+    "traits": [
+      "edifice",
+      "residential"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 6,
+      "lumber": 2,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 1,
+      "food": 0
+    },
+    "construction": {
+      "dc": 16,
+      "options": [
+        {
+          "skill": "defense",
+          "proficiency": "untrained"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [
+      "garrison"
+    ],
+    "kingdom_effects": []
+  },
+  {
+    "id": "tannery",
+    "level": 3,
+    "traits": [
+      "edifice"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 6,
+      "lumber": 2,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 0,
+      "food": 0
+    },
+    "construction": {
+      "dc": 18,
+      "options": [
+        {
+          "skill": "industry",
+          "proficiency": "trained"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [],
+    "kingdom_effects": []
+  },
+  {
+    "id": "lumberyard",
+    "level": 3,
+    "traits": [
+      "yard"
+    ],
+    "lots": 2,
+    "cost": {
+      "rp": 16,
+      "lumber": 5,
+      "luxuries": 0,
+      "ore": 1,
+      "stone": 0,
+      "food": 0
+    },
+    "construction": {
+      "dc": 18,
+      "options": [
+        {
+          "skill": "industry",
+          "proficiency": "trained"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [],
+    "kingdom_effects": []
+  },
+  {
+    "id": "foundry",
+    "level": 3,
+    "traits": [
+      "edifice"
+    ],
+    "lots": 2,
+    "cost": {
+      "rp": 16,
+      "lumber": 5,
+      "luxuries": 0,
+      "ore": 2,
+      "stone": 3,
+      "food": 0
+    },
+    "construction": {
+      "dc": 18,
+      "options": [
+        {
+          "skill": "industry",
+          "proficiency": "trained"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [],
+    "kingdom_effects": []
+  },
+  {
+    "id": "keep",
+    "level": 3,
+    "traits": [
+      "edifice",
+      "building"
+    ],
+    "lots": 2,
+    "cost": {
+      "rp": 32,
+      "lumber": 8,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 8,
+      "food": 0
+    },
+    "construction": {
+      "dc": 18,
+      "options": [
+        {
+          "skill": "defense",
+          "proficiency": "trained"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [],
+    "kingdom_effects": [
+      {
+        "kind": "unrest",
+        "sign": -1,
+        "quantity": "1"
+      }
+    ]
+  },
+  {
+    "id": "smithy",
+    "level": 3,
+    "traits": [
+      "edifice"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 8,
+      "lumber": 2,
+      "luxuries": 0,
+      "ore": 1,
+      "stone": 1,
+      "food": 0
+    },
+    "construction": {
+      "dc": 18,
+      "options": [
+        {
+          "skill": "industry",
+          "proficiency": "trained"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [],
+    "kingdom_effects": []
+  },
+  {
+    "id": "alchemy_laboratory",
+    "level": 3,
+    "traits": [
+      "edifice"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 18,
+      "lumber": 0,
+      "luxuries": 0,
+      "ore": 2,
+      "stone": 5,
+      "food": 0
+    },
+    "construction": {
+      "dc": 16,
+      "options": [
+        {
+          "skill": "industry",
+          "proficiency": "trained"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [],
+    "kingdom_effects": []
+  },
+  {
+    "id": "pier",
+    "level": 3,
+    "traits": [
+      "yard"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 16,
+      "lumber": 2,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 0,
+      "food": 0
+    },
+    "construction": {
+      "dc": 18,
+      "options": [
+        {
+          "skill": "boating",
+          "proficiency": "untrained"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [
+      "waterfront"
+    ],
+    "kingdom_effects": []
+  },
+  {
+    "id": "monument",
+    "level": 3,
+    "traits": [
+      "edifice",
+      "building"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 6,
+      "lumber": 0,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 1,
+      "food": 0
+    },
+    "construction": {
+      "dc": 18,
+      "options": [
+        {
+          "skill": "arts",
+          "proficiency": "trained"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [],
+    "kingdom_effects": [
+      {
+        "kind": "unrest",
+        "sign": -1,
+        "quantity": "1"
+      },
+      {
+        "kind": "ruin_choice",
+        "sign": -1,
+        "quantity": "1"
+      }
+    ]
+  },
+  {
+    "id": "park",
+    "level": 3,
+    "traits": [
+      "yard"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 5,
+      "lumber": 0,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 0,
+      "food": 0
+    },
+    "construction": {
+      "dc": 18,
+      "options": [
+        {
+          "skill": "wilderness",
+          "proficiency": "untrained"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [
+      "menagerie"
+    ],
+    "kingdom_effects": [
+      {
+        "kind": "unrest",
+        "sign": -1,
+        "quantity": "1"
+      }
+    ]
+  },
+  {
+    "id": "stockyard",
+    "level": 3,
+    "traits": [
+      "yard"
+    ],
+    "lots": 4,
+    "cost": {
+      "rp": 20,
+      "lumber": 4,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 0,
+      "food": 0
+    },
+    "construction": {
+      "dc": 18,
+      "options": [
+        {
+          "skill": "industry",
+          "proficiency": "untrained"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [],
+    "kingdom_effects": []
+  },
+  {
+    "id": "festival_hall",
+    "level": 3,
+    "traits": [
+      "edifice"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 7,
+      "lumber": 3,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 0,
+      "food": 0
+    },
+    "construction": {
+      "dc": 18,
+      "options": [
+        {
+          "skill": "arts",
+          "proficiency": "untrained"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [
+      "theater"
+    ],
+    "kingdom_effects": []
+  },
+  {
+    "id": "stable",
+    "level": 3,
+    "traits": [
+      "yard"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 10,
+      "lumber": 2,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 0,
+      "food": 0
+    },
+    "construction": {
+      "dc": 18,
+      "options": [
+        {
+          "skill": "wilderness",
+          "proficiency": "trained"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [],
+    "kingdom_effects": []
+  },
+  {
+    "id": "stonemason",
+    "level": 3,
+    "traits": [
+      "edifice"
+    ],
+    "lots": 2,
+    "cost": {
+      "rp": 16,
+      "lumber": 2,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 0,
+      "food": 0
+    },
+    "construction": {
+      "dc": 18,
+      "options": [
+        {
+          "skill": "industry",
+          "proficiency": "trained"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [],
+    "kingdom_effects": []
+  },
+  {
+    "id": "tavern_popular",
+    "level": 3,
+    "traits": [
+      "edifice"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 24,
+      "lumber": 6,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 2,
+      "food": 0
+    },
+    "construction": {
+      "dc": 18,
+      "options": [
+        {
+          "skill": "trade",
+          "proficiency": "expert"
+        }
+      ]
+    },
+    "upgrade_of": [
+      "tavern_dive"
+    ],
+    "upgrade_to": [
+      "tavern_luxury"
+    ],
+    "kingdom_effects": [
+      {
+        "kind": "unrest",
+        "sign": -1,
+        "quantity": "2"
+      }
+    ]
+  },
+  {
+    "id": "watchtower",
+    "level": 3,
+    "traits": [
+      "edifice"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 12,
+      "lumber": 4,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 4,
+      "food": 0
+    },
+    "construction": {
+      "dc": 18,
+      "options": [
+        {
+          "skill": "defense",
+          "proficiency": "trained"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [],
+    "kingdom_effects": [
+      {
+        "kind": "unrest",
+        "sign": -1,
+        "quantity": "1"
+      }
+    ]
+  },
+  {
+    "id": "specialized_artisan",
+    "level": 4,
+    "traits": [
+      "edifice"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 10,
+      "lumber": 4,
+      "luxuries": 1,
+      "ore": 0,
+      "stone": 0,
+      "food": 0
+    },
+    "construction": {
+      "dc": 19,
+      "options": [
+        {
+          "skill": "trade",
+          "proficiency": "expert"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [],
+    "kingdom_effects": []
+  },
+  {
+    "id": "marketplace",
+    "level": 4,
+    "traits": [
+      "edifice",
+      "residential"
+    ],
+    "lots": 2,
+    "cost": {
+      "rp": 48,
+      "lumber": 4,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 0,
+      "food": 0
+    },
+    "construction": {
+      "dc": 19,
+      "options": [
+        {
+          "skill": "trade",
+          "proficiency": "trained"
+        }
+      ]
+    },
+    "upgrade_of": [
+      "general_store"
+    ],
+    "upgrade_to": [],
+    "kingdom_effects": []
+  },
+  {
+    "id": "paved_streets",
+    "level": 4,
+    "traits": [
+      "infrastructure"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 12,
+      "lumber": 0,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 6,
+      "food": 0
+    },
+    "construction": {
+      "dc": 19,
+      "options": [
+        {
+          "skill": "industry",
+          "proficiency": "trained"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [],
+    "kingdom_effects": []
+  },
+  {
+    "id": "bank",
+    "level": 5,
+    "traits": [
+      "edifice"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 28,
+      "lumber": 0,
+      "luxuries": 0,
+      "ore": 4,
+      "stone": 6,
+      "food": 0
+    },
+    "construction": {
+      "dc": 20,
+      "options": [
+        {
+          "skill": "trade",
+          "proficiency": "trained"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [],
+    "kingdom_effects": []
+  },
+  {
+    "id": "sacred_grove",
+    "level": 5,
+    "traits": [
+      "yard"
+    ],
+    "lots": 11,
+    "cost": {
+      "rp": 36,
+      "lumber": 0,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 0,
+      "food": 0
+    },
+    "construction": {
+      "dc": 20,
+      "options": [
+        {
+          "skill": "wilderness",
+          "proficiency": "trained"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [],
+    "kingdom_effects": []
+  },
+  {
+    "id": "thieves_guild",
+    "level": 5,
+    "traits": [
+      "edifice",
+      "infamous"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 25,
+      "lumber": 4,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 0,
+      "food": 0
+    },
+    "construction": {
+      "dc": 20,
+      "options": [
+        {
+          "skill": "intrigue",
+          "proficiency": "trained"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [],
+    "kingdom_effects": [
+      {
+        "kind": "ruin",
+        "ruin": "crime",
+        "sign": 1,
+        "quantity": "1"
+      }
+    ]
+  },
+  {
+    "id": "garrison",
+    "level": 5,
+    "traits": [
+      "edifice",
+      "residential"
+    ],
+    "lots": 2,
+    "cost": {
+      "rp": 28,
+      "lumber": 6,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 3,
+      "food": 0
+    },
+    "construction": {
+      "dc": 20,
+      "options": [
+        {
+          "skill": "warfare",
+          "proficiency": "trained"
+        }
+      ]
+    },
+    "upgrade_of": [
+      "barracks"
+    ],
+    "upgrade_to": [],
+    "kingdom_effects": [
+      {
+        "kind": "unrest",
+        "sign": -1,
+        "quantity": "1"
+      }
+    ]
+  },
+  {
+    "id": "magical_streetlamps",
+    "level": 5,
+    "traits": [
+      "infrastructure"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 20,
+      "lumber": 0,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 0,
+      "food": 0
+    },
+    "construction": {
+      "dc": 20,
+      "options": [
+        {
+          "skill": "magic",
+          "proficiency": "expert"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [],
+    "kingdom_effects": []
+  },
+  {
+    "id": "mansion",
+    "level": 5,
+    "traits": [
+      "edifice",
+      "residential"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 10,
+      "lumber": 6,
+      "luxuries": 6,
+      "ore": 0,
+      "stone": 3,
+      "food": 0
+    },
+    "construction": {
+      "dc": 20,
+      "options": [
+        {
+          "skill": "industry",
+          "proficiency": "trained"
+        }
+      ]
+    },
+    "upgrade_of": [
+      "houses"
+    ],
+    "upgrade_to": [
+      "noble_villa"
+    ],
+    "kingdom_effects": []
+  },
+  {
+    "id": "stone_wall",
+    "level": 5,
+    "traits": [
+      "infrastructure"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 4,
+      "lumber": 0,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 8,
+      "food": 0
+    },
+    "construction": {
+      "dc": 20,
+      "options": [
+        {
+          "skill": "defense",
+          "proficiency": "trained"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [
+      "wooden_wall"
+    ],
+    "kingdom_effects": [
+      {
+        "kind": "unrest",
+        "sign": -1,
+        "quantity": "1"
+      }
+    ]
+  },
+  {
+    "id": "museum",
+    "level": 5,
+    "traits": [
+      "edifice",
+      "famous",
+      "infamous"
+    ],
+    "lots": 2,
+    "cost": {
+      "rp": 30,
+      "lumber": 6,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 2,
+      "food": 0
+    },
+    "construction": {
+      "dc": 20,
+      "options": [
+        {
+          "skill": "exploration",
+          "proficiency": "trained"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [],
+    "kingdom_effects": [
+      {
+        "kind": "unrest",
+        "sign": -1,
+        "quantity": "1"
+      },
+      {
+        "kind": "unrest",
+        "sign": 1,
+        "quantity": "1"
+      }
+    ]
+  },
+  {
+    "id": "guildhall",
+    "level": 5,
+    "traits": [
+      "edifice"
+    ],
+    "lots": 2,
+    "cost": {
+      "rp": 34,
+      "lumber": 8,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 0,
+      "food": 0
+    },
+    "construction": {
+      "dc": 20,
+      "options": [
+        {
+          "skill": "trade",
+          "proficiency": "expert"
+        }
+      ]
+    },
+    "upgrade_of": [
+      "trade_shop"
+    ],
+    "upgrade_to": [],
+    "kingdom_effects": []
+  },
+  {
+    "id": "arcanists_tower",
+    "level": 5,
+    "traits": [
+      "edifice"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 30,
+      "lumber": 0,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 6,
+      "food": 0
+    },
+    "construction": {
+      "dc": 20,
+      "options": [
+        {
+          "skill": "magic",
+          "proficiency": "trained"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [],
+    "kingdom_effects": []
+  },
+  {
+    "id": "luxury_store",
+    "level": 6,
+    "traits": [
+      "edifice"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 28,
+      "lumber": 10,
+      "luxuries": 6,
+      "ore": 0,
+      "stone": 0,
+      "food": 0
+    },
+    "construction": {
+      "dc": 22,
+      "options": [
+        {
+          "skill": "trade",
+          "proficiency": "expert"
+        }
+      ]
+    },
+    "upgrade_of": [
+      "general_store"
+    ],
+    "upgrade_to": [
+      "magic_shop"
+    ],
+    "kingdom_effects": []
+  },
+  {
+    "id": "secure_warehouse",
+    "level": 6,
+    "traits": [
+      "edifice"
+    ],
+    "lots": 2,
+    "cost": {
+      "rp": 24,
+      "lumber": 6,
+      "luxuries": 0,
+      "ore": 4,
+      "stone": 6,
+      "food": 0
+    },
+    "construction": {
+      "dc": 22,
+      "options": [
+        {
+          "skill": "industry",
+          "proficiency": "expert"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [],
+    "kingdom_effects": []
+  },
+  {
+    "id": "illicit_market",
+    "level": 6,
+    "traits": [
+      "edifice",
+      "infamous"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 50,
+      "lumber": 5,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 0,
+      "food": 0
+    },
+    "construction": {
+      "dc": 22,
+      "options": [
+        {
+          "skill": "intrigue",
+          "proficiency": "trained"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [],
+    "kingdom_effects": [
+      {
+        "kind": "ruin",
+        "ruin": "crime",
+        "sign": 1,
+        "quantity": "1"
+      }
+    ]
+  },
+  {
+    "id": "sewer_system",
+    "level": 7,
+    "traits": [
+      "infrastructure"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 24,
+      "lumber": 8,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 8,
+      "food": 0
+    },
+    "construction": {
+      "dc": 23,
+      "options": [
+        {
+          "skill": "engineering",
+          "proficiency": "expert"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [],
+    "kingdom_effects": []
+  },
+  {
+    "id": "temple",
+    "level": 7,
+    "traits": [
+      "edifice",
+      "famous",
+      "infamous"
+    ],
+    "lots": 2,
+    "cost": {
+      "rp": 32,
+      "lumber": 6,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 6,
+      "food": 0
+    },
+    "construction": {
+      "dc": 23,
+      "options": [
+        {
+          "skill": "folklore",
+          "proficiency": "trained"
+        }
+      ]
+    },
+    "upgrade_of": [
+      "shrine"
+    ],
+    "upgrade_to": [
+      "cathedral"
+    ],
+    "kingdom_effects": [
+      {
+        "kind": "unrest",
+        "sign": -1,
+        "quantity": "2"
+      }
+    ]
+  },
+  {
+    "id": "embassy",
+    "level": 8,
+    "traits": [
+      "edifice"
+    ],
+    "lots": 2,
+    "cost": {
+      "rp": 26,
+      "lumber": 10,
+      "luxuries": 6,
+      "ore": 0,
+      "stone": 4,
+      "food": 0
+    },
+    "construction": {
+      "dc": 24,
+      "options": [
+        {
+          "skill": "politics",
+          "proficiency": "untrained"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [],
+    "kingdom_effects": []
+  },
+  {
+    "id": "magic_shop",
+    "level": 8,
+    "traits": [
+      "edifice"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 44,
+      "lumber": 8,
+      "luxuries": 6,
+      "ore": 0,
+      "stone": 6,
+      "food": 0
+    },
+    "construction": {
+      "dc": 24,
+      "options": [
+        {
+          "skill": "magic",
+          "proficiency": "expert"
+        }
+      ]
+    },
+    "upgrade_of": [
+      "luxury_store"
+    ],
+    "upgrade_to": [
+      "occult_shop"
+    ],
+    "kingdom_effects": []
+  },
+  {
+    "id": "waterfront",
+    "level": 8,
+    "traits": [
+      "yard"
+    ],
+    "lots": 4,
+    "cost": {
+      "rp": 90,
+      "lumber": 10,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 0,
+      "food": 0
+    },
+    "construction": {
+      "dc": 24,
+      "options": [
+        {
+          "skill": "boating",
+          "proficiency": "expert"
+        }
+      ]
+    },
+    "upgrade_of": [
+      "pier"
+    ],
+    "upgrade_to": [],
+    "kingdom_effects": []
+  },
+  {
+    "id": "arena",
+    "level": 9,
+    "traits": [
+      "building",
+      "yard"
+    ],
+    "lots": 4,
+    "cost": {
+      "rp": 40,
+      "lumber": 6,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 12,
+      "food": 0
+    },
+    "construction": {
+      "dc": 26,
+      "options": [
+        {
+          "skill": "warfare",
+          "proficiency": "expert"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [
+      "gladiatorial_arena"
+    ],
+    "kingdom_effects": []
+  },
+  {
+    "id": "castle",
+    "level": 9,
+    "traits": [
+      "edifice",
+      "building",
+      "famous",
+      "infamous"
+    ],
+    "lots": 4,
+    "cost": {
+      "rp": 54,
+      "lumber": 12,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 12,
+      "food": 0
+    },
+    "construction": {
+      "dc": 26,
+      "options": [
+        {
+          "skill": "defense",
+          "proficiency": "expert"
+        },
+        {
+          "skill": "statecraft",
+          "proficiency": "expert"
+        },
+        {
+          "skill": "industry",
+          "proficiency": "expert"
+        },
+        {
+          "skill": "magic",
+          "proficiency": "expert"
+        }
+      ]
+    },
+    "upgrade_of": [
+      "town_hall"
+    ],
+    "upgrade_to": [
+      "palace"
+    ],
+    "kingdom_effects": [
+      {
+        "kind": "unrest",
+        "sign": -1,
+        "quantity": "1d4"
+      }
+    ]
+  },
+  {
+    "id": "hospital",
+    "level": 9,
+    "traits": [
+      "edifice"
+    ],
+    "lots": 2,
+    "cost": {
+      "rp": 30,
+      "lumber": 10,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 6,
+      "food": 0
+    },
+    "construction": {
+      "dc": 26,
+      "options": [
+        {
+          "skill": "defense",
+          "proficiency": "expert"
+        }
+      ]
+    },
+    "upgrade_of": [
+      "herbalist"
+    ],
+    "upgrade_to": [],
+    "kingdom_effects": []
+  },
+  {
+    "id": "tavern_luxury",
+    "level": 9,
+    "traits": [
+      "edifice",
+      "famous"
+    ],
+    "lots": 2,
+    "cost": {
+      "rp": 48,
+      "lumber": 10,
+      "luxuries": 8,
+      "ore": 0,
+      "stone": 8,
+      "food": 0
+    },
+    "construction": {
+      "dc": 26,
+      "options": [
+        {
+          "skill": "trade",
+          "proficiency": "master"
+        }
+      ]
+    },
+    "upgrade_of": [
+      "tavern_popular"
+    ],
+    "upgrade_to": [
+      "tavern_world_class"
+    ],
+    "kingdom_effects": [
+      {
+        "kind": "unrest",
+        "sign": -1,
+        "quantity": "1d4+1"
+      }
+    ]
+  },
+  {
+    "id": "theater",
+    "level": 9,
+    "traits": [
+      "edifice"
+    ],
+    "lots": 2,
+    "cost": {
+      "rp": 24,
+      "lumber": 8,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 3,
+      "food": 0
+    },
+    "construction": {
+      "dc": 26,
+      "options": [
+        {
+          "skill": "arts",
+          "proficiency": "expert"
+        }
+      ]
+    },
+    "upgrade_of": [
+      "festival_hall"
+    ],
+    "upgrade_to": [
+      "opera_house"
+    ],
+    "kingdom_effects": [
+      {
+        "kind": "unrest",
+        "sign": -1,
+        "quantity": "1"
+      }
+    ]
+  },
+  {
+    "id": "noble_villa",
+    "level": 9,
+    "traits": [
+      "edifice",
+      "residential"
+    ],
+    "lots": 2,
+    "cost": {
+      "rp": 24,
+      "lumber": 10,
+      "luxuries": 6,
+      "ore": 0,
+      "stone": 8,
+      "food": 0
+    },
+    "construction": {
+      "dc": 19,
+      "options": [
+        {
+          "skill": "politics",
+          "proficiency": "expert"
+        }
+      ]
+    },
+    "upgrade_of": [
+      "mansion"
+    ],
+    "upgrade_to": [],
+    "kingdom_effects": [
+      {
+        "kind": "unrest",
+        "sign": -1,
+        "quantity": "2"
+      }
+    ]
+  },
+  {
+    "id": "academy",
+    "level": 10,
+    "traits": [
+      "edifice",
+      "building"
+    ],
+    "lots": 2,
+    "cost": {
+      "rp": 52,
+      "lumber": 12,
+      "luxuries": 6,
+      "ore": 0,
+      "stone": 12,
+      "food": 0
+    },
+    "construction": {
+      "dc": 27,
+      "options": [
+        {
+          "skill": "scholarship",
+          "proficiency": "expert"
+        }
+      ]
+    },
+    "upgrade_of": [
+      "library"
+    ],
+    "upgrade_to": [
+      "military_academy",
+      "university"
+    ],
+    "kingdom_effects": []
+  },
+  {
+    "id": "construction_yard",
+    "level": 10,
+    "traits": [
+      "yard"
+    ],
+    "lots": 4,
+    "cost": {
+      "rp": 40,
+      "lumber": 10,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 10,
+      "food": 0
+    },
+    "construction": {
+      "dc": 27,
+      "options": [
+        {
+          "skill": "engineering",
+          "proficiency": "untrained"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [],
+    "kingdom_effects": []
+  },
+  {
+    "id": "printing_house",
+    "level": 10,
+    "traits": [
+      "edifice",
+      "building"
+    ],
+    "lots": 2,
+    "cost": {
+      "rp": 48,
+      "lumber": 14,
+      "luxuries": 12,
+      "ore": 0,
+      "stone": 0,
+      "food": 0
+    },
+    "construction": {
+      "dc": 27,
+      "options": [
+        {
+          "skill": "industry",
+          "proficiency": "master"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [],
+    "kingdom_effects": []
+  },
+  {
+    "id": "military_academy",
+    "level": 12,
+    "traits": [
+      "edifice",
+      "building"
+    ],
+    "lots": 2,
+    "cost": {
+      "rp": 36,
+      "lumber": 12,
+      "luxuries": 0,
+      "ore": 6,
+      "stone": 10,
+      "food": 0
+    },
+    "construction": {
+      "dc": 30,
+      "options": [
+        {
+          "skill": "warfare",
+          "proficiency": "expert"
+        }
+      ]
+    },
+    "upgrade_of": [
+      "academy"
+    ],
+    "upgrade_to": [],
+    "kingdom_effects": []
+  },
+  {
+    "id": "menagerie",
+    "level": 12,
+    "traits": [
+      "edifice",
+      "building"
+    ],
+    "lots": 4,
+    "cost": {
+      "rp": 26,
+      "lumber": 14,
+      "luxuries": 0,
+      "ore": 10,
+      "stone": 10,
+      "food": 0
+    },
+    "construction": {
+      "dc": 30,
+      "options": [
+        {
+          "skill": "wilderness",
+          "proficiency": "expert"
+        }
+      ]
+    },
+    "upgrade_of": [
+      "park"
+    ],
+    "upgrade_to": [],
+    "kingdom_effects": []
+  },
+  {
+    "id": "occult_shop",
+    "level": 13,
+    "traits": [
+      "edifice"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 68,
+      "lumber": 12,
+      "luxuries": 12,
+      "ore": 0,
+      "stone": 6,
+      "food": 0
+    },
+    "construction": {
+      "dc": 32,
+      "options": [
+        {
+          "skill": "magic",
+          "proficiency": "master"
+        }
+      ]
+    },
+    "upgrade_of": [
+      "magic_shop"
+    ],
+    "upgrade_to": [],
+    "kingdom_effects": []
+  },
+  {
+    "id": "gladiatorial_arena",
+    "level": 15,
+    "traits": [
+      "building",
+      "famous",
+      "infamous",
+      "yard"
+    ],
+    "lots": 4,
+    "cost": {
+      "rp": 58,
+      "lumber": 10,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 30,
+      "food": 0
+    },
+    "construction": {
+      "dc": 34,
+      "options": [
+        {
+          "skill": "warfare",
+          "proficiency": "master"
+        }
+      ]
+    },
+    "upgrade_of": [
+      "arena"
+    ],
+    "upgrade_to": [],
+    "kingdom_effects": []
+  },
+  {
+    "id": "cathedral",
+    "level": 15,
+    "traits": [
+      "edifice",
+      "building",
+      "famous",
+      "infamous"
+    ],
+    "lots": 4,
+    "cost": {
+      "rp": 58,
+      "lumber": 20,
+      "luxuries": 0,
+      "ore": 0,
+      "stone": 20,
+      "food": 0
+    },
+    "construction": {
+      "dc": 34,
+      "options": [
+        {
+          "skill": "folklore",
+          "proficiency": "master"
+        }
+      ]
+    },
+    "upgrade_of": [
+      "temple"
+    ],
+    "upgrade_to": [],
+    "kingdom_effects": [
+      {
+        "kind": "unrest",
+        "sign": -1,
+        "quantity": "4"
+      }
+    ]
+  },
+  {
+    "id": "palace",
+    "level": 15,
+    "traits": [
+      "edifice",
+      "building",
+      "famous",
+      "infamous"
+    ],
+    "lots": 4,
+    "cost": {
+      "rp": 108,
+      "lumber": 20,
+      "luxuries": 12,
+      "ore": 15,
+      "stone": 20,
+      "food": 0
+    },
+    "construction": {
+      "dc": 34,
+      "options": [
+        {
+          "skill": "defense",
+          "proficiency": "master"
+        },
+        {
+          "skill": "statecraft",
+          "proficiency": "master"
+        },
+        {
+          "skill": "industry",
+          "proficiency": "master"
+        },
+        {
+          "skill": "magic",
+          "proficiency": "master"
+        }
+      ]
+    },
+    "upgrade_of": [
+      "castle"
+    ],
+    "upgrade_to": [],
+    "kingdom_effects": [
+      {
+        "kind": "unrest",
+        "sign": -1,
+        "quantity": "10"
+      }
+    ]
+  },
+  {
+    "id": "tavern_world_class",
+    "level": 15,
+    "traits": [
+      "edifice",
+      "building",
+      "famous"
+    ],
+    "lots": 2,
+    "cost": {
+      "rp": 64,
+      "lumber": 18,
+      "luxuries": 15,
+      "ore": 0,
+      "stone": 15,
+      "food": 0
+    },
+    "construction": {
+      "dc": 34,
+      "options": [
+        {
+          "skill": "trade",
+          "proficiency": "master"
+        }
+      ]
+    },
+    "upgrade_of": [
+      "tavern_luxury"
+    ],
+    "upgrade_to": [],
+    "kingdom_effects": [
+      {
+        "kind": "unrest",
+        "sign": -1,
+        "quantity": "2d4"
+      }
+    ]
+  },
+  {
+    "id": "opera_house",
+    "level": 15,
+    "traits": [
+      "edifice",
+      "building",
+      "famous",
+      "infamous"
+    ],
+    "lots": 2,
+    "cost": {
+      "rp": 40,
+      "lumber": 20,
+      "luxuries": 18,
+      "ore": 0,
+      "stone": 16,
+      "food": 0
+    },
+    "construction": {
+      "dc": 34,
+      "options": [
+        {
+          "skill": "arts",
+          "proficiency": "master"
+        }
+      ]
+    },
+    "upgrade_of": [
+      "theater"
+    ],
+    "upgrade_to": [],
+    "kingdom_effects": [
+      {
+        "kind": "unrest",
+        "sign": -1,
+        "quantity": "4"
+      }
+    ]
+  },
+  {
+    "id": "university",
+    "level": 15,
+    "traits": [
+      "edifice",
+      "famous",
+      "infamous"
+    ],
+    "lots": 4,
+    "cost": {
+      "rp": 78,
+      "lumber": 18,
+      "luxuries": 18,
+      "ore": 0,
+      "stone": 18,
+      "food": 0
+    },
+    "construction": {
+      "dc": 34,
+      "options": [
+        {
+          "skill": "scholarship",
+          "proficiency": "master"
+        }
+      ]
+    },
+    "upgrade_of": [
+      "academy"
+    ],
+    "upgrade_to": [],
+    "kingdom_effects": []
+  },
+  {
+    "id": "mint",
+    "level": 15,
+    "traits": [
+      "edifice",
+      "building"
+    ],
+    "lots": 1,
+    "cost": {
+      "rp": 30,
+      "lumber": 12,
+      "luxuries": 0,
+      "ore": 20,
+      "stone": 16,
+      "food": 0
+    },
+    "construction": {
+      "dc": 34,
+      "options": [
+        {
+          "skill": "trade",
+          "proficiency": "master"
+        }
+      ]
+    },
+    "upgrade_of": [],
+    "upgrade_to": [],
+    "kingdom_effects": []
+  }
+]

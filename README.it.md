@@ -1,0 +1,255 @@
+# Kingmaker Kingdom Manager
+
+*Read this in English: [README.md](README.md).*
+
+Un'app web da tenere sul proprio PC per gestire la **parte di costruzione del regno** della
+campagna **Kingmaker** di Pathfinder 2e: la scheda del regno, il Turno di Regno con tutte le sue
+attività, gli insediamenti costruiti lotto per lotto, e una **mappa a esagoni** su cui il gruppo
+esplora, rivendica e viaggia — a piedi e in barca — mentre il Game Master prepara e rivela. Tutti
+giocano la stessa partita dal proprio browser; il GM può pubblicarla su internet con un comando.
+
+Esiste perché il sottosistema del regno è tanta contabilità: Dadi Risorsa, Consumo, soglie di
+Malcontento, Rovine, quarantanove attività con quattro esiti ciascuna, settantasei strutture,
+costi di viaggio fra terreni e fiumi. L'app fa i conti, mostra cosa cambierebbe un tiro, e
+**aspetta un clic**: niente si applica in silenzio.
+
+![La mappa](docs/manual/img/screenshots/mappa.jpg)
+
+L'interfaccia è in **italiano e in inglese**, e ogni giocatore sceglie la sua lingua dall'intestazione.
+I testi delle regole vengono dalla wiki italiana [pf2.altervista.org](https://pf2.altervista.org/wiki/Regni)
+e, per l'inglese, dalla fonte ufficiale [Archives of Nethys](https://2e.aonprd.com/).
+
+## Cosa fa
+
+- **Scheda del regno** — caratteristiche e Rovine, le sedici Abilità di Regno con il modificatore
+  e il tiro a un clic, i Ruoli di Governo ricoperti da personaggi veri, i talenti, i Prodotti, PR
+  e Dadi Risorsa, il Consumo.
+- **Turno di Regno** — le quattro fasi con i loro passi, pulsanti dedicati per quelli automatici
+  (tirare i Dadi Risorsa, raccogliere dai Siti di Lavoro, pagare il Consumo, controllare gli
+  eventi casuali, convertire i PR in PE, salire di livello), e ogni attività come finestra:
+  requisiti, costo, CD, i quattro esiti, il tiro, gli effetti proposti da confermare.
+- **Città** — la Griglia Urbana come in un city-builder: nove isolati da quattro lotti, il
+  catalogo delle strutture filtrato per quello che puoi pagare, sovrappopolamento, macerie,
+  confini e la crescita da Villaggio a Metropoli.
+- **Mappa** — una griglia esagonale allineata sulla tua immagine. Stato, terreni, elementi,
+  strade, terreni agricoli, siti di lavoro; le Attività di Regione tirate dall'esagono; la nebbia;
+  i segreti del GM rivelati un esagono o un elemento alla volta.
+- **Viaggi** — trascini una freccia come in un gioco di strategia e vedi attività e giorni; la
+  strada segue la mano esagono per esagono, i fiumi bloccano o costano secondo ponti e guadi, le
+  barche seguono l'acqua disegnata, i gruppi sparsi si ritrovano nel punto migliore. Tutto il
+  tavolo vede la freccia che stai tirando.
+- **Acque** — fiumi, laghi, ponti, guadi e correnti disegnati sulla mappa, o proposti leggendo
+  l'immagine; si scambiano come carta JSON.
+- **Compagnia e Trasporti** — personaggi con ritratto e segnalino, veicoli dal catalogo delle
+  regole posati sulla mappa, salire e scendere.
+- **Il tempo** — il Calendario di Absalom; il GM fa scorrere i giorni e i viaggi avanzano da soli
+  finché il mese chiude il Turno di Regno.
+- **Account** — ruoli di amministratore, Game Master, giocatore e spettatore; un giocatore non
+  riceve mai quello che non conosce.
+
+Altre schermate e la guida completa sono nella [guida utente](docs/it/guida-utente.md)
+(in inglese: [docs/user-guide.md](docs/user-guide.md)).
+
+## Requisiti
+
+- **Python 3.11 o più recente** ([python.org](https://www.python.org/downloads/); su Windows
+  spunta *Add python.exe to PATH* nell'installatore).
+- Un browser moderno (Chrome, Edge, Firefox, Safari).
+- **La tua immagine della mappa.** Con l'app non viene distribuita nessuna mappa: è di Paizo. Usa
+  la mappa a esagoni della tua copia dell'Adventure Path, o qualunque mappa a esagoni, in PNG o JPG.
+- Facoltativo: [Pillow](https://pypi.org/project/Pillow/), solo per leggere l'acqua dall'immagine.
+
+## Installazione
+
+Apri un terminale nella cartella in cui vuoi l'app.
+
+**Windows (PowerShell)**
+
+```powershell
+git clone https://github.com/MarcoMungaiCoppolino/kingmaker-kingdom-manager.git
+cd kingmaker-kingdom-manager
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+**macOS / Linux**
+
+```bash
+git clone https://github.com/MarcoMungaiCoppolino/kingmaker-kingdom-manager.git
+cd kingmaker-kingdom-manager
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+Senza Git: scarica lo ZIP dal pulsante verde *Code* su GitHub, scompattalo, e dai gli stessi
+comandi dalla riga `python -m venv` in poi.
+
+## Primo avvio
+
+```bash
+python launch.py
+```
+
+L'app si apre su <http://127.0.0.1:8080>. Al primissimo avvio crea l'account `admin` e **stampa
+nel terminale una password casuale, una volta sola**: appuntala. Al primo accesso ti chiede di
+cambiarla; da lì crei gli account dei giocatori (l'icona 👤⚙ accanto al tuo nome, che vede solo
+chi amministra).
+
+Poi:
+
+1. **Metti la tua mappa.** Nella scheda *Mappa* apri *Calibrazione della griglia e immagine di
+   sfondo* e carica il PNG/JPG (o copialo in `assets/` e scéglilo dall'elenco). Bastano 2000–4000
+   px di larghezza: una scansione da 20 MB la scarica ogni giocatore.
+2. **Calibra la griglia.** Premi *Adatta la griglia all'immagine*, poi ritocca orientamento,
+   raggio e origine con i cursori finché i poligoni coincidono con gli esagoni stampati. Si fa una
+   volta sola.
+3. **Fonda il regno.** La creazione guidata segue le dieci fasi del manuale.
+
+La partita vive in `saves/kingmaker.db` (un solo file SQLite: per la copia di sicurezza lo copi
+ad app chiusa) e le immagini in `assets/`. Nessuna delle due cartelle è versionata.
+
+## Lingua
+
+Nell'intestazione c'è il pulsante **IT / EN**: cambia l'interfaccia solo per te, e la scelta
+resta sul tuo account. La pagina di accesso ha lo stesso pulsante, e un account nuovo prende la
+lingua con cui è entrato. Prima che qualcuno scelga vale la lingua del browser, poi quella del
+server (`KINGMAKER_LANG`).
+
+I testi delle regole seguono la stessa scelta: quelli italiani vengono da pf2.altervista.org,
+quelli inglesi sono trascritti da Archives of Nethys. Il registro del regno resta nella lingua in
+cui ogni riga è stata scritta.
+
+## Giocare con gli amici
+
+**Nella stessa stanza, sulla stessa rete:**
+
+```bash
+python launch.py --lan
+```
+
+e passa loro `http://<il-tuo-ip>:8080`. Lo stato è condiviso: tutti vedono lo stesso regno e gli
+aggiornamenti arrivano a ogni browser collegato. Fai girare **una sola** copia dell'app sugli
+stessi dati.
+
+**Lontani**, senza aprire porte né affittare niente:
+
+```bash
+python launch.py --online
+```
+
+[NiceGUI On Air](https://nicegui.io/on_air) pubblica la partita passando da un relè gestito da
+nicegui.io; l'indirizzo da passare agli amici compare nel terminale. Questo PC deve restare
+acceso, perché il regno vive qui. Senza token l'indirizzo cambia a ogni avvio; con un token
+gratuito preso sulla stessa pagina resta il tuo (`https://europe.on-air.io/<tuo-nome>/device-0/`):
+
+```bash
+python launch.py --online IL-TUO-TOKEN
+```
+
+Per non lasciare il token nella cronologia della shell mettilo nella variabile d'ambiente
+`KINGMAKER_ON_AIR_TOKEN` e avvia con il solo `--online`. **Leggi le note di sicurezza qui sotto
+prima di pubblicare.**
+
+## Impostazioni
+
+Tutto è facoltativo e si legge dall'ambiente (vedi [`.env.example`](.env.example)):
+
+| Variabile | Cosa fa | Predefinito |
+|---|---|---|
+| `KINGMAKER_DATA_DIR` | dove vive la partita (database, sessioni, copie) | `./saves` |
+| `KINGMAKER_ASSETS_DIR` | dove stanno mappa, ritratti e segnalini | `./assets` |
+| `KINGMAKER_HOST` | indirizzo di ascolto (`--lan` mette `0.0.0.0`) | `127.0.0.1` |
+| `KINGMAKER_PORT` | porta di ascolto (anche `--port`) | `8080` |
+| `KINGMAKER_LANG` | lingua predefinita dell'interfaccia, `en` o `it` | `en` |
+| `KINGMAKER_STORAGE_SECRET` | la chiave che firma i cookie di sessione | casuale, in `saves/.storage_secret` |
+| `KINGMAKER_ON_AIR_TOKEN` | il tuo token On Air per `--online` | — |
+| `KINGMAKER_HTTPS` | segna il cookie di sessione *Secure* (solo dietro un proxy HTTPS) | spento |
+| `KINGMAKER_TRUST_PROXY` | fidati del primo salto di `X-Forwarded-For` come indirizzo del client | spento |
+| `KINGMAKER_LOG` | `INFO` o `DEBUG` | `INFO` |
+
+## Docker
+
+`Dockerfile` e `docker-compose.yml` sono inclusi **senza essere stati provati**: l'autore fa
+girare l'app su Windows con `python launch.py` e non ha costruito l'immagine. Sono un punto di
+partenza per chi vuole ospitarla da sé, non un modo supportato di avviarla. `docker compose up`
+dovrebbe servire l'app sulla porta 8080 con la partita in `./saves` e le immagini in `./assets`.
+
+## Dove ospitarla e sicurezza
+
+- **Sul tuo PC, per il tuo tavolo** (`launch.py`, `--lan`): è quello per cui l'app è stata
+  scritta e provata.
+- **On Air**: comodo, ma il traffico passa in chiaro da un relè di terzi, che potrebbe leggerlo.
+  Va bene per una partita, non per qualcosa che chiameresti un segreto.
+- **Un server affittato**: possibile, e non provato dall'autore. Metti davanti un reverse proxy
+  con HTTPS (Caddy, nginx), imposta `KINGMAKER_HTTPS=1` e `KINGMAKER_TRUST_PROXY=1`, tieni
+  `saves/` fuori dalla radice web e passa la chiave di sessione con la variabile d'ambiente
+  invece che copiando la cartella.
+
+Le password non sono salvate: solo un'impronta PBKDF2-HMAC-SHA256 con sale, nel tuo database.
+Non esiste nessun account presso servizi esterni. I file caricati vengono controllati come
+immagini vere e rinominati; la cartella `/assets` si serve solo a chi è entrato. I giocatori
+ricevono solo gli esagoni che conoscono: il filtro è nel server, non nella pagina.
+
+## Prove
+
+```bash
+python tests/run_all.py
+```
+
+costruisce una scena da zero in `tests/scene/` (senza toccare `saves/`) e lancia tutta la suite —
+circa 1.150 asserzioni in 43 file. `python tools/check_i18n.py`, `check_texts.py`,
+`check_data.py` e `check_names.py` sono i quattro controlli di coerenza (cataloghi completi,
+nessuna etichetta scritta fuori dai cataloghi, stessa forma dei dati nelle due lingue, nessun
+nome indefinito); la suite lancia i primi tre. Due banchi nel
+browser in `tests/benches/` confrontano l'aritmetica del righello nel browser con quella del server.
+
+## Struttura del progetto
+
+```
+launch.py              avvio dell'app (locale, --lan, --online)
+launch_test.py         l'app su una copia dei dati, sulla porta 8081
+kingmaker/             il pacchetto, una cartella per strato
+  main.py              le pagine, l'intestazione, il Manuale in app
+  config.py            percorsi, porta e rete dall'ambiente
+  state.py             il regno in memoria e le statistiche derivate
+  rules/               le regole: il caricatore (rules/__init__.py), il calendario,
+                       le meccaniche in data/*.json e i testi in data/lang/{en,it}/
+  locale/              ciò che dipende da chi guarda: i18n.py e i cataloghi lang/{en,it}.json,
+                       units.py (metri o piedi)
+  geometry/            geometria pura: hexgrid, sections (le facce), atoms, waterways (la rete)
+  water/               l'acqua come il GM la disegna o la importa: reading.py, chart.py
+  travel/              i viaggi: costi, cammini, piani, ritrovi, rotte (travel/__init__.py),
+                       il giorno che passa (daily.py)
+  storage/             SQLite: archive.py (schema e query), migrations.py, legacy_names.py
+  access/              chi sei e cosa vedi: auth.py, permissions.py, view.py
+  media/               immagini caricate e miniature: images.py, imgsize.py
+  ui/                  l'interfaccia
+    theme.py login.py badges.py icons.py   la cornice: CSS, finestre, bus di aggiornamento, intestazione, accesso
+    tabs/              un modulo per scheda: sheet, turn, city, creation, party, transport,
+                       clock, gm_screen
+    hexmap/            la mappa, nove moduli dietro una facciata (hexmap/__init__.py)
+    static/            i quattro script del browser (righello, gomma, corrente, scorrimento)
+tests/                 la suite, la scena costruita da zero, i banchi, le fixture
+tools/                 i quattro controlli e gli strumenti una tantum della 1.0.0
+docs/                  guida utente, manuale del codice, il modello dell'acqua, il diario
+```
+
+Il **manuale del codice** — com'è fatta l'app, modulo per modulo — è in
+[`docs/manual/README.md`](docs/manual/README.md); il racconto del modello dell'acqua e dei
+viaggi, con le misure, in [capitolo 9 del manuale](docs/manual/09-water-travel.md); cosa è cambiato
+e perché in [`CHANGELOG.md`](CHANGELOG.md) e [`docs/devlog.md`](docs/devlog.md). Sono in inglese;
+la guida utente è anche in italiano: [`docs/it/guida-utente.md`](docs/it/guida-utente.md).
+
+## Licenza e crediti
+
+Il programma è rilasciato con [licenza MIT](LICENSE). Le regole del gioco sono Open Game Content
+usato secondo la [Open Game License v1.0a](OPEN_GAME_LICENSE.md), e i nomi e l'ambientazione di
+Pathfinder e Kingmaker compaiono secondo la Community Use Policy di Paizo: [NOTICE.md](NOTICE.md)
+dice cosa ricade sotto cosa. Questo progetto non è pubblicato, approvato né avallato da Paizo
+Inc., ed è gratuito.
+
+I testi italiani delle regole vengono da [pf2.altervista.org](https://pf2.altervista.org/wiki/Regni),
+quelli inglesi da [Archives of Nethys](https://2e.aonprd.com/). Costruito con
+[NiceGUI](https://nicegui.io/).

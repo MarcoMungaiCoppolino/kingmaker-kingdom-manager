@@ -1,0 +1,2019 @@
+{
+  "_source": "https://pf2.altervista.org/wiki/Abilità_del_Regno and the pages of the single Kingdom skills (mechanics); texts per language in lang/",
+  "activities": [
+    {
+      "id": "new_leadership",
+      "phase": "upkeep",
+      "step": "roles",
+      "skills": [
+        "statecraft",
+        "warfare",
+        "intrigue",
+        "politics"
+      ],
+      "dc": {
+        "kind": "control",
+        "mod": 0
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "t": "note",
+            "auto": false
+          }
+        ],
+        "success": [
+          {
+            "t": "note",
+            "auto": false
+          }
+        ],
+        "failure": [
+          {
+            "t": "note",
+            "auto": false
+          }
+        ],
+        "critical_failure": [
+          {
+            "t": "unrest",
+            "q": "1",
+            "auto": true
+          },
+          {
+            "t": "note",
+            "auto": false
+          }
+        ]
+      },
+      "cost_data": []
+    },
+    {
+      "id": "collect_taxes",
+      "phase": "commerce",
+      "step": "taxes",
+      "skills": [
+        "trade"
+      ],
+      "min_proficiency": "trained",
+      "dc": {
+        "kind": "control",
+        "mod": 0
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "t": "mod",
+            "v": 2,
+            "dur": 1,
+            "auto": true,
+            "ability": "economy"
+          }
+        ],
+        "success": [
+          {
+            "t": "mod",
+            "v": 1,
+            "dur": 1,
+            "auto": true,
+            "ability": "economy"
+          },
+          {
+            "t": "unrest",
+            "q": "1",
+            "auto": false
+          }
+        ],
+        "failure": [
+          {
+            "t": "mod",
+            "v": 1,
+            "dur": 1,
+            "auto": true,
+            "ability": "economy"
+          },
+          {
+            "t": "unrest",
+            "q": "1",
+            "auto": true
+          },
+          {
+            "t": "unrest",
+            "q": "1",
+            "auto": false
+          }
+        ],
+        "critical_failure": [
+          {
+            "t": "unrest",
+            "q": "2",
+            "auto": true
+          },
+          {
+            "t": "ruin_choice",
+            "q": "1",
+            "auto": true
+          }
+        ]
+      },
+      "cost_data": []
+    },
+    {
+      "id": "tap_treasury",
+      "phase": "commerce",
+      "step": "expenses",
+      "skills": [
+        "statecraft"
+      ],
+      "dc": {
+        "kind": "control",
+        "mod": 0
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "t": "note",
+            "auto": false
+          }
+        ],
+        "success": [
+          {
+            "t": "note",
+            "auto": false
+          },
+          {
+            "t": "mod",
+            "v": -1,
+            "dur": 2,
+            "auto": true,
+            "ability": "economy"
+          }
+        ],
+        "failure": [
+          {
+            "t": "mod",
+            "v": -1,
+            "dur": 2,
+            "auto": true,
+            "ability": "economy"
+          },
+          {
+            "t": "mod",
+            "v": -1,
+            "dur": 2,
+            "auto": true,
+            "ability": "loyalty"
+          }
+        ],
+        "critical_failure": [
+          {
+            "t": "mod",
+            "v": -1,
+            "dur": 2,
+            "auto": true,
+            "ability": "economy"
+          },
+          {
+            "t": "mod",
+            "v": -1,
+            "dur": 2,
+            "auto": true,
+            "ability": "loyalty"
+          },
+          {
+            "t": "unrest",
+            "q": "1",
+            "auto": true
+          },
+          {
+            "t": "ruin_choice",
+            "q": "1",
+            "auto": true
+          }
+        ]
+      },
+      "cost_data": []
+    },
+    {
+      "id": "improve_lifestyle",
+      "phase": "commerce",
+      "step": "expenses",
+      "skills": [
+        "politics"
+      ],
+      "dc": {
+        "kind": "control",
+        "mod": 0
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "t": "mod",
+            "v": 2,
+            "dur": 1,
+            "auto": true,
+            "ability": "culture"
+          }
+        ],
+        "success": [
+          {
+            "t": "mod",
+            "v": 1,
+            "dur": 1,
+            "auto": true,
+            "ability": "culture"
+          }
+        ],
+        "failure": [
+          {
+            "t": "mod",
+            "v": 1,
+            "dur": 1,
+            "auto": true,
+            "ability": "culture"
+          },
+          {
+            "t": "mod",
+            "v": -1,
+            "dur": 1,
+            "auto": true,
+            "ability": "economy"
+          }
+        ],
+        "critical_failure": [
+          {
+            "t": "mod",
+            "v": -1,
+            "dur": 1,
+            "auto": true,
+            "ability": "economy"
+          },
+          {
+            "t": "unrest",
+            "q": "1",
+            "auto": true
+          },
+          {
+            "t": "ruin_choice",
+            "q": "1",
+            "auto": true
+          }
+        ]
+      },
+      "cost_data": []
+    },
+    {
+      "id": "trade_commodities",
+      "phase": "commerce",
+      "step": "commodities",
+      "skills": [
+        "industry"
+      ],
+      "dc": {
+        "kind": "control",
+        "mod": 0
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "t": "bonus_dice",
+            "q": "2",
+            "auto": true
+          }
+        ],
+        "success": [
+          {
+            "t": "bonus_dice",
+            "q": "1",
+            "auto": true
+          }
+        ],
+        "failure": [
+          {
+            "t": "bonus_dice",
+            "q": "1",
+            "auto": true
+          }
+        ],
+        "critical_failure": [
+          {
+            "t": "unrest",
+            "q": "1",
+            "auto": false
+          }
+        ]
+      },
+      "cost_data": [
+        {
+          "t": "commodity_choice",
+          "q": "-1",
+          "auto": true
+        }
+      ]
+    },
+    {
+      "id": "manage_trade_agreements",
+      "phase": "commerce",
+      "step": "agreements",
+      "skills": [
+        "trade"
+      ],
+      "dc": {
+        "kind": "control",
+        "mod": 0
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "t": "bonus_dice",
+            "q": "1",
+            "auto": true
+          },
+          {
+            "t": "commodity_choice",
+            "q": "1",
+            "auto": true
+          }
+        ],
+        "success": [
+          {
+            "t": "bonus_dice",
+            "q": "1",
+            "auto": false
+          },
+          {
+            "t": "commodity_choice",
+            "q": "1",
+            "auto": false
+          }
+        ],
+        "failure": [
+          {
+            "t": "rp",
+            "q": "1",
+            "auto": true
+          }
+        ],
+        "critical_failure": [
+          {
+            "t": "note",
+            "auto": false
+          }
+        ]
+      },
+      "cost_data": [
+        {
+          "t": "rp",
+          "q": "-2",
+          "auto": true
+        }
+      ]
+    },
+    {
+      "id": "purchase_commodities",
+      "phase": "activity",
+      "step": "leadership",
+      "skills": [
+        "trade"
+      ],
+      "dc": {
+        "kind": "control",
+        "mod": 0
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "t": "commodity_choice",
+            "q": "4",
+            "auto": true
+          },
+          {
+            "t": "commodity_choice",
+            "q": "2",
+            "auto": true
+          }
+        ],
+        "success": [
+          {
+            "t": "commodity_choice",
+            "q": "2",
+            "auto": true
+          }
+        ],
+        "failure": [
+          {
+            "t": "commodity_choice",
+            "q": "1",
+            "auto": true
+          }
+        ],
+        "critical_failure": []
+      },
+      "cost_data": [
+        {
+          "t": "rp",
+          "q": "-4",
+          "auto": true
+        }
+      ]
+    },
+    {
+      "id": "clandestine_business",
+      "phase": "activity",
+      "step": "leadership",
+      "skills": [
+        "intrigue"
+      ],
+      "min_proficiency": "trained",
+      "dc": {
+        "kind": "control",
+        "mod": 0
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "t": "resource_die",
+            "q": "2",
+            "auto": true
+          },
+          {
+            "t": "commodity",
+            "p": "luxuries",
+            "q": "1d4",
+            "auto": true
+          }
+        ],
+        "success": [
+          {
+            "t": "resource_die",
+            "q": "2",
+            "auto": false
+          },
+          {
+            "t": "commodity",
+            "p": "luxuries",
+            "q": "1d4",
+            "auto": false
+          },
+          {
+            "t": "unrest",
+            "q": "1",
+            "auto": true
+          }
+        ],
+        "failure": [
+          {
+            "t": "resource_die",
+            "q": "1",
+            "auto": true
+          },
+          {
+            "t": "unrest",
+            "q": "1",
+            "auto": true
+          },
+          {
+            "t": "ruin",
+            "r": "corruption",
+            "q": "1",
+            "auto": true
+          }
+        ],
+        "critical_failure": [
+          {
+            "t": "unrest",
+            "q": "1d6",
+            "auto": true
+          },
+          {
+            "t": "ruin",
+            "r": "corruption",
+            "q": "2",
+            "auto": true
+          },
+          {
+            "t": "ruin_choice",
+            "q": "1",
+            "auto": true
+          }
+        ]
+      },
+      "cost_data": []
+    },
+    {
+      "id": "hire_adventurers",
+      "phase": "activity",
+      "step": "leadership",
+      "skills": [
+        "exploration"
+      ],
+      "dc": {
+        "kind": "control",
+        "mod": 0
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "t": "note",
+            "auto": false
+          }
+        ],
+        "success": [
+          {
+            "t": "note",
+            "auto": false
+          }
+        ],
+        "failure": [
+          {
+            "t": "note",
+            "auto": false
+          }
+        ],
+        "critical_failure": [
+          {
+            "t": "note",
+            "auto": false
+          }
+        ]
+      },
+      "cost_data": [
+        {
+          "t": "resource_die",
+          "q": "-1",
+          "auto": true
+        }
+      ]
+    },
+    {
+      "id": "focused_attention",
+      "phase": "activity",
+      "step": "leadership",
+      "skills": [
+        "*"
+      ],
+      "dc": {
+        "kind": "fixed",
+        "valore": 20
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "t": "note",
+            "auto": false
+          }
+        ],
+        "success": [
+          {
+            "t": "note",
+            "auto": false
+          }
+        ],
+        "failure": [],
+        "critical_failure": []
+      },
+      "cost_data": []
+    },
+    {
+      "id": "celebrate_holiday",
+      "phase": "activity",
+      "step": "leadership",
+      "skills": [
+        "folklore"
+      ],
+      "dc": {
+        "kind": "control",
+        "mod": 0
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "t": "mod",
+            "v": 2,
+            "dur": 2,
+            "auto": true,
+            "ability": "loyalty"
+          }
+        ],
+        "success": [
+          {
+            "t": "mod",
+            "v": 1,
+            "dur": 2,
+            "auto": true,
+            "ability": "loyalty"
+          },
+          {
+            "t": "resource_die",
+            "q": "-1",
+            "auto": true
+          }
+        ],
+        "failure": [
+          {
+            "t": "resource_die",
+            "q": "-1",
+            "auto": true
+          }
+        ],
+        "critical_failure": [
+          {
+            "t": "bonus_dice",
+            "q": "-4",
+            "auto": true
+          },
+          {
+            "t": "mod",
+            "v": -1,
+            "dur": 2,
+            "auto": true,
+            "ability": "loyalty"
+          }
+        ]
+      },
+      "cost_data": []
+    },
+    {
+      "id": "create_a_masterpiece",
+      "phase": "activity",
+      "step": "leadership",
+      "skills": [
+        "arts"
+      ],
+      "min_proficiency": "trained",
+      "dc": {
+        "kind": "control",
+        "mod": 0
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "t": "fame",
+            "q": "1",
+            "auto": true
+          },
+          {
+            "t": "fame",
+            "q": "1",
+            "auto": false
+          },
+          {
+            "t": "resource_die",
+            "q": "2",
+            "auto": true
+          }
+        ],
+        "success": [
+          {
+            "t": "fame",
+            "q": "1",
+            "auto": true
+          }
+        ],
+        "failure": [],
+        "critical_failure": [
+          {
+            "t": "fame",
+            "q": "-1",
+            "auto": true
+          },
+          {
+            "t": "unrest",
+            "q": "1d4",
+            "auto": false
+          }
+        ]
+      },
+      "cost_data": [],
+      "turn_limit": 1
+    },
+    {
+      "id": "craft_luxuries",
+      "phase": "activity",
+      "step": "leadership",
+      "skills": [
+        "arts"
+      ],
+      "dc": {
+        "kind": "control",
+        "mod": 0
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "t": "commodity",
+            "p": "luxuries",
+            "q": "1d4",
+            "auto": true
+          }
+        ],
+        "success": [
+          {
+            "t": "commodity",
+            "p": "luxuries",
+            "q": "1",
+            "auto": true
+          }
+        ],
+        "failure": [],
+        "critical_failure": [
+          {
+            "t": "ruin_choice",
+            "q": "1",
+            "auto": true
+          }
+        ]
+      },
+      "cost_data": [
+        {
+          "t": "resource_die",
+          "q": "-1",
+          "auto": true
+        }
+      ]
+    },
+    {
+      "id": "pledge_of_fealty",
+      "phase": "activity",
+      "step": "leadership",
+      "skills": [
+        "statecraft",
+        "warfare",
+        "intrigue"
+      ],
+      "min_proficiency": "trained",
+      "dc": {
+        "kind": "special"
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "t": "xp",
+            "q": "10",
+            "auto": false
+          },
+          {
+            "t": "note",
+            "auto": false
+          }
+        ],
+        "success": [
+          {
+            "t": "resource_die",
+            "q": "-1",
+            "auto": true
+          },
+          {
+            "t": "note",
+            "auto": false
+          }
+        ],
+        "failure": [
+          {
+            "t": "unrest",
+            "q": "1",
+            "auto": true
+          }
+        ],
+        "critical_failure": [
+          {
+            "t": "unrest",
+            "q": "2",
+            "auto": true
+          },
+          {
+            "t": "ruin_choice",
+            "q": "1",
+            "auto": true
+          }
+        ]
+      },
+      "cost_data": []
+    },
+    {
+      "id": "infiltration",
+      "phase": "activity",
+      "step": "leadership",
+      "skills": [
+        "intrigue"
+      ],
+      "dc": {
+        "kind": "control",
+        "mod": 0
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "t": "unrest",
+            "q": "-1d4",
+            "auto": false
+          },
+          {
+            "t": "ruin_choice",
+            "q": "-1",
+            "auto": false
+          },
+          {
+            "t": "note",
+            "auto": false
+          }
+        ],
+        "success": [
+          {
+            "t": "unrest",
+            "q": "-1",
+            "auto": false
+          },
+          {
+            "t": "note",
+            "auto": false
+          }
+        ],
+        "failure": [],
+        "critical_failure": [
+          {
+            "t": "mod",
+            "v": -2,
+            "dur": 2,
+            "auto": true
+          }
+        ]
+      },
+      "cost_data": []
+    },
+    {
+      "id": "capital_investment",
+      "phase": "activity",
+      "step": "leadership",
+      "skills": [
+        "trade"
+      ],
+      "dc": {
+        "kind": "control",
+        "mod": 0
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "t": "resource_die",
+            "q": "4",
+            "auto": true
+          }
+        ],
+        "success": [
+          {
+            "t": "resource_die",
+            "q": "2",
+            "auto": true
+          }
+        ],
+        "failure": [
+          {
+            "t": "rp",
+            "q": "1d4",
+            "auto": true
+          }
+        ],
+        "critical_failure": [
+          {
+            "t": "resource_die",
+            "q": "1",
+            "auto": false
+          },
+          {
+            "t": "ruin_choice",
+            "q": "1",
+            "auto": false
+          },
+          {
+            "t": "ruin",
+            "r": "crime",
+            "q": "1",
+            "auto": false
+          }
+        ]
+      },
+      "cost_data": [
+        {
+          "t": "note",
+          "auto": false
+        }
+      ]
+    },
+    {
+      "id": "send_diplomatic_envoy",
+      "phase": "activity",
+      "step": "leadership",
+      "skills": [
+        "statecraft"
+      ],
+      "min_proficiency": "trained",
+      "dc": {
+        "kind": "special"
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "t": "note",
+            "auto": false
+          }
+        ],
+        "success": [
+          {
+            "t": "note",
+            "auto": false
+          }
+        ],
+        "failure": [
+          {
+            "t": "note",
+            "auto": false
+          }
+        ],
+        "critical_failure": [
+          {
+            "t": "unrest",
+            "q": "1d4",
+            "auto": false
+          },
+          {
+            "t": "ruin_choice",
+            "q": "1",
+            "auto": false
+          },
+          {
+            "t": "resource_die",
+            "q": "-2",
+            "auto": false
+          },
+          {
+            "t": "note",
+            "auto": false
+          }
+        ]
+      },
+      "cost_data": []
+    },
+    {
+      "id": "provide_care",
+      "phase": "activity",
+      "step": "leadership",
+      "skills": [
+        "defense"
+      ],
+      "dc": {
+        "kind": "control",
+        "mod": 0
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "t": "unrest",
+            "q": "-1",
+            "auto": true
+          },
+          {
+            "t": "ruin_choice",
+            "q": "-1",
+            "auto": true
+          }
+        ],
+        "success": [
+          {
+            "t": "unrest",
+            "q": "-1",
+            "auto": true
+          }
+        ],
+        "failure": [],
+        "critical_failure": [
+          {
+            "t": "unrest",
+            "q": "1",
+            "auto": false
+          },
+          {
+            "t": "ruin_choice",
+            "q": "1",
+            "auto": false
+          }
+        ]
+      },
+      "cost_data": []
+    },
+    {
+      "id": "prognostication",
+      "phase": "activity",
+      "step": "leadership",
+      "skills": [
+        "magic"
+      ],
+      "min_proficiency": "trained",
+      "dc": {
+        "kind": "control",
+        "mod": 0
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "t": "note",
+            "auto": false
+          }
+        ],
+        "success": [
+          {
+            "t": "note",
+            "auto": false
+          }
+        ],
+        "failure": [],
+        "critical_failure": [
+          {
+            "t": "note",
+            "auto": false
+          }
+        ]
+      },
+      "cost_data": []
+    },
+    {
+      "id": "recruit_army",
+      "phase": "activity",
+      "step": "leadership",
+      "skills": [
+        "warfare",
+        "statecraft"
+      ],
+      "dc": {
+        "kind": "special"
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "t": "note",
+            "auto": false
+          }
+        ],
+        "success": [
+          {
+            "t": "note",
+            "auto": false
+          }
+        ],
+        "failure": [],
+        "critical_failure": [
+          {
+            "t": "unrest",
+            "q": "1",
+            "auto": true
+          },
+          {
+            "t": "note",
+            "auto": false
+          }
+        ]
+      },
+      "cost_data": []
+    },
+    {
+      "id": "request_foreign_aid",
+      "phase": "activity",
+      "step": "leadership",
+      "skills": [
+        "statecraft"
+      ],
+      "min_proficiency": "trained",
+      "dc": {
+        "kind": "special"
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "t": "mod",
+            "v": 4,
+            "dur": 1,
+            "auto": true
+          },
+          {
+            "t": "resource_die",
+            "q": "2",
+            "auto": true
+          }
+        ],
+        "success": [
+          {
+            "t": "resource_die",
+            "q": "1",
+            "auto": false
+          },
+          {
+            "t": "mod",
+            "v": 2,
+            "dur": 1,
+            "auto": false
+          }
+        ],
+        "failure": [
+          {
+            "t": "rp",
+            "q": "1d4",
+            "auto": true
+          }
+        ],
+        "critical_failure": [
+          {
+            "t": "unrest",
+            "q": "1d4",
+            "auto": true
+          }
+        ]
+      },
+      "cost_data": []
+    },
+    {
+      "id": "repair_reputation",
+      "phase": "activity",
+      "step": "leadership",
+      "skills": [
+        "arts",
+        "trade",
+        "engineering",
+        "intrigue"
+      ],
+      "min_proficiency": "trained",
+      "dc": {
+        "kind": "control",
+        "mod": 2
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "t": "ruin_choice",
+            "q": "-2",
+            "auto": true,
+            "pen": -1
+          }
+        ],
+        "success": [
+          {
+            "t": "ruin_choice",
+            "q": "-1",
+            "auto": true
+          }
+        ],
+        "failure": [
+          {
+            "t": "note",
+            "auto": false
+          }
+        ],
+        "critical_failure": [
+          {
+            "t": "unrest",
+            "q": "1d4",
+            "auto": true
+          },
+          {
+            "t": "note",
+            "auto": false
+          }
+        ]
+      },
+      "cost_data": []
+    },
+    {
+      "id": "rest_and_relax",
+      "phase": "activity",
+      "step": "leadership",
+      "skills": [
+        "arts",
+        "boating",
+        "scholarship",
+        "trade",
+        "wilderness"
+      ],
+      "dc": {
+        "kind": "control",
+        "mod": 0
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "t": "unrest",
+            "q": "-1",
+            "auto": true
+          },
+          {
+            "t": "note",
+            "auto": false
+          }
+        ],
+        "success": [
+          {
+            "t": "unrest",
+            "q": "-1",
+            "auto": true
+          }
+        ],
+        "failure": [],
+        "critical_failure": [
+          {
+            "t": "note",
+            "auto": false
+          }
+        ]
+      },
+      "cost_data": []
+    },
+    {
+      "id": "quell_unrest",
+      "phase": "activity",
+      "step": "leadership",
+      "skills": [
+        "arts",
+        "folklore",
+        "warfare",
+        "intrigue",
+        "magic",
+        "politics"
+      ],
+      "dc": {
+        "kind": "control",
+        "mod": 0
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "t": "unrest",
+            "q": "-1d6",
+            "auto": true
+          }
+        ],
+        "success": [
+          {
+            "t": "unrest",
+            "q": "-1",
+            "auto": true
+          }
+        ],
+        "failure": [],
+        "critical_failure": [
+          {
+            "t": "unrest",
+            "q": "1d4",
+            "auto": false
+          },
+          {
+            "t": "ruin_choice",
+            "q": "1",
+            "auto": false
+          },
+          {
+            "t": "ruin_choice",
+            "q": "1",
+            "auto": false
+          }
+        ]
+      },
+      "cost_data": [],
+      "turn_limit": 1
+    },
+    {
+      "id": "creative_solution",
+      "phase": "activity",
+      "step": "leadership",
+      "skills": [
+        "scholarship"
+      ],
+      "dc": {
+        "kind": "control",
+        "mod": 0
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "t": "note",
+            "auto": false
+          },
+          {
+            "t": "xp",
+            "q": "10",
+            "auto": false
+          }
+        ],
+        "success": [
+          {
+            "t": "rp",
+            "q": "-1d4",
+            "auto": true
+          },
+          {
+            "t": "note",
+            "auto": false
+          }
+        ],
+        "failure": [
+          {
+            "t": "rp",
+            "q": "-2d6",
+            "auto": true
+          }
+        ],
+        "critical_failure": [
+          {
+            "t": "rp",
+            "q": "-2d6",
+            "auto": true
+          },
+          {
+            "t": "mod",
+            "v": -1,
+            "dur": 2,
+            "auto": true,
+            "ability": "culture"
+          }
+        ]
+      },
+      "cost_data": []
+    },
+    {
+      "id": "supernatural_solution",
+      "phase": "activity",
+      "step": "leadership",
+      "skills": [
+        "magic"
+      ],
+      "dc": {
+        "kind": "control",
+        "mod": 0
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "t": "note",
+            "auto": false
+          },
+          {
+            "t": "xp",
+            "q": "10",
+            "auto": false
+          }
+        ],
+        "success": [
+          {
+            "t": "rp",
+            "q": "-1d4",
+            "auto": true
+          },
+          {
+            "t": "note",
+            "auto": false
+          }
+        ],
+        "failure": [
+          {
+            "t": "rp",
+            "q": "-2d6",
+            "auto": true
+          }
+        ],
+        "critical_failure": [
+          {
+            "t": "rp",
+            "q": "-2d6",
+            "auto": true
+          },
+          {
+            "t": "note",
+            "auto": false
+          }
+        ]
+      },
+      "cost_data": []
+    },
+    {
+      "id": "establish_trade_agreement",
+      "phase": "activity",
+      "step": "leadership",
+      "skills": [
+        "trade",
+        "boating",
+        "magic"
+      ],
+      "dc": {
+        "kind": "special"
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "t": "resource_die",
+            "q": "2",
+            "auto": true
+          },
+          {
+            "t": "note",
+            "auto": false
+          }
+        ],
+        "success": [
+          {
+            "t": "note",
+            "auto": false
+          }
+        ],
+        "failure": [
+          {
+            "t": "resource_die",
+            "q": "-2",
+            "auto": true
+          }
+        ],
+        "critical_failure": [
+          {
+            "t": "unrest",
+            "q": "1",
+            "auto": true
+          },
+          {
+            "t": "mod",
+            "v": -1,
+            "dur": 2,
+            "auto": true,
+            "ability": "economy"
+          }
+        ]
+      },
+      "cost_data": []
+    },
+    {
+      "id": "relocate_capital",
+      "phase": "activity",
+      "step": "leadership",
+      "skills": [
+        "industry"
+      ],
+      "min_proficiency": "trained",
+      "dc": {
+        "kind": "control",
+        "mod": 5
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "t": "note",
+            "auto": false
+          }
+        ],
+        "success": [
+          {
+            "t": "unrest",
+            "q": "1",
+            "auto": true
+          },
+          {
+            "t": "note",
+            "auto": false
+          }
+        ],
+        "failure": [
+          {
+            "t": "unrest",
+            "q": "1",
+            "auto": true
+          },
+          {
+            "t": "ruin_choice",
+            "q": "1",
+            "auto": true
+          },
+          {
+            "t": "ruin_choice",
+            "q": "1",
+            "auto": true
+          },
+          {
+            "t": "note",
+            "auto": false
+          }
+        ],
+        "critical_failure": [
+          {
+            "t": "unrest",
+            "q": "1d4",
+            "auto": true
+          },
+          {
+            "t": "ruin_choice",
+            "q": "1",
+            "auto": true
+          },
+          {
+            "t": "ruin_choice",
+            "q": "1",
+            "auto": true
+          },
+          {
+            "t": "ruin_choice",
+            "q": "1",
+            "auto": true
+          },
+          {
+            "t": "ruin_choice",
+            "q": "3",
+            "auto": true
+          },
+          {
+            "t": "note",
+            "auto": false
+          }
+        ]
+      },
+      "cost_data": [],
+      "turn_limit": 1
+    },
+    {
+      "id": "abandon_hex",
+      "phase": "activity",
+      "step": "region",
+      "skills": [
+        "exploration",
+        "wilderness"
+      ],
+      "dc": {
+        "kind": "control",
+        "mod": 0
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "t": "rp",
+            "q": "1",
+            "auto": true
+          },
+          {
+            "t": "note",
+            "auto": false
+          }
+        ],
+        "success": [
+          {
+            "t": "unrest",
+            "q": "1",
+            "auto": true
+          },
+          {
+            "t": "note",
+            "auto": false
+          }
+        ],
+        "failure": [
+          {
+            "t": "unrest",
+            "q": "2",
+            "auto": true
+          },
+          {
+            "t": "note",
+            "auto": false
+          }
+        ],
+        "critical_failure": [
+          {
+            "t": "unrest",
+            "q": "3",
+            "auto": true
+          },
+          {
+            "t": "note",
+            "auto": false
+          }
+        ]
+      },
+      "cost_data": []
+    },
+    {
+      "id": "go_fishing",
+      "phase": "activity",
+      "step": "region",
+      "skills": [
+        "boating"
+      ],
+      "dc": {
+        "kind": "control",
+        "mod": 0
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "t": "commodity",
+            "p": "food",
+            "q": "1d4",
+            "auto": true
+          }
+        ],
+        "success": [
+          {
+            "t": "commodity",
+            "p": "food",
+            "q": "1",
+            "auto": true
+          }
+        ],
+        "failure": [],
+        "critical_failure": [
+          {
+            "t": "unrest",
+            "q": "1",
+            "auto": true
+          }
+        ]
+      },
+      "cost_data": []
+    },
+    {
+      "id": "build_roads",
+      "phase": "activity",
+      "step": "region",
+      "skills": [
+        "engineering"
+      ],
+      "dc": {
+        "kind": "control",
+        "mod": 0
+      },
+      "effects": {},
+      "cost_data": [],
+      "reference": "map"
+    },
+    {
+      "id": "harvest_crops",
+      "phase": "activity",
+      "step": "region",
+      "skills": [
+        "agriculture"
+      ],
+      "dc": {
+        "kind": "control",
+        "mod": 0
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "t": "commodity",
+            "p": "food",
+            "q": "1d4",
+            "auto": true
+          }
+        ],
+        "success": [
+          {
+            "t": "commodity",
+            "p": "food",
+            "q": "1",
+            "auto": true
+          }
+        ],
+        "failure": [],
+        "critical_failure": [
+          {
+            "t": "commodity",
+            "p": "food",
+            "q": "-1d4",
+            "auto": true
+          },
+          {
+            "t": "unrest",
+            "q": "1",
+            "auto": false
+          }
+        ]
+      },
+      "cost_data": []
+    },
+    {
+      "id": "fortify_hex",
+      "phase": "activity",
+      "step": "region",
+      "skills": [
+        "defense"
+      ],
+      "dc": {
+        "kind": "control",
+        "mod": 0
+      },
+      "effects": {},
+      "cost_data": [],
+      "reference": "map"
+    },
+    {
+      "id": "irrigation",
+      "phase": "activity",
+      "step": "region",
+      "skills": [
+        "engineering"
+      ],
+      "min_proficiency": "trained",
+      "dc": {
+        "kind": "control",
+        "mod": 0
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "t": "note",
+            "auto": false
+          },
+          {
+            "t": "rp",
+            "q": "0",
+            "auto": false
+          }
+        ],
+        "success": [
+          {
+            "t": "note",
+            "auto": false
+          }
+        ],
+        "failure": [],
+        "critical_failure": [
+          {
+            "t": "unrest",
+            "q": "1",
+            "auto": true
+          },
+          {
+            "t": "note",
+            "auto": false
+          }
+        ]
+      },
+      "cost_data": []
+    },
+    {
+      "id": "clear_hex",
+      "phase": "activity",
+      "step": "region",
+      "skills": [
+        "engineering",
+        "exploration"
+      ],
+      "dc": {
+        "kind": "control",
+        "mod": 0
+      },
+      "effects": {},
+      "cost_data": [],
+      "reference": "map"
+    },
+    {
+      "id": "gather_livestock",
+      "phase": "activity",
+      "step": "region",
+      "skills": [
+        "wilderness"
+      ],
+      "dc": {
+        "kind": "control",
+        "mod": 0
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "t": "commodity",
+            "p": "food",
+            "q": "1d4",
+            "auto": true
+          }
+        ],
+        "success": [
+          {
+            "t": "commodity",
+            "p": "food",
+            "q": "1",
+            "auto": true
+          }
+        ],
+        "failure": [],
+        "critical_failure": [
+          {
+            "t": "commodity",
+            "p": "food",
+            "q": "-1d4",
+            "auto": true
+          },
+          {
+            "t": "unrest",
+            "q": "1",
+            "auto": false
+          }
+        ]
+      },
+      "cost_data": []
+    },
+    {
+      "id": "claim_hex",
+      "phase": "activity",
+      "step": "region",
+      "skills": [
+        "exploration",
+        "intrigue",
+        "magic",
+        "wilderness"
+      ],
+      "dc": {
+        "kind": "control",
+        "mod": 0
+      },
+      "effects": {},
+      "cost_data": [],
+      "reference": "map"
+    },
+    {
+      "id": "establish_farmland",
+      "phase": "activity",
+      "step": "region",
+      "skills": [
+        "agriculture"
+      ],
+      "dc": {
+        "kind": "control",
+        "mod": 0
+      },
+      "effects": {},
+      "cost_data": [],
+      "reference": "map"
+    },
+    {
+      "id": "establish_settlement",
+      "phase": "activity",
+      "step": "region",
+      "skills": [
+        "industry",
+        "engineering",
+        "politics",
+        "scholarship"
+      ],
+      "dc": {
+        "kind": "control",
+        "mod": 0
+      },
+      "effects": {},
+      "cost_data": [],
+      "reference": "map"
+    },
+    {
+      "id": "establish_work_site",
+      "phase": "activity",
+      "step": "region",
+      "skills": [
+        "engineering"
+      ],
+      "dc": {
+        "kind": "control",
+        "mod": 0
+      },
+      "effects": {},
+      "cost_data": [],
+      "reference": "map"
+    },
+    {
+      "id": "build_structure",
+      "phase": "activity",
+      "step": "civic",
+      "skills": [
+        "*"
+      ],
+      "dc": {
+        "kind": "special"
+      },
+      "effects": {},
+      "cost_data": [],
+      "reference": "city"
+    },
+    {
+      "id": "demolish",
+      "phase": "activity",
+      "step": "civic",
+      "skills": [
+        "engineering"
+      ],
+      "dc": {
+        "kind": "control",
+        "mod": 0
+      },
+      "effects": {},
+      "cost_data": [],
+      "reference": "city"
+    },
+    {
+      "id": "train_army",
+      "phase": "activity",
+      "step": "army",
+      "skills": [
+        "scholarship",
+        "warfare"
+      ],
+      "dc": {
+        "kind": "special"
+      },
+      "effects": {},
+      "cost_data": []
+    },
+    {
+      "id": "offensive_gambit",
+      "phase": "activity",
+      "step": "army",
+      "skills": [
+        "intrigue",
+        "warfare"
+      ],
+      "dc": {
+        "kind": "special"
+      },
+      "effects": {},
+      "cost_data": []
+    },
+    {
+      "id": "disband_army",
+      "phase": "activity",
+      "step": "army",
+      "skills": [],
+      "dc": {
+        "kind": "none_"
+      },
+      "outcomes": {},
+      "effects": {},
+      "cost_data": []
+    },
+    {
+      "id": "deploy_army",
+      "phase": "activity",
+      "step": "army",
+      "skills": [
+        "exploration",
+        "boating",
+        "magic"
+      ],
+      "dc": {
+        "kind": "control",
+        "mod": 0
+      },
+      "effects": {},
+      "cost_data": []
+    },
+    {
+      "id": "outfit_army",
+      "phase": "activity",
+      "step": "army",
+      "skills": [
+        "trade",
+        "warfare"
+      ],
+      "dc": {
+        "kind": "control",
+        "mod": 0
+      },
+      "effects": {},
+      "cost_data": []
+    },
+    {
+      "id": "recover_army",
+      "phase": "activity",
+      "step": "army",
+      "skills": [
+        "defense",
+        "folklore",
+        "engineering",
+        "magic",
+        "arts",
+        "warfare",
+        "politics",
+        "exploration",
+        "wilderness"
+      ],
+      "dc": {
+        "kind": "control",
+        "mod": 0
+      },
+      "effects": {},
+      "cost_data": []
+    },
+    {
+      "id": "garrison_army",
+      "phase": "activity",
+      "step": "army",
+      "skills": [
+        "defense",
+        "politics",
+        "engineering"
+      ],
+      "dc": {
+        "kind": "control",
+        "mod": 0
+      },
+      "effects": {},
+      "cost_data": []
+    }
+  ]
+}

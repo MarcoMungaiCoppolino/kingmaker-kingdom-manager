@@ -1,0 +1,64 @@
+<title>atoms: browser versus server</title><pre id="out">...</pre>
+<script>
+// The graph the browser rebuilds from the mask must be **the same** as
+// `atoms.graph` in Python, and the course by waypoints must cost the same as
+// `atoms.course_by_waypoints`. On every configuration up to three lines.
+// Data: `python tests/benches/atom_cases.py`, then serve the repo root over
+// HTTP and open this page. It must end with EQUAL.
+(async () => {
+  const data = await (await fetch('atom_cases.json')).json();
+  let src = await (await fetch('../../kingmaker/ui/static/travel_drag.js')).text();
+  const i = src.lastIndexOf('})();');
+  src = src.slice(0, i) +
+    '  window.__km = {graphOf, courseByWaypoints, adjacencies};\n' + src.slice(i);
+  eval(src);
+  const km = window.__km;
+  const lines = [], say = (t) => lines.push(t);
+  let differentGraphs = 0, differentCourses = 0, courses = 0;
+  const examples = [];
+  for (let n = 0; n < data.cases.length; n++) {
+    const entry = data.cases[n];
+    // A fake field with a single hexagon, to have the graph rebuilt.
+    window.kmTravelField = {
+      active: true, cells: [[0, 0, 0, 0, 0, 1, 0, 0, 0, 0]], neighbours: [[]], sides: [],
+      travellers: [{origin: 0, from: [0], activities: 1}],
+      atoms: data.atoms, masks: {'0,0': [entry.mask, [], '0'.repeat(24), [0, 0]]},
+    };
+    km.adjacencies();
+    const g = km.graphOf('0,0');
+    const mine = g.nb.map((v) => v.slice().sort((a, b) => a - b));
+    if (JSON.stringify(mine) !== JSON.stringify(entry.neighbours)) {
+      differentGraphs++;
+      if (examples.length < 3) examples.push('different graph, mask ' + entry.mask);
+    }
+    for (const c of entry.courses) {
+      courses++;
+      // A **new** field, as the app does: the graph cache is cleared when the
+      // object changes, not when it is modified in place.
+      window.kmTravelField = Object.assign({}, window.kmTravelField, {
+        masks: {'0,0': [entry.mask, c.openings, '0'.repeat(24), [0, 0]]}});
+      km.adjacencies();
+      const g2 = km.graphOf('0,0');
+      const waypoints = c.waypoints.map((t) => new Set(t));
+      const outcome = km.courseByWaypoints(g2, c.from, waypoints, c.to, 0.25, !!c.constrained);
+      const browser = outcome ? Math.round(outcome.cost * 1000) / 1000 : null;
+      const server = c.cost === null ? null : Math.round(c.cost * 1000) / 1000;
+      // The atoms too, one by one: the tie-breaker must be the same.
+      const sameAtoms = JSON.stringify(outcome ? outcome.atoms : null) === JSON.stringify(c.atoms);
+      if (browser !== server || !sameAtoms) {
+        differentCourses++;
+        if (examples.length < 6) examples.push('different course: mask ' + entry.mask +
+          ' from ' + c.from + ' to ' + c.to + ' waypoints ' + JSON.stringify(c.waypoints) +
+          ' -> browser ' + browser + ', server ' + server);
+      }
+    }
+  }
+  say(data.cases.length + ' configurations: different graphs ' + differentGraphs);
+  say(courses + ' courses by waypoints: different costs ' + differentCourses);
+  for (const e of examples) say('  ' + e);
+  say(differentGraphs === 0 && differentCourses === 0 ? 'EQUAL' : 'DIFFERENT');
+  document.getElementById('out').textContent = lines.join('\n');
+})().catch((e) => {
+  document.getElementById('out').textContent = 'ERROR ' + e + '\n' + e.stack;
+});
+</script>

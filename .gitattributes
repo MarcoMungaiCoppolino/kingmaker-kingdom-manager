@@ -1,0 +1,12 @@
+# In the repository every line ends with LF, even if the working copy on
+# Windows keeps CRLF. It matters the day the app runs on a Linux host: the
+# scripts and the Dockerfile must not arrive with the wrong line endings.
+* text=auto eol=lf
+
+# Binary files: no conversion.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.db  binary

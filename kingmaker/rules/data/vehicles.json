@@ -1,0 +1,398 @@
+{
+  "_source": "https://pf2.altervista.org/wiki/Veicoli and the pages of the single vehicles (mechanics); texts per language in lang/",
+  "vehicles": [
+    {
+      "id": "aeronave",
+      "level": 12,
+      "speed": {
+        "fly": 15.0
+      },
+      "speed_depends_on": null,
+      "url": "https://pf2.altervista.org/wiki/Aeronave"
+    },
+    {
+      "id": "aliante",
+      "level": 0,
+      "speed": {
+        "fly": 7.5
+      },
+      "speed_depends_on": null,
+      "url": "https://pf2.altervista.org/wiki/Aliante"
+    },
+    {
+      "id": "apparato_del_polipo",
+      "level": 11,
+      "speed": {
+        "land_": 1.5,
+        "swim": 12.0
+      },
+      "speed_depends_on": null,
+      "url": "https://pf2.altervista.org/wiki/Apparato_del_Polipo"
+    },
+    {
+      "id": "barca_a_remi",
+      "level": 0,
+      "speed": {
+        "swim": 6.0
+      },
+      "speed_depends_on": null,
+      "url": "https://pf2.altervista.org/wiki/Barca_a_Remi"
+    },
+    {
+      "id": "barca_planare",
+      "level": 15,
+      "speed": {
+        "fly": 15.0
+      },
+      "speed_depends_on": null,
+      "url": "https://pf2.altervista.org/wiki/Barca_Planare"
+    },
+    {
+      "id": "batisfera",
+      "level": 5,
+      "speed": {
+        "swim": 6.0
+      },
+      "speed_depends_on": null,
+      "url": "https://pf2.altervista.org/wiki/Batisfera"
+    },
+    {
+      "id": "bici_automatizzata",
+      "level": 1,
+      "speed": {
+        "land_": 9.0
+      },
+      "speed_depends_on": null,
+      "url": "https://pf2.altervista.org/wiki/Bici_Automatizzata"
+    },
+    {
+      "id": "calderone_del_volare",
+      "level": 6,
+      "speed": {
+        "land_": 9.0
+      },
+      "speed_depends_on": null,
+      "url": "https://pf2.altervista.org/wiki/Calderone_del_Volare"
+    },
+    {
+      "id": "calpestatore_titanico",
+      "level": 15,
+      "speed": {
+        "land_": 12.0
+      },
+      "speed_depends_on": null,
+      "url": "https://pf2.altervista.org/wiki/Calpestatore_Titanico"
+    },
+    {
+      "id": "carrello_a_vapore",
+      "level": 4,
+      "speed": {
+        "land_": 7.5
+      },
+      "speed_depends_on": null,
+      "url": "https://pf2.altervista.org/wiki/Carrello_a_Vapore"
+    },
+    {
+      "id": "carretto",
+      "level": 0,
+      "speed": {},
+      "speed_depends_on": "towing",
+      "url": "https://pf2.altervista.org/wiki/Carretto"
+    },
+    {
+      "id": "carretto_a_vapore",
+      "level": 2,
+      "speed": {
+        "land_": 7.5
+      },
+      "speed_depends_on": null,
+      "url": "https://pf2.altervista.org/wiki/Carretto_a_Vapore"
+    },
+    {
+      "id": "carro",
+      "level": 1,
+      "speed": {},
+      "speed_depends_on": "towing",
+      "url": "https://pf2.altervista.org/wiki/Carro"
+    },
+    {
+      "id": "carro_da_guerra_leggero",
+      "level": 0,
+      "speed": {},
+      "speed_depends_on": "towing",
+      "url": "https://pf2.altervista.org/wiki/Carro_da_Guerra,_Leggero"
+    },
+    {
+      "id": "carro_da_guerra_pesante",
+      "level": 3,
+      "speed": {},
+      "speed_depends_on": "towing",
+      "url": "https://pf2.altervista.org/wiki/Carro_da_Guerra,_Pesante"
+    },
+    {
+      "id": "carro_meccanico",
+      "level": 3,
+      "speed": {
+        "land_": 6.0
+      },
+      "speed_depends_on": null,
+      "url": "https://pf2.altervista.org/wiki/Carro_Meccanico"
+    },
+    {
+      "id": "carrozza",
+      "level": 2,
+      "speed": {},
+      "speed_depends_on": "towing",
+      "url": "https://pf2.altervista.org/wiki/Carrozza"
+    },
+    {
+      "id": "carrozza_corazzata",
+      "level": 5,
+      "speed": {
+        "land_": 7.5
+      },
+      "speed_depends_on": null,
+      "url": "https://pf2.altervista.org/wiki/Carrozza_Corazzata"
+    },
+    {
+      "id": "carrozza_lumaca",
+      "level": 7,
+      "speed": {
+        "land_": 4.5,
+        "scalable": 4.5
+      },
+      "speed_depends_on": null,
+      "url": "https://pf2.altervista.org/wiki/Carrozza_Lumaca"
+    },
+    {
+      "id": "castello_meccanico",
+      "level": 16,
+      "speed": {
+        "land_": 12.0
+      },
+      "speed_depends_on": null,
+      "url": "https://pf2.altervista.org/wiki/Castello_Meccanico"
+    },
+    {
+      "id": "chiatta_della_sabbia",
+      "level": 6,
+      "speed": {
+        "land_": 12.0
+      },
+      "speed_depends_on": null,
+      "url": "https://pf2.altervista.org/wiki/Chiatta_della_Sabbia"
+    },
+    {
+      "id": "cutter",
+      "level": 6,
+      "speed": {
+        "swim": 9.0
+      },
+      "speed_depends_on": null,
+      "url": "https://pf2.altervista.org/wiki/Cutter"
+    },
+    {
+      "id": "deltaplano_di_piccocroce",
+      "level": 4,
+      "speed": {
+        "fly": 10.5
+      },
+      "speed_depends_on": null,
+      "url": "https://pf2.altervista.org/wiki/Deltaplano_di_Piccocroce"
+    },
+    {
+      "id": "elepoli",
+      "level": 16,
+      "speed": {
+        "land_": 3.0
+      },
+      "speed_depends_on": null,
+      "url": "https://pf2.altervista.org/wiki/Elepoli"
+    },
+    {
+      "id": "galea",
+      "level": 10,
+      "speed": {
+        "swim": 9.0
+      },
+      "speed_depends_on": null,
+      "url": "https://pf2.altervista.org/wiki/Galea"
+    },
+    {
+      "id": "gigante_a_vapore",
+      "level": 14,
+      "speed": {
+        "land_": 6.0
+      },
+      "speed_depends_on": null,
+      "url": "https://pf2.altervista.org/wiki/Gigante_a_Vapore"
+    },
+    {
+      "id": "locanda_mobile",
+      "level": 8,
+      "speed": {
+        "land_": 9.0
+      },
+      "speed_depends_on": null,
+      "url": "https://pf2.altervista.org/wiki/Locanda_Mobile"
+    },
+    {
+      "id": "lucciola",
+      "level": 5,
+      "speed": {
+        "fluttuare": 6.0
+      },
+      "speed_depends_on": null,
+      "url": "https://pf2.altervista.org/wiki/Lucciola"
+    },
+    {
+      "id": "meccano_bombo",
+      "level": 9,
+      "speed": {
+        "fly": 9.0
+      },
+      "speed_depends_on": null,
+      "url": "https://pf2.altervista.org/wiki/Meccano_Bombo"
+    },
+    {
+      "id": "nave_a_vela",
+      "level": 9,
+      "speed": {
+        "swim": 12.0
+      },
+      "speed_depends_on": null,
+      "url": "https://pf2.altervista.org/wiki/Nave_a_Vela"
+    },
+    {
+      "id": "passolungo",
+      "level": 7,
+      "speed": {
+        "land_": 9.0
+      },
+      "speed_depends_on": null,
+      "url": "https://pf2.altervista.org/wiki/Passolungo"
+    },
+    {
+      "id": "pedalo_adattabile",
+      "level": 2,
+      "speed": {
+        "swim": 4.5
+      },
+      "speed_depends_on": null,
+      "url": "https://pf2.altervista.org/wiki/Pedal%C3%B2_Adattabile"
+    },
+    {
+      "id": "ponte_d_oro_di_vonthos",
+      "level": 17,
+      "speed": {
+        "fly": 12.0
+      },
+      "speed_depends_on": null,
+      "url": "https://pf2.altervista.org/wiki/Ponte_d%27Oro_di_Vonthos"
+    },
+    {
+      "id": "saltatore_meccanico",
+      "level": 6,
+      "speed": {
+        "land_": 10.5
+      },
+      "speed_depends_on": null,
+      "url": "https://pf2.altervista.org/wiki/Saltatore_Meccanico"
+    },
+    {
+      "id": "salterello_d_artificio",
+      "level": 4,
+      "speed": {},
+      "speed_depends_on": "unspecified",
+      "url": "https://pf2.altervista.org/wiki/Salterello_d%27Artificio"
+    },
+    {
+      "id": "scatorcio",
+      "level": 1,
+      "speed": {
+        "land_": 9.0
+      },
+      "speed_depends_on": null,
+      "url": "https://pf2.altervista.org/wiki/Scatorcio"
+    },
+    {
+      "id": "scavalcarupi",
+      "level": 10,
+      "speed": {
+        "scalable": 12.0
+      },
+      "speed_depends_on": null,
+      "url": "https://pf2.altervista.org/wiki/Scavalcarupi"
+    },
+    {
+      "id": "scavasabbia",
+      "level": 3,
+      "speed": {
+        "land_": 6.0,
+        "scavare": 3.0
+      },
+      "speed_depends_on": null,
+      "url": "https://pf2.altervista.org/wiki/Scavasabbia"
+    },
+    {
+      "id": "slitta",
+      "level": 1,
+      "speed": {},
+      "speed_depends_on": "towing",
+      "url": "https://pf2.altervista.org/wiki/Slitta"
+    },
+    {
+      "id": "sommergibile_squalo",
+      "level": 11,
+      "speed": {
+        "swim": 12.0
+      },
+      "speed_depends_on": null,
+      "url": "https://pf2.altervista.org/wiki/Sommergibile_Squalo"
+    },
+    {
+      "id": "topografo_mobile",
+      "level": 14,
+      "speed": {
+        "land_": 4.5
+      },
+      "speed_depends_on": null,
+      "url": "https://pf2.altervista.org/wiki/Topografo_Mobile"
+    },
+    {
+      "id": "torre_d_assedio",
+      "level": 4,
+      "speed": {
+        "land_": 3.0
+      },
+      "speed_depends_on": null,
+      "url": "https://pf2.altervista.org/wiki/Torre_d%27Assedio"
+    },
+    {
+      "id": "trivella_meccanica",
+      "level": 9,
+      "speed": {
+        "land_": 6.0,
+        "scavare": 3.0
+      },
+      "speed_depends_on": null,
+      "url": "https://pf2.altervista.org/wiki/Trivella_Meccanica"
+    },
+    {
+      "id": "velocipede",
+      "level": 1,
+      "speed": {},
+      "speed_depends_on": "pilot",
+      "url": "https://pf2.altervista.org/wiki/Velocipede"
+    },
+    {
+      "id": "velocista",
+      "level": 10,
+      "speed": {
+        "land_": 15.0
+      },
+      "speed_depends_on": null,
+      "url": "https://pf2.altervista.org/wiki/Velocista"
+    }
+  ]
+}

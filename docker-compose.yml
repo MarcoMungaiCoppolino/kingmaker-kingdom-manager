@@ -1,0 +1,18 @@
+# UNTESTED — see the Dockerfile. `docker compose up` on a machine with Docker
+# should build the image and serve the app on http://localhost:8080, keeping
+# the game in ./saves and the images in ./assets of this folder.
+services:
+  kingmaker:
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./saves:/data/saves
+      - ./assets:/data/assets
+    environment:
+      # en or it; each person can still switch from the header
+      KINGMAKER_LANG: en
+      # set both only behind a reverse proxy that terminates HTTPS
+      # KINGMAKER_HTTPS: "1"
+      # KINGMAKER_TRUST_PROXY: "1"
+    restart: unless-stopped

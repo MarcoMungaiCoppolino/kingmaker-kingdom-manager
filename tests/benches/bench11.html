@@ -1,0 +1,42 @@
+<title>ruler and server: same number, same arrow</title><pre id="out">...</pre>
+<script>
+// The real payload and the hand-drawn roads: the ruler (legCost, inPoints)
+// against the server's plan and the arrow it draws.
+// Data: `python tests/benches/dump_atoms.py` on the test scene, then serve the
+// repo root over HTTP and open this page. It must end with EQUAL.
+(async () => {
+  const data = await (await fetch('atom_field.json')).json();
+  let src = await (await fetch('../../kingmaker/ui/static/travel_drag.js')).text();
+  const i = src.lastIndexOf('})();');
+  src = src.slice(0, i) + '  window.__km = {legCost, inPoints};\n' + src.slice(i);
+  eval(src);
+  const km = window.__km;
+  const lines = [], say = (t) => lines.push(t);
+  let different = 0;
+  for (const group of data.groups) {
+    window.kmTravelField = group.field;
+    for (const road of group.roads) {
+      const cost = km.legCost(road.indices);
+      const points = km.inPoints(road.indices).map((p) => [Math.round(p[0] * 10) / 10,
+                                                           Math.round(p[1] * 10) / 10]);
+      const sameCost = Math.abs(cost - road.cost) < 1e-6;
+      // The pixel points reach the browser rounded to six decimals in hexagon
+      // radii: a tenth of a pixel of difference is not a difference.
+      const samePoints = points.length === road.points.length && points.every(
+        (p, k) => Math.abs(p[0] - road.points[k][0]) < 0.15 && Math.abs(p[1] - road.points[k][1]) < 0.15);
+      if (!sameCost || !samePoints) different++;
+      say(road.name.padEnd(16) + ' ruler ' + cost + '  plan ' + road.cost +
+          (sameCost ? '  =' : '  DIFFERENT') + '   points ' + points.length +
+          ' / ' + road.points.length + (samePoints ? '  =' : '  DIFFERENT'));
+      if (!samePoints) {
+        say('   browser ' + JSON.stringify(points));
+        say('   server  ' + JSON.stringify(road.points));
+      }
+    }
+  }
+  say(different === 0 ? 'EQUAL' : 'DIFFERENT ' + different);
+  document.getElementById('out').textContent = lines.join('\n');
+})().catch((e) => {
+  document.getElementById('out').textContent = 'ERROR ' + e + '\n' + e.stack;
+});
+</script>

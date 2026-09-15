@@ -1,0 +1,59 @@
+{
+  "_source": "https://golarion.altervista.org/wiki/Calendario_di_Absalom",
+  "leader_rest_days": 7,
+  "leap_year": {
+    "every_years": 8,
+    "month": "Calistril",
+    "last_known": 4712
+  },
+  "months": [
+    {
+      "name": "Abadius",
+      "days": 31
+    },
+    {
+      "name": "Calistril",
+      "days": 28
+    },
+    {
+      "name": "Pharast",
+      "days": 31
+    },
+    {
+      "name": "Gozran",
+      "days": 30
+    },
+    {
+      "name": "Desnus",
+      "days": 31
+    },
+    {
+      "name": "Sarenith",
+      "days": 30
+    },
+    {
+      "name": "Erastus",
+      "days": 31
+    },
+    {
+      "name": "Arodus",
+      "days": 31
+    },
+    {
+      "name": "Rova",
+      "days": 30
+    },
+    {
+      "name": "Lamashan",
+      "days": 31
+    },
+    {
+      "name": "Neth",
+      "days": 30
+    },
+    {
+      "name": "Kuthona",
+      "days": 31
+    }
+  ]
+}

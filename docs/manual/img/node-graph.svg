@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 320" width="620" height="320" font-family="system-ui, sans-serif"><title>The travel graph</title>
+<polygon points="103.4,110.0 190.0,60.0 276.6,110.0 276.6,210.0" fill="#4fb3a5" fill-opacity="0.22" stroke="#4fb3a5" stroke-width="1" stroke-opacity="0.5"/>
+<polygon points="276.6,210.0 190.0,260.0 103.4,210.0 103.4,110.0" fill="#d7b263" fill-opacity="0.22" stroke="#d7b263" stroke-width="1" stroke-opacity="0.5"/>
+<polygon points="276.6,110.0 276.6,210.0 190.0,260.0 103.4,210.0 103.4,110.0 190.0,60.0" fill="none" stroke="#8b949e" stroke-width="2.0" stroke-linejoin="round"/>
+<polygon points="449.8,110.0 449.8,210.0 363.2,260.0 276.6,210.0 276.6,110.0 363.2,60.0" fill="none" stroke="#8b949e" stroke-width="2.0" stroke-linejoin="round"/>
+<line x1="276.6" y1="210.0" x2="103.4" y2="110.0" stroke="#4a9fd8" stroke-width="5" stroke-linecap="round"/>
+<circle cx="209.2" cy="126.7" r="13.0" fill="#4fb3a5" fill-opacity="0.85"/><text x="209.2" y="131.2" text-anchor="middle" font-size="14.3" fill="#12100b" font-weight="700">0</text>
+<circle cx="170.8" cy="193.3" r="13.0" fill="#d7b263" fill-opacity="0.85"/><text x="170.8" y="197.9" text-anchor="middle" font-size="14.3" fill="#12100b" font-weight="700">1</text>
+<circle cx="363.2" cy="160.0" r="13.0" fill="#a586d0" fill-opacity="0.85"/><text x="363.2" y="164.6" text-anchor="middle" font-size="14.3" fill="#12100b" font-weight="700">0</text>
+<line x1="209.2" y1="126.7" x2="363.2" y2="160.0" stroke="#7d8590" stroke-width="2" stroke-linecap="round" stroke-dasharray="6 4"/>
+<line x1="209.2" y1="126.7" x2="170.8" y2="193.3" stroke="#d7a13b" stroke-width="2" stroke-linecap="round" stroke-dasharray="6 4"/>
+<text x="310.0" y="30.0" text-anchor="middle" font-size="14" fill="#c9d1d9" font-weight="600">a node is (col, row, bank)</text>
+<text x="310.0" y="288.0" text-anchor="middle" font-size="12" fill="#7d8590" font-weight="500">step between hexes: one leaves by the sides of one's own bank</text>
+<text x="310.0" y="306.0" text-anchor="middle" font-size="12" fill="#d7a13b" font-weight="500">step inside the hex: only with a bridge or a ford</text>
+</svg>

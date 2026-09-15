@@ -1,0 +1,69 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.pfx
+credentials.*
+secrets.*
+TOKEN*.txt
+
+# The live game: the database, its backups, the browser sessions
+/saves/*
+!/saves/README.md
+# NiceGUI writes the browser sessions in the working folder if not told otherwise
+.nicegui/
+*.bak
+*.tmp
+*.log
+
+# The map image, portraits and tokens uploaded by the table
+/assets/*
+!/assets/README.md
+
+# The test scene (built from scratch by tests/run_all.py) and the bench data
+/tests/scene/
+/tests/benches/*.json
+# Scratch folders of the author
+/prove/
+/prova/
+/carica_grinbelta.py
+
+# Claude Code session files
+.claude/
+
+# Python virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pyre/
+.coverage
+.coverage.*
+htmlcov/
+
+# Packaging and build output
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Local editor and tool configuration
+.vscode/
+.idea/
+*.code-workspace
+
+# Operating-system files
+.DS_Store
+Thumbs.db
+Desktop.ini

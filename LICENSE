@@ -1,0 +1,43 @@
+MIT License
+
+Copyright (c) 2026 Marco Mungai Coppolino
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+The MIT licence above covers only the original work of the author: the
+application code, the user interface, the save format, the tools, the tests,
+the original analysis and prose in README.md and docs/, the figures, and the
+house rules created at the table (marked `"fonte": "tavolo"` / `"source":
+"table"` in the data).
+
+It does NOT cover the Pathfinder game rules, which the author does not own and
+cannot sublicense. Wherever they appear in this repository — in the data files
+under `kingmaker/data/`, in the rules implemented in `kingmaker/rules.py`, and
+in the passages of README.md and docs/ that quote, translate or restate them —
+those rules are Open Game Content, used under the Open Game License v1.0a.
+See OPEN_GAME_LICENSE.md for the licence and the Section 15 copyright notice.
+
+Paizo's Product Identity (the Pathfinder and Kingmaker trademarks, the Absalom
+Reckoning calendar and its deity names, and the character and place names
+listed in NOTICE.md) is covered by neither licence. It appears under Paizo's
+Community Use Policy, which requires that this project remain free of charge.
+See NOTICE.md, which identifies precisely which material falls under which
+licence, as OGL sections 7 and 8 require.

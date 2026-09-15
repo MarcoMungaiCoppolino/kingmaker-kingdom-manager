@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 300" width="460" height="300" font-family="system-ui, sans-serif"><title>The elbow of the bridge</title>
+<polygon points="143.4,100.0 230.0,50.0 316.6,100.0 316.6,200.0" fill="#4fb3a5" fill-opacity="0.22" stroke="#4fb3a5" stroke-width="1" stroke-opacity="0.5"/>
+<polygon points="316.6,200.0 230.0,250.0 143.4,200.0 143.4,100.0" fill="#d7b263" fill-opacity="0.22" stroke="#d7b263" stroke-width="1" stroke-opacity="0.5"/>
+<polygon points="316.6,100.0 316.6,200.0 230.0,250.0 143.4,200.0 143.4,100.0 230.0,50.0" fill="none" stroke="#8b949e" stroke-width="2.0" stroke-linejoin="round"/>
+<line x1="316.6" y1="200.0" x2="143.4" y2="100.0" stroke="#4a9fd8" stroke-width="5" stroke-linecap="round"/>
+<circle cx="230.0" cy="150.0" r="10.0" fill="#d7a13b" fill-opacity="0.85"/>
+<line x1="186.7" y1="75.0" x2="245.8" y2="122.7" stroke="#c9d1d9" stroke-width="4.5" stroke-linecap="round"/>
+<line x1="245.8" y1="122.7" x2="214.2" y2="177.3" stroke="#c9d1d9" stroke-width="4.5" stroke-linecap="round"/>
+<line x1="214.2" y1="177.3" x2="186.7" y2="225.0" stroke="#c9d1d9" stroke-width="4.5" stroke-linecap="round"/>
+<circle cx="245.8" cy="122.7" r="6.0" fill="#c9d1d9" fill-opacity="0.85"/>
+<circle cx="214.2" cy="177.3" r="6.0" fill="#c9d1d9" fill-opacity="0.85"/>
+<text x="230.0" y="28.0" text-anchor="middle" font-size="13" fill="#c9d1d9" font-weight="600">enters here, bends, leaves there</text>
+<text x="230.0" y="282.0" text-anchor="middle" font-size="12" fill="#7d8590" font-weight="500">the elbow is the bridge inside the hex</text>
+</svg>

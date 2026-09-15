@@ -1,0 +1,192 @@
+{
+  "feats": [
+    {
+      "id": "skill_training",
+      "name": "Addestramento nelle Abilità",
+      "traits": [
+        "Generico",
+        "Regno"
+      ],
+      "prerequisites": "",
+      "summary": "Diventi Addestrato in un'Abilità di Regno.",
+      "description": "Il vostro regno riceve il grado di competenza Addestrato in un'Abilità di Regno a tua scelta. È possibile selezionare questo talento più volte, scegliendo ogni volta una nuova abilità."
+    },
+    {
+      "id": "kingdom_assurance",
+      "name": "Assicurazione Regno",
+      "traits": [
+        "Fortuna",
+        "Generico",
+        "Regno"
+      ],
+      "prerequisites": "Addestrato in almeno tre Abilità",
+      "summary": "Prendi un risultato fisso una volta per turno con un'abilità scelta.",
+      "description": "Scegli un'Abilità di Regno in cui il tuo regno è Addestrato. Una volta per Turno di Regno, quando tenti una prova con quell'abilità, puoi rinunciare a tirare e prendere un risultato pari a 10 + il tuo bonus di competenza; non applicare altri bonus, penalità o modificatori a questo risultato. Speciale: puoi selezionare questo talento più volte, scegliendo ogni volta un'abilità diversa."
+    },
+    {
+      "id": "muddle_through",
+      "name": "Cavarsela",
+      "traits": [
+        "Generico",
+        "Regno"
+      ],
+      "prerequisites": "Addestrato in Terre Selvagge",
+      "summary": "Aumenta le soglie di tre Rovine.",
+      "description": "Il tuo popolo ha una mentalità indipendente e si occupa dei piccoli problemi del regno, senza lasciare che diventino problemi più grossi. Aumenta di 1 la soglia di due delle tue Rovine e di 2 quella di un'altra."
+    },
+    {
+      "id": "insider_trading",
+      "name": "Commercio Interno",
+      "traits": [
+        "Generico",
+        "Regno"
+      ],
+      "prerequisites": "Addestrato in Industria",
+      "summary": "+1 a Commerciare Prodotti, Stabilire un Accordo Commerciale e Stabilire un Sito di Lavoro; 1 Dado Risorsa bonus a ogni turno.",
+      "description": "Ottieni un Bonus di Status +1 alle attività Commerciare Prodotti, Stabilire un Accordo Commerciale e Stabilire un Sito di Lavoro. Inoltre guadagni 1 Dado Risorsa bonus all'inizio di ogni Turno di Regno."
+    },
+    {
+      "id": "fortified_fiefs",
+      "name": "Feudi Fortificati",
+      "traits": [
+        "Generico",
+        "Regno"
+      ],
+      "prerequisites": "Addestrato in Difesa",
+      "summary": "+2 a Fortificare Esagono e alla costruzione di strutture difensive.",
+      "description": "Ottieni un Bonus di Circostanza +2 alle prove di Fortificare Esagono e alle attività per Costruire o Riparare una Caserma, un Castello, una Fortezza, una Guarnigione, Mura di Pietra o Mura di Legno. Inoltre ottieni un Bonus di Status +1 a tutte le Prove di Regno tentate durante eventi pericolosi che hanno un impatto diretto sulle difese dei tuoi insediamenti."
+    },
+    {
+      "id": "cooperative_leadership",
+      "name": "Governo Collaborativo",
+      "traits": [
+        "Generico",
+        "Regno"
+      ],
+      "prerequisites": "",
+      "summary": "Attenzione Assoluta concede +3 invece di +2.",
+      "description": "Quando un leader usa Attenzione Assoluta per aiutare la prova di un altro leader, il Bonus di Circostanza concesso da un Successo aumenta a +3.\n\nAll'11° livello, quando un leader usa Attenzione Assoluta per aiutare la prova di un altro leader, considera un Fallimento Critico sulla prova aiutata come un Fallimento. Se il regno ha almeno il grado di Esperto nell'abilità usata per la prova aiutata, considera un Fallimento come un Successo (ma non puoi migliorare un Fallimento Critico in un Successo)."
+    },
+    {
+      "id": "practical_magic",
+      "name": "Magia Pratica",
+      "traits": [
+        "Generico",
+        "Regno"
+      ],
+      "prerequisites": "Addestrato in Magia",
+      "summary": "+1 alle prove di Magia, usa Magia al posto di Ingegneria, Assoldare Avventurieri costa 1 PR.",
+      "description": "Ottieni un Bonus di Status +1 alle prove di Magia e puoi usare le prove di Magia al posto di quelle di Ingegneria. Inoltre riduci il costo dell'attività Assoldare Avventurieri a 1 PR."
+    },
+    {
+      "id": "pull_together",
+      "name": "Rimboccarsi le Maniche",
+      "traits": [
+        "Generico",
+        "Regno"
+      ],
+      "prerequisites": "Addestrato in Politica",
+      "summary": "Una volta per turno puoi mitigare un Fallimento Critico con una Prova Semplice CD 11.",
+      "description": "Una volta per Turno di Regno, quando ottieni un Fallimento Critico su una prova di abilità di Regno, puoi tentare una Prova Semplice CD 11. Se ha successo, considera invece il risultato come un Fallimento. La CD di questa Prova Semplice aumenta di 5 ogni volta che la si usa di seguito, ma diminuisce di 1 (fino a un minimo di 11) per ogni Turno di Regno trascorso senza sfruttarla."
+    },
+    {
+      "id": "crush_dissent",
+      "name": "Schiacciare il Dissenso",
+      "traits": [
+        "Generico",
+        "Regno"
+      ],
+      "prerequisites": "Addestrato in Guerra",
+      "summary": "Una volta per turno puoi annullare un aumento di Malcontento con una prova di Guerra.",
+      "description": "Una volta per Turno di Regno, quando ottieni Malcontento, puoi tentare di Schiacciare il Dissenso effettuando una prova base di Guerra. In caso di Successo l'aumento di Malcontento viene annullato, ma in caso di Fallimento Critico l'aumento viene raddoppiato. Inoltre ottieni un Bonus di Status +1 alle prove per risolvere eventi pericolosi del regno che comportano dissensi interni, come ad esempio Faida."
+    },
+    {
+      "id": "civil_service",
+      "name": "Servizio Civile",
+      "traits": [
+        "Generico",
+        "Regno"
+      ],
+      "prerequisites": "",
+      "summary": "Un Ruolo di Governo scelto non subisce più la Penalità di Assenza; +2 a Nuova Direzione.",
+      "description": "Quando selezioni questo talento, scegli un Ruolo di Governo: la sua penalità di assenza non è più applicabile. Puoi cambiare il ruolo a cui si applica usando l'attività Nuova Direzione all'inizio di un Turno di Regno. Ottieni inoltre un Bonus di Status +2 alle prove di Nuova Direzione."
+    },
+    {
+      "id": "inspiring_entertainment",
+      "name": "Intrattenimento Ispiratore",
+      "traits": [
+        "Generico",
+        "Regno"
+      ],
+      "prerequisites": "Cultura 14",
+      "summary": "Controlla il Malcontento con Cultura; +2 alle prove di Cultura quando hai Malcontento.",
+      "description": "Quando controlli il Malcontento durante la Fase Gestione di un Turno di Regno, puoi tirare una prova sulla Cultura invece che sulla Lealtà per determinare il risultato. Il tuo regno ottiene anche un Bonus di Status +2 a tutte le prove di abilità basate sulla Cultura quando ha almeno 1 Malcontento."
+    },
+    {
+      "id": "liquidate_resources",
+      "name": "Liquidare le Risorse",
+      "traits": [
+        "Generico",
+        "Regno"
+      ],
+      "prerequisites": "Economia 14",
+      "summary": "Evita di scendere a 0 PR una volta per turno, al costo di 4 Dadi Risorsa il turno dopo.",
+      "description": "La prima volta in un Turno di Regno in cui sei costretto a spendere PR come risultato di una prova fallita o di un evento pericoloso, e tale spesa ti ridurrebbe a 0 PR, puoi invece ridurre i tuoi PR a 1 e trattare la spesa come pagata per intero. All'inizio del prossimo Turno di Regno tira 4 Dadi Risorsa in meno del normale."
+    },
+    {
+      "id": "quick_recovery",
+      "name": "Recupero Rapido",
+      "traits": [
+        "Generico",
+        "Regno"
+      ],
+      "prerequisites": "Stabilità 14",
+      "summary": "+4 alle prove per porre fine agli eventi continui nocivi.",
+      "description": "Ogni volta che tenti una prova di abilità per porre fine a un evento continuo nocivo nel regno, ottieni un Bonus di Status +4 alla prova."
+    },
+    {
+      "id": "endure_anarchy",
+      "name": "Sopravvivere all'Anarchia",
+      "traits": [
+        "Generico",
+        "Regno"
+      ],
+      "prerequisites": "Lealtà 14",
+      "summary": "Riduci meglio il Malcontento alto e l'anarchia arriva solo a 24.",
+      "description": "Se il Malcontento del regno è pari o superiore a 6 e utilizzi un'attività di Regno che diminuisce il Malcontento, diminuiscilo di 1 punto ulteriore. Il regno non cade nell'anarchia a meno che il Malcontento non raggiunga 24."
+    },
+    {
+      "id": "free_and_fair",
+      "name": "Libere ed Eque",
+      "traits": [
+        "Generico",
+        "Regno"
+      ],
+      "prerequisites": "",
+      "summary": "+2 a Nuova Direzione e Giuramento di Fedeltà, con possibilità di ripetere la prova per 2 PR.",
+      "description": "Ottieni un Bonus di Circostanza +2 alle prove di Lealtà tentate nell'ambito delle attività Nuova Direzione e Giuramento di Fedeltà. Se ottieni un Fallimento o un Fallimento Critico puoi spendere 2 PR per ripetere la prova (ma senza il Bonus di Circostanza +2); questo aggiunge il tratto Fortuna. Devi accettare il risultato del secondo tiro, anche se peggiore."
+    },
+    {
+      "id": "quality_of_life",
+      "name": "Qualità della Vita",
+      "traits": [
+        "Generico",
+        "Regno"
+      ],
+      "prerequisites": "",
+      "summary": "+1 al primo guadagno di Lusso per turno; insediamenti trattati come di un livello superiore per gli oggetti magici.",
+      "description": "La prima volta che guadagni Prodotti di Lusso in un Turno di Regno, aumenta il totale guadagnato di 1. Tutti i tuoi insediamenti sono trattati come se avessero un livello superiore a quello reale per determinare quali tipi di oggetti magici possono essere offerti in vendita nei loro mercati e negozi."
+    },
+    {
+      "id": "fame_and_fortune",
+      "name": "Fama e Fortuna",
+      "traits": [
+        "Generico",
+        "Regno"
+      ],
+      "prerequisites": "",
+      "summary": "Ogni Successo Critico nella Fase Attività dà 1 Dado Risorsa bonus il turno successivo.",
+      "description": "Ogni volta che ottieni un Successo Critico su una qualsiasi prova di abilità di Regno durante la Fase Attività di un Turno di Regno, guadagni 1 Dado Risorsa bonus all'inizio del tuo prossimo Turno di Regno."
+    }
+  ]
+}

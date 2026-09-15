@@ -1,0 +1,15 @@
+.git
+.claude
+.venv
+venv
+__pycache__
+*.pyc
+saves
+assets
+prove
+prova
+tests/scene
+tests/benches/*.json
+.env
+.env.*
+*.log

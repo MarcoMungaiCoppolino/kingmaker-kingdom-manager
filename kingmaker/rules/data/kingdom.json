@@ -1,0 +1,974 @@
+{
+  "_source": "https://pf2.altervista.org/wiki/Regni — Kingdom Rules — Leading a Kingdom — Kingdom Skills — Settlements (mechanics); texts per language in lang/",
+  "abilities": [
+    {
+      "id": "culture"
+    },
+    {
+      "id": "economy"
+    },
+    {
+      "id": "loyalty"
+    },
+    {
+      "id": "stability"
+    }
+  ],
+  "ruins": [
+    {
+      "id": "corruption",
+      "ability": "culture"
+    },
+    {
+      "id": "crime",
+      "ability": "economy"
+    },
+    {
+      "id": "decay",
+      "ability": "stability"
+    },
+    {
+      "id": "strife",
+      "ability": "loyalty"
+    }
+  ],
+  "skills": [
+    {
+      "id": "agriculture",
+      "ability": "stability"
+    },
+    {
+      "id": "arts",
+      "ability": "culture"
+    },
+    {
+      "id": "trade",
+      "ability": "economy"
+    },
+    {
+      "id": "defense",
+      "ability": "stability"
+    },
+    {
+      "id": "exploration",
+      "ability": "economy"
+    },
+    {
+      "id": "folklore",
+      "ability": "culture"
+    },
+    {
+      "id": "statecraft",
+      "ability": "loyalty"
+    },
+    {
+      "id": "warfare",
+      "ability": "loyalty"
+    },
+    {
+      "id": "industry",
+      "ability": "economy"
+    },
+    {
+      "id": "engineering",
+      "ability": "stability"
+    },
+    {
+      "id": "intrigue",
+      "ability": "loyalty"
+    },
+    {
+      "id": "magic",
+      "ability": "culture"
+    },
+    {
+      "id": "boating",
+      "ability": "economy"
+    },
+    {
+      "id": "politics",
+      "ability": "loyalty"
+    },
+    {
+      "id": "scholarship",
+      "ability": "culture"
+    },
+    {
+      "id": "wilderness",
+      "ability": "stability"
+    }
+  ],
+  "charters": [
+    {
+      "id": "conquest",
+      "boosts": [
+        "loyalty"
+      ],
+      "flaw": "culture"
+    },
+    {
+      "id": "expansion",
+      "boosts": [
+        "culture"
+      ],
+      "flaw": "stability"
+    },
+    {
+      "id": "exploration",
+      "boosts": [
+        "stability"
+      ],
+      "flaw": "economy"
+    },
+    {
+      "id": "grant",
+      "boosts": [
+        "economy"
+      ],
+      "flaw": "loyalty"
+    },
+    {
+      "id": "open_charter",
+      "boosts": [],
+      "flaw": null
+    }
+  ],
+  "heartlands": [
+    {
+      "id": "hill_or_plain",
+      "boost": "loyalty",
+      "terrains": [
+        "hills",
+        "plains"
+      ]
+    },
+    {
+      "id": "forest_or_swamp",
+      "boost": "culture",
+      "terrains": [
+        "forest",
+        "swamp"
+      ]
+    },
+    {
+      "id": "lake_or_river",
+      "boost": "economy",
+      "terrains": [
+        "lake",
+        "river"
+      ]
+    },
+    {
+      "id": "mountain_or_ruin",
+      "boost": "stability",
+      "terrains": [
+        "mountains",
+        "ruins"
+      ]
+    }
+  ],
+  "governments": [
+    {
+      "id": "despotism",
+      "boosts": [
+        "stability",
+        "economy"
+      ],
+      "skills": [
+        "warfare",
+        "intrigue"
+      ],
+      "feat": "crush_dissent"
+    },
+    {
+      "id": "feudalism",
+      "boosts": [
+        "stability",
+        "culture"
+      ],
+      "skills": [
+        "trade",
+        "defense"
+      ],
+      "feat": "fortified_fiefs"
+    },
+    {
+      "id": "oligarchy",
+      "boosts": [
+        "loyalty",
+        "economy"
+      ],
+      "skills": [
+        "arts",
+        "industry"
+      ],
+      "feat": "insider_trading"
+    },
+    {
+      "id": "republic",
+      "boosts": [
+        "stability",
+        "loyalty"
+      ],
+      "skills": [
+        "engineering",
+        "politics"
+      ],
+      "feat": "pull_together"
+    },
+    {
+      "id": "thaumocracy",
+      "boosts": [
+        "economy",
+        "culture"
+      ],
+      "skills": [
+        "folklore",
+        "magic"
+      ],
+      "feat": "practical_magic"
+    },
+    {
+      "id": "yeomanry",
+      "boosts": [
+        "loyalty",
+        "culture"
+      ],
+      "skills": [
+        "agriculture",
+        "wilderness"
+      ],
+      "feat": "muddle_through"
+    }
+  ],
+  "roles": [
+    {
+      "id": "ruler",
+      "ability": "loyalty"
+    },
+    {
+      "id": "counselor",
+      "ability": "culture"
+    },
+    {
+      "id": "emissary",
+      "ability": "loyalty"
+    },
+    {
+      "id": "general",
+      "ability": "stability"
+    },
+    {
+      "id": "warden",
+      "ability": "stability"
+    },
+    {
+      "id": "magister",
+      "ability": "culture"
+    },
+    {
+      "id": "treasurer",
+      "ability": "economy"
+    },
+    {
+      "id": "viceroy",
+      "ability": "economy"
+    }
+  ],
+  "proficiencies": [
+    {
+      "id": "untrained",
+      "level_bonus": null,
+      "rank": 0
+    },
+    {
+      "id": "trained",
+      "level_bonus": 2,
+      "rank": 1
+    },
+    {
+      "id": "expert",
+      "level_bonus": 4,
+      "rank": 2
+    },
+    {
+      "id": "master",
+      "level_bonus": 6,
+      "rank": 3
+    },
+    {
+      "id": "legendary",
+      "level_bonus": 8,
+      "rank": 4
+    }
+  ],
+  "size_table": [
+    {
+      "min": 1,
+      "max": 9,
+      "die": 4,
+      "dc_mod": 0,
+      "storage": 4
+    },
+    {
+      "min": 10,
+      "max": 24,
+      "die": 6,
+      "dc_mod": 1,
+      "storage": 8
+    },
+    {
+      "min": 25,
+      "max": 49,
+      "die": 8,
+      "dc_mod": 2,
+      "storage": 12
+    },
+    {
+      "min": 50,
+      "max": 99,
+      "die": 10,
+      "dc_mod": 3,
+      "storage": 16
+    },
+    {
+      "min": 100,
+      "max": 100000,
+      "die": 12,
+      "dc_mod": 4,
+      "storage": 20
+    }
+  ],
+  "level_table": [
+    {
+      "level": 1,
+      "control_dc": 14
+    },
+    {
+      "level": 2,
+      "control_dc": 15
+    },
+    {
+      "level": 3,
+      "control_dc": 16
+    },
+    {
+      "level": 4,
+      "control_dc": 18
+    },
+    {
+      "level": 5,
+      "control_dc": 20
+    },
+    {
+      "level": 6,
+      "control_dc": 22
+    },
+    {
+      "level": 7,
+      "control_dc": 23
+    },
+    {
+      "level": 8,
+      "control_dc": 24
+    },
+    {
+      "level": 9,
+      "control_dc": 26
+    },
+    {
+      "level": 10,
+      "control_dc": 27
+    },
+    {
+      "level": 11,
+      "control_dc": 28
+    },
+    {
+      "level": 12,
+      "control_dc": 30
+    },
+    {
+      "level": 13,
+      "control_dc": 31
+    },
+    {
+      "level": 14,
+      "control_dc": 32
+    },
+    {
+      "level": 15,
+      "control_dc": 34
+    },
+    {
+      "level": 16,
+      "control_dc": 35
+    },
+    {
+      "level": 17,
+      "control_dc": 36
+    },
+    {
+      "level": 18,
+      "control_dc": 38
+    },
+    {
+      "level": 19,
+      "control_dc": 39
+    },
+    {
+      "level": 20,
+      "control_dc": 40
+    }
+  ],
+  "settlement_types": [
+    {
+      "id": "village",
+      "kingdom_level": 1,
+      "blocks": 1,
+      "level": "1",
+      "consumption": 1,
+      "item_bonus_max": 1,
+      "influence": 0,
+      "milestone_xp": 40
+    },
+    {
+      "id": "town",
+      "kingdom_level": 3,
+      "blocks": 4,
+      "level": "2–4",
+      "consumption": 2,
+      "item_bonus_max": 1,
+      "influence": 1,
+      "milestone_xp": 60
+    },
+    {
+      "id": "city",
+      "kingdom_level": 9,
+      "blocks": 9,
+      "level": "5–9",
+      "consumption": 4,
+      "item_bonus_max": 2,
+      "influence": 2,
+      "milestone_xp": 80
+    },
+    {
+      "id": "metropolis",
+      "kingdom_level": 15,
+      "blocks": 18,
+      "level": "10+",
+      "consumption": 6,
+      "item_bonus_max": 3,
+      "influence": 3,
+      "milestone_xp": 120
+    }
+  ],
+  "commodities": [
+    {
+      "id": "food",
+      "icon": "🌾"
+    },
+    {
+      "id": "lumber",
+      "icon": "🪵"
+    },
+    {
+      "id": "luxuries",
+      "icon": "💎"
+    },
+    {
+      "id": "ore",
+      "icon": "⛏️"
+    },
+    {
+      "id": "stone",
+      "icon": "🪨"
+    }
+  ],
+  "terrains": [
+    {
+      "id": "plains",
+      "rp_cost": 1,
+      "color": "#cfc98a"
+    },
+    {
+      "id": "hills",
+      "rp_cost": 2,
+      "color": "#b9a05e"
+    },
+    {
+      "id": "forest",
+      "rp_cost": 4,
+      "color": "#547a45"
+    },
+    {
+      "id": "swamp",
+      "rp_cost": 8,
+      "color": "#6d7a52"
+    },
+    {
+      "id": "mountains",
+      "rp_cost": 12,
+      "color": "#8b7d6f"
+    },
+    {
+      "id": "lake",
+      "rp_cost": 1,
+      "color": "#3f7fa6",
+      "legacy": true
+    },
+    {
+      "id": "river",
+      "rp_cost": 1,
+      "color": "#4a8fb5",
+      "legacy": true
+    },
+    {
+      "id": "ruins",
+      "rp_cost": 4,
+      "color": "#7a6a63"
+    }
+  ],
+  "disconnected_terrain_cost": {
+    "mountains": 12,
+    "swamp": 8,
+    "forest": 4,
+    "hills": 2,
+    "plains": 1,
+    "lake": 1,
+    "river": 1,
+    "ruins": 4
+  },
+  "hex_features": [
+    {
+      "id": "settlement",
+      "icon": "🏘️"
+    },
+    {
+      "id": "freehold",
+      "icon": "🏚️"
+    },
+    {
+      "id": "bridge",
+      "icon": "🌉"
+    },
+    {
+      "id": "landmark",
+      "icon": "🗿"
+    },
+    {
+      "id": "refuge",
+      "icon": "🛡️"
+    },
+    {
+      "id": "resource",
+      "icon": "✨"
+    },
+    {
+      "id": "ruins_feature",
+      "icon": "🏛️"
+    },
+    {
+      "id": "work_site",
+      "icon": "⚒️"
+    },
+    {
+      "id": "structure",
+      "icon": "🏗️"
+    },
+    {
+      "id": "farmland",
+      "icon": "🌾"
+    },
+    {
+      "id": "fortification",
+      "icon": "🏰"
+    },
+    {
+      "id": "roads",
+      "icon": "🛣️"
+    },
+    {
+      "id": "trap",
+      "icon": "⚠️",
+      "source": "table"
+    },
+    {
+      "id": "dungeon",
+      "icon": "🕳️",
+      "source": "table"
+    },
+    {
+      "id": "event",
+      "icon": "🎭",
+      "source": "table"
+    }
+  ],
+  "travel": {
+    "_source": "https://pf2.altervista.org/wiki/Esplorazione_degli_Esagoni",
+    "hex_size": {
+      "width_km": 21.6
+    },
+    "activities_per_day_table": [
+      {
+        "up_to": 3,
+        "activities": 0.5
+      },
+      {
+        "up_to": 7.5,
+        "activities": 1
+      },
+      {
+        "up_to": 12,
+        "activities": 2
+      },
+      {
+        "up_to": 16.5,
+        "activities": 3
+      },
+      {
+        "up_to": null,
+        "activities": 4
+      }
+    ],
+    "travel_speed": {
+      "_source": "wiki",
+      "hours_per_day": 8,
+      "table": [
+        {
+          "metres": 3,
+          "metres_per_minute": 30,
+          "km_hour": 1.8,
+          "km_day": 14.4
+        },
+        {
+          "metres": 4.5,
+          "metres_per_minute": 45,
+          "km_hour": 2.7,
+          "km_day": 21.6
+        },
+        {
+          "metres": 6,
+          "metres_per_minute": 60,
+          "km_hour": 3.6,
+          "km_day": 28.8
+        },
+        {
+          "metres": 7.5,
+          "metres_per_minute": 75,
+          "km_hour": 4.5,
+          "km_day": 36
+        },
+        {
+          "metres": 9,
+          "metres_per_minute": 90,
+          "km_hour": 5.4,
+          "km_day": 43.2
+        },
+        {
+          "metres": 10.5,
+          "metres_per_minute": 105,
+          "km_hour": 6.3,
+          "km_day": 50.4
+        },
+        {
+          "metres": 12,
+          "metres_per_minute": 120,
+          "km_hour": 7.2,
+          "km_day": 57.6
+        },
+        {
+          "metres": 15,
+          "metres_per_minute": 150,
+          "km_hour": 9,
+          "km_day": 72
+        },
+        {
+          "metres": 18,
+          "metres_per_minute": 180,
+          "km_hour": 10.8,
+          "km_day": 86.4
+        }
+      ],
+      "between_the_lines": {
+        "_source": "table",
+        "km_ora_per_metro": 0.6
+      }
+    },
+    "categories": {
+      "open": {
+        "cost": 1
+      },
+      "difficult": {
+        "cost": 2
+      },
+      "greater_difficult": {
+        "cost": 3
+      }
+    },
+    "category_order": [
+      "open",
+      "difficult",
+      "greater_difficult"
+    ],
+    "terrains": {
+      "plains": {
+        "category": "open"
+      },
+      "hills": {
+        "category": "difficult"
+      },
+      "forest": {
+        "category": "difficult",
+        "or_category": "greater_difficult"
+      },
+      "swamp": {
+        "category": "greater_difficult"
+      },
+      "mountains": {
+        "category": "greater_difficult"
+      },
+      "lake": {
+        "category": null,
+        "water": true
+      },
+      "river": {
+        "category": null,
+        "water": true
+      },
+      "ruins": {
+        "category": "greater_difficult",
+        "source": "table"
+      }
+    },
+    "borders": {
+      "_source": "table",
+      "kinds": {
+        "water": {
+          "icon": "🌊",
+          "passes": false,
+          "extra_activities": 0
+        },
+        "ford": {
+          "icon": "〰️",
+          "passes": true,
+          "extra_activities": 1
+        },
+        "bridge": {
+          "icon": "🌉",
+          "passes": true,
+          "extra_activities": 0
+        }
+      }
+    },
+    "current": {
+      "_source": "https://pf2.altervista.org/wiki/Esplorazione_degli_Esagoni",
+      "downstream": {
+        "category": "open"
+      },
+      "upstream": {
+        "category": "difficult",
+        "or_category": "greater_difficult"
+      },
+      "still": {
+        "category": "open"
+      },
+      "unknown_": {
+        "as": "downstream",
+        "source": "table"
+      }
+    },
+    "roads": {
+      "improves_by_steps": 1
+    },
+    "reconnaissance": {
+      "roads": false
+    },
+    "forced_march": {
+      "extra_activities": 1
+    },
+    "other_activities": [
+      {
+        "id": "map_the_area",
+        "cost": 1
+      },
+      {
+        "id": "fortify_camp",
+        "cost": 1
+      },
+      {
+        "id": "subsist",
+        "cost": 1
+      }
+    ]
+  },
+  "milestone_xp": [
+    {
+      "xp": 40,
+      "id": "first_landmark"
+    },
+    {
+      "xp": 40,
+      "id": "first_refuge"
+    },
+    {
+      "xp": 40,
+      "id": "first_village"
+    },
+    {
+      "xp": 40,
+      "id": "size_10"
+    },
+    {
+      "xp": 60,
+      "id": "first_diplomatic_relation"
+    },
+    {
+      "xp": 60,
+      "id": "first_town"
+    },
+    {
+      "xp": 60,
+      "id": "all_eight_leaders"
+    },
+    {
+      "xp": 60,
+      "id": "size_25"
+    },
+    {
+      "xp": 80,
+      "id": "first_trade_agreement"
+    },
+    {
+      "xp": 80,
+      "id": "first_city"
+    },
+    {
+      "xp": 80,
+      "id": "size_50"
+    },
+    {
+      "xp": 80,
+      "id": "rp_100"
+    },
+    {
+      "xp": 120,
+      "id": "first_metropolis"
+    },
+    {
+      "xp": 120,
+      "id": "size_100"
+    }
+  ],
+  "unrest_thresholds": [
+    {
+      "min": 1,
+      "penalty": -1
+    },
+    {
+      "min": 5,
+      "penalty": -2
+    },
+    {
+      "min": 10,
+      "penalty": -3
+    },
+    {
+      "min": 15,
+      "penalty": -4
+    }
+  ],
+  "turn_phases": [
+    {
+      "id": "upkeep",
+      "steps": [
+        {
+          "id": "roles"
+        },
+        {
+          "id": "unrest"
+        },
+        {
+          "id": "resources"
+        },
+        {
+          "id": "consumption"
+        }
+      ]
+    },
+    {
+      "id": "commerce",
+      "steps": [
+        {
+          "id": "taxes"
+        },
+        {
+          "id": "expenses"
+        },
+        {
+          "id": "commodities"
+        },
+        {
+          "id": "agreements"
+        }
+      ]
+    },
+    {
+      "id": "activity",
+      "steps": [
+        {
+          "id": "leadership"
+        },
+        {
+          "id": "region"
+        },
+        {
+          "id": "civic"
+        },
+        {
+          "id": "army"
+        }
+      ]
+    },
+    {
+      "id": "event",
+      "steps": [
+        {
+          "id": "control"
+        },
+        {
+          "id": "resolution"
+        },
+        {
+          "id": "xp"
+        },
+        {
+          "id": "level"
+        }
+      ]
+    }
+  ],
+  "structure_traits": [
+    {
+      "id": "edifice"
+    },
+    {
+      "id": "building"
+    },
+    {
+      "id": "famous"
+    },
+    {
+      "id": "infamous"
+    },
+    {
+      "id": "infrastructure"
+    },
+    {
+      "id": "yard"
+    },
+    {
+      "id": "residential"
+    }
+  ]
+}

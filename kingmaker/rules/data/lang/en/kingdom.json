@@ -1,0 +1,903 @@
+{
+  "abilities": [
+    {
+      "id": "culture",
+      "name": "Culture",
+      "abbr": "Cul",
+      "ruin": "Corruption",
+      "desc": "Measures the nation's interest in and dedication to the arts and sciences, religion and reason, and the pursuit of knowledge."
+    },
+    {
+      "id": "economy",
+      "name": "Economy",
+      "abbr": "Eco",
+      "ruin": "Crime",
+      "desc": "Measures the practical, day-to-day workings of society: production, construction, buying and selling."
+    },
+    {
+      "id": "loyalty",
+      "name": "Loyalty",
+      "abbr": "Loy",
+      "ruin": "Strife",
+      "desc": "Measures the collective will, spirit, and sense of camaraderie of the citizens."
+    },
+    {
+      "id": "stability",
+      "name": "Stability",
+      "abbr": "Sta",
+      "ruin": "Decay",
+      "desc": "Measures the physical health and well-being of the nation: infrastructure, buildings, and protection."
+    }
+  ],
+  "ruins": [
+    {
+      "id": "corruption",
+      "name": "Corruption",
+      "desc": "Citizens sliding into decadence, forbidden knowledge, unethical research, destruction of heritage."
+    },
+    {
+      "id": "crime",
+      "name": "Crime",
+      "desc": "Theft, smuggling and rackets that choke prosperity."
+    },
+    {
+      "id": "decay",
+      "name": "Decay",
+      "desc": "Physical damage, neglect or degradation of the kingdom, its people and its infrastructure."
+    },
+    {
+      "id": "strife",
+      "name": "Strife",
+      "desc": "Treachery, subterfuge, bribery, violence, abuse of power and infighting."
+    }
+  ],
+  "skills": [
+    {
+      "id": "agriculture",
+      "name": "Agriculture",
+      "desc": "Measures the kingdom's ability to work the land, raising crops, herds and livestock."
+    },
+    {
+      "id": "arts",
+      "name": "Arts",
+      "desc": "Measures the kingdom's dedication to entertainment, works of art and public works such as monuments."
+    },
+    {
+      "id": "trade",
+      "name": "Trade",
+      "desc": "Measures the kingdom's involvement in commerce of every kind and the health of its marketplace. You take a cumulative –1 item penalty to Trade checks for every settlement without a Land Border, unless it has at least one Water Border with a Bridge."
+    },
+    {
+      "id": "defense",
+      "name": "Defense",
+      "desc": "Measures the kingdom's ability to watch over and protect itself and its citizens from bandits, monsters, criminals and invasion."
+    },
+    {
+      "id": "exploration",
+      "name": "Exploration",
+      "desc": "Measures the kingdom's ability to look beyond its borders and to examine the territory it has claimed up close."
+    },
+    {
+      "id": "folklore",
+      "name": "Folklore",
+      "desc": "Measures the kingdom's ties to faiths and customs of every kind."
+    },
+    {
+      "id": "statecraft",
+      "name": "Statecraft",
+      "desc": "Measures the kingdom's ability to engage and interact with other nations, independent settlements and powers."
+    },
+    {
+      "id": "warfare",
+      "name": "Warfare",
+      "desc": "Reflects the kingdom's readiness to mobilise its military forces against its enemies."
+    },
+    {
+      "id": "industry",
+      "name": "Industry",
+      "desc": "Measures the kingdom's dedication to building and manufacturing goods, from basic necessities to luxuries."
+    },
+    {
+      "id": "engineering",
+      "name": "Engineering",
+      "desc": "Measures the kingdom's ability to alter the physical landscape of its territory."
+    },
+    {
+      "id": "intrigue",
+      "name": "Intrigue",
+      "desc": "Measures the kingdom's control over the hidden forces of politics, espionage and criminal investigation."
+    },
+    {
+      "id": "magic",
+      "name": "Magic",
+      "desc": "Measures the kingdom's affinity for the mystic arts, be they arcane, divine, occult or primal."
+    },
+    {
+      "id": "boating",
+      "name": "Boating",
+      "desc": "Reflects the kingdom's affinity for navigating rivers and lakes."
+    },
+    {
+      "id": "politics",
+      "name": "Politics",
+      "desc": "Measures the kingdom's engagement in civic life of every kind."
+    },
+    {
+      "id": "scholarship",
+      "name": "Scholarship",
+      "desc": "Measures the kingdom's interest in teaching and educating its citizens."
+    },
+    {
+      "id": "wilderness",
+      "name": "Wilderness",
+      "desc": "Measures the kingdom's ability to manage natural resources, the ecosystem and natural disasters."
+    }
+  ],
+  "charters": [
+    {
+      "id": "conquest",
+      "name": "Conquest",
+      "desc": "Your sponsor has conquered a territory and its former rulers have been defeated. The people are devoted to your rule (partly out of fear), but the constant threat of war hampers the arts."
+    },
+    {
+      "id": "expansion",
+      "name": "Expansion",
+      "desc": "You are entrusted with a domain adjacent to already settled lands. Your sponsor's support helps society, but the dependence leaves the kingdom insecure."
+    },
+    {
+      "id": "exploration",
+      "name": "Exploration",
+      "desc": "Your sponsor wants you to explore, clear and stabilise a wild area along the frontier. They guarantee the initial structures, at the cost of a financial debt."
+    },
+    {
+      "id": "grant",
+      "name": "Grant",
+      "desc": "A large sum of unrestricted funds, but you must employ many of your sponsor's citizens and allies, whose loyalties are divided."
+    },
+    {
+      "id": "open_charter",
+      "name": "Open",
+      "desc": "A true free agent and pioneer: a single boost to any ability and no innate flaw."
+    }
+  ],
+  "heartlands": [
+    {
+      "id": "hill_or_plain",
+      "name": "Hill or Plain",
+      "desc": "Your nation starts in an area that is easy to cross; the citizens appreciate that life is easier."
+    },
+    {
+      "id": "forest_or_swamp",
+      "name": "Forest or Swamp",
+      "desc": "Woods or marshes: no shortage of natural resources or wonders to feed the citizens' imagination."
+    },
+    {
+      "id": "lake_or_river",
+      "name": "Lake or River",
+      "desc": "On the shores of a lake or a river: a built-in engine for trade."
+    },
+    {
+      "id": "mountain_or_ruin",
+      "name": "Mountain or Ruin",
+      "desc": "Mountains or a major ruined site, used to strengthen the defences. Hardy and resilient citizens."
+    }
+  ],
+  "governments": [
+    {
+      "id": "despotism",
+      "name": "Despotism",
+      "desc": "The government centres on a single individual whose authority is absolute."
+    },
+    {
+      "id": "feudalism",
+      "name": "Feudalism",
+      "desc": "The government rests on a dynastic royal family, with much of the power spread among vassals and fiefs."
+    },
+    {
+      "id": "oligarchy",
+      "name": "Oligarchy",
+      "desc": "The government is decided by a council of influential leaders who make decisions for everyone else."
+    },
+    {
+      "id": "republic",
+      "name": "Republic",
+      "desc": "The nation draws its leadership from its own citizens, gathered in parliamentary bodies."
+    },
+    {
+      "id": "thaumocracy",
+      "name": "Thaumocracy",
+      "desc": "The nation is ruled by the most skilled in magic, who use their knowledge to decide the best ways to govern."
+    },
+    {
+      "id": "yeomanry",
+      "name": "Yeomanry",
+      "desc": "The nation is decentralised and relies on local leaders and citizens to handle the business of government."
+    }
+  ],
+  "roles": [
+    {
+      "id": "ruler",
+      "name": "Ruler",
+      "desc": "Performs the most important ceremonies, is the chief diplomatic officer, signs all laws and appoints characters to the other high offices.",
+      "absence_penalty": "−1 to all checks (cumulative with any other vacancy penalty); gain 1d4 Unrest at the start of the Kingdom turn; the Control DC increases by 2"
+    },
+    {
+      "id": "counselor",
+      "name": "Counselor",
+      "desc": "The link between the government and the citizens: interprets the wishes of the citizenry and advises the other leaders.",
+      "absence_penalty": "−1 to all Culture-based checks"
+    },
+    {
+      "id": "emissary",
+      "name": "Emissary",
+      "desc": "Keeps the secrets of state, oversees clandestine intrigues and manages foreign policy.",
+      "absence_penalty": "−1 to all Loyalty-based checks"
+    },
+    {
+      "id": "general",
+      "name": "General",
+      "desc": "Leads the kingdom's military, directs the armies and commands them in times of war.",
+      "absence_penalty": "−4 to Army activities"
+    },
+    {
+      "id": "warden",
+      "name": "Warden",
+      "desc": "Oversees the safety, protection and general health of the kingdom, its lands and its borders.",
+      "absence_penalty": "−4 to Region activities"
+    },
+    {
+      "id": "magister",
+      "name": "Magister",
+      "desc": "Responsible for everything magical in the kingdom and for how the supernatural affects the citizens.",
+      "absence_penalty": "−4 to all Army activities"
+    },
+    {
+      "id": "treasurer",
+      "name": "Treasurer",
+      "desc": "Oversees the kingdom's funds, the state of business and industry, and matters of taxation.",
+      "absence_penalty": "−1 to all Economy-based checks"
+    },
+    {
+      "id": "viceroy",
+      "name": "Viceroy",
+      "desc": "Plans and carries out the expansion and development of the kingdom, in its territories and settlements.",
+      "absence_penalty": "−1 to all Stability-based checks"
+    }
+  ],
+  "proficiencies": [
+    {
+      "id": "untrained",
+      "name": "Untrained"
+    },
+    {
+      "id": "trained",
+      "name": "Trained"
+    },
+    {
+      "id": "expert",
+      "name": "Expert"
+    },
+    {
+      "id": "master",
+      "name": "Master"
+    },
+    {
+      "id": "legendary",
+      "name": "Legendary"
+    }
+  ],
+  "size_table": [
+    {
+      "kind": "Territory"
+    },
+    {
+      "kind": "Province"
+    },
+    {
+      "kind": "State"
+    },
+    {
+      "kind": "Country"
+    },
+    {
+      "kind": "Dominion"
+    }
+  ],
+  "level_table": [
+    {
+      "capabilities": [
+        "Charter",
+        "Government",
+        "Heartland",
+        "Initial Proficiencies",
+        "Favored Land",
+        "Settlement Construction (Village)"
+      ]
+    },
+    {
+      "capabilities": [
+        "Kingdom Feat"
+      ]
+    },
+    {
+      "capabilities": [
+        "Settlement Construction (Town)",
+        "Skill Increase"
+      ]
+    },
+    {
+      "capabilities": [
+        "Expansion Expert",
+        "Fine Living",
+        "Kingdom Feat"
+      ]
+    },
+    {
+      "capabilities": [
+        "Ability Boosts",
+        "Ruin Resistance",
+        "Skill Increase"
+      ]
+    },
+    {
+      "capabilities": [
+        "Kingdom Feat"
+      ]
+    },
+    {
+      "capabilities": [
+        "Skill Increase"
+      ]
+    },
+    {
+      "capabilities": [
+        "Experienced Leadership +2",
+        "Kingdom Feat",
+        "Ruin Resistance"
+      ]
+    },
+    {
+      "capabilities": [
+        "Expansion Expert (Claim Hex 3/turn)",
+        "Settlement Construction (City)",
+        "Skill Increase"
+      ]
+    },
+    {
+      "capabilities": [
+        "Ability Boosts",
+        "Kingdom Feat",
+        "Life of Luxury"
+      ]
+    },
+    {
+      "capabilities": [
+        "Ruin Resistance",
+        "Skill Increase"
+      ]
+    },
+    {
+      "capabilities": [
+        "Civic Planning",
+        "Kingdom Feat"
+      ]
+    },
+    {
+      "capabilities": [
+        "Skill Increase"
+      ]
+    },
+    {
+      "capabilities": [
+        "Ruin Resistance",
+        "Kingdom Feat"
+      ]
+    },
+    {
+      "capabilities": [
+        "Ability Boosts",
+        "Settlement Construction (Metropolis)",
+        "Skill Increase"
+      ]
+    },
+    {
+      "capabilities": [
+        "Experienced Leadership +3",
+        "Kingdom Feat"
+      ]
+    },
+    {
+      "capabilities": [
+        "Ruin Resistance",
+        "Skill Increase"
+      ]
+    },
+    {
+      "capabilities": [
+        "Kingdom Feat"
+      ]
+    },
+    {
+      "capabilities": [
+        "Skill Increase"
+      ]
+    },
+    {
+      "capabilities": [
+        "Ability Boosts",
+        "Envy of the World",
+        "Kingdom Feat",
+        "Ruin Resistance"
+      ]
+    }
+  ],
+  "settlement_types": [
+    {
+      "id": "village",
+      "name": "Village",
+      "population": "400 or fewer"
+    },
+    {
+      "id": "town",
+      "name": "Town",
+      "population": "401–2,000"
+    },
+    {
+      "id": "city",
+      "name": "City",
+      "population": "2,001–25,000"
+    },
+    {
+      "id": "metropolis",
+      "name": "Metropolis",
+      "population": "25,001+"
+    }
+  ],
+  "commodities": [
+    {
+      "id": "food",
+      "name": "Food",
+      "desc": "Spent to Pay Consumption during the Upkeep phase, on famines and disasters, and to keep armies fed in wartime. Gathered with Go Fishing, Harvest Crops or Gather Livestock."
+    },
+    {
+      "id": "lumber",
+      "name": "Lumber",
+      "desc": "Used to build structures. Harvested from the lumber camps built with Establish Work Site."
+    },
+    {
+      "id": "luxuries",
+      "name": "Luxuries",
+      "desc": "Used to build specialised structures or spent during certain encounters. Found while adventuring, made with Craft Luxuries or gained from events."
+    },
+    {
+      "id": "ore",
+      "name": "Ore",
+      "desc": "Used to build structures. Mined from the mines built with Establish Work Site."
+    },
+    {
+      "id": "stone",
+      "name": "Stone",
+      "desc": "Used to build structures. Quarried from the quarries built with Establish Work Site."
+    }
+  ],
+  "terrains": [
+    {
+      "id": "plains",
+      "name": "Plains"
+    },
+    {
+      "id": "hills",
+      "name": "Hills"
+    },
+    {
+      "id": "forest",
+      "name": "Forest"
+    },
+    {
+      "id": "swamp",
+      "name": "Swamp"
+    },
+    {
+      "id": "mountains",
+      "name": "Mountains"
+    },
+    {
+      "id": "lake",
+      "name": "Lake"
+    },
+    {
+      "id": "river",
+      "name": "River"
+    },
+    {
+      "id": "ruins",
+      "name": "Ruins"
+    }
+  ],
+  "disconnected_terrain_cost": {
+    "_note": "Building on Rugged Terrain: use the highest RP cost among the terrain features of the hex."
+  },
+  "hex_features": [
+    {
+      "id": "settlement",
+      "name": "Settlement",
+      "desc": "A village, town, city or metropolis."
+    },
+    {
+      "id": "freehold",
+      "name": "Freehold",
+      "desc": "A settlement that is not part of your kingdom. Bringing it into the kingdom requires a successful Pledge of Fealty. The kingdom gains no XP for improvements already built."
+    },
+    {
+      "id": "bridge",
+      "name": "Bridge",
+      "desc": "An easy overland route across a river: ignore the usual increase in RP cost for Build Roads in that hex. A settlement built here can start with a Bridge structure on a water border."
+    },
+    {
+      "id": "landmark",
+      "name": "Landmark",
+      "desc": "When you add it to the kingdom reduce Unrest by 1d4 and, until the end of the next Kingdom turn, all Culture and Economy checks gain a +2 circumstance bonus. The first Landmark claimed is worth 40 XP."
+    },
+    {
+      "id": "refuge",
+      "name": "Refuge",
+      "desc": "When you claim it reduce one Ruin by 1 and, until the end of the next Kingdom turn, all Loyalty and Stability checks gain a +2 circumstance bonus. The first Refuge claimed is worth 40 XP."
+    },
+    {
+      "id": "resource",
+      "name": "Resource",
+      "desc": "A particularly dense or lucrative source of Lumber, Ore or Stone: an appropriate Work Site built here doubles the Commodities produced."
+    },
+    {
+      "id": "ruins_feature",
+      "name": "Ruins",
+      "desc": "A partially destroyed structure. Once claimed and cleared you can use its remains as the basis of an appropriate settlement structure, halving its cost."
+    },
+    {
+      "id": "work_site",
+      "name": "Work Site",
+      "desc": "Produces 1 Commodity (Lumber, Stone or Ore) every Kingdom turn, or 2 if it sits in a Resource hex of the matching kind. Commodities are gathered during the Upkeep phase."
+    },
+    {
+      "id": "structure",
+      "name": "Structure",
+      "desc": "If you clear a hex that contains a Structure, you can add it automatically and for free to a settlement founded there."
+    },
+    {
+      "id": "farmland",
+      "name": "Farmland",
+      "desc": "Every Farmland hex reduces the kingdom's Consumption by 1, as long as it lies within the influence of one of its settlements. You cannot build settlements on Farmland."
+    },
+    {
+      "id": "fortification",
+      "name": "Fortification",
+      "desc": "A protected encampment (a fort or a barbican) built with Fortify Hex. It grants a bonus in war and offers travelling PCs a safe place to rest."
+    },
+    {
+      "id": "roads",
+      "name": "Roads",
+      "desc": "Travel along roads uses a terrain type one step better than the surroundings."
+    },
+    {
+      "id": "trap",
+      "name": "Trap or Hazard",
+      "desc": "A Game Master placeholder: something here can hurt. It has no effect on the kingdom or on travel, and comes from no rule: it serves to remember where a danger was put, and to reveal it to the party when they walk into it."
+    },
+    {
+      "id": "dungeon",
+      "name": "Dungeon",
+      "desc": "A Game Master placeholder: the entrance of a place to explore. It has no effect on the kingdom or on travel, and comes from no rule: it keeps on the map something that would otherwise live only in the notes."
+    },
+    {
+      "id": "event",
+      "name": "Event",
+      "desc": "A Game Master placeholder: something that must happen here. It has no effect on the kingdom or on travel, and comes from no rule: it is a reminder tied to a hex instead of to a separate sheet."
+    }
+  ],
+  "_hex_features_note": "The Terrain Features with \"source\": \"table\" are not in the rules and carry no Pathfinder 2 mechanics: they are placeholders the Game Master uses to keep the map in order. They are kept apart on purpose, so nobody mistakes them for rules of the game.",
+  "travel": {
+    "_note": "Transcribed from the Hexploration rules, nothing added. The terrains the rules do not assign to a category stay null: the app stops and asks the GM instead of guessing. The GM can still force the category on a single hex.",
+    "hex_size": {
+      "note": "12 miles (about 21.6 km) from corner to corner: roughly a day to cross."
+    },
+    "activities_per_day_table": [
+      {
+        "note": "A party this slow takes 2 days for every activity."
+      },
+      null,
+      null,
+      null,
+      null
+    ],
+    "party_speed": "That of the slowest member.",
+    "travel_speed": {
+      "_page": "Exploration and Downtime Modes — Table: Travel Speed",
+      "_note": "How much ground is really covered, for whoever wants the figure in kilometres instead of activities. It is not needed to count journeys between hexes — those go by activities per day, which is another table — but it answers the question «how fast are we going», and the rules give it. The distances hold on flat, clear ground: difficult terrain halves them, greater difficult terrain cuts them to a third. If the journey calls for a check — swimming, climbing — the GM may ask for one every hour and read the progress on this same table.",
+      "between_the_lines": {
+        "_note": "The table stops at 18 metres (60 feet) and skips 13.5 and 16.5. For those Speeds — and for a faster vehicle — the same proportion continues: 0.6 km per hour for every metre of Speed. It is not an extra rule, it is the rule of the table: that factor reproduces all nine written rows exactly, from the first to the last. In the table in feet it reads as «every 10 feet more is one mile per hour more»."
+      }
+    },
+    "categories": {
+      "open": {
+        "name": "Open terrain"
+      },
+      "difficult": {
+        "name": "Difficult terrain"
+      },
+      "greater_difficult": {
+        "name": "Greater difficult terrain"
+      }
+    },
+    "terrains": {
+      "forest": {
+        "note": "The rules give it as difficult or greater difficult: the GM chooses."
+      },
+      "lake": {
+        "note": "Water: a vehicle or a swim Speed is needed. The rules assign no fixed category. Whoever sails crosses it as open terrain (see water_and_flight); whoever goes on foot does not pass."
+      },
+      "river": {
+        "note": "Downstream it is open terrain, upstream difficult or greater difficult depending on currents and weather. As a terrain it applies to a hex wholly taken by the river: a river flowing between two hexes is marked as a border instead (see borders)."
+      },
+      "ruins": {
+        "note": "The rules assign no category to this terrain: the table chose the harshest, greater difficult terrain. It is not a rule of the book."
+      }
+    },
+    "borders": {
+      "_note": "The rules know Water Borders and Bridges on the Urban Grid of a settlement (see structures.json, the «Bridge» structure: «Bridges can only be built on Water Borders»), not between the hexes of the map. Bringing the same idea onto the map is a choice of the table: the vocabulary is the game's, the travel rule is not. A border that is not marked is land, and costs nothing.",
+      "kinds": {
+        "water": {
+          "name": "Water Border",
+          "note": "A watercourse or a body of water between the two hexes. It cannot be passed without a water vehicle."
+        },
+        "ford": {
+          "name": "Ford",
+          "note": "It can be crossed, but costs one more Travel activity."
+        },
+        "bridge": {
+          "name": "Bridge",
+          "note": "It can be crossed at no extra cost. It is not the same as the «Bridge» Terrain Feature, which sits on a hex and concerns the RP cost of Build Roads."
+        }
+      }
+    },
+    "current": {
+      "_note": "Following a watercourse. The rules say it of the River terrain: downstream it is open terrain, upstream difficult or greater difficult depending on currents and weather. Between the two the rules do not choose, and neither does the app: it counts the easier one and says so, as it does for the forest. Which way the water flows on the map the rules cannot know: the GM marks it on the drawing, stretch by stretch.",
+      "downstream": {
+        "name": "Downstream",
+        "note": "Going down with the current: open terrain."
+      },
+      "upstream": {
+        "name": "Upstream",
+        "note": "Going up against the current: difficult or greater difficult depending on currents and weather."
+      },
+      "still": {
+        "name": "Still water",
+        "note": "Inside a lake there is no current to follow or go up: there is no direction, and the general line applies — whoever sails finds open terrain almost everywhere (see water_and_flight)."
+      },
+      "unknown_": {
+        "name": "No current",
+        "note": "A stretch without a direction is water without a current to follow or go up: it is travelled both ways the same, and counts as open terrain. It is the case of every line of a lake, and the table's choice for a river whose direction has not been marked yet. The rules say nothing about a still watercourse: they say that whoever travels on water finds open terrain almost everywhere, and that is where the figure comes from."
+      }
+    },
+    "roads": {
+      "note": "Travelling on a road improves the terrain by one step. It does not apply to Reconnoiter."
+    },
+    "reconnaissance": {
+      "cost": "as Travel for that hex",
+      "note": "It does not include moving: it is the cost of scouting the hex you are in."
+    },
+    "forced_march": {
+      "sustainable_days": "Constitution modifier, minimum 1",
+      "beyond": "Fatigued until you spend a full day resting."
+    },
+    "water_and_flight": "If you're flying or traveling on water, most hexes are open terrain.",
+    "other_activities": [
+      {
+        "id": "map_the_area",
+        "name": "Map the Area",
+        "note": "Requires a successful Reconnoiter in the same hex and a Survival check; reduces the DCs to cross by 2."
+      },
+      {
+        "id": "fortify_camp",
+        "name": "Fortify Camp"
+      },
+      {
+        "id": "subsist",
+        "name": "Subsist"
+      }
+    ]
+  },
+  "milestone_xp": [
+    {
+      "id": "first_landmark",
+      "desc": "Claim the first Landmark"
+    },
+    {
+      "id": "first_refuge",
+      "desc": "Claim the first Refuge"
+    },
+    {
+      "id": "first_village",
+      "desc": "Establish the first Village"
+    },
+    {
+      "id": "size_10",
+      "desc": "Reach kingdom Size 10"
+    },
+    {
+      "id": "first_diplomatic_relation",
+      "desc": "Establish the first Diplomatic Relation"
+    },
+    {
+      "id": "first_town",
+      "desc": "Expand a Village into your first Town"
+    },
+    {
+      "id": "all_eight_leaders",
+      "desc": "Fill all eight Leadership Roles"
+    },
+    {
+      "id": "size_25",
+      "desc": "Reach kingdom Size 25"
+    },
+    {
+      "id": "first_trade_agreement",
+      "desc": "Establish the first Trade Agreement"
+    },
+    {
+      "id": "first_city",
+      "desc": "Expand a Town into your first City"
+    },
+    {
+      "id": "size_50",
+      "desc": "Reach kingdom Size 50"
+    },
+    {
+      "id": "rp_100",
+      "desc": "Spend 100 RP during a Kingdom turn"
+    },
+    {
+      "id": "first_metropolis",
+      "desc": "Expand a City into your first Metropolis"
+    },
+    {
+      "id": "size_100",
+      "desc": "Reach kingdom Size 100"
+    }
+  ],
+  "turn_phases": [
+    {
+      "id": "upkeep",
+      "name": "Upkeep Phase",
+      "steps": [
+        {
+          "id": "roles",
+          "name": "Step 1: Assign Leadership Roles",
+          "desc": "Assign or change leaders with the New Leadership activity (repeatable as many times as you want in this step). Then determine the Vacancy penalties: every unassigned role suffers its own penalty."
+        },
+        {
+          "id": "unrest",
+          "name": "Step 2: Adjust Unrest",
+          "desc": "Increase Unrest by 1 for every Overcrowded settlement and by 1 if you are at war. If Unrest is 10 or more the kingdom gains 1d10 Ruin points to distribute and attempts a DC 11 flat check: on a failure it loses a hex. At Unrest 20 or more the kingdom falls into anarchy: you can attempt only Quell Unrest and every check is worsened by one degree."
+        },
+        {
+          "id": "resources",
+          "name": "Step 3: Resource Collection",
+          "desc": "Resource Dice = kingdom level + 4 + bonus dice − penalty dice. Roll them to gain the turn's RP. Then collect 1 Commodity from every Work Site (2 if in a Resource hex). Commodities beyond storage are lost."
+        },
+        {
+          "id": "consumption",
+          "name": "Step 4: Pay Consumption",
+          "desc": "Consumption = settlement Consumption + army Consumption − influenced Farmland hexes + event modifiers. Spend Food equal to the Consumption; for every point unpaid spend 5 RP or increase Unrest by 1d4."
+        }
+      ]
+    },
+    {
+      "id": "commerce",
+      "name": "Commerce Phase",
+      "steps": [
+        {
+          "id": "taxes",
+          "name": "Step 1: Collect Taxes",
+          "desc": "You can Collect Taxes once per turn. If you do not, you can attempt a DC 11 flat check: on a success reduce Unrest by 1."
+        },
+        {
+          "id": "expenses",
+          "name": "Step 2: Approve Expenses",
+          "desc": "You can attempt Improve Lifestyle or Tap Treasury."
+        },
+        {
+          "id": "commodities",
+          "name": "Step 3: Tap Commodities",
+          "desc": "If you have Commodities in stock you can attempt Trade Commodities to increase the turn's RP."
+        },
+        {
+          "id": "agreements",
+          "name": "Step 4: Manage Trade Agreements",
+          "desc": "If you have Trade Agreements you can use Manage Trade Agreements."
+        }
+      ]
+    },
+    {
+      "id": "activity",
+      "name": "Activity Phase",
+      "steps": [
+        {
+          "id": "leadership",
+          "name": "Step 1: Leadership Activities",
+          "desc": "If the capital has a Castle, a Palace or a Town Hall, every PC with a Leadership Role can attempt up to 3 Leadership activities; otherwise up to 2. A leader cannot attempt the same Leadership activity more than once per turn."
+        },
+        {
+          "id": "region",
+          "name": "Step 2: Region Activities",
+          "desc": "The PC leaders can collectively attempt up to 3 Region activities."
+        },
+        {
+          "id": "civic",
+          "name": "Step 3: Civic Activities",
+          "desc": "The party can attempt one Civic activity for every settlement of the kingdom."
+        },
+        {
+          "id": "army",
+          "name": "Step 4: Army Activities",
+          "desc": "Only at war: every army maintained by the kingdom can perform a single Army activity."
+        }
+      ]
+    },
+    {
+      "id": "event",
+      "name": "Event Phase",
+      "steps": [
+        {
+          "id": "control",
+          "name": "Step 1: Check for Random Event",
+          "desc": "DC 16 flat check. On a success a random kingdom event occurs. Otherwise the next turn's DC is reduced by 5. Once the event occurs, the DC goes back to 16."
+        },
+        {
+          "id": "resolution",
+          "name": "Step 2: Event Resolution",
+          "desc": "Random events are resolved now. The event's DC is the Control DC modified by the event's level modifier."
+        },
+        {
+          "id": "xp",
+          "name": "Step 3: Apply Kingdom XP",
+          "desc": "A random event is worth 30 XP. The first turn the kingdom spends 100 RP earns 80 XP. Unspent RP convert into XP 1 for 1, up to a maximum of 120 XP per turn."
+        },
+        {
+          "id": "level",
+          "name": "Step 4: Increase Kingdom Level",
+          "desc": "If XP is at least 1,000 and the kingdom is not at its maximum level (= the party's level), increase the level by 1 and subtract 1,000 XP. At most one level per turn."
+        }
+      ]
+    }
+  ],
+  "structure_traits": [
+    {
+      "id": "edifice",
+      "name": "Edifice"
+    },
+    {
+      "id": "building",
+      "name": "Building"
+    },
+    {
+      "id": "famous",
+      "name": "Famous"
+    },
+    {
+      "id": "infamous",
+      "name": "Infamous"
+    },
+    {
+      "id": "infrastructure",
+      "name": "Infrastructure"
+    },
+    {
+      "id": "yard",
+      "name": "Yard"
+    },
+    {
+      "id": "residential",
+      "name": "Residential"
+    }
+  ]
+}

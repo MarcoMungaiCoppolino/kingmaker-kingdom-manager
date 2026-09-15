@@ -1,0 +1,10 @@
+# The only dependency of the app, pinned to the version it was tested with:
+# the app uses `ui.upload(max_file_size=...)` and `e.file.size()`, which exist
+# since NiceGUI 3.x. To upgrade: change the number, restart and try the map.
+nicegui==3.16.0
+
+# Optional, and the app starts the same without it. It only serves «Read the
+# map» in the Waters box, which opens the background image to propose where
+# the rivers run. Without Pillow that button says so and does nothing else:
+# borders are marked by hand, which is the normal way of working anyway.
+#     pip install "Pillow>=10,<12"

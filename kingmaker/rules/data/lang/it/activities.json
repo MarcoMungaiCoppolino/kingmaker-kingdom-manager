@@ -1,0 +1,1575 @@
+{
+  "_dc_note": "tipo 'controllo' = CD di Controllo del regno + mod; 'fisso' = valore assoluto; 'speciale' = vedi nota",
+  "activities": [
+    {
+      "id": "new_leadership",
+      "name": "Nuova Direzione",
+      "traits": [
+        "Pausa"
+      ],
+      "requirements": "",
+      "cost": "",
+      "description": "Annunci la promozione di un personaggio in un Ruolo di Governo, sia che si tratti di un leader appena nominato o che stia passando da un ruolo a un altro. Normalmente si esegue all'inizio di un Turno di Regno, ma se eventi imprevisti (come la morte di un personaggio) rimuovono un leader, si può usare immediatamente anche fuori dal turno. Ogni abilità è particolarmente adatta a due ruoli specifici:\n• Governare: Bonus di Circostanza +2 per assegnare Maestri e Viceré.\n• Guerra: Bonus di Circostanza +2 per assegnare Generali e Guardiani.\n• Intrigo: Bonus di Circostanza +2 per assegnare Emissari e Tesorieri.\n• Politica: Bonus di Circostanza +2 per assegnare Consiglieri e Governanti.\nI Governanti sono particolarmente difficili da assegnare: subisci una Penalità di Circostanza −4 alla prova e, a meno di un Successo Critico, ottieni 1 Malcontento aggiuntivo. Puoi usare questa attività anche solo per riselezionare i quattro Ruoli di Governo investiti: qualsiasi risultato diverso da un Fallimento Critico lo consente.",
+      "outcomes": {
+        "critical_success": "Il popolo ama il nuovo leader. Il leader fornisce immediatamente i benefici del nuovo ruolo e guadagna un Bonus di Circostanza +1 a tutte le prove di abilità di Regno che tenta prima della fine del prossimo Turno di Regno.",
+        "success": "Il popolo accetta il nuovo leader. Il leader fornisce immediatamente i benefici legati all'occupazione del nuovo ruolo.",
+        "failure": "Il popolo non è sicuro del nuovo leader. Il leader subisce una Penalità di Circostanza −1 a tutte le prove che effettua durante la Fase Attività di ogni Turno di Regno. Alla fine di ogni Turno di Regno successivo può tentare una prova base basata sulla Lealtà per ingraziarsi la popolazione: il Successo rimuove la penalità, un Fallimento Critico comporta l'esito di Fallimento Critico.",
+        "critical_failure": "Il popolo rifiuta il nuovo leader. Il ruolo è considerato assente e va riassegnato con Nuova Direzione all'inizio del successivo Turno di Regno. Il Malcontento aumenta di 1."
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "text": "Il leader entra in carica e ottiene +1 Circostanza a tutte le sue prove di Regno fino alla fine del prossimo Turno di Regno."
+          }
+        ],
+        "success": [
+          {
+            "text": "Il leader entra in carica e fornisce subito i benefici del ruolo."
+          }
+        ],
+        "failure": [
+          {
+            "text": "Il leader entra in carica con −1 Circostanza alle prove della Fase Attività, finché non si ingrazia la popolazione con una prova di Lealtà."
+          }
+        ],
+        "critical_failure": [
+          null,
+          {
+            "text": "Il ruolo è considerato assente: segnalo come Assente nella scheda e riassegnalo con Nuova Direzione il prossimo turno."
+          }
+        ]
+      }
+    },
+    {
+      "id": "collect_taxes",
+      "name": "Riscuotere Tasse",
+      "traits": [
+        "Commercio",
+        "Pausa"
+      ],
+      "requirements": "",
+      "cost": "",
+      "description": "Gli esattori delle tasse viaggiano per il territorio a raccogliere fondi per il miglioramento del regno. Tenta una prova base. Se non tenti di Riscuotere Tasse, puoi invece tentare una Prova Semplice CD 11: con Successo riduci Malcontento di 1.",
+      "outcomes": {
+        "critical_success": "I tuoi esattori hanno avuto un successo strepitoso! Per il resto del Turno di Regno ottieni un Bonus di Circostanza +2 alle prove di Economia.",
+        "success": "Ottieni un Bonus di Circostanza +1 alle prove basate su Economia per il resto del Turno di Regno. Se hai riscosso le tasse anche nel turno precedente, aumenta Malcontento di 1.",
+        "failure": "Come Successo, ma il popolo è scontento delle tasse: aumenta Malcontento di 1 (o di 2 se hai riscosso le tasse nel turno precedente).",
+        "critical_failure": "Gli esattori incontrano resistenza. Aumenta Malcontento di 2 e scegli una Rovina da aumentare di 1."
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "name": "Riscuotere Tasse (Circostanza)"
+          }
+        ],
+        "success": [
+          {
+            "name": "Riscuotere Tasse (Circostanza)"
+          },
+          null
+        ],
+        "failure": [
+          {
+            "name": "Riscuotere Tasse (Circostanza)"
+          },
+          null,
+          null
+        ]
+      }
+    },
+    {
+      "id": "tap_treasury",
+      "name": "Attingere alla Tesoreria",
+      "traits": [
+        "Commercio",
+        "Pausa"
+      ],
+      "requirements": "",
+      "cost": "",
+      "description": "Attingi alle riserve di denaro del regno per uso personale dei PG o per fornire fondi di emergenza per un evento. Dopo un Successo o un Successo Critico, tutti i futuri tentativi di Attingere alla Tesoreria subiscono un peggioramento di due gradi, finché non vengono restituiti fondi pari a quelli prelevati tramite Investimento di Capitali.",
+      "outcomes": {
+        "critical_success": "Prelevi fondi pari alla colonna «Ricchezze per Personaggio Aggiuntivo» della Tabella Tesoro del Gruppo per Livello (usando il livello del regno), oppure finanzi con successo l'evento inaspettato.",
+        "success": "Come Successo Critico, ma attingi troppo dalla tesoreria: subisci una Penalità di Circostanza −1 a tutte le prove di Economia fino alla fine del prossimo Turno di Regno.",
+        "failure": "Non ottieni i fondi e le voci sulla carenza di denaro ti fanno subire una Penalità di Circostanza −1 a tutte le prove di Lealtà ed Economia fino alla fine del prossimo Turno di Regno.",
+        "critical_failure": "Come Fallimento, ma le voci esagerano. Aumenta Malcontento di 1 e aggiungi 1 a una Rovina a scelta."
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "text": "Prelevi fondi pari alla voce «Ricchezze per Personaggio Aggiuntivo» al livello del regno, oppure finanzi l'evento inaspettato."
+          }
+        ],
+        "success": [
+          {
+            "text": "Ottieni i fondi."
+          },
+          {
+            "name": "Tesoreria prosciugata (Circostanza)"
+          }
+        ],
+        "failure": [
+          {
+            "name": "Voci sulla carenza di denaro (Circostanza)"
+          },
+          {
+            "name": "Voci sulla carenza di denaro (Circostanza)"
+          }
+        ],
+        "critical_failure": [
+          {
+            "name": "Voci sulla carenza di denaro (Circostanza)"
+          },
+          {
+            "name": "Voci sulla carenza di denaro (Circostanza)"
+          },
+          null,
+          null
+        ]
+      }
+    },
+    {
+      "id": "improve_lifestyle",
+      "name": "Migliorare Stile di Vita",
+      "traits": [
+        "Commercio",
+        "Pausa"
+      ],
+      "requirements": "Può essere intrapresa solo durante la Fase Commercio.",
+      "cost": "",
+      "description": "Tenti una prova base per attingere al tesoro del regno al fine di migliorare la qualità della vita dei cittadini.",
+      "outcomes": {
+        "critical_success": "I cittadini hanno molto tempo libero per attività ricreative. Per il resto del Turno di Regno ottieni un Bonus di Circostanza +2 alle prove basate su Cultura.",
+        "success": "I cittadini si godono la vita. Per il resto del Turno di Regno ottieni un Bonus di Circostanza +1 alle prove di Cultura.",
+        "failure": "Come Successo, ma hai messo a dura prova la tesoreria: Penalità di Circostanza −1 alle prove di Economia per il resto del Turno di Regno.",
+        "critical_failure": "Gli elementi criminali abusano della tua generosità. Penalità di Circostanza −1 alle prove di Economia per il resto del Turno di Regno, ottieni 1 Malcontento e aggiungi 1 a una Rovina a tua scelta."
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "name": "Migliorare Stile di Vita (Circostanza)"
+          }
+        ],
+        "success": [
+          {
+            "name": "Migliorare Stile di Vita (Circostanza)"
+          }
+        ],
+        "failure": [
+          {
+            "name": "Migliorare Stile di Vita (Circostanza)"
+          },
+          {
+            "name": "Tesoreria sotto sforzo (Circostanza)"
+          }
+        ],
+        "critical_failure": [
+          {
+            "name": "Tesoreria sotto sforzo (Circostanza)"
+          },
+          null,
+          null
+        ]
+      }
+    },
+    {
+      "id": "trade_commodities",
+      "name": "Commerciare Prodotti",
+      "traits": [
+        "Commercio",
+        "Pausa"
+      ],
+      "requirements": "Il regno deve avere scorte del Prodotto scelto.",
+      "cost": "Riduci le scorte di un Prodotto di un massimo di 4.",
+      "description": "Seleziona un Prodotto che il regno sta immagazzinando e riducine le scorte di un massimo di 4, poi tenta una prova base. Se commerci con un gruppo con cui hai stabilito Relazioni Diplomatiche ottieni un Bonus di Circostanza +1 alla prova.",
+      "outcomes": {
+        "critical_success": "All'inizio del prossimo Turno di Regno ottieni 2 Dadi Risorsa bonus per ogni punto di scorte speso.",
+        "success": "All'inizio del prossimo Turno di Regno ottieni 1 Dado Risorsa bonus per ogni punto di scorte speso.",
+        "failure": "Ottieni 1 Dado Risorsa bonus all'inizio del prossimo Turno di Regno.",
+        "critical_failure": "Non ottieni Dadi Risorsa bonus (il Prodotto resta comunque speso). Se hai Commerciato Prodotti anche nel turno precedente, ottieni 1 Malcontento."
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "text": "Dadi Risorsa bonus il prossimo turno (2 per ogni punto di scorte speso)"
+          }
+        ],
+        "success": [
+          {
+            "text": "Dadi Risorsa bonus il prossimo turno (1 per ogni punto di scorte speso)"
+          }
+        ],
+        "failure": [
+          {
+            "text": "1 Dado Risorsa bonus il prossimo turno"
+          }
+        ]
+      },
+      "cost_data": [
+        {
+          "text": "Scorte di un Prodotto da spendere (massimo 4)"
+        }
+      ]
+    },
+    {
+      "id": "manage_trade_agreements",
+      "name": "Gestire gli Accordi Commerciali",
+      "traits": [
+        "Governo",
+        "Pausa"
+      ],
+      "dc": {
+        "note": "+5 se hai gestito accordi commerciali nel turno precedente"
+      },
+      "requirements": "Avere almeno un Accordo Commerciale stabilito.",
+      "cost": "2 PR per ogni accordo commerciale che vuoi gestire.",
+      "description": "Invii degli agenti a occuparsi degli accordi commerciali stabiliti. Spendi 2 PR per ogni accordo che desideri gestire, poi tenta una prova base.",
+      "outcomes": {
+        "critical_success": "All'inizio del prossimo Turno di Regno guadagni 1 Dado Risorsa bonus per ogni accordo commerciale e 1 Prodotto a tua scelta per ogni accordo (non più della metà possono essere di Lusso).",
+        "success": "Come Successo Critico, ma devi scegliere se ottenere i Dadi Risorsa oppure i Prodotti.",
+        "failure": "Guadagni 1 PR per ogni accordo commerciale all'inizio del prossimo turno.",
+        "critical_failure": "Nessun beneficio. Per 1 Turno di Regno non puoi Gestire gli Accordi Commerciali."
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "text": "Dadi Risorsa bonus il prossimo turno (1 per accordo)"
+          },
+          {
+            "text": "Prodotti a scelta (1 per accordo, non più della metà di Lusso)"
+          }
+        ],
+        "success": [
+          {
+            "text": "Dadi Risorsa bonus (1 per accordo) — scegli questo oppure i Prodotti"
+          },
+          {
+            "text": "Prodotti a scelta (1 per accordo) — scegli questo oppure i Dadi Risorsa"
+          }
+        ],
+        "failure": [
+          {
+            "text": "1 PR per accordo, all'inizio del prossimo turno"
+          }
+        ],
+        "critical_failure": [
+          {
+            "text": "Nessun beneficio. Per 1 Turno di Regno non puoi Gestire gli Accordi Commerciali."
+          }
+        ]
+      },
+      "cost_data": [
+        {
+          "text": "2 PR per ogni accordo che vuoi gestire"
+        }
+      ]
+    },
+    {
+      "id": "purchase_commodities",
+      "name": "Acquistare Prodotti",
+      "traits": [
+        "Governo",
+        "Pausa"
+      ],
+      "requirements": "",
+      "cost": "8 PR per Prodotti di Lusso, 4 PR per qualsiasi altro Prodotto.",
+      "description": "Puoi spendere PR per Acquistare Prodotti, ma è più costoso che raccoglierli o affidarsi agli accordi commerciali. Seleziona il Prodotto che desideri acquistare (Cibo, Legname, Lusso, Minerali o Pietra), spendi il costo e tenta una prova base.",
+      "outcomes": {
+        "critical_success": "Guadagni immediatamente 4 Prodotti del tipo scelto e 2 Prodotti di qualsiasi altro tipo (eccetto Prodotti di Lusso).",
+        "success": "Guadagni 2 Prodotti del tipo scelto.",
+        "failure": "Guadagni 1 Prodotto del tipo scelto.",
+        "critical_failure": "Non guadagni Prodotti."
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "text": "4 Prodotti del tipo acquistato"
+          },
+          {
+            "text": "2 Prodotti di qualsiasi altro tipo (non di Lusso)"
+          }
+        ],
+        "success": [
+          {
+            "text": "2 Prodotti del tipo acquistato"
+          }
+        ],
+        "failure": [
+          {
+            "text": "1 Prodotto del tipo acquistato"
+          }
+        ]
+      },
+      "cost_data": [
+        {
+          "text": "4 PR per Prodotto, 8 PR se di Lusso"
+        }
+      ]
+    },
+    {
+      "id": "clandestine_business",
+      "name": "Affari Clandestini",
+      "traits": [
+        "Governo",
+        "Pausa"
+      ],
+      "dc": {
+        "note": "+2 per ogni Turno di Regno consecutivo in cui porti avanti Affari Clandestini; −1 per ogni turno che passa senza, fino a tornare alla CD di Controllo"
+      },
+      "requirements": "",
+      "cost": "",
+      "description": "Sai che nel regno ci sono dei criminali, e loro sanno che tu sai. Li incoraggi a inviare tangenti sotto forma di risorse e Prodotti al Governo, ma i cittadini comuni si arrabbieranno molto se lo scoprissero.",
+      "outcomes": {
+        "critical_success": "Tira immediatamente 2 Dadi Risorsa e guadagna PR pari al risultato. Inoltre guadagni 1d4 Prodotti di Lusso. I cittadini non se ne accorgono.",
+        "success": "O tiri 2 Dadi Risorsa e guadagni PR pari al risultato, o guadagni 1d4 Prodotti di Lusso. In entrambi i casi si diffondono voci: aumenta Malcontento di 1.",
+        "failure": "Tira 1 Dado Risorsa e guadagna PR pari al risultato. Le voci sono corroborate da testimoni oculari: aumenta Malcontento di 1 e Corruzione di 1.",
+        "critical_failure": "Non ottieni nulla se non cittadini arrabbiati. Aumenta Malcontento di 1d6, Corruzione di 2 e un'altra Rovina a tua scelta di 1."
+      },
+      "effects": {
+        "success": [
+          {
+            "text": "2 Dadi Risorsa in PR — scegli questo oppure i Prodotti di Lusso"
+          },
+          null,
+          null
+        ]
+      }
+    },
+    {
+      "id": "hire_adventurers",
+      "name": "Assoldare Avventurieri",
+      "traits": [
+        "Governo",
+        "Pausa"
+      ],
+      "dc": {
+        "note": "modificata dal modificatore di livello dell'evento continuo"
+      },
+      "requirements": "Un evento continuo in corso.",
+      "cost": "Tira 1 Dado Risorsa e spendi PR pari al risultato (2 Dadi Risorsa se ritenti dopo un Fallimento). Con il talento Magia Pratica il costo si riduce a 1 PR.",
+      "description": "Anche se i PG possono agire da soli per affrontare gli eventi continui, spesso è più efficiente Assoldare Avventurieri. La CD è pari alla CD di Controllo modificata dal modificatore di livello dell'evento.",
+      "outcomes": {
+        "critical_success": "Poni fine all'evento in corso.",
+        "success": "L'evento continuo non termina, ma ottieni un Bonus di Circostanza +2 per risolvere l'evento durante la prossima Fase Evento.",
+        "failure": "Non riesci a porre fine all'evento continuo. Se ritenti, il costo in PR aumenta a 2 Dadi Risorsa.",
+        "critical_failure": "Come Fallimento, ma non è più possibile tentare di porre fine a questo evento continuo con Assoldare Avventurieri."
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "text": "L'evento continuo in corso termina."
+          }
+        ],
+        "success": [
+          {
+            "text": "L'evento continua, ma ottieni +2 Circostanza per risolverlo nella prossima Fase Evento."
+          }
+        ],
+        "failure": [
+          {
+            "text": "L'evento continua. Se ritenti, il costo sale a 2 Dadi Risorsa."
+          }
+        ],
+        "critical_failure": [
+          {
+            "text": "L'evento continua e non puoi più tentare Assoldare Avventurieri su di esso."
+          }
+        ]
+      },
+      "cost_data": [
+        {
+          "text": "1 Dado Risorsa in PR (2 se ritenti dopo un Fallimento)"
+        }
+      ]
+    },
+    {
+      "id": "focused_attention",
+      "name": "Attenzione Assoluta",
+      "traits": [
+        "Governo",
+        "Pausa"
+      ],
+      "requirements": "",
+      "cost": "",
+      "description": "Ti prendi del tempo per concentrare l'attenzione sull'aiutare un altro leader in un'attività. Scegli un altro leader e un'abilità di Regno, quindi tenta una prova CD 20 usando l'abilità scelta. Il Talento di Regno Governo Collaborativo aumenta l'efficienza di questa attività (bonus +3 invece di +2).",
+      "outcomes": {
+        "critical_success": "Come Successo.",
+        "success": "Concedi a quel leader un Bonus di Circostanza +2 a una prova di regno che usa quell'abilità, a patto che il leader tenti la prova durante lo stesso Turno di Regno.",
+        "failure": "Nessun beneficio.",
+        "critical_failure": "Nessun beneficio."
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "text": "Il leader bersaglio ottiene +2 Circostanza a una prova con l'abilità scelta, in questo stesso Turno di Regno."
+          }
+        ],
+        "success": [
+          {
+            "text": "Il leader bersaglio ottiene +2 Circostanza a una prova con l'abilità scelta, in questo stesso Turno di Regno."
+          }
+        ]
+      }
+    },
+    {
+      "id": "celebrate_holiday",
+      "name": "Celebrare Festività",
+      "traits": [
+        "Governo",
+        "Pausa"
+      ],
+      "dc": {
+        "note": "+4 se hai Celebrato Festività nel turno precedente"
+      },
+      "requirements": "",
+      "cost": "Su Successo o Fallimento: tira 1 Dado Risorsa e spendi PR pari al risultato.",
+      "description": "Dichiari un giorno di festa. Le festività possono essere religiose, storiche, militari o semplicemente festive, ma tutte sollevano i cittadini dalle loro fatiche e danno loro la possibilità di fare baldoria a spese del regno.",
+      "outcomes": {
+        "critical_success": "Le festività sono una gioia per il popolo e le entrate accessorie coprono i costi. Ottieni un Bonus di Circostanza +2 alle prove di Lealtà fino alla fine del prossimo Turno di Regno.",
+        "success": "Bonus di Circostanza +1 alle prove di Lealtà fino alla fine del prossimo Turno di Regno. Tira 1 Dado Risorsa e spendi PR pari al risultato; se non puoi, considera il risultato un Fallimento Critico.",
+        "failure": "La festività trascorre con poco entusiasmo ma è comunque costosa. Tira 1 Dado Risorsa e spendi PR pari al risultato; se non puoi, considera il risultato un Fallimento Critico.",
+        "critical_failure": "Durante il prossimo turno riduci il totale dei Dadi Risorsa di 4. Subisci inoltre una Penalità di Circostanza −1 alle prove basate su Lealtà fino alla fine del prossimo Turno di Regno."
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "name": "Celebrare Festività (Circostanza)"
+          }
+        ],
+        "success": [
+          {
+            "name": "Celebrare Festività (Circostanza)"
+          },
+          {
+            "text": "Costo della festività: 1 Dado Risorsa in PR (se non puoi pagare è un Fallimento Critico)"
+          }
+        ],
+        "failure": [
+          {
+            "text": "Costo della festività: 1 Dado Risorsa in PR (se non puoi pagare è un Fallimento Critico)"
+          }
+        ],
+        "critical_failure": [
+          {
+            "text": "−4 al totale dei Dadi Risorsa del prossimo turno"
+          },
+          {
+            "name": "Festività disastrosa (Circostanza)"
+          }
+        ]
+      }
+    },
+    {
+      "id": "create_a_masterpiece",
+      "name": "Creare un Capolavoro",
+      "traits": [
+        "Governo",
+        "Pausa"
+      ],
+      "requirements": "Una sola volta per Turno di Regno, indipendentemente dal numero di leader.",
+      "cost": "",
+      "description": "Incoraggi gli artisti del regno a creare ed esporre un'opera d'arte magistrale per rafforzare la reputazione del regno. Il risultato influisce su Fama o Infamia, a seconda del tipo di regno.",
+      "outcomes": {
+        "critical_success": "Guadagni 1 punto Fama/Infamia immediatamente e, all'inizio del prossimo Turno di Regno, 1 ulteriore punto. Tira 2 Dadi Risorsa e guadagna PR pari al risultato.",
+        "success": "Guadagni immediatamente 1 punto Fama/Infamia.",
+        "failure": "Il tuo tentativo di creare un capolavoro fallisce.",
+        "critical_failure": "Perdi 1 punto Fama/Infamia; se non ne hai da perdere, guadagni 1d4 Malcontento."
+      },
+      "effects": {
+        "critical_success": [
+          null,
+          {
+            "text": "1 punto in più all'inizio del prossimo Turno di Regno"
+          },
+          null
+        ],
+        "critical_failure": [
+          null,
+          {
+            "text": "Solo se non hai punti Fama/Infamia da perdere"
+          }
+        ]
+      }
+    },
+    {
+      "id": "craft_luxuries",
+      "name": "Fabbricare Oggetti di Lusso",
+      "traits": [
+        "Governo",
+        "Pausa"
+      ],
+      "requirements": "",
+      "cost": "Tira 1 Dado Risorsa e spendi PR pari al risultato.",
+      "description": "Incoraggi i tuoi artigiani a creare beni di lusso e puoi anche aiutarli in questo intento. Tira 1 Dado Risorsa e spendi PR pari al risultato, poi tenta una prova base.",
+      "outcomes": {
+        "critical_success": "I tuoi artigiani superano le aspettative: guadagni 1d4 Prodotti di Lusso.",
+        "success": "I tuoi artigiani producono merci deliziose: guadagni 1 Prodotto di Lusso.",
+        "failure": "I tuoi artigiani non riescono a produrre nulla di degno di nota.",
+        "critical_failure": "Alcuni artigiani approfittano dell'occasione per i propri piani o per vendere ai mercati clandestini. Aumenta di 1 una delle tue Rovine."
+      },
+      "cost_data": [
+        {
+          "text": "1 Dado Risorsa in PR"
+        }
+      ]
+    },
+    {
+      "id": "pledge_of_fealty",
+      "name": "Giuramento di Fedeltà",
+      "traits": [
+        "Governo",
+        "Pausa"
+      ],
+      "dc": {
+        "note": "CD di Negoziazione del gruppo bersaglio (il GM la conosce)"
+      },
+      "requirements": "",
+      "cost": "",
+      "description": "Quando i tuoi rappresentanti incontrano coloni indipendenti, rifugiati, gruppi indipendenti o altre bande riunite nelle terre selvagge che non fanno già parte di una nazione, puoi offrire loro un posto nel tuo regno in cambio della loro fedeltà. Alcuni gruppi rispondono meglio (o peggio) a specifiche abilità.",
+      "outcomes": {
+        "critical_success": "Il gruppo entra a far parte del regno, concedendo il beneficio elencato nella sua descrizione. Se non hai ancora rivendicato l'esagono in cui risiede, lo fai immediatamente guadagnando 10 PE e aumentando la Dimensione di 1. Se l'esagono non confina con il regno diventa territorio secondario.",
+        "success": "Come Successo Critico, ma non rivendichi l'esagono. Tira 1 Dado Risorsa: devi spendere PR pari al risultato per integrare il gruppo nel regno.",
+        "failure": "Il gruppo rifiuta di giurare per ora. Puoi ritentare il prossimo turno. Aumenta Malcontento di 1.",
+        "critical_failure": "Il gruppo rifiuta e non compirà mai un Giuramento di Fedeltà verso il tuo regno, salvo cambiamenti significativi. Aumenta Malcontento di 2 e di 1 una Rovina a tua scelta."
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "text": "Solo se rivendichi l'esagono del gruppo"
+          },
+          {
+            "text": "Il gruppo entra nel regno. Se rivendichi il suo esagono, segnalo sulla Mappa (Dimensione +1); se non confina col regno diventa territorio secondario."
+          }
+        ],
+        "success": [
+          {
+            "text": "Costo di integrazione: 1 Dado Risorsa in PR"
+          },
+          {
+            "text": "Il gruppo entra nel regno, ma non rivendichi l'esagono."
+          }
+        ]
+      }
+    },
+    {
+      "id": "infiltration",
+      "name": "Infiltrarsi",
+      "traits": [
+        "Governo",
+        "Pausa"
+      ],
+      "requirements": "",
+      "cost": "",
+      "description": "Puoi inviare spie per raccogliere informazioni su una nazione vicina, un culto, una gilda di ladri, un Insediamento Indipendente non reclamato o un luogo d'avventura inesplorato. In alternativa puoi inviare le spie a indagare sullo stato di salute del tuo regno.",
+      "outcomes": {
+        "critical_success": "Apprendi qualcosa di prezioso o utile; l'informazione è esatta e precisa. Se stavi indagando sulla salute del regno, scegli: riduci Malcontento di 1d4 oppure riduci di 1 una Rovina a tua scelta.",
+        "success": "Apprendi qualcosa di utile, ma le informazioni sono vaghe e imprecise. Se indagavi sulla salute del regno, riduci Malcontento di 1.",
+        "failure": "Le tue spie non scoprono nulla di importante, ma non sono state compromesse.",
+        "critical_failure": "Non hai più notizie delle tue spie, ma qualcuno certamente sì. Penalità di Circostanza −2 a tutte le prove di regno fino alla fine del prossimo Turno di Regno."
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "text": "Salute del regno — scegli questo oppure la Rovina"
+          },
+          {
+            "text": "Salute del regno — scegli questo oppure il Malcontento"
+          },
+          {
+            "text": "Apprendi un'informazione esatta e precisa."
+          }
+        ],
+        "success": [
+          {
+            "text": "Solo se indagavi sulla salute del regno"
+          },
+          {
+            "text": "Apprendi qualcosa di utile ma vago."
+          }
+        ],
+        "critical_failure": [
+          {
+            "name": "Spie compromesse (Circostanza)"
+          }
+        ]
+      }
+    },
+    {
+      "id": "capital_investment",
+      "name": "Investimento di Capitali",
+      "traits": [
+        "Governo",
+        "Pausa"
+      ],
+      "requirements": "Devi trovarti all'interno dell'area di influenza di un insediamento che contenga almeno una Banca.",
+      "cost": "Monete e beni personali pari alla voce «Ricchezze per Personaggio Aggiuntivo» della Tabella Tesoro del Gruppo per Livello, al livello del tuo regno. Investimenti inferiori causano un Fallimento Critico automatico; quelli superiori vanno persi.",
+      "description": "Contribuisci con fondi dal tuo patrimonio personale al bene del regno. Il contributo genera attività economica sotto forma di PR utilizzabili nel Turno di Regno in corso o in quello successivo, a tua scelta. Puoi usare Investimento di Capitali anche per rimborsare i fondi di Attingere alla Tesoreria: in tal caso non serve alcun tiro.",
+      "outcomes": {
+        "critical_success": "Tira immediatamente 4 Dadi Risorsa e guadagna PR pari al risultato.",
+        "success": "Tira immediatamente 2 Dadi Risorsa e guadagna PR pari al risultato.",
+        "failure": "Guadagni 1d4 PR.",
+        "critical_failure": "Scegli: tira 1 Dado Risorsa e guadagna PR pari al risultato aumentando anche Crimine di un importo uguale, oppure guadagni 0 PR e aumenti Crimine di 1."
+      },
+      "effects": {
+        "critical_failure": [
+          {
+            "text": "Scegli: PR da 1 Dado Risorsa…"
+          },
+          {
+            "text": "…e Crimine di pari importo (regola la quantità)"
+          },
+          {
+            "text": "…oppure 0 PR e Crimine +1"
+          }
+        ]
+      },
+      "cost_data": [
+        {
+          "text": "Investi monete e beni personali pari alla voce «Ricchezze per Personaggio Aggiuntivo» al livello del regno. Investire meno è un Fallimento Critico automatico."
+        }
+      ]
+    },
+    {
+      "id": "send_diplomatic_envoy",
+      "name": "Inviare un Delegato Diplomatico",
+      "traits": [
+        "Governo",
+        "Pausa"
+      ],
+      "dc": {
+        "note": "CD di Negoziazione del gruppo bersaglio. Contro una nazione in guerra con te: Penalità di Circostanza −4 e risultato peggiorato di un grado."
+      },
+      "requirements": "",
+      "cost": "",
+      "description": "Invii emissari a un altro gruppo per favorire relazioni e comunicazioni positive. La prima volta che il regno stabilisce relazioni diplomatiche nella campagna guadagna 60 PE come Ricompensa Miliare.",
+      "outcomes": {
+        "critical_success": "Stabilisci relazioni diplomatiche e ottieni un Bonus di Circostanza +2 a tutte le prove effettuate con quel gruppo fino al prossimo Turno di Regno.",
+        "success": "Stabilisci relazioni diplomatiche.",
+        "failure": "Gli emissari sono ricevuti ma il gruppo non è pronto. Se ritenti nel prossimo Turno di Regno ottieni un Bonus di Circostanza +2 a quella prova.",
+        "critical_failure": "Disastro. Scegli: guadagni 1d4 Malcontento, aggiungi 1 a una Rovina a tua scelta, oppure tira 2 Dadi Risorsa e spendi PR pari al risultato. In ogni caso non puoi ritentare verso questo bersaglio per 3 Turni di Regno."
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "text": "Stabilisci relazioni diplomatiche e ottieni +2 Circostanza a tutte le prove con quel gruppo fino al prossimo Turno di Regno."
+          }
+        ],
+        "success": [
+          {
+            "text": "Stabilisci relazioni diplomatiche."
+          }
+        ],
+        "failure": [
+          {
+            "text": "Nessuna relazione. Se ritenti il prossimo turno hai +2 Circostanza."
+          }
+        ],
+        "critical_failure": [
+          {
+            "text": "Scegli uno dei tre"
+          },
+          {
+            "text": "Scegli uno dei tre"
+          },
+          {
+            "text": "Scegli uno dei tre"
+          },
+          {
+            "text": "Non puoi ritentare verso questo bersaglio per 3 Turni di Regno."
+          }
+        ]
+      }
+    },
+    {
+      "id": "provide_care",
+      "name": "Offrire Assistenza",
+      "traits": [
+        "Governo",
+        "Pausa"
+      ],
+      "requirements": "",
+      "cost": "",
+      "description": "Tenta una prova base per organizzare e incoraggiare i guaritori, gli speziali, i medici e gli altri assistenti dei tuoi insediamenti a fornire cure e supporto ai cittadini in difficoltà.",
+      "outcomes": {
+        "critical_success": "Riduci Malcontento di 1 e riduci di 1 una Rovina a tua scelta.",
+        "success": "Riduci Malcontento di 1.",
+        "failure": "Non fornisci alcuna assistenza degna di nota, ma almeno non peggiori le cose.",
+        "critical_failure": "Aumenti di 1 il Malcontento oppure una Rovina a tua scelta."
+      },
+      "effects": {
+        "critical_failure": [
+          {
+            "text": "Scegli questo oppure la Rovina"
+          },
+          {
+            "text": "Scegli questo oppure il Malcontento"
+          }
+        ]
+      }
+    },
+    {
+      "id": "prognostication",
+      "name": "Pronosticare",
+      "traits": [
+        "Governo",
+        "Pausa"
+      ],
+      "requirements": "",
+      "cost": "",
+      "description": "Gli incantatori del regno leggono i presagi e forniscono consigli su come prepararsi al meglio per gli eventi futuri.",
+      "outcomes": {
+        "critical_success": "Se in questo turno si verifica un evento casuale, tira due volte per determinarlo: i giocatori scelgono quale dei due si verifica e il regno ottiene un Bonus di Circostanza +2 alla prova per risolverlo.",
+        "success": "In questo turno ottieni un Bonus di Circostanza +1 alle prove per risolvere gli eventi casuali del regno.",
+        "failure": "I tuoi incantatori non prevedono alcun aiuto.",
+        "critical_failure": "Letture imprecise: in questo turno si verifica automaticamente un evento casuale. Tira due volte; il GM decide quale applicare."
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "text": "Se questo turno si verifica un evento casuale, tiralo due volte: scegliete voi quale accade, e avete +2 Circostanza per risolverlo."
+          }
+        ],
+        "success": [
+          {
+            "text": "+1 Circostanza alle prove per risolvere gli eventi casuali di questo turno."
+          }
+        ],
+        "critical_failure": [
+          {
+            "text": "Questo turno si verifica automaticamente un evento casuale: tiralo due volte, il GM decide quale applicare."
+          }
+        ]
+      }
+    },
+    {
+      "id": "recruit_army",
+      "name": "Reclutare Esercito",
+      "traits": [
+        "Esercito",
+        "Pausa"
+      ],
+      "dc": {
+        "note": "CD di Reclutamento dell'esercito scelto. Guerra per un Esercito Base, Governare per un Esercito Specializzato."
+      },
+      "requirements": "",
+      "cost": "",
+      "description": "O recluti un esercito tra i cittadini del regno, o ti assicuri la fedeltà di un esercito specializzato incontrato nelle Terre Rubate. Nota: questa attività si svolge durante il passo Attività di Governo.",
+      "outcomes": {
+        "critical_success": "Recluti l'esercito, che diventa Efficiente.",
+        "success": "Recluti l'esercito.",
+        "failure": "Non riesci a reclutare l'esercito.",
+        "critical_failure": "Ottieni 1 Malcontento e non puoi più tentare di reclutare un esercito fino al prossimo Turno di Regno."
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "text": "Recluti l'esercito, che diventa Efficiente."
+          }
+        ],
+        "success": [
+          {
+            "text": "Recluti l'esercito."
+          }
+        ],
+        "critical_failure": [
+          null,
+          {
+            "text": "Non puoi più reclutare eserciti fino al prossimo Turno di Regno."
+          }
+        ]
+      }
+    },
+    {
+      "id": "request_foreign_aid",
+      "name": "Richiedere Aiuto Estero",
+      "traits": [
+        "Governo",
+        "Pausa"
+      ],
+      "dc": {
+        "note": "CD di Negoziazione del gruppo bersaglio + 2"
+      },
+      "requirements": "Hai relazioni diplomatiche con il gruppo a cui chiedi aiuto.",
+      "cost": "",
+      "description": "Quando si verifica un disastro, invia una richiesta di aiuto a un'altra nazione con cui hai relazioni diplomatiche.",
+      "outcomes": {
+        "critical_success": "Bonus di Circostanza +4 a qualsiasi prova di abilità di Regno tentata nel resto del Turno di Regno (puoi applicarlo dopo il tiro ma prima di conoscerne l'effetto). Inoltre tira 2 Dadi Risorsa e guadagna PR pari al risultato; se non spesi, questi PR non contano per i PE di fine turno.",
+        "success": "Come Successo Critico, ma scegli un solo beneficio: tira 1 Dado Risorsa e guadagna PR pari al risultato, oppure ottieni un Bonus di Circostanza +2 a una prova.",
+        "failure": "Gli aiuti non arrivano in tempo. All'inizio del prossimo Turno di Regno guadagni 1d4 PR.",
+        "critical_failure": "Nessun aiuto, e le tue richieste fanno sembrare il regno disperato. Aumenta Malcontento di 1d4."
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "name": "Aiuto Estero (Circostanza)"
+          },
+          null
+        ],
+        "success": [
+          {
+            "text": "Scegli questo oppure il bonus"
+          },
+          {
+            "name": "Aiuto Estero (Circostanza)"
+          }
+        ],
+        "failure": [
+          {
+            "text": "All'inizio del prossimo Turno di Regno"
+          }
+        ]
+      }
+    },
+    {
+      "id": "repair_reputation",
+      "name": "Riparare Reputazione",
+      "traits": [
+        "Governo",
+        "Pausa"
+      ],
+      "requirements": "",
+      "cost": "",
+      "description": "Quando la reputazione della nazione è danneggiata, concentri gli sforzi su una campagna per rassicurare i cittadini, reprimere la criminalità, organizzare riparazioni o correggere una cattiva opinione pubblica. La CD è la tua CD di Controllo + 2.",
+      "outcomes": {
+        "critical_success": "Riduci di 2 la Rovina bersaglio e riduci di 1 la sua penalità di Rovina attuale, fino a un minimo di 0.",
+        "success": "Riduci la Rovina bersaglio di 1.",
+        "failure": "Non riesci a ridurre la Rovina bersaglio. Non puoi tentare Riparare Reputazione su questa Rovina per 1 Turno di Regno.",
+        "critical_failure": "Fallisci in modo pubblico e imbarazzante. Aumenta Malcontento di 1d4 e non puoi tentare Riparare Reputazione per 3 Turni di Regno."
+      },
+      "effects": {
+        "failure": [
+          {
+            "text": "Non puoi tentare Riparare Reputazione su questa Rovina per 1 Turno di Regno."
+          }
+        ],
+        "critical_failure": [
+          null,
+          {
+            "text": "Non puoi tentare Riparare Reputazione per 3 Turni di Regno."
+          }
+        ]
+      },
+      "skills_note": "Arti riduce Corruzione, Commercio riduce Crimine, Ingegneria riduce Decadenza, Intrigo riduce Conflitto."
+    },
+    {
+      "id": "rest_and_relax",
+      "name": "Riposare e Rilassarsi",
+      "traits": [
+        "Governo",
+        "Pausa"
+      ],
+      "dc": {
+        "note": "+4 se il regno ha scelto di Riposare e Rilassarsi nel Turno di Regno precedente"
+      },
+      "requirements": "",
+      "cost": "",
+      "description": "Ti prendi del tempo per rilassarti ed estendi la possibilità di rilassarsi anche ai tuoi cittadini, dando il buon esempio alla nazione.",
+      "outcomes": {
+        "critical_success": "Riduci Malcontento di 1 e la prossima attività di Governo guadagna un Bonus di Circostanza +2.",
+        "success": "Riduci Malcontento di 1.",
+        "failure": "Il riposo è benvenuto, ma non particolarmente vantaggioso a lungo termine.",
+        "critical_failure": "Penalità di Circostanza −2 alla prossima prova di abilità con un'attività di Governo."
+      },
+      "effects": {
+        "critical_success": [
+          null,
+          {
+            "text": "La prossima attività di Governo ottiene +2 Circostanza."
+          }
+        ],
+        "critical_failure": [
+          {
+            "text": "La prossima prova di un'attività di Governo subisce −2 Circostanza."
+          }
+        ]
+      },
+      "skills_note": "Arti: intrattenimento o hobby. Nautica: gite su laghi e fiumi. Studio: lettura e studio. Commercio: acquisti e banchetti. Terre Selvagge: relax in campagna."
+    },
+    {
+      "id": "quell_unrest",
+      "name": "Sedare Malcontento",
+      "traits": [
+        "Governo",
+        "Pausa"
+      ],
+      "requirements": "Non più di una volta per Turno di Regno.",
+      "cost": "",
+      "description": "Invii i tuoi agenti tra i cittadini con l'incarico di reprimere il dissenso e calmare i disordini.",
+      "outcomes": {
+        "critical_success": "Riduci Malcontento di 1d6.",
+        "success": "Riduci Malcontento di 1.",
+        "failure": "Non riesci a ridurre il Malcontento.",
+        "critical_failure": "Inciti ulteriore dissenso. Scegli: aumenta Malcontento di 1d4 oppure aumenta di 1 due Rovine a tua scelta."
+      },
+      "effects": {
+        "critical_failure": [
+          {
+            "text": "Scegli questo oppure le due Rovine"
+          },
+          {
+            "text": "Prima Rovina a scelta"
+          },
+          {
+            "text": "Seconda Rovina a scelta"
+          }
+        ]
+      },
+      "skills_note": "Non puoi mai usare la stessa abilità per questa attività in Turni di Regno consecutivi."
+    },
+    {
+      "id": "creative_solution",
+      "name": "Soluzione Creativa",
+      "traits": [
+        "Fortuna",
+        "Governo",
+        "Pausa"
+      ],
+      "requirements": "Non puoi influenzare una stessa prova con Soluzione Creativa e Soluzione Sovrannaturale insieme.",
+      "cost": "",
+      "description": "Lavori con gli studiosi, i pensatori e i praticanti di esperimenti magici e mondani del regno per trovare nuovi modi di risolvere i problemi quando le attività abituali non funzionano.",
+      "outcomes": {
+        "critical_success": "Puoi invocare la soluzione su qualsiasi prova di abilità di Regno del resto del turno: dichiaralo dopo il tiro ma prima di conoscere il risultato, poi ritira la prova con un Bonus di Circostanza +2 accettando il nuovo risultato. Se non la usi entro fine turno guadagni invece 10 PE.",
+        "success": "Come Successo Critico, ma costa 1d4 PR di ricerca, pagati subito che tu usi o meno la soluzione.",
+        "failure": "La ricerca costa 2d6 PR e non fornisce alcun vantaggio.",
+        "critical_failure": "Come Fallimento, e i tuoi studiosi sono così frustrati da subire una Penalità di Circostanza −1 alle prove basate sulla Cultura fino alla fine del prossimo Turno di Regno."
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "text": "Puoi ritirare una prova di Regno di questo turno con +2 Circostanza."
+          },
+          {
+            "text": "Solo se non usi la soluzione entro fine turno"
+          }
+        ],
+        "success": [
+          {
+            "text": "Costo della ricerca, pagato subito"
+          },
+          {
+            "text": "Puoi ritirare una prova di Regno di questo turno con +2 Circostanza."
+          }
+        ],
+        "failure": [
+          {
+            "text": "Costo della ricerca, senza alcun vantaggio"
+          }
+        ],
+        "critical_failure": [
+          {
+            "text": "Costo della ricerca, senza alcun vantaggio"
+          },
+          {
+            "name": "Studiosi frustrati (Circostanza)"
+          }
+        ]
+      }
+    },
+    {
+      "id": "supernatural_solution",
+      "name": "Soluzione Sovrannaturale",
+      "traits": [
+        "Fortuna",
+        "Governo",
+        "Pausa"
+      ],
+      "requirements": "Non puoi influenzare una stessa prova con Soluzione Sovrannaturale e Soluzione Creativa insieme.",
+      "cost": "",
+      "description": "I tuoi incantatori cercano di risolvere i problemi quando le soluzioni banali non sono sufficienti.",
+      "outcomes": {
+        "critical_success": "Puoi invocare la soluzione su qualsiasi prova di abilità di Regno del resto del turno: dichiaralo appena prima del tiro, poi tenta una prova di Magia contro la stessa CD in aggiunta alla prova e prendi il risultato che preferisci. Se non la usi entro fine turno guadagni invece 10 PE.",
+        "success": "Come Successo Critico, ma costa 1d4 PR di ricerca, pagati subito che tu usi o meno la soluzione.",
+        "failure": "La ricerca costa 2d6 PR e non fornisce alcun vantaggio.",
+        "critical_failure": "Come Fallimento, e non puoi tentare di nuovo una Soluzione Sovrannaturale per 2 Turni di Regno."
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "text": "Puoi affiancare una prova di Magia a una prova di Regno di questo turno e prendere il risultato migliore."
+          },
+          {
+            "text": "Solo se non usi la soluzione entro fine turno"
+          }
+        ],
+        "success": [
+          {
+            "text": "Costo della ricerca, pagato subito"
+          },
+          {
+            "text": "Puoi affiancare una prova di Magia a una prova di Regno di questo turno."
+          }
+        ],
+        "failure": [
+          {
+            "text": "Costo della ricerca, senza alcun vantaggio"
+          }
+        ],
+        "critical_failure": [
+          {
+            "text": "Costo della ricerca, senza alcun vantaggio"
+          },
+          {
+            "text": "Non puoi tentare di nuovo una Soluzione Sovrannaturale per 2 Turni di Regno."
+          }
+        ]
+      }
+    },
+    {
+      "id": "establish_trade_agreement",
+      "name": "Stabilire un Accordo Commerciale",
+      "traits": [
+        "Governo",
+        "Pausa"
+      ],
+      "dc": {
+        "note": "La più alta tra la CD di Negoziazione del gruppo e la tua CD di Controllo"
+      },
+      "requirements": "Hai relazioni diplomatiche con il gruppo con cui vuoi stabilire l'accordo.",
+      "cost": "",
+      "description": "Invii una banda di mercanti per stabilire un accordo commerciale tra il tuo regno e un gruppo con cui hai stabilito relazioni diplomatiche.",
+      "outcomes": {
+        "critical_success": "Stabilisci l'accordo e i tuoi mercanti tornano con dei doni: tira immediatamente 2 Dadi Risorsa e guadagna PR pari al risultato.",
+        "success": "Stabilisci con successo un accordo commerciale.",
+        "failure": "I mercanti devono addolcire l'accordo: tira 2 Dadi Risorsa e spendi PR pari al risultato. Se ci riesci stabilisci l'accordo, altrimenti il tentativo fallisce.",
+        "critical_failure": "I tuoi commercianti non tornano. Ottieni 1 Malcontento e, fino alla fine del prossimo Turno di Regno, subisci una Penalità di Circostanza −1 a tutte le prove di Economia."
+      },
+      "effects": {
+        "critical_success": [
+          null,
+          {
+            "text": "L'accordo commerciale è stabilito: aggiungilo nella scheda del regno."
+          }
+        ],
+        "success": [
+          {
+            "text": "L'accordo commerciale è stabilito: aggiungilo nella scheda del regno."
+          }
+        ],
+        "failure": [
+          {
+            "text": "Devi pagarli per stabilire l'accordo; se non puoi, il tentativo fallisce"
+          }
+        ],
+        "critical_failure": [
+          null,
+          {
+            "name": "Commercianti perduti (Circostanza)"
+          }
+        ]
+      },
+      "skills_note": "Nautica se un fiume navigabile collega il tuo regno al territorio dell'altro gruppo. Magia solo se il regno è almeno Maestro in Magia. Altrimenti Commercio."
+    },
+    {
+      "id": "relocate_capital",
+      "name": "Trasferire la Capitale",
+      "traits": [
+        "Governo",
+        "Pausa"
+      ],
+      "requirements": "Un insediamento diverso dalla capitale attuale deve contenere un Castello, un Palazzo o un Municipio. Tutti i leader devono spendere tutte le loro Attività di Governo del turno in questa attività. Non puoi Trasferire la Capitale di nuovo per almeno 3 Turni di Regno.",
+      "cost": "",
+      "description": "I leader annunciano che stanno sradicando la sede del governo dalla sua attuale dimora per ristabilirla in un altro insediamento.",
+      "outcomes": {
+        "critical_success": "Il trasferimento avviene in modo splendido, con la gente entusiasta della nuova capitale.",
+        "success": "Il trasloco si svolge con disagi minimi, ma alcune persone sono turbate. Aumenta Malcontento di 1.",
+        "failure": "La mossa provoca infelicità. Guadagni 1 Malcontento e aumenti di 1 due Rovine a scelta.",
+        "critical_failure": "Lo spostamento non ha successo e la capitale resta invariata. Guadagni 1d4 Malcontento, aumenti di 1 tre Rovine a scelta e di 3 la quarta."
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "text": "La capitale si trasferisce senza attriti: cambiala dalla scheda Città."
+          }
+        ],
+        "success": [
+          null,
+          {
+            "text": "La capitale si trasferisce: cambiala dalla scheda Città."
+          }
+        ],
+        "failure": [
+          null,
+          {
+            "text": "Prima Rovina a scelta"
+          },
+          {
+            "text": "Seconda Rovina a scelta"
+          },
+          {
+            "text": "La capitale si trasferisce: cambiala dalla scheda Città."
+          }
+        ],
+        "critical_failure": [
+          null,
+          {
+            "text": "Prima Rovina a scelta"
+          },
+          {
+            "text": "Seconda Rovina a scelta"
+          },
+          {
+            "text": "Terza Rovina a scelta"
+          },
+          {
+            "text": "Quarta Rovina"
+          },
+          {
+            "text": "La capitale resta invariata."
+          }
+        ]
+      }
+    },
+    {
+      "id": "abandon_hex",
+      "name": "Abbandonare Esagono",
+      "traits": [
+        "Pausa",
+        "Regione"
+      ],
+      "dc": {
+        "note": "+1 per ogni esagono aggiuntivo abbandonato oltre il primo"
+      },
+      "requirements": "L'esagono da abbandonare deve essere Controllato.",
+      "cost": "",
+      "description": "Rinunci a un esagono e ritiri tutti i coloni o gli esploratori. Puoi abbandonare più di un esagono alla volta, ma ogni esagono in più aumenta di 1 la CD. Il Malcontento guadagnato raddoppia se l'esagono include un insediamento; un insediamento in un esagono abbandonato diventa un Insediamento Indipendente.",
+      "outcomes": {
+        "critical_success": "Abbandoni l'esagono, diminuendo la Dimensione di 1 per esagono. Guadagni 1 PR per ogni esagono abbandonato.",
+        "success": "Come Successo Critico, ma non ottieni PR e incrementi Malcontento di 1.",
+        "failure": "Abbandoni l'esagono, ma alcuni cittadini diventano rifugiati scontenti. Aumenta Malcontento di 2 e tenta una Prova Semplice CD 6: se fallisci, i rifugiati diventano banditi e nella prossima Fase Evento il regno subisce automaticamente un evento Abusivi.",
+        "critical_failure": "Come Fallimento, ma aumenta Malcontento di 3 e si verifica automaticamente un evento Banditi in Attività invece di un evento Abusivi."
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "text": "1 PR per ogni esagono abbandonato"
+          },
+          {
+            "text": "Abbandona l'esagono dalla Mappa: la Dimensione cala di 1 per esagono."
+          }
+        ],
+        "success": [
+          null,
+          {
+            "text": "Abbandona l'esagono dalla Mappa: la Dimensione cala di 1 per esagono."
+          }
+        ],
+        "failure": [
+          null,
+          {
+            "text": "Abbandona l'esagono dalla Mappa. Tenta una Prova Semplice CD 6: se fallisci, la prossima Fase Evento porta un evento Abusivi."
+          }
+        ],
+        "critical_failure": [
+          null,
+          {
+            "text": "Abbandona l'esagono dalla Mappa. Si verifica automaticamente un evento Banditi nella Fase Attività."
+          }
+        ]
+      }
+    },
+    {
+      "id": "go_fishing",
+      "name": "Andare a Pesca",
+      "traits": [
+        "Pausa",
+        "Regione"
+      ],
+      "requirements": "Devi avere almeno un esagono rivendicato che includa terreno fluviale o lacustre.",
+      "cost": "",
+      "description": "Tenta una prova base per pescare il cibo nei fiumi e nei laghi del tuo regno.",
+      "outcomes": {
+        "critical_success": "Ottieni 1d4 prodotti Cibo.",
+        "success": "Ottieni 1 prodotto Cibo.",
+        "failure": "Non ottieni prodotti Cibo.",
+        "critical_failure": "Perdi dei pescatori per tragici incidenti: ottieni 1 Malcontento."
+      }
+    },
+    {
+      "id": "build_roads",
+      "name": "Costruire Strade",
+      "traits": [
+        "Pausa",
+        "Regione"
+      ],
+      "requirements": "L'esagono in cui vuoi costruire le strade deve essere Rivendicato dal tuo regno.",
+      "cost": "PR determinati dal terreno più inospitale dell'esagono (Montagne 12, Paludi 8, Foreste 4, Colline 2, Pianure 1). Doppio se l'esagono include fiumi che lo attraversano da un lato all'altro: in tal caso aggiungi anche la struttura Ponte all'esagono.",
+      "description": "Ordini agli ingegneri del regno di costruire una rete di strade robuste attraverso l'esagono. I viaggi lungo le strade utilizzano un tipo di terreno migliore di quello circostante.",
+      "outcomes": {
+        "critical_success": "Costruisci strade nell'esagono obiettivo e in un esagono adiacente rivendicato senza strade, i cui terreni siano ospitali almeno quanto quelli dell'obiettivo. Se nessuno è appropriato, tratta il risultato come un Successo.",
+        "success": "Costruisci strade nell'esagono.",
+        "failure": "Non riesci a costruire strade nell'esagono.",
+        "critical_failure": "Perdi diversi operai per incidenti, banditismo o un mostro feroce. Guadagni 1 Malcontento."
+      }
+    },
+    {
+      "id": "harvest_crops",
+      "name": "Fare il Raccolto",
+      "traits": [
+        "Pausa",
+        "Regione"
+      ],
+      "requirements": "",
+      "cost": "",
+      "description": "Tenta una prova base per procurarsi cibo selvatico o raccogliere i raccolti in eccesso dalle fattorie.",
+      "outcomes": {
+        "critical_success": "Guadagna 1d4 prodotti Cibo.",
+        "success": "Ottieni 1 prodotto Cibo.",
+        "failure": "Non ottieni prodotti Cibo.",
+        "critical_failure": "Perdi 1d4 prodotti Cibo perché vanno a male; se non hai Cibo da perdere, ottieni invece 1 Malcontento."
+      },
+      "effects": {
+        "critical_failure": [
+          null,
+          {
+            "text": "Solo se non hai Cibo da perdere"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fortify_hex",
+      "name": "Fortificare Esagono",
+      "traits": [
+        "Pausa",
+        "Regione"
+      ],
+      "requirements": "L'esagono bersaglio deve essere Rivendicato dal tuo regno e non deve avere un insediamento al suo interno.",
+      "cost": "PR determinati dal terreno più inospitale dell'esagono (Montagne 12, Paludi 8, Foreste 4, Colline 2, Pianure 1).",
+      "description": "Ordini ai tuoi ingegneri di costruire un accampamento protetto, come un forte o un barbacane, che serva da postazione difensiva nell'esagono. Un esagono fortificato concede un bonus in guerra e offre ai PG in viaggio un luogo di riposo che impedisce ai mostri erranti di interrompere il riposo.",
+      "outcomes": {
+        "critical_success": "Ottieni un rimborso pari alla metà dei PR spesi, quindi riduci Malcontento di 1.",
+        "success": "Stabilisci la fortificazione nell'esagono. Riduci Malcontento di 1.",
+        "failure": "Non riesci a fortificare l'esagono.",
+        "critical_failure": "Perdi diversi operai per incidenti, banditismo o un mostro feroce. Guadagni 1 Malcontento."
+      }
+    },
+    {
+      "id": "irrigation",
+      "name": "Irrigare",
+      "traits": [
+        "Pausa",
+        "Regione"
+      ],
+      "requirements": "Controlli un esagono adiacente a un fiume o a un lago che di per sé non contiene un fiume o un lago.",
+      "cost": "PR determinati dal terreno più inospitale dell'esagono (Montagne 12, Paludi 8, Foreste 4, Colline 2, Pianure 1).",
+      "description": "Invii scavatori per costruire vie d'acqua, canali o sistemi di drenaggio per convogliare l'acqua da aree che hanno accesso naturale a un fiume o a un lago.",
+      "outcomes": {
+        "critical_success": "L'esagono guadagna un elemento del terreno fiume o lago (o converte un precedente Fallimento Critico di Irrigare in un Fallimento). Recuperi metà dei PR spesi.",
+        "success": "Come Successo Critico, ma senza recuperare alcun PR.",
+        "failure": "L'esagono non ottiene l'elemento di terreno fiume o lago.",
+        "critical_failure": "Come Fallimento, ma i lavori diventano terreno fertile per le malattie. Guadagni 1 Malcontento. Da ora in poi, all'inizio di ogni Fase Evento, tenta una Prova Semplice CD 4 (+1 per ogni esagono del regno con un Fallimento Critico di Irrigare): se fallisci il regno subisce un evento Pestilenza in aggiunta agli altri. Puoi ritentare l'attività in un turno successivo per annullare il Fallimento Critico."
+      },
+      "effects": {
+        "critical_success": [
+          {
+            "text": "L'esagono guadagna un elemento di terreno fiume o lago: aggiungilo dalla Mappa."
+          },
+          {
+            "text": "Rimborso: metà dei PR spesi (regola la quantità)"
+          }
+        ],
+        "success": [
+          {
+            "text": "L'esagono guadagna un elemento di terreno fiume o lago: aggiungilo dalla Mappa."
+          }
+        ],
+        "critical_failure": [
+          null,
+          {
+            "text": "All'inizio di ogni Fase Evento tenta una Prova Semplice CD 4 (+1 per ogni esagono con un Fallimento Critico di Irrigare): se fallisci, il regno subisce un evento Pestilenza. Ritentare Irrigare annulla il Fallimento Critico."
+          }
+        ]
+      }
+    },
+    {
+      "id": "clear_hex",
+      "name": "Liberare Esagono",
+      "traits": [
+        "Pausa",
+        "Regione"
+      ],
+      "dc": {
+        "note": "+2 se l'esagono da liberare non fa ancora parte del tuo regno. Con Esplorazione la CD è quella per livello della creatura/pericolo più alto."
+      },
+      "requirements": "",
+      "cost": "Con Ingegneria: PR determinati dal terreno più inospitale dell'esagono (Montagne 12, Paludi 8, Foreste 4, Colline 2, Pianure 1).",
+      "description": "Ingegneri e mercenari cercano di preparare un esagono per la costruzione di un insediamento, oppure si adoperano per rimuovere una miglioria esistente, un pericolo o un incontro. Se l'esagono ha Rovine o una Struttura esistente, l'azione non rimuove fisicamente gli edifici: potrai incorporarli in seguito in un insediamento costruito qui.",
+      "outcomes": {
+        "critical_success": "Liberi l'esagono. Se hai speso PR ti viene rimborsata metà del costo. Se stavi rimuovendo creature pericolose (ma non pericoli), i tuoi esploratori recuperano 2 Prodotti di Lusso come tesoro.",
+        "success": "Riesci a liberare l'esagono.",
+        "failure": "Non riesci a liberare l'esagono.",
+        "critical_failure": "Fallisci catastroficamente e diversi operai perdono la vita. Ottieni 1 Malcontento."
+      },
+      "skills_note": "Ingegneria per preparare un esagono a un insediamento o demolire una miglioria (costa PR). Esplorazione per rimuovere un pericolo o un incontro: la CD è determinata dalla creatura o dal pericolo di livello più alto nell'esagono."
+    },
+    {
+      "id": "gather_livestock",
+      "name": "Radunare il Bestiame",
+      "traits": [
+        "Pausa",
+        "Regione"
+      ],
+      "requirements": "",
+      "cost": "",
+      "description": "Tenti una prova base per raccogliere il bestiame in eccesso dalla fauna locale, dai ranch e dalle fattorie.",
+      "outcomes": {
+        "critical_success": "Guadagni 1d4 prodotti Cibo.",
+        "success": "Guadagni 1 prodotto Cibo.",
+        "failure": "Non guadagni prodotti Cibo.",
+        "critical_failure": "Perdi 1d4 prodotti Cibo perché andati a male. Se non hai Cibo da perdere, guadagni 1 Malcontento."
+      },
+      "effects": {
+        "critical_failure": [
+          null,
+          {
+            "text": "Solo se non hai Cibo da perdere"
+          }
+        ]
+      }
+    },
+    {
+      "id": "claim_hex",
+      "name": "Rivendicare Esagono",
+      "traits": [
+        "Pausa",
+        "Regione"
+      ],
+      "requirements": "Hai Ricognito l'esagono da reclamare. L'esagono deve essere adiacente ad almeno un esagono che fa già parte del tuo regno. Eventuali pericoli o mostri devono essere prima eliminati (con una normale avventura o con Liberare Esagono).",
+      "cost": "1 PR",
+      "description": "I tuoi esploratori ispezionano completamente l'esagono e cercano di aggiungerlo al dominio del tuo regno. Al 1° livello puoi selezionare questa attività non più di una volta per turno; al 4° livello fino a due volte; dal 9° livello fino a tre volte. Rivendicare con successo un esagono vale 10 PE regno.",
+      "outcomes": {
+        "critical_success": "Rivendichi l'esagono, aumentando la Dimensione del regno di 1. L'occupazione va così bene che puoi tentare immediatamente un'altra Attività di Regione.",
+        "success": "Rivendichi l'esagono, aumentando la Dimensione del regno di 1.",
+        "failure": "Non riesci a rivendicare l'esagono.",
+        "critical_failure": "Non rivendichi l'esagono e perdi coloni ed esploratori: Penalità di Circostanza −1 alle prove di Stabilità fino alla fine del prossimo Turno di Regno."
+      }
+    },
+    {
+      "id": "establish_farmland",
+      "name": "Stabilire Terreno Agricolo",
+      "traits": [
+        "Pausa",
+        "Regione"
+      ],
+      "dc": {
+        "note": "+5 se l'esagono è prevalentemente di Colline"
+      },
+      "requirements": "Pianure o Colline sono gli elementi di terreno predominanti nell'esagono; l'esagono è sotto l'influenza di uno dei tuoi insediamenti.",
+      "cost": "1 PR in un esagono di Pianure, 2 PR in un esagono di Colline.",
+      "description": "Pianti colture e stabilisci il bestiame in fattorie permanenti, ranch e altre operazioni di coltivazione per creare Terreni Agricoli.",
+      "outcomes": {
+        "critical_success": "Stabilisci due esagoni adiacenti di Terreno Agricolo invece di uno. Se l'esagono bersaglio era di Colline, l'esagono aggiuntivo può essere di Colline o di Pianure; altrimenti deve essere di Pianure. Se non è disponibile un esagono appropriato, tratta il risultato come un Successo.",
+        "success": "Stabilisci un esagono di Terreno Agricolo.",
+        "failure": "Non riesci a stabilire un esagono di Terreno Agricolo.",
+        "critical_failure": "Non riesci, e il tentativo diffonde potenzialmente una piaga. All'inizio di ognuna delle due successive Fasi Evento tenta una Prova Semplice CD 6: se fallisci, il regno subisce un evento Carestia in questo esagono e in tutti quelli adiacenti."
+      }
+    },
+    {
+      "id": "establish_settlement",
+      "name": "Stabilire un Insediamento",
+      "traits": [
+        "Pausa",
+        "Regione"
+      ],
+      "requirements": "L'esagono in cui si crea l'insediamento è stato Liberato e al momento non contiene alcun insediamento (inclusi gli Insediamenti Indipendenti).",
+      "cost": "Determinato dal risultato: 1d6 PR (Successo Critico), 3d6 PR (Successo), 6d6 PR (Fallimento). Se non puoi pagare, il risultato è considerato un Fallimento Critico.",
+      "description": "Elabori piani, raccogli risorse, attiri i cittadini e stabilisci i confini per fondare un nuovo insediamento nell'esagono. Un insediamento parte sempre come Villaggio.",
+      "outcomes": {
+        "critical_success": "L'insediamento è fondato in gran parte con l'aiuto di volontari entusiasti. Spendi 1d6 PR.",
+        "success": "Stabilisci l'insediamento. Spendi 3d6 PR.",
+        "failure": "Stabilisci l'insediamento, ma in modo inefficiente e con grandi spese. Spendi 6d6 PR.",
+        "critical_failure": "Non riesci a stabilire l'insediamento."
+      }
+    },
+    {
+      "id": "establish_work_site",
+      "name": "Stabilire un Sito di Lavoro",
+      "traits": [
+        "Governo",
+        "Pausa"
+      ],
+      "requirements": "I campi di Legname richiedono un esagono con una quantità significativa di terreno forestale. Le miniere e le cave richiedono un esagono con una quantità significativa di terreno collinare o montuoso.",
+      "cost": "PR determinati dal terreno più inospitale dell'esagono (Montagne 12, Paludi 8, Foreste 4, Colline 2, Pianure 1).",
+      "description": "Assumi una squadra di operai per recarsi in un esagono che contiene Legname, Minerali o Pietra da raccogliere. Un Sito di Lavoro genera 1 Prodotto per turno, o 2 se si trova in un esagono Risorsa del tipo corrispondente.",
+      "outcomes": {
+        "critical_success": "Stabilisci il Sito di Lavoro e scopri una fornitura inaspettatamente ricca: tutti i rendimenti garantiti da questo sito sono raddoppiati fino alla fine del successivo Turno di Regno.",
+        "success": "Stabilisci un Sito di Lavoro nell'esagono.",
+        "failure": "Non riesci a stabilire un Sito di Lavoro nell'esagono.",
+        "critical_failure": "Non riesci e perdi diversi operai per incidenti, banditismo o un mostro feroce. Guadagni 1 Malcontento."
+      }
+    },
+    {
+      "id": "build_structure",
+      "name": "Costruire una Struttura",
+      "traits": [
+        "Civica",
+        "Pausa"
+      ],
+      "dc": {
+        "note": "CD indicata dalla struttura scelta"
+      },
+      "requirements": "Devi soddisfare i requisiti della struttura e selezionare il numero appropriato di lotti contigui in un singolo isolato.",
+      "cost": "Il costo in PR e Prodotti indicato dalla struttura. Per riparare una struttura danneggiata (non ridotta in Macerie), spendi metà del costo: la struttura esistente dà un Bonus di Oggetto +2 alla prova.",
+      "description": "Cerchi di costruire una struttura nell'insediamento che concede l'Attività Civica. Puoi scegliere qualsiasi struttura per la quale soddisfi i requisiti. A meno che la scheda non indichi diversamente, gli effetti sono immediati; se la struttura modifica il totale dei punti di una Rovina, lo modifica al momento della costruzione.",
+      "outcomes": {
+        "critical_success": "Costruisci o ripari la struttura con grande efficienza e recuperi metà dei Prodotti spesi.",
+        "success": "Costruisci o ripari la struttura.",
+        "failure": "Non riesci a costruire o riparare la struttura. Puoi tentare di completarla nel prossimo Turno di Regno senza ripagare il costo in PR e Prodotti.",
+        "critical_failure": "Non riesci a costruire la struttura; se stavi riparando una struttura danneggiata, questa viene ridotta in Macerie. In entrambi i casi le Macerie riempiono i lotti e vanno ripulite con Demolire prima di poter ritentare."
+      },
+      "skills_note": "L'abilità, il grado di competenza e la CD sono indicati dalla scheda della struttura scelta."
+    },
+    {
+      "id": "demolish",
+      "name": "Demolire",
+      "traits": [
+        "Civica",
+        "Pausa"
+      ],
+      "requirements": "",
+      "cost": "",
+      "description": "Scegli un singolo lotto occupato in uno dei tuoi insediamenti e tenti una prova base per ridurlo in Macerie, quindi rimuovi le Macerie per preparare una nuova struttura. Per le strutture a più lotti servono più attività Demolire (o un Successo Critico). Non appena inizi a demolire una struttura a più lotti, tutti i suoi lotti smettono di funzionare.",
+      "outcomes": {
+        "critical_success": "Scegli: demolisci un'intera struttura a più lotti in una sola volta liberando tutti i suoi lotti, oppure recuperi 1d6 Prodotti (Legname, Pietra o Minerali) dalle Macerie di una demolizione di un singolo lotto.",
+        "success": "Demolisci il lotto con successo.",
+        "failure": "Non riesci a demolire il lotto. Rimane in Macerie e non può essere usato per ulteriori costruzioni finché non riesci a demolirlo.",
+        "critical_failure": "Come Fallimento, ma degli incidenti costano la vita ad alcuni operai. Guadagni 1 Malcontento."
+      }
+    },
+    {
+      "id": "train_army",
+      "name": "Addestrare Esercito",
+      "traits": [
+        "Esercito",
+        "Pausa"
+      ],
+      "dc": {
+        "note": "CD di Addestramento della Tattica scelta"
+      },
+      "requirements": "",
+      "cost": "",
+      "description": "Addestri un esercito all'uso di una Tattica. Se l'esercito ha già appreso il numero massimo di Tattiche, la nuova sostituisce una Tattica a scelta precedentemente appresa.",
+      "outcomes": {
+        "critical_success": "L'esercito impara la Tattica ed è Efficiente.",
+        "success": "L'esercito impara la Tattica.",
+        "failure": "L'esercito non riesce a imparare la Tattica.",
+        "critical_failure": "L'esercito non impara la Tattica e diventa frustrato ed esausto: aumenta di 1 la sua condizione Logorato."
+      }
+    },
+    {
+      "id": "offensive_gambit",
+      "name": "Azzardo Offensivo",
+      "traits": [
+        "Esercito",
+        "Pausa"
+      ],
+      "dc": {
+        "note": "CD di Perlustrazione dell'esercito nemico"
+      },
+      "requirements": "Hai almeno un esercito nello stesso esagono di un esercito nemico.",
+      "cost": "",
+      "description": "Ordini un attacco contro un esercito nemico, causando un Incontro di Guerra che inizierà dopo la fine del Turno di Regno.",
+      "outcomes": {
+        "critical_success": "I tuoi eserciti in questo esagono ottengono un Bonus di Circostanza +2 ai tiri di Iniziativa e un esercito nemico in questo esagono a scelta del gruppo diventa Scosso 1.",
+        "success": "I tuoi eserciti in questo esagono ottengono un Bonus di Circostanza +2 alle prove di Iniziativa.",
+        "failure": "Non ottieni alcun vantaggio in battaglia.",
+        "critical_failure": "Le forze nemiche hanno anticipato l'attacco: gli eserciti nemici nell'esagono ottengono un Bonus di Circostanza +4 ai tiri di Iniziativa in tutti gli Incontri di Guerra che ne derivano."
+      },
+      "skills_note": "Intrigo per sorprendere il nemico, Guerra per intimidirlo. Nessuna prova è necessaria se attacchi senza cercare un vantaggio di iniziativa."
+    },
+    {
+      "id": "disband_army",
+      "name": "Congedare Esercito",
+      "traits": [
+        "Esercito",
+        "Pausa"
+      ],
+      "dc": {
+        "note": "Nessuna prova richiesta"
+      },
+      "requirements": "",
+      "cost": "",
+      "description": "Puoi scegliere di congedare un esercito senza bisogno di alcuna prova. Se l'esercito è composto da coscritti del regno, i soldati tornano a essere cittadini; se era reclutato nelle terre selvagge, i soldati tornano alle loro dimore. Un esercito congedato non contribuisce più al Consumo del regno."
+    },
+    {
+      "id": "deploy_army",
+      "name": "Disporre Esercito",
+      "traits": [
+        "Esercito",
+        "Pausa"
+      ],
+      "dc": {
+        "note": "+5 se l'esercito attraversa il confine del tuo regno, +10 se attraversa il confine di un regno nemico"
+      },
+      "requirements": "",
+      "cost": "",
+      "description": "L'esercito si sposta nel tuo regno o oltre. Poiché il viaggio avviene nel corso dell'intero mese che precede il Turno di Regno, il territorio percorso può essere molto vasto.",
+      "outcomes": {
+        "critical_success": "L'esercito arriva molto più rapidamente del previsto e diventa Efficiente.",
+        "success": "L'esercito arriva a destinazione.",
+        "failure": "L'esercito arriva ma ha incontrato problemi. Aumenta di 1 la condizione Logorato e tenta una Prova Semplice CD 6: se fallisci, riduci di 1 i PF dell'esercito.",
+        "critical_failure": "L'esercito diventa Smarrito finché non si riprende. Aumenta Malcontento di 1d4 e tenta una Prova Semplice CD 11: se fallisci, riduci di 1 i PF dell'esercito."
+      },
+      "skills_note": "Esplorazione: entro 20 esagoni (paludi, montagne e attraversamenti d'acqua senza Ponte contano doppio; se partenza e arrivo sono collegati da una strada il risultato aumenta di un grado; la marcia forzata dà +4 ma aumenta Logorato di 1, o di 2 se fallisci). Nautica: entro 20 esagoni lungo uno specchio d'acqua che collega partenza e arrivo. Magia (Maestro): entro 30 esagoni."
+    },
+    {
+      "id": "outfit_army",
+      "name": "Equipaggiare Esercito",
+      "traits": [
+        "Esercito",
+        "Pausa"
+      ],
+      "requirements": "Il livello dell'equipaggiamento scelto deve essere ≤ livello dell'esercito; se lo crei o lo acquisti anche ≤ livello del regno; se distribuisci bottino, ≤ livello dell'esercito nemico più alto sconfitto in quella battaglia.",
+      "cost": "Se acquisti l'equipaggiamento, la quantità standard di PR.",
+      "description": "Fornisci al tuo esercito un equipaggiamento migliore, scegliendo il tipo dall'elenco degli equipaggiamenti.",
+      "outcomes": {
+        "critical_success": "L'equipaggiamento si rivela particolarmente facile da usare e l'esercito diventa Efficiente.",
+        "success": "L'equipaggiamento è sufficiente e l'esercito ne viene equipaggiato immediatamente.",
+        "failure": "L'equipaggiamento è inutilizzabile e il tentativo fallisce. Se hai speso PR, ti vengono rimborsati.",
+        "critical_failure": "Come Fallimento, ma i PR spesi non vengono rimborsati."
+      },
+      "skills_note": "Commercio se acquisti l'equipaggiamento (costa PR; non puoi acquistare equipaggiamento magico se il regno non è almeno Esperto in Magia). Guerra se distribuisci equipaggiamento recuperato in battaglia (non costa PR)."
+    },
+    {
+      "id": "recover_army",
+      "name": "Guarire Esercito",
+      "traits": [
+        "Esercito",
+        "Pausa"
+      ],
+      "dc": {
+        "note": "+5 se stai recuperando dalla condizione Sconfitto"
+      },
+      "requirements": "",
+      "cost": "",
+      "description": "Quando un esercito incappa nella malasorte può essere afflitto da condizioni negative. Usi questa attività per cercare di rimuovere un'afflizione; l'abilità richiesta dipende dall'afflizione.",
+      "outcomes": {
+        "critical_success": "Riduci il valore dell'afflizione di 2 (o, per un esercito danneggiato, aumenta i suoi PF di 2 fino al massimo). Se l'afflizione non ha un valore, viene rimossa.",
+        "success": "Come Successo Critico, ma riduci il valore di 1 (o aumenta i PF di 1 fino al massimo).",
+        "failure": "Non riesci a rimuovere l'afflizione.",
+        "critical_failure": "Non riesci e il basso morale diffonde il malcontento: aumenta Malcontento di 1. Se stavi tentando di guarire un esercito Sconfitto, l'esercito è Distrutto."
+      },
+      "skills_note": "Danneggiato: Difesa o Folklore (Esperto). Immobilizzato o Impantanato: Ingegneria o Magia (Esperto). Logorato: Arti (Esperto) o Difesa. Sconfitto: Guerra (Esperto) o Politica (Maestro). Scosso: Arti o Guerra (Esperto). Smarrito: Esplorazione o Terre Selvagge (Esperto)."
+    },
+    {
+      "id": "garrison_army",
+      "name": "Presidiare Esercito",
+      "traits": [
+        "Esercito",
+        "Pausa"
+      ],
+      "dc": {
+        "note": "+5 se l'esagono non fa parte del tuo regno, +10 se fa parte di un regno nemico"
+      },
+      "requirements": "L'esercito è nello stesso esagono di un Insediamento, Rifugio o Sito di Lavoro.",
+      "cost": "",
+      "description": "Sposti un esercito in una fortificazione e lo assegni a presidiarla.",
+      "outcomes": {
+        "critical_success": "L'esercito è Fortificato finché non viene disposto. Inoltre l'efficienza del presidio riduce il Consumo di questo esercito di 2 (minimo 1) finché non viene disposto.",
+        "success": "L'esercito è Fortificato finché non viene disposto.",
+        "failure": "L'esercito è Fortificato fino all'inizio del Turno di Regno successivo, poi va usata di nuovo questa attività per mantenere la condizione.",
+        "critical_failure": "L'esercito non viene Fortificato e non puoi ritentare Presidiare Esercito in questo luogo per 4 Turni di Regno. Aumenta Malcontento di 1."
+      },
+      "skills_note": "Difesa per un esagono Rifugio, Politica per un Insediamento, Ingegneria per un Sito di Lavoro."
+    }
+  ]
+}

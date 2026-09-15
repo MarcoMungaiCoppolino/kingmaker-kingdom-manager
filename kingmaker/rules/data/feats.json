@@ -1,0 +1,90 @@
+{
+  "_source": "https://pf2.altervista.org/wiki/Talenti_di_Regno",
+  "feats": [
+    {
+      "id": "skill_training",
+      "level": 1,
+      "repeatable": true
+    },
+    {
+      "id": "kingdom_assurance",
+      "level": 1,
+      "repeatable": true
+    },
+    {
+      "id": "muddle_through",
+      "level": 1,
+      "repeatable": false
+    },
+    {
+      "id": "insider_trading",
+      "level": 1,
+      "repeatable": false
+    },
+    {
+      "id": "fortified_fiefs",
+      "level": 1,
+      "repeatable": false
+    },
+    {
+      "id": "cooperative_leadership",
+      "level": 1,
+      "repeatable": false
+    },
+    {
+      "id": "practical_magic",
+      "level": 1,
+      "repeatable": false
+    },
+    {
+      "id": "pull_together",
+      "level": 1,
+      "repeatable": false
+    },
+    {
+      "id": "crush_dissent",
+      "level": 1,
+      "repeatable": false
+    },
+    {
+      "id": "civil_service",
+      "level": 1,
+      "repeatable": false
+    },
+    {
+      "id": "inspiring_entertainment",
+      "level": 3,
+      "repeatable": false
+    },
+    {
+      "id": "liquidate_resources",
+      "level": 3,
+      "repeatable": false
+    },
+    {
+      "id": "quick_recovery",
+      "level": 3,
+      "repeatable": false
+    },
+    {
+      "id": "endure_anarchy",
+      "level": 3,
+      "repeatable": false
+    },
+    {
+      "id": "free_and_fair",
+      "level": 7,
+      "repeatable": false
+    },
+    {
+      "id": "quality_of_life",
+      "level": 7,
+      "repeatable": false
+    },
+    {
+      "id": "fame_and_fortune",
+      "level": 11,
+      "repeatable": false
+    }
+  ]
+}

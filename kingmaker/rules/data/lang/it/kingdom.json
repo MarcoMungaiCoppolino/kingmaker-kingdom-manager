@@ -1,0 +1,903 @@
+{
+  "abilities": [
+    {
+      "id": "culture",
+      "name": "Cultura",
+      "abbr": "Cul",
+      "ruin": "Corruzione",
+      "desc": "Misura l'interesse e la dedizione della nazione per le arti e le scienze, per la religione e lo studio."
+    },
+    {
+      "id": "economy",
+      "name": "Economia",
+      "abbr": "Eco",
+      "ruin": "Crimine",
+      "desc": "Misura il funzionamento pratico e quotidiano della società: produzione, costruzione, acquisto e vendita."
+    },
+    {
+      "id": "loyalty",
+      "name": "Lealtà",
+      "abbr": "Lea",
+      "ruin": "Conflitto",
+      "desc": "Misura la volontà collettiva, lo spirito e il senso di cameratismo dei cittadini."
+    },
+    {
+      "id": "stability",
+      "name": "Stabilità",
+      "abbr": "Sta",
+      "ruin": "Decadenza",
+      "desc": "Misura la salute fisica e il benessere della nazione: infrastrutture, edifici e protezione."
+    }
+  ],
+  "ruins": [
+    {
+      "id": "corruption",
+      "name": "Corruzione",
+      "desc": "Cittadini che cadono nella dissolutezza, conoscenze proibite, ricerca non etica, distruzione del patrimonio."
+    },
+    {
+      "id": "crime",
+      "name": "Crimine",
+      "desc": "Furti, contrabbando e imprese che soffocano la prosperità."
+    },
+    {
+      "id": "decay",
+      "name": "Decadenza",
+      "desc": "Danno fisico, abbandono o degrado del regno, della popolazione e delle infrastrutture."
+    },
+    {
+      "id": "strife",
+      "name": "Conflitto",
+      "desc": "Tradimento, sotterfugio, corruzione, violenza, abuso di potere e lotte intestine."
+    }
+  ],
+  "skills": [
+    {
+      "id": "agriculture",
+      "name": "Agricoltura",
+      "desc": "Misura la capacità del regno di coltivare la terra, facendo nascere raccolti, greggi e bestiame."
+    },
+    {
+      "id": "arts",
+      "name": "Arti",
+      "desc": "Misura la dedizione del regno all'intrattenimento, alle opere d'arte e alle opere pubbliche come i monumenti."
+    },
+    {
+      "id": "trade",
+      "name": "Commercio",
+      "desc": "Misura il coinvolgimento del regno nel commercio di ogni tipo e nella salute del suo mercato. Subisci una Penalità di Oggetto −1 cumulativa alle prove di Commercio per ogni insediamento senza Confini di Terra, a meno che non abbia almeno un Confine d'Acqua con un Ponte."
+    },
+    {
+      "id": "defense",
+      "name": "Difesa",
+      "desc": "Misura la capacità del regno di sorvegliare e proteggere se stesso e i suoi cittadini da banditi, mostri, criminali e incursioni."
+    },
+    {
+      "id": "exploration",
+      "name": "Esplorazione",
+      "desc": "Misura la capacità del regno di guardare oltre i propri confini e di esaminare da vicino il territorio rivendicato."
+    },
+    {
+      "id": "folklore",
+      "name": "Folklore",
+      "desc": "Misura il legame del regno con le fedi e le usanze di ogni tipo."
+    },
+    {
+      "id": "statecraft",
+      "name": "Governare",
+      "desc": "Misura la capacità del regno di impegnarsi e interagire con altre nazioni, insediamenti indipendenti e potenze."
+    },
+    {
+      "id": "warfare",
+      "name": "Guerra",
+      "desc": "Riflette la disponibilità del regno a mobilitare le proprie forze militari contro i suoi nemici."
+    },
+    {
+      "id": "industry",
+      "name": "Industria",
+      "desc": "Misura la dedizione del regno alla costruzione e produzione di oggetti, dai beni di prima necessità al lusso."
+    },
+    {
+      "id": "engineering",
+      "name": "Ingegneria",
+      "desc": "Misura la capacità del regno di modificare il paesaggio fisico del suo territorio."
+    },
+    {
+      "id": "intrigue",
+      "name": "Intrigo",
+      "desc": "Misura il controllo del regno sulle forze nascoste della politica, lo spionaggio e le indagini criminali."
+    },
+    {
+      "id": "magic",
+      "name": "Magia",
+      "desc": "Misura l'affinità del regno per le arti mistiche, siano esse arcane, divine, occulte o primeve."
+    },
+    {
+      "id": "boating",
+      "name": "Nautica",
+      "desc": "Riflette l'affinità del regno per la navigazione di fiumi e laghi."
+    },
+    {
+      "id": "politics",
+      "name": "Politica",
+      "desc": "Misura l'adesione del regno alla vita civica di tutti i tipi."
+    },
+    {
+      "id": "scholarship",
+      "name": "Studio",
+      "desc": "Misura l'interesse del regno nell'insegnare e formare i suoi cittadini."
+    },
+    {
+      "id": "wilderness",
+      "name": "Terre Selvagge",
+      "desc": "Misura la capacità del regno di gestire le risorse naturali, l'ecosistema e i disastri naturali."
+    }
+  ],
+  "charters": [
+    {
+      "id": "conquest",
+      "name": "Conquista",
+      "desc": "Il tuo finanziatore ha conquistato un territorio e i suoi precedenti capi sono stati sconfitti. Il popolo è devoto al tuo governo (anche se in parte per paura), ma la costante minaccia di guerra ostacola le arti."
+    },
+    {
+      "id": "expansion",
+      "name": "Espansione",
+      "desc": "Ti viene affidato un dominio adiacente a terre già colonizzate. Il sostegno del finanziatore aiuta la società, ma la dipendenza rende insicuro il regno."
+    },
+    {
+      "id": "exploration",
+      "name": "Esplorazione",
+      "desc": "Il tuo finanziatore vuole che tu esplori, sgomberi e stabilizzi un'area selvaggia lungo il confine. Garantisce le strutture iniziali, a costo di contrarre un debito finanziario."
+    },
+    {
+      "id": "grant",
+      "name": "Finanziamento",
+      "desc": "Grande quantità di fondi senza restrizioni, ma devi impiegare molti cittadini e alleati del finanziatore, che hanno una fedeltà divisa."
+    },
+    {
+      "id": "open_charter",
+      "name": "Libera",
+      "desc": "Un vero agente libero e pioniere: un singolo aumento a qualsiasi caratteristica e nessun difetto innato."
+    }
+  ],
+  "heartlands": [
+    {
+      "id": "hill_or_plain",
+      "name": "Collina o Pianura",
+      "desc": "La tua nazione inizia in un'area facile da attraversare; i cittadini apprezzano che la vita sia più facile."
+    },
+    {
+      "id": "forest_or_swamp",
+      "name": "Foresta o Palude",
+      "desc": "Boschi o paludi: non mancano risorse naturali o meraviglie per sostenere l'immaginazione dei cittadini."
+    },
+    {
+      "id": "lake_or_river",
+      "name": "Lago o Fiume",
+      "desc": "Sulle rive di un lago o di un fiume: un meccanismo integrato per il commercio."
+    },
+    {
+      "id": "mountain_or_ruin",
+      "name": "Montagna o Rovine",
+      "desc": "Montagne o un'importante località in rovina, usate per rafforzare le difese. Cittadini robusti e resistenti."
+    }
+  ],
+  "governments": [
+    {
+      "id": "despotism",
+      "name": "Dispotismo",
+      "desc": "Il governo è incentrato su un singolo individuo la cui autorità è assoluta."
+    },
+    {
+      "id": "feudalism",
+      "name": "Feudalesimo",
+      "desc": "Il governo è affidato a una famiglia reale dinastica, con gran parte del potere distribuito tra vassalli e feudi."
+    },
+    {
+      "id": "oligarchy",
+      "name": "Oligarchia",
+      "desc": "Il governo è determinato da un consiglio di leader influenti che prendono decisioni per tutti gli altri."
+    },
+    {
+      "id": "republic",
+      "name": "Repubblica",
+      "desc": "La nazione trae la sua leadership dai suoi stessi cittadini, riuniti in organi parlamentari."
+    },
+    {
+      "id": "thaumocracy",
+      "name": "Taumocrazia",
+      "desc": "La nazione è governata dai più abili nella magia, che usano la loro conoscenza per determinare i modi migliori di governare."
+    },
+    {
+      "id": "yeomanry",
+      "name": "Yeomanry",
+      "desc": "La nazione è decentralizzata e si affida ai leader locali e ai cittadini per gestire le questioni governative."
+    }
+  ],
+  "roles": [
+    {
+      "id": "ruler",
+      "name": "Governante",
+      "desc": "Celebra le cerimonie più importanti, è il principale funzionario diplomatico, firma tutte le leggi e nomina i personaggi alle altre alte cariche.",
+      "absence_penalty": "−1 a tutte le prove (cumulativo con qualsiasi altra Penalità di Assenza); ottieni 1d4 Malcontento all'inizio del Turno di Regno; la CD di Controllo incrementa di 2"
+    },
+    {
+      "id": "counselor",
+      "name": "Consigliere",
+      "desc": "Collegamento tra il governo e i cittadini: interpreta i desideri della cittadinanza e consiglia gli altri leader.",
+      "absence_penalty": "−1 a tutte le prove basate su Cultura"
+    },
+    {
+      "id": "emissary",
+      "name": "Emissario",
+      "desc": "Custodisce i segreti di Stato, supervisiona gli intrighi clandestini e gestisce la politica estera.",
+      "absence_penalty": "−1 a tutte le prove basate su Lealtà"
+    },
+    {
+      "id": "general",
+      "name": "Generale",
+      "desc": "Guida l'esercito del regno, dirige gli eserciti e li comanda in tempo di guerra.",
+      "absence_penalty": "−4 alle attività dell'Esercito"
+    },
+    {
+      "id": "warden",
+      "name": "Guardiano",
+      "desc": "Controlla sicurezza, protezione e salute generale del regno, delle sue terre e dei suoi confini.",
+      "absence_penalty": "−4 alle Attività di Regione"
+    },
+    {
+      "id": "magister",
+      "name": "Maestro",
+      "desc": "Responsabile di tutto ciò che riguarda la magia nel regno e di come il soprannaturale influisce sui cittadini.",
+      "absence_penalty": "−4 a tutte le attività dell'Esercito"
+    },
+    {
+      "id": "treasurer",
+      "name": "Tesoriere",
+      "desc": "Controlla i fondi del regno, lo stato degli affari e delle industrie e le questioni fiscali.",
+      "absence_penalty": "−1 a tutte le prove basate su Economia"
+    },
+    {
+      "id": "viceroy",
+      "name": "Viceré",
+      "desc": "Pianifica e implementa l'espansione e lo sviluppo del regno, nei territori e negli insediamenti.",
+      "absence_penalty": "−1 a tutte le prove basate su Stabilità"
+    }
+  ],
+  "proficiencies": [
+    {
+      "id": "untrained",
+      "name": "Senza Addestramento"
+    },
+    {
+      "id": "trained",
+      "name": "Addestrato"
+    },
+    {
+      "id": "expert",
+      "name": "Esperto"
+    },
+    {
+      "id": "master",
+      "name": "Maestro"
+    },
+    {
+      "id": "legendary",
+      "name": "Leggendario"
+    }
+  ],
+  "size_table": [
+    {
+      "kind": "Territorio"
+    },
+    {
+      "kind": "Provincia"
+    },
+    {
+      "kind": "Stato"
+    },
+    {
+      "kind": "Paese"
+    },
+    {
+      "kind": "Dominio"
+    }
+  ],
+  "level_table": [
+    {
+      "capabilities": [
+        "Concessione",
+        "Governo",
+        "Territorio Centrale",
+        "Competenze Iniziali",
+        "Terreno Preferito",
+        "Costruzione Insediamento (Villaggio)"
+      ]
+    },
+    {
+      "capabilities": [
+        "Talento del Regno"
+      ]
+    },
+    {
+      "capabilities": [
+        "Costruzione Insediamento (Paese)",
+        "Incremento di Abilità"
+      ]
+    },
+    {
+      "capabilities": [
+        "Esperto di Espansione",
+        "Vita Agiata",
+        "Talento del Regno"
+      ]
+    },
+    {
+      "capabilities": [
+        "Aumenti di Caratteristica",
+        "Resistenza alla Rovina",
+        "Incremento di Abilità"
+      ]
+    },
+    {
+      "capabilities": [
+        "Talento del Regno"
+      ]
+    },
+    {
+      "capabilities": [
+        "Incremento di Abilità"
+      ]
+    },
+    {
+      "capabilities": [
+        "Governo Esperto +2",
+        "Talento del Regno",
+        "Resistenza alla Rovina"
+      ]
+    },
+    {
+      "capabilities": [
+        "Esperto di Espansione (Rivendicare Esagono 3/turno)",
+        "Costruzione Insediamento (Città)",
+        "Incremento di Abilità"
+      ]
+    },
+    {
+      "capabilities": [
+        "Aumenti di Caratteristica",
+        "Talento del Regno",
+        "Vita di Lusso"
+      ]
+    },
+    {
+      "capabilities": [
+        "Resistenza alla Rovina",
+        "Incremento di Abilità"
+      ]
+    },
+    {
+      "capabilities": [
+        "Pianificazione Civica",
+        "Talento del Regno"
+      ]
+    },
+    {
+      "capabilities": [
+        "Incremento di Abilità"
+      ]
+    },
+    {
+      "capabilities": [
+        "Resistenza alla Rovina",
+        "Talento del Regno"
+      ]
+    },
+    {
+      "capabilities": [
+        "Aumenti di Caratteristica",
+        "Costruzione Insediamento (Metropoli)",
+        "Incremento di Abilità"
+      ]
+    },
+    {
+      "capabilities": [
+        "Governo Esperto +3",
+        "Talento del Regno"
+      ]
+    },
+    {
+      "capabilities": [
+        "Resistenza alla Rovina",
+        "Incremento di Abilità"
+      ]
+    },
+    {
+      "capabilities": [
+        "Talento del Regno"
+      ]
+    },
+    {
+      "capabilities": [
+        "Incremento di Abilità"
+      ]
+    },
+    {
+      "capabilities": [
+        "Aumenti di Caratteristica",
+        "Invidia del Mondo",
+        "Talento del Regno",
+        "Resistenza alla Rovina"
+      ]
+    }
+  ],
+  "settlement_types": [
+    {
+      "id": "village",
+      "name": "Villaggio",
+      "population": "400 o meno"
+    },
+    {
+      "id": "town",
+      "name": "Paese",
+      "population": "401–2.000"
+    },
+    {
+      "id": "city",
+      "name": "Città",
+      "population": "2.001–25.000"
+    },
+    {
+      "id": "metropolis",
+      "name": "Metropoli",
+      "population": "25.001+"
+    }
+  ],
+  "commodities": [
+    {
+      "id": "food",
+      "name": "Cibo",
+      "desc": "Speso per Pagare il Consumo durante la Fase Gestione, per carestie e disastri, e per mantenere nutriti gli eserciti in guerra. Si raccoglie con Andare a Pesca, Fare il Raccolto o Radunare il Bestiame."
+    },
+    {
+      "id": "lumber",
+      "name": "Legname",
+      "desc": "Usato per costruire strutture. Raccolto dai campi di legname costruiti con Stabilire un Sito di Lavoro."
+    },
+    {
+      "id": "luxuries",
+      "name": "Lusso",
+      "desc": "Usato per costruire strutture specializzate o speso durante alcuni incontri. Trovato in avventura, creato con Fabbricare Oggetti di Lusso o ricevuto da eventi."
+    },
+    {
+      "id": "ore",
+      "name": "Minerali",
+      "desc": "Usati per costruire strutture. Raccolti dalle miniere costruite con Stabilire un Sito di Lavoro."
+    },
+    {
+      "id": "stone",
+      "name": "Pietra",
+      "desc": "Usata per costruire strutture. Raccolta dalle cave costruite con Stabilire un Sito di Lavoro."
+    }
+  ],
+  "terrains": [
+    {
+      "id": "plains",
+      "name": "Pianura"
+    },
+    {
+      "id": "hills",
+      "name": "Collina"
+    },
+    {
+      "id": "forest",
+      "name": "Foresta"
+    },
+    {
+      "id": "swamp",
+      "name": "Palude"
+    },
+    {
+      "id": "mountains",
+      "name": "Montagna"
+    },
+    {
+      "id": "lake",
+      "name": "Lago"
+    },
+    {
+      "id": "river",
+      "name": "Fiume"
+    },
+    {
+      "id": "ruins",
+      "name": "Rovine"
+    }
+  ],
+  "disconnected_terrain_cost": {
+    "_note": "Costruire su Terreno Sconnesso: usa il costo in PR più alto tra gli elementi di terreno dell'esagono."
+  },
+  "hex_features": [
+    {
+      "id": "settlement",
+      "name": "Insediamento",
+      "desc": "Un villaggio, un paese, una città o una metropoli."
+    },
+    {
+      "id": "freehold",
+      "name": "Insediamento Indipendente",
+      "desc": "Un insediamento che non fa parte del tuo regno. Portarlo nel regno richiede un Giuramento di Fedeltà riuscito. Il regno non guadagna PE per i miglioramenti già costruiti."
+    },
+    {
+      "id": "bridge",
+      "name": "Ponte",
+      "desc": "Un facile percorso terrestre su un fiume: ignora il normale aumento del costo di PR per Costruire Strade in quell'esagono. Un insediamento costruito qui può iniziare con una struttura Ponte su un confine d'acqua."
+    },
+    {
+      "id": "landmark",
+      "name": "Punto di Riferimento",
+      "desc": "Quando lo aggiungi al regno riduci Malcontento di 1d4 e, fino alla fine del prossimo Turno di Regno, tutte le prove di Cultura ed Economia ottengono un Bonus di Circostanza +2. Il primo Punto di Riferimento rivendicato vale 40 PE."
+    },
+    {
+      "id": "refuge",
+      "name": "Rifugio",
+      "desc": "Quando lo rivendichi riduci di 1 una Rovina e, fino alla fine del Turno di Regno successivo, tutte le prove di Lealtà e Stabilità ottengono un Bonus di Circostanza +2. Il primo Rifugio rivendicato vale 40 PE."
+    },
+    {
+      "id": "resource",
+      "name": "Risorsa",
+      "desc": "Fonte particolarmente densa o redditizia di Legname, Minerali o Pietra: un Sito di Lavoro appropriato costruito qui raddoppia i Prodotti prodotti."
+    },
+    {
+      "id": "ruins_feature",
+      "name": "Rovine",
+      "desc": "Struttura parzialmente distrutta. Dopo averla Rivendicata e Liberata puoi usarne i resti come base per una struttura di insediamento appropriata, dimezzandone il costo."
+    },
+    {
+      "id": "work_site",
+      "name": "Sito di Lavoro",
+      "desc": "Genera 1 Prodotto (Legname, Pietra o Minerali) a ogni Turno di Regno, o 2 se si trova in un esagono Risorsa del tipo corrispondente. I Prodotti si accumulano durante la Fase Gestione."
+    },
+    {
+      "id": "structure",
+      "name": "Struttura",
+      "desc": "Se liberi un esagono che contiene una Struttura, puoi aggiungerla automaticamente e gratuitamente a un insediamento fondato lì."
+    },
+    {
+      "id": "farmland",
+      "name": "Terreno Agricolo",
+      "desc": "Ogni esagono Terreno Agricolo riduce di 1 il Consumo del regno, purché si trovi nell'area di influenza di uno dei suoi insediamenti. Non puoi costruire insediamenti su un Terreno Agricolo."
+    },
+    {
+      "id": "fortification",
+      "name": "Fortificazione",
+      "desc": "Un accampamento protetto (forte o barbacane) costruito con Fortificare Esagono. Concede un bonus in guerra e offre ai PG in viaggio un luogo di riposo sicuro."
+    },
+    {
+      "id": "roads",
+      "name": "Strade",
+      "desc": "I viaggi lungo le strade usano un tipo di terreno migliore di quello circostante."
+    },
+    {
+      "id": "trap",
+      "name": "Trappola o Pericolo",
+      "desc": "Segnaposto del Game Master: qui c'è qualcosa che può fare male. Non ha nessun effetto sul regno né sul viaggio, e non viene da una regola: serve a ricordarsi dove si è messo un pericolo, e a rivelarlo al gruppo quando ci finisce dentro."
+    },
+    {
+      "id": "dungeon",
+      "name": "Dungeon",
+      "desc": "Segnaposto del Game Master: l'ingresso di un luogo da esplorare. Non ha nessun effetto sul regno né sul viaggio, e non viene da una regola: tiene sulla mappa una cosa che altrimenti starebbe solo negli appunti."
+    },
+    {
+      "id": "event",
+      "name": "Evento",
+      "desc": "Segnaposto del Game Master: qualcosa che deve succedere qui. Non ha nessun effetto sul regno né sul viaggio, e non viene da una regola: è un promemoria legato a un esagono invece che a un foglio a parte."
+    }
+  ],
+  "_hex_features_note": "Gli Elementi del Terreno con \"fonte\": \"tavolo\" non stanno sulla wiki e non hanno nessuna meccanica di Pathfinder 2: sono segnaposti che il Game Master usa per tenere in ordine la mappa. Sono tenuti distinti apposta, così nessuno li scambia per regole del gioco.",
+  "travel": {
+    "_note": "Trascritto dalla pagina, nulla di aggiunto. I terreni che la wiki non assegna a una categoria restano a null: l'app si ferma e lo chiede al GM invece di indovinare. Il GM puo' comunque forzare la categoria sul singolo esagono.",
+    "hex_size": {
+      "note": "21,6 km da un angolo all'altro: circa un giorno per attraversarlo."
+    },
+    "activities_per_day_table": [
+      {
+        "note": "Un gruppo cosi' lento impiega 2 giorni per ogni attivita'."
+      },
+      null,
+      null,
+      null,
+      null
+    ],
+    "party_speed": "Quella del membro piu' lento.",
+    "travel_speed": {
+      "_page": "Modalita' Esplorazione e Pausa — Tabella: Velocita' di Viaggio",
+      "_note": "Quanta strada si fa davvero, per chi vuole il numero in chilometri invece che in attivita'. Non serve al conto dei viaggi fra esagoni — quello va ad attivita' al giorno, che e' un'altra tabella — ma e' la risposta alla domanda «quanto andiamo veloci», e la wiki la da'. Le distanze valgono su terreno piano e sgombro: il terreno difficile le dimezza, il difficile superiore le riduce a un terzo. Se il viaggio chiede una prova — nuotare, scalare — il GM puo' chiederne una all'ora e leggere i progressi su questa stessa tabella.",
+      "between_the_lines": {
+        "_note": "La tabella si ferma a 18 metri e salta 13,5 e 16,5. Per quelle Velocita' — e per un veicolo piu' svelto — si continua con la stessa proporzione: 0,6 km all'ora per ogni metro di Velocita'. Non e' una regola in piu', e' la regola della tabella: quel fattore riproduce esatte tutte e nove le righe scritte, dalla prima all'ultima. Nella tabella in piedi inglesi si legge come «ogni tre metri in piu' e' un miglio all'ora in piu'»."
+      }
+    },
+    "categories": {
+      "open": {
+        "name": "Terreno aperto"
+      },
+      "difficult": {
+        "name": "Terreno difficile"
+      },
+      "greater_difficult": {
+        "name": "Terreno difficile superiore"
+      }
+    },
+    "terrains": {
+      "forest": {
+        "note": "La wiki la da' come difficile o difficile superiore: sceglie il GM."
+      },
+      "lake": {
+        "note": "Acqua: serve un veicolo o una Velocita' di Nuotare. La wiki non assegna una categoria fissa. Chi naviga lo attraversa come terreno aperto (vedi acqua_e_volo); chi va a piedi non ci passa."
+      },
+      "river": {
+        "note": "A valle e' terreno aperto, a monte difficile o difficile superiore secondo correnti e meteo. Come terreno vale per un esagono tutto occupato dal fiume: un fiume che scorre fra due esagoni si segna invece come confine (vedi confini)."
+      },
+      "ruins": {
+        "note": "La wiki non assegna una categoria a questo terreno: il tavolo ha scelto la piu' dura, terreno difficile superiore. Non e' una regola del manuale."
+      }
+    },
+    "borders": {
+      "_note": "Le regole conoscono i Confini d'Acqua e i Ponti sulla Griglia Urbana di un insediamento (vedi structures.json, la struttura «Ponte»: «I ponti possono essere costruiti solo sui Confini d'Acqua»), non fra gli esagoni della mappa. Portare la stessa idea sulla mappa e' una scelta del tavolo: il vocabolario e' quello del gioco, la regola di viaggio no. Un confine che non e' segnato e' terra, e non costa niente.",
+      "kinds": {
+        "water": {
+          "name": "Confine d'Acqua",
+          "note": "Un corso o uno specchio d'acqua fra i due esagoni. Non ci si passa senza un veicolo d'acqua."
+        },
+        "ford": {
+          "name": "Guado",
+          "note": "Si attraversa, ma costa un'attivita' di Viaggiare in piu'."
+        },
+        "bridge": {
+          "name": "Ponte",
+          "note": "Si attraversa senza costo aggiuntivo. E' cosa diversa dall'Elemento del Terreno «Ponte», che sta su un esagono e riguarda il costo in PR di Costruire Strade."
+        }
+      }
+    },
+    "current": {
+      "_note": "Seguire un corso d'acqua. La pagina lo dice del terreno Fiume: a valle e' terreno aperto, a monte difficile o difficile superiore secondo correnti e meteo. Fra le due la wiki non sceglie, e nemmeno l'app: conta la piu' facile e lo segnala, come fa per la foresta. Da che parte scorra l'acqua sulla mappa la wiki non puo' saperlo: quello lo segna il GM sul disegno, tratto per tratto.",
+      "downstream": {
+        "name": "A valle",
+        "note": "Si scende seguendo la corrente: terreno aperto."
+      },
+      "upstream": {
+        "name": "A monte",
+        "note": "Si risale contro corrente: difficile o difficile superiore secondo correnti e meteo."
+      },
+      "still": {
+        "name": "Acqua ferma",
+        "note": "Dentro un lago non c'e' corrente da assecondare o da risalire: non c'e' un verso, e vale la riga generale — chi naviga trova quasi ovunque terreno aperto (vedi acqua_e_volo)."
+      },
+      "unknown_": {
+        "name": "Senza corrente",
+        "note": "Un tratto senza verso e' acqua senza corrente da assecondare o da risalire: si percorre nei due sensi allo stesso modo, e vale terreno aperto. E' il caso di tutte le righe di un lago, e la scelta del tavolo per un fiume di cui il verso non e' stato ancora segnato. La wiki non dice niente di un corso d'acqua fermo: dice che chi viaggia sull'acqua trova quasi ovunque terreno aperto, ed e' da li' che viene il numero."
+      }
+    },
+    "roads": {
+      "note": "Viaggiare su strada migliora il terreno di un grado. Non vale per Fare una Ricognizione."
+    },
+    "reconnaissance": {
+      "cost": "come Viaggiare per quell'esagono",
+      "note": "Non comprende lo spostamento: e' il costo per perlustrare l'esagono in cui ti trovi."
+    },
+    "forced_march": {
+      "sustainable_days": "modificatore di Costituzione, minimo 1",
+      "beyond": "Affaticato finche' non passi un giorno intero a riposare."
+    },
+    "water_and_flight": "Se voli o viaggi sull'acqua, quasi tutti gli esagoni sono terreno aperto.",
+    "other_activities": [
+      {
+        "id": "map_the_area",
+        "name": "Mappare l'Area",
+        "note": "Richiede una Ricognizione riuscita nello stesso esagono e una prova di Sopravvivenza; riduce di 2 le CD di attraversamento."
+      },
+      {
+        "id": "fortify_camp",
+        "name": "Fortificare l'Accampamento"
+      },
+      {
+        "id": "subsist",
+        "name": "Sopravvivere"
+      }
+    ]
+  },
+  "milestone_xp": [
+    {
+      "id": "first_landmark",
+      "desc": "Rivendicare il primo Punto di Riferimento"
+    },
+    {
+      "id": "first_refuge",
+      "desc": "Rivendicare il primo Rifugio"
+    },
+    {
+      "id": "first_village",
+      "desc": "Stabilire il primo Villaggio"
+    },
+    {
+      "id": "size_10",
+      "desc": "Raggiungere Dimensione del regno 10"
+    },
+    {
+      "id": "first_diplomatic_relation",
+      "desc": "Stabilire la prima Relazione Diplomatica"
+    },
+    {
+      "id": "first_town",
+      "desc": "Espandere un Villaggio nel proprio primo Paese"
+    },
+    {
+      "id": "all_eight_leaders",
+      "desc": "Assegnare tutti e otto i Ruoli di Governo"
+    },
+    {
+      "id": "size_25",
+      "desc": "Raggiungere Dimensione del regno 25"
+    },
+    {
+      "id": "first_trade_agreement",
+      "desc": "Stabilire il primo Accordo Commerciale"
+    },
+    {
+      "id": "first_city",
+      "desc": "Espandere un Paese nella propria prima Città"
+    },
+    {
+      "id": "size_50",
+      "desc": "Raggiungere Dimensione del regno 50"
+    },
+    {
+      "id": "rp_100",
+      "desc": "Spendere 100 PR durante un Turno di Regno"
+    },
+    {
+      "id": "first_metropolis",
+      "desc": "Espandere una Città nella propria prima Metropoli"
+    },
+    {
+      "id": "size_100",
+      "desc": "Raggiungere Dimensione del regno 100"
+    }
+  ],
+  "turn_phases": [
+    {
+      "id": "upkeep",
+      "name": "Fase Gestione",
+      "steps": [
+        {
+          "id": "roles",
+          "name": "Passo 1: Assegnare i Ruoli di Governo",
+          "desc": "Assegna o modifica i leader con l'attività Nuova Direzione (ripetibile quante volte vuoi in questo passo). Poi determina le Penalità di Assenza: tutti i ruoli non assegnati subiscono la propria penalità."
+        },
+        {
+          "id": "unrest",
+          "name": "Passo 2: Modificare il Malcontento",
+          "desc": "Aumenta Malcontento di 1 per ogni insediamento Sovrappopolato e di 1 se sei in guerra. Se il Malcontento è ≥ 10 il regno guadagna 1d10 punti di Rovina da distribuire e tenta una Prova Semplice CD 11: se fallisce perde un esagono. A Malcontento ≥ 20 il regno cade in anarchia: puoi tentare solo Sedare Malcontento e tutte le prove sono peggiorate di un grado."
+        },
+        {
+          "id": "resources",
+          "name": "Passo 3: Raccogliere le Risorse",
+          "desc": "Dadi Risorsa = livello del regno + 4 + dadi bonus − dadi penalità. Tirali per ottenere i PR del turno. Poi raccogli 1 Prodotto da ogni Sito di Lavoro (2 se in un esagono Risorsa). I Prodotti oltre il magazzino sono persi."
+        },
+        {
+          "id": "consumption",
+          "name": "Passo 4: Pagare il Consumo",
+          "desc": "Consumo = Consumo degli insediamenti + Consumo degli eserciti − esagoni di Terreno Agricolo influenzati + modificatori da eventi. Spendi Cibo pari al Consumo; per ogni punto non pagato spendi 5 PR oppure aumenta Malcontento di 1d4."
+        }
+      ]
+    },
+    {
+      "id": "commerce",
+      "name": "Fase Commercio",
+      "steps": [
+        {
+          "id": "taxes",
+          "name": "Passo 1: Riscuotere le Tasse",
+          "desc": "Puoi Riscuotere Tasse una volta per turno. Se non lo fai, puoi tentare una Prova Semplice CD 11: con successo riduci Malcontento di 1."
+        },
+        {
+          "id": "expenses",
+          "name": "Passo 2: Approvare le Spese",
+          "desc": "Puoi tentare Migliorare Stile di Vita o Attingere alla Tesoreria."
+        },
+        {
+          "id": "commodities",
+          "name": "Passo 3: Attingere ai Prodotti",
+          "desc": "Se hai scorte di Prodotti puoi tentare Commerciare Prodotti per aumentare i PR del turno."
+        },
+        {
+          "id": "agreements",
+          "name": "Passo 4: Gestire gli Accordi Commerciali",
+          "desc": "Se hai Accordi Commerciali puoi usare Gestire gli Accordi Commerciali."
+        }
+      ]
+    },
+    {
+      "id": "activity",
+      "name": "Fase Attività",
+      "steps": [
+        {
+          "id": "leadership",
+          "name": "Passo 1: Attività di Governo",
+          "desc": "Se la capitale ha un Castello, un Palazzo o un Municipio, ogni PG con un Ruolo di Governo può tentare fino a 3 attività di Governo; altrimenti fino a 2. Un leader non può tentare la stessa attività di Governo più di una volta per turno."
+        },
+        {
+          "id": "region",
+          "name": "Passo 2: Attività di Regione",
+          "desc": "I leader PG possono tentare collettivamente fino a 3 attività di Regione."
+        },
+        {
+          "id": "civic",
+          "name": "Passo 3: Attività Civiche",
+          "desc": "Il gruppo può tentare un'attività Civica per ogni insediamento del regno."
+        },
+        {
+          "id": "army",
+          "name": "Passo 4: Attività dell'Esercito",
+          "desc": "Solo in guerra: ogni esercito mantenuto dal regno può effettuare una singola attività Esercito."
+        }
+      ]
+    },
+    {
+      "id": "event",
+      "name": "Fase Eventi",
+      "steps": [
+        {
+          "id": "control",
+          "name": "Passo 1: Controllare Eventi Casuali",
+          "desc": "Prova Semplice CD 16. Con successo si verifica un evento casuale del regno. Altrimenti la CD del prossimo turno è ridotta di 5. Una volta che l'evento si verifica, la CD torna a 16."
+        },
+        {
+          "id": "resolution",
+          "name": "Passo 2: Risoluzione dell'Evento",
+          "desc": "Gli eventi casuali si risolvono ora. La CD dell'evento è la CD di Controllo modificata dal modificatore di livello dell'evento."
+        },
+        {
+          "id": "xp",
+          "name": "Passo 3: Distribuire i PE Regno",
+          "desc": "Un evento casuale vale 30 PE. Il primo turno in cui il regno spende 100 PR guadagna 80 PE. I PR non spesi si convertono in PE 1 a 1, fino a un massimo di 120 PE per turno."
+        },
+        {
+          "id": "level",
+          "name": "Passo 4: Aumentare il Livello del Regno",
+          "desc": "Se i PE sono almeno 1.000 e il regno non è al livello massimo (= livello del gruppo), aumenta il livello di 1 e sottrai 1.000 PE. Massimo un livello per turno."
+        }
+      ]
+    }
+  ],
+  "structure_traits": [
+    {
+      "id": "edifice",
+      "name": "Costruzione"
+    },
+    {
+      "id": "building",
+      "name": "Edificio"
+    },
+    {
+      "id": "famous",
+      "name": "Famoso"
+    },
+    {
+      "id": "infamous",
+      "name": "Infame"
+    },
+    {
+      "id": "infrastructure",
+      "name": "Infrastruttura"
+    },
+    {
+      "id": "yard",
+      "name": "Piazzale"
+    },
+    {
+      "id": "residential",
+      "name": "Residenziale"
+    }
+  ]
+}

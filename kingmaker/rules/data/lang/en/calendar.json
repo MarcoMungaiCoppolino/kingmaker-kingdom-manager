@@ -1,0 +1,21 @@
+{
+  "_note": "Absalom Reckoning (AR). Transcribed from the reference page, nothing added. Mind a contradiction that sits in the source: the page says «every year is 52 weeks» (364 days) but the listed months add up to 365. The app uses the months, because it is the month that closes the Kingdom turn; the weeks are not needed for the count.",
+  "_kingdom_turn": "«Kingdom management takes place in Kingdom turns that occur at the end of every month of game time» — Kingmaker Adventure Path, Running a Kingdom. So the length of a turn is not a fixed number of days: it is the length of the current month.",
+  "_leaders_rest": "«If a character assigned to a Leadership Role has not spent the week of downtime required by that role since the end of the last Kingdom turn, they must forgo one of the three kingdom activities or apply the Vacancy penalty» — same source. They are 7 days, not necessarily consecutive.",
+  "weekdays": ["Moonday", "Toilday", "Wealday", "Oathday", "Fireday", "Starday", "Sunday"],
+  "leap_year": {"note": "Once every eight years one more day at the end of Calistril. The last known leap year is 4712 AR, the next 4720 AR."},
+  "months": [
+    {"note": "first month of the year, named after Abadar"},
+    {"note": "late winter, named after Calistria"},
+    {"note": "named after Pharasma"},
+    {"note": "stormy month, named after Gozreh"},
+    {"note": "named after Desna"},
+    {"note": "sun-blessed month, named after Sarenrae"},
+    {"note": "named after Erastil"},
+    {"note": "the summer month, named after Aroden"},
+    {"note": "the month autumn begins, named after Rovagug"},
+    {"note": "named after Lamashtu"},
+    {"note": "named after Nethys"},
+    {"note": "named after Zon-Kuthon"}
+  ]
+}
