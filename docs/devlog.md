@@ -286,3 +286,15 @@ What was learned, in one line each:
 - One owner of the truth, moved by a record with a compare-and-swap, beats any number of
   clever merges; and a fake of the service in one process makes the whole dance testable.
 
+## 1.1.1 — 16 September 2026 · The first evening with the launcher
+
+Three things the table found within hours of installing. A boat sent back to the depot left
+its passengers standing on the water line, where the ruler refuses to start: the fix is a
+landing on the nearest atom with ground, the neighbour's when the hex is a lake, and a small
+arrow that takes a stuck marker off the map altogether. The uninstaller complained about
+elements it could not remove: it was removing the program while the program's own server was
+still running, and asking about the game only afterwards; now it stops the app, asks first,
+and a real install and uninstall cycle in a scratch folder is part of the checks. And the
+crest, freshly put next to the kingdom's name, wrapped under it: a flex item without a width
+of its own. Small things, all three found by playing, none by the suite.
+

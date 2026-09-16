@@ -9,6 +9,7 @@ from nicegui import ui
 from kingmaker.state import STATE
 from kingmaker.ui import theme
 from kingmaker.geometry import waterways, hexgrid, sections
+from kingmaker.geometry import atoms as atoms_mod
 from kingmaker.access import permissions
 from kingmaker import travel as travel_mod
 
@@ -323,6 +324,50 @@ def _all_water(coord) -> bool:
     terrains = (hexagon or {}).get("terrains") or []
     entries = [travel_mod.TERRAINS.get(x) or {} for x in terrains]
     return bool(entries) and all(v.get("water") for v in entries)
+
+def _nearest_atom_point(unit, orient: str):
+    """The inner point of the atom nearest to `unit` (radii from the center):
+    a place inside a piece, never on a water line."""
+    return min((tuple(face.point) for face in atoms_mod.atoms(orient)),
+               key=lambda p: (p[0] - unit[0]) ** 2 + (p[1] - unit[1]) ** 2)
+
+
+def ashore_spot(coord, spot, orient: str | None = None) -> tuple[tuple[int, int], tuple[float, float]]:
+    """Where whoever is left by a boat sets foot: `(hex, point)`.
+
+    A boat sits on a water junction — a corner, the center, a point where
+    lines meet — and whoever stayed aboard when it went back to the depot
+    was left exactly there, on the water line, or in the middle of a lake:
+    a place no journey starts from. Here they go to the inner point of the
+    **nearest atom** of the same hex; when the hex is all water (a lake, a
+    water terrain) to the nearest atom of the nearest neighbour that has dry
+    ground, measured in pixels from where the boat was.
+    """
+    m = STATE.k["map"]
+    orient = orient or m["orientation"]
+    coord = (int(coord[0]), int(coord[1]))
+    here = (0.0, 0.0) if spot is None or spot[0] is None else (float(spot[0]), float(spot[1]))
+    if not _all_water(coord):
+        return coord, _nearest_atom_point(here, orient)
+    size = float(m["size"])
+    origin = (float(m["origin_x"]), float(m["origin_y"]))
+    cx, cy = hexgrid.hex_center(coord[0], coord[1], size, origin, orient)
+    px, py = cx + here[0] * size, cy + here[1] * size
+    on_map = _common.inside_map(m)
+    best = None
+    for other in hexgrid.neighbours(coord[0], coord[1], orient):
+        other = (int(other[0]), int(other[1]))
+        if not on_map(other) or _all_water(other):
+            continue
+        nx, ny = hexgrid.hex_center(other[0], other[1], size, origin, orient)
+        point = _nearest_atom_point(((px - nx) / size, (py - ny) / size), orient)
+        distance = (nx + point[0] * size - px) ** 2 + (ny + point[1] * size - py) ** 2
+        if best is None or distance < best[0]:
+            best = (distance, other, point)
+    if best is None:
+        return coord, _nearest_atom_point(here, orient)
+    return best[1], best[2]
+
 
 def _no_landing(entry: dict, coord) -> str | None:
     """Why one does not set foot there. None = one does.

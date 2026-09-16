@@ -8,6 +8,26 @@ what broke, what was learned — is in [docs/devlog.md](docs/devlog.md).
 The versions before 1.0.0 were never tagged: the app was played from a working copy and the
 numbers below were assigned afterwards, one per day of development, from the session history.
 
+## [1.1.1] — 2026-09-16
+
+The first days with the launcher at the table: three things it showed.
+
+### Fixed
+- A boat taken back to the depot left its passengers on the water — the boat's junction, or
+  the middle of a lake — where no journey could start. They now land on the nearest dry atom
+  of the same hex, or of the nearest neighbour with ground (`boats.ashore_spot`).
+- The uninstaller could report "some elements could not be removed": a server still running
+  kept the program files locked, and the question about the game came after the removal, so
+  a kept game left the folder in place. It now stops the launcher and its server first, asks
+  before removing anything, and leaves nothing of the program behind either way.
+- The crest and the kingdom's name in the header wrapped on two lines: they sit on one now,
+  on the login page too.
+
+### Added
+- A way out for a stuck marker: the arrow next to *Who leaves* in the Travel box takes the
+  chosen characters off the map, to be placed again from the Party tab. Someone on a journey
+  is refused.
+
 ## [1.1.0] — 2026-09-16
 
 The app for people without a terminal: an installer, a launcher window, and the same web app

@@ -2,7 +2,7 @@
 
 *In italiano: [it/guida-utente.md](it/guida-utente.md) (longer, with the history of every choice).*
 
-This guide describes the app as it is in version 1.1.0, tab by tab, with the reason behind
+This guide describes the app as it is in version 1.1.1, tab by tab, with the reason behind
 each choice where it matters at the table. To install and start it see the
 [README](../README.md); the window of the installed app is the first chapter below. The screenshots in [`manual/img/screenshots/`](manual/img/screenshots/)
 were taken with the Italian interface; the English one is the same, label for label.
@@ -279,7 +279,9 @@ Then, to say where to go:
   the map, and you can do it **while still dragging**.
 - or **right-click** the destination hex, which always takes the cheapest way in one go.
 - or, in the *Travel* box, pick who leaves from a list, click the destination and press the
-  compute button.
+  compute button. The small arrow next to that list takes the chosen characters **off the
+  map**: no hex, no vehicle, back to the Party tab to be placed again. It is the way out when
+  a marker ends up somewhere no journey starts from; someone on a journey is not moved.
 
 **When the arrow does not go on, it says so**: it flashes red for half a second, the phone
 vibrates, and the reason appears top right — either *there is water between the two hexes*

@@ -276,15 +276,19 @@ results.append(("and whoever is aboard departs with it",
 hexmap._choose_vehicle(mine, None, entry)
 results.append(("clicking it again leaves it", mine.get("travel_vehicle") is None))
 
-# Putting it back in the shed removes it from the map: whoever was aboard
-# stays where they were, on foot. Staying «on» a boat that is nowhere would
-# be the ghost link one comes from.
+# Putting it back in the shed removes it from the map: whoever was aboard is
+# set ashore, on foot — the boat was in a lake cell, so on the nearest
+# neighbour with ground, never left in the water. Staying «on» a boat that is
+# nowhere would be the ghost link one comes from.
 hexmap._put_back_in_depot({}, None, sid)
 results.append(("in the shed it vanishes from the map",
               A.stable_vehicle(sid)["hex_col"] is None))
-results.append(("but whoever was aboard stays where they were",
-              (A.character(pc["id"])["hex_col"],
-               A.character(pc["id"])["hex_row"]) == (10, 4)))
+_landed = A.character(pc["id"])
+results.append(("but whoever was aboard is set ashore next to the lake",
+              (_landed["hex_col"], _landed["hex_row"]) != (10, 4)
+              and (_landed["hex_col"], _landed["hex_row"])
+              in {tuple(n) for n in hexgrid.neighbours(10, 4, orient)}
+              and _landed["pos_x"] is not None))
 results.append(("and gets off, because the vehicle is no longer there",
               A.character(pc["id"])["stable_id"] is None))
 

@@ -30,8 +30,11 @@ def header(user: auth.User | None = None) -> None:
     with ui.row().classes("w-full items-center gap-3 flex-wrap") \
             .style("padding:10px 16px;background:linear-gradient(90deg,#1f1a14,#14110d);"
                    "border-bottom:1px solid var(--km-line)"):
-        ui.html(f'<div class="km-title" style="font-size:1.4rem">{theme.crest(30)}'
-                f'{theme.esc(k["name"] or t("main.unnamed_kingdom"))}</div>')
+        # The `ui.html` element is a flex item of the header row: without a
+        # width of its own the name wrapped under the crest.
+        ui.html(f'<div class="km-title" style="font-size:1.4rem;display:flex;align-items:center;'
+                f'gap:8px;white-space:nowrap">{theme.crest(30, margin="0")}'
+                f'<span>{theme.esc(k["name"] or t("main.unnamed_kingdom"))}</span></div>')
         if k["created"]:
             gov = rules.BY_ID["government"].get(k["government"])
             if gov:

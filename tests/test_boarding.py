@@ -635,6 +635,58 @@ finally:
 A.update_character(pc["id"], stable_id=None)
 A.delete_stable_vehicle(depot)
 
+# --- a boat taken back to the depot sets its passengers on dry ground ---
+# A boat on the river's chord, with someone aboard exactly on the line: taken
+# back, they must stand inside an atom, not on the water; in a lake, in the
+# nearest neighbour with ground.
+clean()
+RIVER_ROW = [(9, 4), (10, 4), (11, 4), (12, 4)]
+for c in RIVER_ROW:
+    A.set_banks(C, c, [[0, 1, 2], [3, 4, 5]])
+for a, b in zip(RIVER_ROW, RIVER_ROW[1:]):
+    A.set_border(C, a, b, "water")
+boat = new_vehicle("barca_a_remi", "water", "Ferry")
+corner = tuple(sections.unit_corners(orient)[3])
+A.update_stable_vehicle(boat, hex_col=10, hex_row=4, pos_x=corner[0], pos_y=corner[1])
+sailor = STATE.characters()[0]
+A.update_character(sailor["id"], stable_id=boat, hex_col=10, hex_row=4, pos_x=corner[0], pos_y=corner[1])
+hexmap._put_back_in_depot({"travel_vehicle": None, "travel_pcs": []}, None, boat)
+landed = A.character(sailor["id"])
+results.append(("back in the depot, the passenger is on the ground of the same hex",
+              landed["stable_id"] is None and (landed["hex_col"], landed["hex_row"]) == (10, 4)))
+faces = hexmap.sections_map().get((10, 4)) or ()
+on_a_face = sections.face_of_point(faces, (landed["pos_x"], landed["pos_y"])) if faces else 0
+results.append(("and inside a piece, not on the water line",
+              landed["pos_x"] is not None and (landed["pos_x"], landed["pos_y"]) != corner
+              and on_a_face is not None))
+# The lake: the boat in the middle of a lake cell, the passenger goes to a neighbour.
+def _vertex_name(coord, k):
+    return waterways.node_text(waterways.vertex_key(coord, k, orient))
+ring = [_vertex_name((9, 4), k) for k in (2, 3, 4)] + [_vertex_name((11, 4), k) for k in (5, 0, 1)]
+A.set_lake(C, "l1", [(9, 4), (10, 4), (11, 4)], points=ring)
+A.update_stable_vehicle(boat, hex_col=10, hex_row=4, pos_x=0.0, pos_y=0.0)
+A.update_character(sailor["id"], stable_id=boat, hex_col=10, hex_row=4, pos_x=0.0, pos_y=0.0)
+hexmap._put_back_in_depot({"travel_vehicle": None, "travel_pcs": []}, None, boat)
+landed = A.character(sailor["id"])
+results.append(("from a lake the passenger lands in a neighbouring hex with ground",
+              landed["stable_id"] is None and (landed["hex_col"], landed["hex_row"]) != (10, 4)
+              and (landed["hex_col"], landed["hex_row"]) in {tuple(n) for n in hexgrid.neighbours(10, 4, orient)}
+              and landed["pos_x"] is not None))
+A.remove_lake(C)
+A.delete_stable_vehicle(boat)
+clean()
+
+# --- the way out: the chosen characters taken off the map ----------------
+told_ones.clear()
+A.update_character(sailor["id"], hex_col=10, hex_row=4, pos_x=0.1, pos_y=0.1, stable_id=None)
+mine_off = {"travel_pcs": [sailor["id"]], "travel_vehicle": None, "plan": None}
+hexmap._remove_from_map(mine_off, None)
+gone = A.character(sailor["id"])
+results.append(("taken off the map: no hex, no point, no vehicle, and the choice cleared",
+              gone["hex_col"] is None and gone["pos_x"] is None and gone["stable_id"] is None
+              and mine_off["travel_pcs"] == []))
+A.update_character(sailor["id"], hex_col=10, hex_row=4)
+
 width = max(len(n) for n, _ in results)
 for name, ok in results:
     print(("  ok  " if ok else " NO   ") + name.ljust(width))

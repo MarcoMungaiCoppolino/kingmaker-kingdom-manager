@@ -71,10 +71,16 @@ def _travel_panel(mine: dict, mapping) -> None:
         # had taken the first place — with four vehicles in the list the
         # choice of travellers ended up below the fold of the screen, and
         # seemed gone.
-        ui.select({p["id"]: p["name"] for p in characters}, label=t("map.travel.who_leaves"),
-                  value=list(mine["travel_pcs"]), multiple=True,
-                  on_change=lambda e: _choose_travellers(mine, e.value)) \
-            .props("outlined dense use-chips options-dense").classes("w-full")
+        with ui.row().classes("items-center gap-1 w-full no-wrap"):
+            ui.select({p["id"]: p["name"] for p in characters}, label=t("map.travel.who_leaves"),
+                      value=list(mine["travel_pcs"]), multiple=True,
+                      on_change=lambda e: _choose_travellers(mine, e.value)) \
+                .props("outlined dense use-chips options-dense").classes("flex-1")
+            # The way out when a marker ends up somewhere it cannot leave
+            # from: off the map, and placed again from the Party tab.
+            ui.button(icon="undo", on_click=lambda: _remove_from_map(mine, mapping)) \
+                .props("flat dense round size=sm color=grey") \
+                .tooltip(t("map.travel.remove_from_map"))
 
         if not chosen:
             ui.label(t("map.travel.map_click_hex_take")) \
@@ -129,6 +135,42 @@ def _choose_travellers(mine: dict, values) -> None:
     # Changing the group changes the Speed: the previous count no longer holds.
     _common._forget_plan(mine)
     _redraw_travel(mine, mine["map"])
+
+def _remove_from_map(mine: dict, mapping) -> None:
+    """Takes the chosen characters off the map: no hex, no vehicle.
+
+    They go back to the Party tab, where «Put on the map» places them
+    again. It is the way out when a marker got stuck somewhere no journey
+    starts from. Whoever is on a journey is not moved: that journey would
+    have to be cancelled first, and that is a decision, not a side effect.
+    """
+    user = theme.user()
+    chosen = list(mine.get("travel_pcs") or [])
+    if not chosen:
+        theme.notify(t("map.travel.first_choose_who_leaves"), "warning")
+        return
+    if journeys_by_character(set(chosen)):
+        theme.notify(t("map.travel.remove_on_journey"), "warning")
+        return
+    names = []
+    for char_id in chosen:
+        char = STATE.archive.character(char_id)
+        if char is None or not permissions.can_on_character(user, char):
+            continue
+        STATE.archive.update_character(char_id, hex_col=None, hex_row=None,
+                                       pos_x=None, pos_y=None, stable_id=None)
+        names.append(char["name"])
+    if not names:
+        theme.notify(t("map.travel.remove_not_yours"), "negative")
+        return
+    mine["travel_pcs"] = []
+    _common._forget_plan(mine)
+    STATE.record(t("map.travel.removed_from_map", names=", ".join(sorted(names))), "map")
+    theme.notify(t("map.travel.removed_from_map", names=", ".join(sorted(names))), "positive")
+    theme.save_and_refresh()
+    _redraw_travel(mine, mapping)
+    theme.refresh_panels(("hexmap.map", "party.characters"))
+
 
 def _reset_journey(mine: dict, mapping) -> None:
     _common._forget_plan(mine)
@@ -1947,15 +1989,27 @@ def _take_vehicle(mine: dict, mapping, sid: str) -> None:
     _redraw_travel(mine, mapping)
 
 def _put_back_in_depot(mine: dict, mapping, sid: str) -> None:
-    """Takes the vehicle off the map. Whoever was on it stays where they were, on the ground."""
+    """Takes the vehicle off the map. Whoever was on it is set down on the ground.
+
+    From a wagon they stay where they were. From a boat they were **on the
+    water** — the boat's junction, or the middle of a lake — and left there
+    nobody could move them: they go ashore, to the nearest dry atom
+    (`boats.ashore_spot`).
+    """
     if not permissions.can(theme.user(), permissions.MANAGE_STABLE):
         return
     entry = STATE.archive.stable_vehicle(sid)
+    on_water = (travel_mod.vehicle_kind(entry) == "water" and entry.get("hex_col") is not None)
     # A vehicle no longer on the map has nobody aboard: staying «on» a wagon
     # that is in the depot would mean travelling at its Speed without having
     # it in front, and it is exactly the ghost link one comes from.
     for char in STATE.archive.characters_on_vehicle(sid):
-        STATE.archive.update_character(char["id"], stable_id=None)
+        fields: dict = {"stable_id": None}
+        if on_water:
+            where, spot = _boats.ashore_spot((entry["hex_col"], entry["hex_row"]),
+                                             (entry.get("pos_x"), entry.get("pos_y")))
+            fields.update(hex_col=where[0], hex_row=where[1], pos_x=spot[0], pos_y=spot[1])
+        STATE.archive.update_character(char["id"], **fields)
     STATE.archive.update_stable_vehicle(sid, hex_col=None, hex_row=None)
     if mine.get("travel_vehicle") == sid:
         mine["travel_vehicle"] = None

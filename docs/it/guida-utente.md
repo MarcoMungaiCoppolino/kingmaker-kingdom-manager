@@ -2,7 +2,7 @@
 
 *In English: [../user-guide.md](../user-guide.md).*
 
-Questa guida descrive l'app com'è alla versione 1.1.0, scheda per scheda, con il perché di ogni
+Questa guida descrive l'app com'è alla versione 1.1.1, scheda per scheda, con il perché di ogni
 scelta. Per installarla e avviarla vedi il [README.it.md](../../README.it.md); la finestra
 dell'app installata è il primo capitolo qui sotto. Le schermate in
 [`manual/img/screenshots/`](../manual/img/screenshots/) sono dell'interfaccia italiana.
@@ -697,7 +697,10 @@ Per farlo viaggiare ci sono due strade, e fanno la stessa cosa:
   assegna una categoria (lago, fiume, rovine): quelli il GM li decide a mano.
 
 * **dal riquadro Viaggio**, a destra: scegli chi parte da un elenco, clicca la destinazione e
-  premi *Calcola il percorso*.
+  premi *Calcola il percorso*. La freccina accanto a quell'elenco **toglie dalla mappa** i
+  personaggi scelti: niente esagono, niente veicolo, tornano nella scheda Compagnia da rimettere
+  sulla mappa. È la via d'uscita quando un segnalino finisce dove nessun viaggio parte; chi è
+  in viaggio non viene mosso.
 
 **Parti** mette il gruppo in cammino: da lì avanza da solo mentre il tempo scorre. **Applica e
 sposta** salta al risultato, per quando al tavolo non serve far passare i giorni. In entrambi i

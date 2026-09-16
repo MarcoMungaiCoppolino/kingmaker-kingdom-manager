@@ -90,22 +90,48 @@ Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: desktopico
 Filename: "{app}\{#AppExe}"; Description: "{cm:LaunchProgram,{#StringChange(AppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 
 [Code]
-// The uninstaller removes what it installed; the game is the user's, so it
-// asks. Yes: the whole folder goes. No: saves\ and assets\ stay, and a
-// message says where.
+// Before anything is removed: the launcher and the server it started must
+// be gone, or their files stay locked and Windows reports "some elements
+// could not be removed". Then the question about the game, asked *before*
+// the program is removed: answered Yes, the whole folder goes with it;
+// answered No, saves\ and assets\ are left and the uninstaller is told so
+// through the message at the end.
+var
+  KeepGame: Boolean;
+
+procedure StopTheApp;
+var
+  Code: Integer;
+begin
+  Exec(ExpandConstant('{sys}\taskkill.exe'), '/F /IM "{#AppExe}" /T', '', SW_HIDE, ewWaitUntilTerminated, Code);
+end;
+
+function InitializeUninstall(): Boolean;
+begin
+  StopTheApp;
+  Result := True;
+end;
+
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 var
   Game: String;
 begin
-  if CurUninstallStep = usPostUninstall then
+  Game := ExpandConstant('{app}');
+  if CurUninstallStep = usUninstall then
   begin
-    Game := ExpandConstant('{app}');
+    KeepGame := False;
     if DirExists(Game + '\saves') or DirExists(Game + '\assets') then
     begin
-      if MsgBox(FmtMessage(CustomMessage('DeleteGame'), [Game]), mbConfirmation, MB_YESNO or MB_DEFBUTTON2) = IDYES then
-        DelTree(Game, True, True, True)
-      else if not UninstallSilent then
-        MsgBox(FmtMessage(CustomMessage('KeptGame'), [Game]), mbInformation, MB_OK);
+      if UninstallSilent or (MsgBox(FmtMessage(CustomMessage('DeleteGame'), [Game]), mbConfirmation, MB_YESNO or MB_DEFBUTTON2) = IDNO) then
+        KeepGame := True
+      else
+      begin
+        // The launcher's settings and lock live in saves\ too: one sweep.
+        DelTree(Game + '\saves', True, True, True);
+        DelTree(Game + '\assets', True, True, True);
+      end;
     end;
   end;
+  if (CurUninstallStep = usPostUninstall) and KeepGame and not UninstallSilent then
+    MsgBox(FmtMessage(CustomMessage('KeptGame'), [Game]), mbInformation, MB_OK);
 end;

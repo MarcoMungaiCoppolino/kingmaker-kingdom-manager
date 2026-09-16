@@ -145,7 +145,8 @@ async def login_page() -> None:
     with ui.column().classes("w-full items-center").style("padding-top:8vh"):
         with ui.card().classes("km-panel").style("min-width:340px;max-width:400px"):
             with ui.row().classes("w-full items-center no-wrap"):
-                ui.html(f'<div class="km-title" style="font-size:1.6rem">{theme.crest(34)}Kingmaker</div>')
+                ui.html(f'<div class="km-title" style="font-size:1.6rem;display:flex;align-items:center;'
+                        f'gap:8px;white-space:nowrap">{theme.crest(34, margin="0")}<span>Kingmaker</span></div>')
                 ui.element("div").style("flex:1")
                 language_button(None)
             ui.label(t("login.kingdom_belongs_whoever_governs")) \
