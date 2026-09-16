@@ -53,6 +53,7 @@ class User:
     must_change_pw: bool
     language: str | None = None
     units: str | None = None
+    can_host: bool = False
 
     @property
     def role_name(self) -> str:
@@ -71,6 +72,7 @@ def _from_row(row: dict) -> User:
         must_change_pw=bool(row["must_change_pw"]),
         language=row.get("language") if hasattr(row, "get") else None,
         units=row.get("units") if hasattr(row, "get") else None,
+        can_host=bool(row.get("can_host")) if hasattr(row, "get") else False,
     )
 
 

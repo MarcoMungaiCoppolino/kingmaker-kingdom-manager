@@ -2,13 +2,133 @@
 
 *In English: [../user-guide.md](../user-guide.md).*
 
-Questa guida descrive l'app com'è alla versione 1.0.0, scheda per scheda, con il perché di ogni
-scelta. Per installarla e avviarla vedi il [README.it.md](../../README.it.md). Le schermate in
+Questa guida descrive l'app com'è alla versione 1.1.0, scheda per scheda, con il perché di ogni
+scelta. Per installarla e avviarla vedi il [README.it.md](../../README.it.md); la finestra
+dell'app installata è il primo capitolo qui sotto. Le schermate in
 [`manual/img/screenshots/`](../manual/img/screenshots/) sono dell'interfaccia italiana.
 
 I nomi di pulsanti e riquadri qui sotto sono quelli dell'interfaccia in italiano; in inglese
 cambiano di conseguenza (*Viaggio* → *Travel*, *Acque* → *Waters*, *Regia* → *GM Screen*,
 *Compagnia* → *Party*, *Trasporti* → *Transport*).
+
+## Il launcher
+
+![Il launcher](../manual/img/screenshots/launcher.jpg)
+
+L'app installata (il setup per Windows o l'archivio per Linux dalla pagina delle release) apre
+questa finestra al posto di un terminale; dal sorgente è `python launch.py --launcher`. Avvia
+e ferma il server, nient'altro: si gioca sempre nel browser. La schermata è dell'interfaccia
+inglese; in italiano i pulsanti sono *Avvia*, *Ferma*, *Apri nel browser*, *Copia*,
+*Impostazioni*.
+
+**Dove si gioca?** *Solo su questo computer* è la scelta predefinita: il gioco si apre nel tuo
+browser e nessun altro lo raggiunge. *Sulla stessa rete* è per gli amici nella stessa casa:
+aprono il link di rete nel loro browser. *Online, con amici lontani* pubblica il gioco tramite
+il relay NiceGUI On Air; il tuo computer deve restare acceso, perché il regno vive lì. La scelta
+viene ricordata.
+
+**Il token On Air.** Scegliendo *Online* compare il campo e i tre passi: premi *Ottieni un
+token*, registrati su nicegui.io (gratis), copia il token che la pagina mostra, incollalo qui.
+Con il token il tuo indirizzo resta lo stesso a ogni avvio; senza, ogni volta un indirizzo
+casuale nuovo. Il token è conservato in chiaro nella cartella della partita; il relay trasporta
+il traffico del gioco e potrebbe leggerlo: va bene per una partita, non per dei segreti.
+
+**Avvia, Ferma, i link.** *Avvia* fa partire il server; quando è pronto la riga di stato
+diventa verde, il browser si apre e compaiono i link con un pulsante *Copia* ciascuno: questo
+computer, la rete (una riga per ogni indirizzo della macchina; prova quello che somiglia alla
+tua rete di casa), online. *Ferma* chiude il server in modo pulito, con l'ultimo salvataggio
+scritto. Anche chiudere la finestra lo ferma, dopo una conferma. Se la porta è occupata il
+launcher prende la successiva e lo dice. Su Windows, il primo avvio *Sulla stessa rete* è
+preceduto da un avviso: Windows chiederà se consentire l'app attraverso il firewall, e devi
+premere *Consenti accesso*.
+
+**Il primo avvio.** La password dell'amministratore è mostrata in una finestra, con *Copia*;
+non viene mostrata più. Al primo accesso l'app chiede di cambiarla. Se va persa,
+*Impostazioni → Reimposta la password dell'amministratore* (a server fermo) ne genera una nuova
+e la mostra una volta.
+
+**Una partita da altrove.** *Carica un salvataggio…* (a server fermo) prende il `kingmaker.db`
+di un altro PC, o lo zip scaricato dalla sua scheda Salvataggio: mostra il nome del regno, gli
+account e le immagini, chiede una volta, copia tutto e conserva il salvataggio precedente accanto. Si entra
+poi con gli account di quel file. Lo stesso riquadro è nella pagina di creazione del regno, per
+chi usa il sorgente senza launcher.
+
+**Impostazioni.** La porta, la lingua del launcher (l'app ha il suo interruttore), se aprire
+il browser all'avvio, *Apri la cartella della partita* (dove stanno `saves` e `assets`, per le
+copie di sicurezza), e la reimpostazione dell'amministratore. *Mostra il registro* in basso
+apre quello che il server stampa: è lì che si guarda quando si ferma da solo.
+
+**Aggiornamenti.** Quando su GitHub c'è una release più nuova, una riga in alto lo dice. Su
+Windows *Scarica l'aggiornamento* scarica l'installatore e lo avvia, conservando la partita; su
+Linux apre la pagina della release. *Impostazioni → Versioni su GitHub…* elenca tutte le
+release, dalla più recente, con quella installata segnata, e installa quella che scegli; tornare
+a una versione più vecchia è permesso, con un avviso, perché un salvataggio scritto da una
+versione più nuova può essere rifiutato da una più vecchia. La partita sta in `saves` e `assets` dentro la cartella
+installata: un aggiornamento sostituisce il programma e le lascia, e la disinstallazione (in
+*App installate*) chiede se cancellare anche loro.
+
+## Giocare da più PC (il cloud)
+
+Senza, la partita vive su un PC e il suo proprietario deve essere online perché qualcuno
+giochi. Con il cloud, l'ospitare può passare tra le persone fidate del tavolo — l'amministratore
+e i GM che l'amministratore segna *Può ospitare* nella finestra degli account — tramite una
+cartella nel Dropbox dell'amministratore. I giocatori non ospitano mai e non hanno mai il
+salvataggio: aprono l'indirizzo del tavolo, che resta lo stesso chiunque ospiti, perché gli
+host condividono un solo token On Air.
+
+![La procedura guidata](../manual/img/screenshots/wizard.jpg)
+
+**L'amministratore, una volta.** Nel riquadro *Cloud* del launcher premi *Configura
+Dropbox…*: sette passi con un'immagine ciascuno. Un account Dropbox gratuito; *Create app* nella
+App Console di Dropbox con *Scoped access* e *App folder* (l'app vede solo la sua cartella); i
+cinque permessi; l'*App key* incollata nel launcher, con il nome del tavolo; la pagina di
+autorizzazione (Continue, poi Allow); il codice mostrato, da incollare; fatto. Solo l'amministratore ha bisogno di
+un account Dropbox.
+
+**Gli altri host.** Mentre l'amministratore ospita, il DM apre *Collegati a un tavolo…* nel
+suo launcher: l'indirizzo del tavolo, il suo nome utente e la password. L'host controlla che
+l'account possa ospitare e consegna ciò che serve al launcher; la password è usata una volta
+e non conservata. Da lì in poi anche quel launcher può ospitare.
+
+**Giocare.** *Avvia* chiede prima al cloud chi ospita. Nessuno: il launcher prende la
+partita, carica dal cloud la copia più recente se è più nuova della sua, porta le immagini
+che gli mancano e parte. Qualcuno: il riquadro dice «ospitata da X dal…», con *Entra* per
+aprire il gioco lì. Mentre ospiti, il cloud riceve una copia della partita ogni pochi minuti
+quando qualcosa è cambiato, le immagini una volta sola, e un'ultima copia quando premi
+*Ferma*. Nella cartella restano cinque copie recenti e una al giorno per trenta giorni; il
+totale resta sotto i cento megabyte per anni.
+
+**Il *Prendi il controllo* dell'amministratore.** Compare quando ospita qualcun altro: il suo
+server si ferma entro un minuto (può perdere gli ultimi minuti di gioco) e la partita passa a
+te.
+
+**Da sapere.** Il PC di un host ha tutta la partita, segreti e hash delle password compresi:
+per questo ospitare è una decisione di fiducia, non una casella per tutti. La credenziale del
+cloud è conservata in chiaro nella cartella della partita di ogni host, come il token On Air;
+*Dimentica il cloud* la toglie, e l'amministratore può anche revocarla su Dropbox, dopo di che
+ogni host si ricollega. Se il cloud non risponde, il launcher propone di ospitare senza, e lo
+dice.
+
+## Salvataggio (amministratori)
+
+La scheda con l'icona di download, dopo la Regia, esiste solo per gli amministratori. Tre
+riquadri:
+
+- **Scarica tutto (.zip)** — un solo file con tutta la partita: il database (regno, mappa,
+  acque, personaggi, veicoli, viaggi, account, diario), il regno in JSON leggibile, e ogni
+  immagine di `assets` (la mappa, i ritratti, i segnalini). Tienilo come copia di sicurezza, o
+  portalo su un altro PC. Una copia resta in `saves/backups/`.
+- **Carica un salvataggio** — lo zip scaricato qui, o un semplice `kingmaker.db`. Una finestra
+  dice cosa contiene il file (regno, account, immagini) e chiede; il salvataggio attuale viene
+  copiato accanto a sé (`kingmaker.db.before-restore-<data>.bak`), poi il database è sostituito
+  e le immagini scompattate in `assets`. Un file di una versione vecchia viene migrato entrando;
+  uno di una versione più nuova è rifiutato. Se gli account del file non sono quelli attuali,
+  tutti rientrano.
+- **Ricomincia da capo** — svuota la partita e torna alla creazione del regno; gli account
+  restano.
+
+Lo stesso controllo *Carica un salvataggio* è nella pagina di creazione del regno, e il launcher
+ha *Carica un salvataggio…* per lo stesso zip.
 
 ## Account e ruoli
 
@@ -256,6 +376,11 @@ Procedura guidata sulle dieci fasi del manuale: Concetto, Concessione, Territori
 Governo, Finalizzare i Punteggi, Dettagli, Ruoli di Governo (con i quattro ruoli investiti e
 le abilità che addestrano), Primo Villaggio, Modificatori di Abilità, Fama o Infamia.
 I punteggi si aggiornano in tempo reale mentre scegli.
+
+Sotto le dieci fasi, chi può azzerare il regno vede **Hai già un salvataggio?**: lo stesso
+controllo *Carica un salvataggio* della scheda Salvataggio, per una partita giocata su un
+altro PC o prima dell'installatore. Niente da rifare: il file viene guardato, confermato e
+copiato dentro.
 
 ### Mappa
 Griglia esagonale sovrapposta all'immagine della mappa. Per ogni esagono puoi registrare

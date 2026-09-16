@@ -13,3 +13,7 @@ tests/benches/*.json
 .env
 .env.*
 *.log
+packaging
+build
+dist
+.github

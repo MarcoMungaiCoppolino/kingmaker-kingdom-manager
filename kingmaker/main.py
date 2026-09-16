@@ -1,10 +1,17 @@
 """Entry point of the application."""
 from __future__ import annotations
 
+import hmac
+import json
+import os
 import sqlite3
+import sys
+import tempfile
 import time
+from pathlib import Path
 
-from nicegui import ui
+from fastapi import Request, Response
+from nicegui import app, run, ui
 from nicegui.storage import Storage
 
 from kingmaker.access import auth, permissions
@@ -12,6 +19,7 @@ from kingmaker import config, rules
 from kingmaker.locale import i18n
 from kingmaker.locale.i18n import t, tn
 from kingmaker.state import STATE
+from kingmaker.storage import bundle
 from kingmaker.ui import login, hexmap, theme
 from kingmaker.ui.tabs import city, party, creation, clock, gm_screen, sheet, transport, turn
 
@@ -22,7 +30,7 @@ def header(user: auth.User | None = None) -> None:
     with ui.row().classes("w-full items-center gap-3 flex-wrap") \
             .style("padding:10px 16px;background:linear-gradient(90deg,#1f1a14,#14110d);"
                    "border-bottom:1px solid var(--km-line)"):
-        ui.html('<div class="km-title" style="font-size:1.4rem">👑 '
+        ui.html(f'<div class="km-title" style="font-size:1.4rem">{theme.crest(30)}'
                 f'{theme.esc(k["name"] or t("main.unnamed_kingdom"))}</div>')
         if k["created"]:
             gov = rules.BY_ID["government"].get(k["government"])
@@ -80,6 +88,13 @@ def page_() -> None:
     if not STATE.k["created"]:
         with ui.column().classes("w-full").style("padding:16px;max-width:1100px;margin:0 auto"):
             creation.creation_page(at_end=lambda: ui.navigate.reload())
+            # The game of another PC, or of the time before the installer:
+            # nothing to redo, load its file.
+            if user.can(permissions.RESET_KINGDOM):
+                with ui.card().classes("km-panel w-full"):
+                    theme.title(t("main.have_save_title"), 2)
+                    ui.label(t("main.have_save_text")).style("color:var(--km-muted);font-size:.85rem")
+                    save_upload()
         return
 
     # The tab in the foreground decides which panels are worth redrawing when
@@ -100,6 +115,10 @@ def page_() -> None:
         # panel is never even created, there is nothing to discover.
         t_gm = ui.tab("gm", label=t("tabs.gm"), icon="visibility") \
             if permissions.can(user, permissions.SEE_SECRETS) else None
+        # The save: download, load, start over. Administrators only, and
+        # like the GM screen the panel is not even built for the others.
+        t_save = ui.tab("save", label=t("tabs.save"), icon="download") \
+            if permissions.can(user, permissions.EXPORT_SAVE) else None
 
     with ui.tab_panels(tabs, value=t_map).classes("w-full").style("background:transparent"):
         with ui.tab_panel(t_map):
@@ -119,6 +138,9 @@ def page_() -> None:
         if t_gm is not None:
             with ui.tab_panel(t_gm):
                 gm_screen.gm_panel()
+        if t_save is not None:
+            with ui.tab_panel(t_save):
+                save_panel(user)
 
     theme.active_tab("map")
 
@@ -195,21 +217,6 @@ def _activity_list() -> None:
                         turn.outcomes_block(a)
 
 
-def _download() -> None:
-    """The save holds the whole campaign: the permission is checked again here.
-
-    Hiding the button is not a defence: whoever knows the event could fire it
-    all the same.
-    """
-    who = auth.current_user(STATE.archive)
-    if not permissions.can(who, permissions.EXPORT_SAVE):
-        theme.notify(t("main.you_do_not_have"), "negative")
-        return
-    STATE.record(t("main.downloaded_save", username=who.username), "account")
-    theme.mark_dirty()
-    ui.download.content(STATE.export(), "kingdom.json")
-
-
 def _tables(user: auth.User) -> None:
     with ui.row().classes("w-full items-start gap-4 flex-wrap"):
         with ui.card().classes("km-panel"):
@@ -276,52 +283,64 @@ def _tables(user: auth.User) -> None:
             ui.markdown(borders["_note"]).style("font-size:.75rem;color:var(--km-gold-dim)")
 
     theme.sep()
-    with ui.card().classes("km-panel w-full"):
-        theme.title(t("main.data_save_file"), 2)
-        ui.label(t("main.save_file", path=STATE.archive.path)) \
-            .style("color:var(--km-muted);font-size:.8rem")
-        ui.label(t("main.rules_source_pf2_altervista")) \
-            .style("color:var(--km-muted);font-size:.8rem")
-        if user.can(permissions.EXPORT_SAVE):
-            with ui.row().classes("items-center gap-2 flex-wrap"):
-                ui.button(t("main.download_database"), icon="save",
-                          on_click=_download_database) \
-                    .props("dense color=amber") \
-                    .tooltip(t("main.download_database_tooltip"))
-                ui.button(t("main.download_json_save"), on_click=_download) \
-                    .props("dense outline color=amber") \
-                    .tooltip(t("main.whole_campaign_gm_notes"))
-                ui.button(t("main.start_over_from_scratch"),
-                          on_click=lambda: _confirm_reset(user)) \
-                    .props("dense flat color=red")
-            if user.can(permissions.RESET_KINGDOM):
-                ui.upload(label=t("main.load_database"), on_upload=_load_database,
-                          auto_upload=True, max_file_size=MAX_SAVE_BYTES) \
-                    .props("accept=.db,.sqlite,.bak dense").classes("w-full")
-        else:
-            ui.label(t("main.save_can_downloaded_reset")).style("color:var(--km-muted);font-size:.78rem")
+    ui.label(t("main.rules_source_pf2_altervista")) \
+        .style("color:var(--km-muted);font-size:.8rem")
 
 
 MAX_SAVE_BYTES = 512 * 1024 * 1024
 BACKUP_FOLDER = "backups"
 
 
-def _download_database() -> None:
-    """A complete copy of the database, written next to the save and sent."""
+def save_panel(user: auth.User) -> None:
+    """The Save tab: the whole game in one file, out and in, and the reset."""
+    with ui.column().classes("w-full").style("max-width:760px;margin:0 auto"):
+        with ui.card().classes("km-panel w-full"):
+            theme.title(t("main.save_title"), 2)
+            ui.label(t("main.save_intro")).style("white-space:normal;font-size:.85rem")
+            ui.button(t("main.download_everything"), icon="download",
+                      on_click=_download_bundle).props("color=amber") \
+                .tooltip(t("main.download_everything_tooltip"))
+            ui.label(t("main.save_file", path=STATE.archive.path)) \
+                .style("color:var(--km-muted);font-size:.78rem")
+        with ui.card().classes("km-panel w-full"):
+            theme.title(t("main.load_title"), 2)
+            ui.label(t("main.load_intro")).style("white-space:normal;font-size:.85rem")
+            if user.can(permissions.RESET_KINGDOM):
+                save_upload()
+        with ui.card().classes("km-panel w-full"):
+            theme.title(t("main.start_over_from_scratch"), 2)
+            ui.label(t("main.reset_intro")).style("white-space:normal;font-size:.85rem")
+            ui.button(t("main.start_over_from_scratch"), icon="delete_forever",
+                      on_click=lambda: _confirm_reset(user)).props("flat color=red")
+
+
+def save_upload() -> None:
+    """The «Load a save» control: in the Save tab, and on the creation page
+    for whoever arrives with a game already played elsewhere."""
+    ui.upload(label=t("main.load_database"), on_upload=_load_database,
+              auto_upload=True, max_file_size=MAX_SAVE_BYTES) \
+        .props("accept=.zip,.db,.sqlite,.bak dense").classes("w-full")
+
+
+def _download_bundle() -> None:
+    """Everything in one zip — database, kingdom as JSON, images — written
+    next to the save and sent."""
     who = auth.current_user(STATE.archive)
     if not permissions.can(who, permissions.EXPORT_SAVE):
         theme.notify(t("main.you_do_not_have"), "negative")
         return
     stamp = time.strftime("%Y%m%d-%H%M%S")
-    name = f"kingmaker-{stamp}.db"
-    path = STATE.archive.backup_to(config.DATA_DIR / BACKUP_FOLDER / name)
+    name = f"kingmaker-{stamp}.zip"
+    path = bundle.write(STATE.archive, STATE.export(), config.ASSETS_DIR,
+                        config.DATA_DIR / BACKUP_FOLDER / name)
     STATE.record(t("main.downloaded_database", username=who.username), "account")
     theme.mark_dirty()
     ui.download.file(path, name)
 
 
 async def _load_database(event) -> None:
-    """An uploaded save: looked at first, then replaced only on confirmation."""
+    """An uploaded save, a zip or a bare database: looked at first, then
+    replaced only on confirmation."""
     who = auth.current_user(STATE.archive)
     if not permissions.can(who, permissions.RESET_KINGDOM):
         theme.notify(t("main.you_do_not_have_4"), "negative")
@@ -333,10 +352,11 @@ async def _load_database(event) -> None:
     folder = config.DATA_DIR / BACKUP_FOLDER
     folder.mkdir(parents=True, exist_ok=True)
     stamp = time.strftime("%Y%m%d-%H%M%S")
-    path = folder / f"uploaded-{stamp}.db"
+    suffix = ".zip" if str(file.name).lower().endswith(".zip") else ".db"
+    path = folder / f"uploaded-{stamp}{suffix}"
     path.write_bytes(await file.read())
     try:
-        info = STATE.archive.inspect(path)
+        info = bundle.inspect(path)
     except ValueError as exc:
         key, params = (exc.args + ({},))[:2]
         theme.notify(t("main.not_a_save", reason=t(key, **params)), "negative")
@@ -351,7 +371,8 @@ async def _load_database(event) -> None:
         theme.title(t("main.restore_title"), 2)
         ui.label(t("main.restore_details", name=file.name, version=info["version"],
                    kingdom=info["kingdom"] or "?", users=info["users"],
-                   v=tn("main.restore_accounts", info["users"]))) \
+                   v=tn("main.restore_accounts", info["users"]),
+                   images=tn("main.restore_images", info["assets"]))) \
             .style("color:var(--km-gold);font-size:.85rem")
         ui.label(t("main.restore_warning")).style("white-space:normal;font-size:.82rem")
 
@@ -409,12 +430,187 @@ def start(host: str = "127.0.0.1", port: int = 8080, show: bool = True,
     Storage.path.mkdir(parents=True, exist_ok=True)
     config.ON_AIR = bool(online)
     _first_start()
+    app.on_startup(lambda: _announce_ready(host, port))
+    launcher_route(os.environ.get(LAUNCHER_SECRET_VARIABLE, "").strip(),
+                   os.environ.get(SYNC_CREDENTIAL_VARIABLE, "").strip())
     # Behind HTTPS the session cookie must never travel in the clear.
     cookie = {"https_only": True, "same_site": "lax"} if config.HTTPS else None
     ui.run(host=host, port=port, title="Kingmaker Kingdom Manager",
-           favicon="👑", dark=True, show=show, reload=False,
+           favicon=str(theme.CREST_FILE), dark=True, show=show, reload=False,
            storage_secret=config.storage_secret(), on_air=online,
            session_middleware_kwargs=cookie)
+
+
+LAUNCHER_SECRET_VARIABLE = "KINGMAKER_LAUNCHER_SECRET"
+SYNC_CREDENTIAL_VARIABLE = "KINGMAKER_SYNC_CREDENTIAL"
+# The paths the launcher uses; `login.OPEN_PAGES` lists them so the access
+# middleware lets them through to their own checks.
+LAUNCHER_PATHS = ("/_launcher/shutdown", "/_launcher/status", "/_launcher/snapshot",
+                  "/_launcher/synced", "/_launcher/credential")
+
+
+def launcher_route(secret: str, credential_json: str = "") -> None:
+    """The routes for the launcher, registered only when it started us.
+
+    A signal cannot reach a child without a console — and the installed app
+    has none — so the launcher asks over HTTP instead, with a secret it made
+    up for this start and passed in the environment. Wrong secret, or a
+    caller that is not this machine: 404, as if the route did not exist.
+    Without a secret none of the local routes is registered at all.
+
+    - `POST /_launcher/shutdown`: stop, the last save written.
+    - `GET /_launcher/status`: `{"rev"}`, so the launcher knows when the game
+      changed without asking for a copy.
+    - `POST /_launcher/snapshot`: a database-only bundle (`bundle.write_snapshot`),
+      what the launcher uploads to the cloud; `?epoch=&seq=` go in its manifest.
+    - `POST /_launcher/synced`: `{"epoch","seq"}` recorded in `meta`, so the
+      database itself knows which cloud copy it matches.
+    - `POST /_launcher/credential`: the one route open to the network — the
+      launcher of another host sends `{"username","password"}` and, if that
+      account may host (`permissions.HOST_GAME`), receives the cloud
+      credential this server was given at start. Never registered without
+      one. Wrong password, wrong role, and the same throttles as the login
+      page: 404.
+    """
+    if not secret:
+        return
+
+    def _local(request: Request) -> bool:
+        client = request.client.host if request.client else ""
+        offered = request.headers.get("x-launcher-secret", "")
+        return client in ("127.0.0.1", "::1") and hmac.compare_digest(offered, secret)
+
+    @app.post("/_launcher/shutdown")
+    async def _shutdown(request: Request) -> Response:
+        if not _local(request):
+            return Response(status_code=404)
+        app.shutdown()
+        return Response(status_code=204)
+
+    @app.get("/_launcher/status")
+    async def _status(request: Request) -> Response:
+        if not _local(request):
+            return Response(status_code=404)
+        return Response(json.dumps({"rev": STATE.archive.rev, "kingdom": STATE.k.get("name") or "",
+                                    "synced": synced_marks()}),
+                        media_type="application/json")
+
+    @app.post("/_launcher/snapshot")
+    async def _snapshot(request: Request) -> Response:
+        if not _local(request):
+            return Response(status_code=404)
+        marks = {}
+        for key in ("epoch", "seq"):
+            value = request.query_params.get(key)
+            if value is not None and value.isdigit():
+                marks[key] = int(value)
+        theme.write_to_disk()
+        with tempfile.TemporaryDirectory(prefix="km-snap-") as tmp:
+            target = bundle.write_snapshot(STATE.archive, config.ASSETS_DIR,
+                                           Path(tmp) / "snapshot.zip", marks)
+            data = target.read_bytes()
+        return Response(data, media_type="application/zip",
+                        headers={"X-Kingmaker-Rev": str(STATE.archive.rev)})
+
+    @app.post("/_launcher/synced")
+    async def _synced(request: Request) -> Response:
+        if not _local(request):
+            return Response(status_code=404)
+        try:
+            payload = json.loads((await request.body()).decode("utf-8") or "{}")
+            epoch, seq = int(payload["epoch"]), int(payload["seq"])
+        except (ValueError, KeyError, TypeError):
+            return Response(status_code=400)
+        STATE.archive.write_meta("sync_marks", json.dumps({"epoch": epoch, "seq": seq}))
+        return Response(status_code=204)
+
+    credential = None
+    if credential_json:
+        try:
+            credential = json.loads(credential_json)
+        except ValueError:
+            credential = None
+    if not isinstance(credential, dict) or not credential:
+        return
+
+    @app.post("/_launcher/credential")
+    async def _credential(request: Request) -> Response:
+        try:
+            payload = json.loads((await request.body()).decode("utf-8") or "{}")
+            username, password = str(payload["username"]), str(payload["password"])
+        except (ValueError, KeyError, TypeError):
+            return Response(status_code=404)
+        ip = auth.client_ip(_Caller(request))
+        who = await run.io_bound(auth.verify, STATE.archive, username, password, ip)
+        if who is None or not permissions.can(who, permissions.HOST_GAME):
+            return Response(status_code=404)
+        STATE.record(t("main.credential_fetched", username=who.username), "account")
+        theme.mark_dirty()
+        return Response(json.dumps({"credential": credential, "role": who.role,
+                                    "username": who.username,
+                                    "kingdom": STATE.k.get("name") or ""}),
+                        media_type="application/json")
+
+
+class _Caller:
+    """What `auth.client_ip` expects — the shape of a NiceGUI client — built
+    from a plain FastAPI request."""
+
+    def __init__(self, request: Request) -> None:
+        self.request = request
+        self.ip = request.client.host if request.client else None
+
+
+def synced_marks() -> dict:
+    """The `(epoch, seq)` of the cloud copy this database matches, or {}."""
+    raw = STATE.archive.read_meta("sync_marks")
+    if not raw:
+        return {}
+    try:
+        data = json.loads(raw)
+        return {"epoch": int(data["epoch"]), "seq": int(data["seq"])}
+    except (ValueError, KeyError, TypeError):
+        return {}
+
+
+def announce(kind: str, value: str) -> None:
+    """One line for the launcher: `KM <kind> <value>`, on stdout, flushed.
+
+    The launcher (`kingmaker.launcher`) starts the server as a child process
+    and reads its output: these lines are the contract, the human text around
+    them is free to change. Without a stdout (the installed app started by a
+    double click, not by the launcher) there is nobody to tell.
+    """
+    if sys.stdout is None:
+        return
+    print(f"KM {kind} {value}", flush=True)
+
+
+def _announce_ready(host: str, port: int) -> None:
+    announce("ready", f"http://127.0.0.1:{port}")
+    if host == "0.0.0.0":
+        for address in lan_addresses():
+            announce("lan", f"http://{address}:{port}")
+
+
+def lan_addresses() -> list[str]:
+    """The IPv4 addresses of this machine, without the loopback: what the
+    others on the network type in their browser."""
+    try:
+        import ifaddr
+    except ImportError:       # a NiceGUI dependency, but not a promise
+        return []
+    found = []
+    for adapter in ifaddr.get_adapters():
+        for ip in adapter.ips:
+            address = str(ip.ip)
+            # Loopback and link-local (169.254: an adapter with no network)
+            # are no use to anyone; the home-network ranges come first.
+            if ip.is_IPv4 and not address.startswith(("127.", "169.254.")):
+                found.append(address)
+    rank = {"192.168.": 0, "10.": 1}
+    found.sort(key=lambda a: next((r for p, r in rank.items() if a.startswith(p)), 2))
+    return found
 
 
 def _first_start() -> None:
@@ -431,3 +627,4 @@ def _first_start() -> None:
     print("  be asked to change it, and from there you can create the other accounts.")
     print("=" * 64)
     print()
+    announce("admin-password", password)

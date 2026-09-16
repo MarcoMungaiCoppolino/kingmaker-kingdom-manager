@@ -128,20 +128,26 @@ TABLE IF NOT EXISTS` in the `SCHEMA` is enough.
 
 ## Export, reset, copies
 
-- **Download the JSON save** (Manual tab, admin only): `STATE.export()` — the whole `STATE.k`,
-  hexes included, plus the last 400 rows of the journal. It does not contain the other tables
-  (users, characters, water).
-- **Start over**: `STATE.reset()` → `archive.reset` empties **every** table of the campaign
+- **The kingdom as JSON**: `STATE.export()` — the whole `STATE.k`, hexes included, plus the
+  last 400 rows of the journal; it does not contain the other tables (users, characters,
+  water). Since 1.1.0 it has no button of its own: it travels inside the zip below as
+  `kingdom.json`, for a human to read.
+- **Start over** (the Save tab): `STATE.reset()` → `archive.reset` empties **every** table of the campaign
   (`CAMPAIGN_TABLES`: kingdom, hexes, secrets, fog, characters, vehicles, journeys, water,
   journal). The accounts stay.
-- **Download / load the save file** (Manual tab, admin only): `Archive.backup_to` writes a
-  consistent copy of the whole database with the SQLite backup API after a WAL checkpoint, sent
-  as `kingmaker-<date>.db` from `saves/backups/`; `Archive.inspect` says what an uploaded file
-  is (SQLite header, the game tables, schema version not newer than ours, kingdom name, number
-  of accounts) or raises a `ValueError` carrying a catalog key; `Archive.restore_from` closes
-  the connection, copies the current file to `kingmaker.db.before-restore-<date>.bak`, swaps
-  the file in and reopens it through `_open`, so an old save is migrated exactly as at start;
-  `STATE.restore` reloads the kingdom. `tests/test_backup.py` covers the round trip.
+- **Download / load the save** (the Save tab, admin only; the load also on the creation page
+  and in the launcher): `storage/bundle.py` writes one zip — `manifest.json`, `kingmaker.db`
+  from `Archive.backup_to` (a consistent copy with the SQLite backup API after a WAL
+  checkpoint), `kingdom.json` from `STATE.export`, and `assets/…` — sent as
+  `kingmaker-<date>.zip` from `saves/backups/`. `bundle.inspect` takes a zip or a bare
+  database and says what it holds (`Archive.inspect`: SQLite header, the game tables, schema
+  version not newer than ours, kingdom name, number of accounts; plus the number of images) or
+  raises a `ValueError` carrying a catalog key; `bundle.restore` goes through
+  `Archive.restore_from` — the connection closed, the current file copied to
+  `kingmaker.db.before-restore-<date>.bak`, the file swapped in and reopened through `_open`,
+  so an old save is migrated exactly as at start — then unpacks the images over `assets/`,
+  refusing any member that climbs out of it; `STATE.restore` reloads the kingdom.
+  `tests/test_backup.py` covers both round trips.
 - **Copies**: `saves/backup-*` are copies made by hand before the big migrations, and
   `kingmaker.db.pre-v27.bak` is the automatic one. `KINGMAKER_DATA_DIR` moves the whole data
   folder (DB, sessions, cookie key).

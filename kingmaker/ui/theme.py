@@ -1,6 +1,7 @@
 """Visual theme and shared widgets."""
 from __future__ import annotations
 
+import base64
 import functools
 import html
 import logging
@@ -119,6 +120,19 @@ body, .nicegui-content { background: var(--km-bg); color: var(--km-text);
 # resets the scroll. Coming back to the Map you found yourself in the top-left
 # corner, and whoever plays in the right half of the Stolen Lands had to make
 # the trip again every time.
+
+
+# The party's crest: the favicon (a file NiceGUI serves at /favicon.ico) and,
+# small and inlined, the badge next to the kingdom's name — the same picture
+# as the launcher's icon, so the app has one face everywhere.
+CREST_FILE = Path(__file__).parent / "static" / "crest.png"
+_CREST_SMALL = base64.b64encode((Path(__file__).parent / "static" / "crest-40.png").read_bytes()).decode("ascii")
+
+
+def crest(size: int = 28, margin: str = "0 6px 0 0") -> str:
+    """The crest as an inline `<img>`, ready for `ui.html`."""
+    return (f'<img src="data:image/png;base64,{_CREST_SMALL}" width="{size}" height="{size}" '
+            f'alt="" style="vertical-align:middle;border-radius:22%;margin:{margin}">')
 
 
 SCROLL_JS = (Path(__file__).parent / "static" / "map_scroll.js").read_text(encoding="utf-8")

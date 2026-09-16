@@ -112,6 +112,56 @@ results.append(("without a choice English means feet", units.current() == "ft"))
 i18n.language_resolver = lambda: "it"
 results.append(("without a choice Italian means metres", units.current() == "m"))
 
+# 6. the bundle: database, kingdom JSON and images in one zip, and back
+from kingmaker.storage import bundle  # noqa: E402
+import zipfile  # noqa: E402
+assets = folder / "assets"
+(assets / "characters").mkdir(parents=True)
+(assets / "map.png").write_bytes(b"\x89PNG map")
+(assets / "characters" / "aldric.png").write_bytes(b"\x89PNG face")
+(assets / "README.md").write_text("not shipped", encoding="utf-8")
+zipped = bundle.write(A, STATE.export(), assets, folder / "kingmaker-bundle.zip")
+with zipfile.ZipFile(zipped) as zf:
+    names = set(zf.namelist())
+results.append(("the zip holds the database, the JSON and the manifest",
+                {"kingmaker.db", "kingdom.json", "manifest.json"} <= names))
+results.append(("the images travel under assets/, the README does not",
+                {"assets/map.png", "assets/characters/aldric.png"} <= names
+                and "assets/README.md" not in names))
+info = bundle.inspect(zipped)
+results.append(("inspect reads a zip", info["kind"] == "zip" and info["users"] == before["users"]
+                and info["kingdom"] == before["name"] and info["assets"] == 2))
+results.append(("inspect reads a bare database too",
+                bundle.inspect(copy)["kind"] == "db" and bundle.inspect(copy)["assets"] == 0))
+try:
+    bundle.inspect(text_file)
+    results.append(("a text file is refused by the bundle", False))
+except ValueError as exc:
+    results.append(("a text file is refused by the bundle", exc.args[0] == "main.not_sqlite"))
+empty_zip = folder / "empty.zip"
+with zipfile.ZipFile(empty_zip, "w") as zf:
+    zf.writestr("hello.txt", "no database here")
+try:
+    bundle.inspect(empty_zip)
+    results.append(("a zip without the database is refused", False))
+except ValueError as exc:
+    results.append(("a zip without the database is refused", exc.args[0] == "main.missing_tables"))
+# a hostile member must not climb out of the assets folder
+with zipfile.ZipFile(zipped, "a") as zf:
+    zf.writestr("assets/../escaped.txt", "nope")
+target_assets = folder / "restored-assets"
+kept_bundle = bundle.restore(A, target_assets, zipped)
+results.append(("restore from a zip keeps the previous save",
+                kept_bundle.exists() and kept_bundle.name.startswith("kingmaker.db.before-restore-")))
+results.append(("the images are unpacked in place",
+                (target_assets / "map.png").read_bytes() == b"\x89PNG map"
+                and (target_assets / "characters" / "aldric.png").exists()))
+results.append(("the climbing member is ignored", not (folder / "escaped.txt").exists()
+                and not (target_assets / "escaped.txt").exists()))
+STATE.k = __import__("kingmaker.state", fromlist=["new_kingdom"]).new_kingdom()
+STATE.load()
+results.append(("the game after the zip is the same game", counts() == before))
+
 shutil.rmtree(folder, ignore_errors=True)
 for name, ok in results:
     print(f" {'ok' if ok else 'NO'}  {name}")

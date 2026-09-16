@@ -40,6 +40,9 @@ CONTROL_CLOCK = "control_clock"
 MANAGE_USERS = "manage_users"
 EXPORT_SAVE = "export_save"
 RESET_KINGDOM = "reset_kingdom"
+# Whose launcher may host the game and receive the cloud credential: every
+# administrator, and the GMs the administrator flagged (`users.can_host`).
+HOST_GAME = "host_game"
 
 MIN_ROLE = {
     EDIT_KINGDOM: PLAYER,
@@ -61,6 +64,7 @@ MIN_ROLE = {
     # player should be able to walk away with.
     EXPORT_SAVE: ADMIN,
     RESET_KINGDOM: ADMIN,
+    HOST_GAME: GM,
 }
 
 
@@ -87,6 +91,10 @@ def can(user, action: str) -> bool:
         # An action never declared: better to deny it and notice, than to grant
         # it by oversight.
         raise KeyError(f"unknown action: {action!r}")
+    if action == HOST_GAME and not at_least(user, ADMIN):
+        # The role is not enough here: a GM hosts only if the administrator
+        # said so, one account at a time.
+        return at_least(user, required) and bool(getattr(user, "can_host", False))
     return at_least(user, required)
 
 

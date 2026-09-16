@@ -1,0 +1,4 @@
+# What the installers need on top of requirements.txt. Pillow is bundled so
+# that "read the water from the map image" works in the installed app.
+pyinstaller>=6.10,<7
+Pillow>=10,<12

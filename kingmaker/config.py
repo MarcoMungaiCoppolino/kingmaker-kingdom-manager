@@ -9,9 +9,26 @@ from __future__ import annotations
 
 import os
 import secrets
+import sys
 from pathlib import Path
 
-ROOT_DIR = Path(__file__).resolve().parent.parent
+
+def _root() -> Path:
+    """The folder the game lives next to.
+
+    From source it is the repository (the parent of this package), so `saves/`
+    and `assets/` sit beside `launch.py`. In the installed app (frozen with
+    PyInstaller, `sys.frozen` set) the package lives inside the bundle's
+    `_internal/`, which every update replaces: the game goes next to the
+    executable instead, so the installed folder has the same shape as the
+    repository.
+    """
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent
+    return Path(__file__).resolve().parent.parent
+
+
+ROOT_DIR = _root()
 
 
 def _folder(variable: str, default_one: Path) -> Path:

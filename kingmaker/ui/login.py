@@ -15,7 +15,10 @@ from kingmaker.ui import theme
 # Paths reachable without having logged in. Besides the login page, the
 # NiceGUI static files and the websocket channel are needed, otherwise the
 # login page would arrive without style and without javascript.
-OPEN_PAGES = {"/login", "/favicon.ico"}
+# `/_launcher/shutdown` answers only the launcher that started the server,
+# with its secret (`main.launcher_route`): nobody else gets past a 404.
+OPEN_PAGES = {"/login", "/favicon.ico", "/_launcher/shutdown", "/_launcher/status",
+              "/_launcher/snapshot", "/_launcher/synced", "/_launcher/credential"}
 OPEN_PREFIXES = ("/_nicegui/", "/_nicegui_ws")
 
 
@@ -142,7 +145,7 @@ async def login_page() -> None:
     with ui.column().classes("w-full items-center").style("padding-top:8vh"):
         with ui.card().classes("km-panel").style("min-width:340px;max-width:400px"):
             with ui.row().classes("w-full items-center no-wrap"):
-                theme.title("👑 Kingmaker", 1)
+                ui.html(f'<div class="km-title" style="font-size:1.6rem">{theme.crest(34)}Kingmaker</div>')
                 ui.element("div").style("flex:1")
                 language_button(None)
             ui.label(t("login.kingdom_belongs_whoever_governs")) \
@@ -310,6 +313,10 @@ def users_panel(user: auth.User) -> None:
                     .tooltip(permissions.role_description(row["role"]))
                 ui.checkbox(t("login.active"), value=bool(row["active"]),
                             on_change=lambda e, i=row["id"]: _change_active(i, e.value))
+                if row["role"] == permissions.GM:
+                    ui.checkbox(t("login.can_host"), value=bool(row.get("can_host")),
+                                on_change=lambda e, i=row["id"]: _change_can_host(i, e.value)) \
+                        .tooltip(t("login.can_host_tooltip"))
                 ui.label(t("login.last_login", v=row["last_login"] or t("login.never"))) \
                     .style("color:var(--km-muted);font-size:.72rem;flex:1")
                 if row["id"] != user.id and row["active"]:
@@ -394,6 +401,14 @@ def _change_role(user_id: str, role: str) -> None:
     elif role in permissions.HIERARCHY:
         STATE.archive.update_user(user_id, role=role)
     users_panel.refresh()
+
+
+@theme.requires(permissions.MANAGE_USERS)
+def _change_can_host(user_id: str, allowed: bool) -> None:
+    STATE.archive.update_user(user_id, can_host=1 if allowed else 0)
+    STATE.record(t("login.can_host_log", username=(STATE.archive.user_by_id(user_id) or {}).get("username", "?"),
+                   state=t("login.can_host_yes") if allowed else t("login.can_host_no")), "account")
+    theme.mark_dirty()
 
 
 @theme.requires(permissions.MANAGE_USERS)

@@ -156,7 +156,9 @@ When a name appears in the code it always means the same thing:
 python launch.py                # http://127.0.0.1:8080, opens the browser
 python launch.py --lan          # reachable from the local network
 python launch.py --online       # NiceGUI On Air, token from KINGMAKER_ON_AIR_TOKEN
+python launch.py --launcher     # the launcher window of the installed app, from source
 ```
 
 On the first start `main._first_start` creates the `admin` account and prints the password in
-the console, once. To try things without touching the game: chapter 11.
+the console, once (the launcher shows it in a dialog). To try things without touching the
+game: chapter 11. The installed app, its launcher and how it is built: chapter 12.

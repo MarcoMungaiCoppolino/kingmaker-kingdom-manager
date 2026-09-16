@@ -33,7 +33,7 @@ from kingmaker.geometry import waterways, hexgrid, sections as sections_mod
 
 log = logging.getLogger(__name__)
 
-SCHEMA_VERSION = 28
+SCHEMA_VERSION = 29
 
 # Hex columns kept separate because one filters or searches on them. The rest
 # of the row goes into `extra`, so a new key is not lost.
@@ -163,7 +163,10 @@ CREATE TABLE IF NOT EXISTS users (
     -- choose, and then the browser's language is used.
     language          TEXT,
     -- Metres or feet for the Speeds shown ('m', 'ft'); NULL follows the language.
-    units             TEXT
+    units             TEXT,
+    -- May this person's launcher host the game (GM role only; administrators
+    -- always can): the trust decision behind the cloud sync (schema 29).
+    can_host          INTEGER NOT NULL DEFAULT 0
 );
 
 -- The kingdom's stable: the vehicles the party really owns. `vehicle` is the
@@ -558,6 +561,8 @@ class Archive:
         (27, "users", "language TEXT"),
         # Metres or feet, chosen by each person (schema 28).
         (28, "users", "units TEXT"),
+        # Whose launcher may host the game (schema 29).
+        (29, "users", "can_host INTEGER NOT NULL DEFAULT 0"),
         # A boat sits in the water on its own, and whoever boards it reaches
         # it. It is the opposite of a wagon, which sits where whoever tows it
         # is: a boat is not carried on one's shoulders to the river.
@@ -902,7 +907,7 @@ class Archive:
         if not fields:
             return
         allowed = {"username", "pw_hash", "salt", "iterations", "role",
-                   "active", "must_change_pw", "last_login", "language", "units"}
+                   "active", "must_change_pw", "last_login", "language", "units", "can_host"}
         unknowns = set(fields) - allowed
         if unknowns:
             raise ValueError(f"fields that cannot be modified: {sorted(unknowns)}")

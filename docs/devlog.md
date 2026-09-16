@@ -234,3 +234,55 @@ What was learned, in one line each:
   backup saved an afternoon.
 - Docker is easy to write and hard to test on a machine without Docker; the README says so
   rather than pretending.
+
+## 1.1.0 — 16 September 2026 · The launcher and the installers
+
+The release for whoever has no terminal. A GM at the table should not need Python, a venv and
+`pip` to run a kingdom: the answer was an installer that carries Python inside, and a small
+window in front of the server — start, stop, where do you play, the link to give the players.
+
+The app turned out to be almost ready to freeze. Every resource was already anchored on
+`Path(__file__)`, `reload=False` was already there, nothing used `sys.argv` or the working
+folder. Two things broke, both invisible from source: the root of the game (`config.ROOT_DIR`)
+would have landed inside PyInstaller's `_internal`, which every update replaces, and the
+first-start password was a `print` to a console the installed app does not have. The first
+became `config._root()`, next to the executable when frozen; the second became `KM` lines on
+stdout, a contract between the server and the launcher that reads it.
+
+**Stopping was the real lesson.** The first launcher sent Ctrl+Break to the child, as one does;
+it never arrived, because a child started without a window has its own hidden console, and the
+frozen executable has no console at all. The stop that works is a request: `POST
+/_launcher/shutdown` with a secret made up for that start, answered only from this machine, and
+NiceGUI's `app.shutdown()` behind it, so the last save is written on the way out. The route does
+not exist unless the launcher asked for it.
+
+Two smaller ones. A tkinter `StringVar` that nothing holds is collected, and the entry showing
+the link goes blank: the screenshot for the manual found it. And GitHub no longer offers Ubuntu
+20.04 runners, so the Linux build needs 22.04 or newer; the owner's WSL was 20.04, and the
+README says the minimum instead of fighting it.
+
+**The cloud, the same day.** The launcher solved the terminal and left the real problem:
+the game lives on one PC. Every design that keeps several owners of the truth was refused —
+multi-master means merging a running clock and a GM's secrets on every player's disk. What
+was built instead keeps one host at a time and moves the hosting: a record in a Dropbox
+folder taken with a compare-and-swap, a heartbeat that says "alive", the copies in two
+tiers, the credential handed out by a live host to the accounts the administrator trusts.
+Three things bit on the way. Time: a record's age must come from the server's clock, and
+the first parser used `mktime`, which in daylight-saving time was an hour off, so a fresh
+record looked stale. Threads: `root.after` from a worker thread raises when the main thread
+is not in the loop, and a lambda that captures the variable of an `except` block finds it
+gone; every callback now goes through the same queue as the server's lines. Churn: recording
+"what the cloud holds" in the database is itself a write that bumps the revision, so the
+next tick uploaded again, forever, until the revision was read back after the write.
+
+What was learned, in one line each:
+
+- A frozen program is the same program in another folder: the two things that break are the
+  two things that assumed the folder.
+- Between two processes, print a contract, not prose: `KM ready <url>` survives every rewording.
+- A signal is a courtesy that needs a console; an HTTP request with a secret works everywhere.
+- Test the built thing, not the build: the smoke test starts the executable and asks it for a
+  page before anything is uploaded.
+- One owner of the truth, moved by a record with a compare-and-swap, beats any number of
+  clever merges; and a fake of the service in one process makes the whole dance testable.
+

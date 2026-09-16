@@ -50,7 +50,42 @@ e, per l'inglese, dalla fonte ufficiale [Archives of Nethys](https://2e.aonprd.c
 Altre schermate e la guida completa sono nella [guida utente](docs/it/guida-utente.md)
 (in inglese: [docs/user-guide.md](docs/user-guide.md)).
 
-## Requisiti
+## Scaricare
+
+La via più semplice, senza Python e senza terminale: l'app installata, dall'[ultima
+release](https://github.com/MarcoMungaiCoppolino/kingmaker-kingdom-manager/releases/latest).
+
+- **Windows** — `Kingmaker-Kingdom-Manager-<versione>-Setup.exe`. Si installa solo per il tuo
+  utente (niente permessi di amministratore), sotto `%LOCALAPPDATA%\Programs` se non scegli
+  un'altra cartella, e mette *Kingmaker Kingdom Manager* nel menu Start. Il file non è firmato
+  con un certificato a pagamento, quindi la prima volta Windows mostra *PC protetto da
+  Windows*: premi **Ulteriori informazioni**, poi **Esegui comunque**.
+- **Linux** — `Kingmaker-Kingdom-Manager-<versione>-linux-x86_64.tar.gz`: scompattalo in una
+  cartella dove puoi scrivere e avvia `kingmaker-kingdom-manager`. Serve Ubuntu 22.04 o più
+  recente, Debian 12 o più recente, o una distribuzione con glibc 2.35+.
+
+Quello che si apre è il **launcher**: scegli dove si gioca (questo computer, la stessa rete,
+online con amici lontani), premi *Avvia*, e il gioco si apre nel browser. La prima volta mostra
+la password dell'amministratore in una finestra; i link da dare ai giocatori hanno un pulsante
+*Copia*; *Online* ha il campo per il token On Air e i passi per ottenerlo. Giocavi già, su un
+altro PC o dal sorgente? *Carica un salvataggio…* nel launcher, o lo stesso riquadro nella
+pagina di creazione del regno, prende lo zip della sua scheda Salvataggio (o il suo
+`kingmaker.db`) e riporta tutto, immagini comprese. La partita vive in
+`saves\` e `assets\` **dentro la cartella installata**: un aggiornamento sostituisce il programma
+e le lascia, e la disinstallazione chiede se cancellare anche loro. Il launcher ti avvisa quando
+esce una versione nuova e, su Windows, la scarica per te.
+
+**Più PC.** Il launcher può anche spostare l'ospitare tra l'amministratore e i GM segnati
+*Può ospitare*, tramite una cartella nel Dropbox gratuito dell'amministratore: chi avvia per
+primo ospita, gli altri entrano, la partita segue. L'amministratore lo configura una volta,
+guidato da immagini; gli altri host scrivono il loro account una volta. Vedi la
+[guida utente](docs/it/guida-utente.md).
+
+![Il launcher](docs/manual/img/screenshots/launcher.jpg)
+
+Per macOS non c'è ancora un installatore: si installa dal sorgente, qui sotto.
+
+## Requisiti (dal sorgente)
 
 - **Python 3.11 o più recente** ([python.org](https://www.python.org/downloads/); su Windows
   spunta *Add python.exe to PATH* nell'installatore).
@@ -59,9 +94,9 @@ Altre schermate e la guida completa sono nella [guida utente](docs/it/guida-uten
   la mappa a esagoni della tua copia dell'Adventure Path, o qualunque mappa a esagoni, in PNG o JPG.
 - Facoltativo: [Pillow](https://pypi.org/project/Pillow/), solo per leggere l'acqua dall'immagine.
 
-## Installazione
+## Installare dal sorgente
 
-Apri un terminale nella cartella in cui vuoi l'app.
+Per chi vuole il codice, o per macOS. Apri un terminale nella cartella in cui vuoi l'app.
 
 **Windows (PowerShell)**
 
@@ -69,9 +104,12 @@ Apri un terminale nella cartella in cui vuoi l'app.
 git clone https://github.com/MarcoMungaiCoppolino/kingmaker-kingdom-manager.git
 cd kingmaker-kingdom-manager
 python -m venv .venv
-.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
+
+Su Windows i comandi qui sotto chiamano l'interprete dell'ambiente, `.\.venv\Scripts\python.exe`,
+al posto di `python`: non c'è niente da attivare e nessuna impostazione di PowerShell da cambiare
+(eseguire `Activate.ps1` è rifiutato dalla politica di esecuzione predefinita).
 
 **macOS / Linux**
 
@@ -86,13 +124,17 @@ pip install -r requirements.txt
 Senza Git: scarica lo ZIP dal pulsante verde *Code* su GitHub, scompattalo, e dai gli stessi
 comandi dalla riga `python -m venv` in poi.
 
+La finestra del launcher dell'app installata c'è anche dal sorgente, con
+`python launch.py --launcher`; i comandi qui sotto avviano direttamente il server.
+
 ## Primo avvio
 
 ```bash
 python launch.py
 ```
 
-L'app si apre su <http://127.0.0.1:8080>. Al primissimo avvio crea l'account `admin` e **stampa
+(su Windows: `.\.venv\Scripts\python.exe launch.py`, e lo stesso per ogni `python launch.py` qui
+sotto.) L'app si apre su <http://127.0.0.1:8080>. Al primissimo avvio crea l'account `admin` e **stampa
 nel terminale una password casuale, una volta sola**: appuntala. Al primo accesso ti chiede di
 cambiarla; da lì crei gli account dei giocatori (l'icona 👤⚙ accanto al tuo nome, che vede solo
 chi amministra).
@@ -107,8 +149,9 @@ Poi:
    volta sola.
 3. **Fonda il regno.** La creazione guidata segue le dieci fasi del manuale.
 
-La partita vive in `saves/kingmaker.db` (un solo file SQLite: per la copia di sicurezza lo copi
-ad app chiusa) e le immagini in `assets/`. Nessuna delle due cartelle è versionata.
+La partita vive in `saves/kingmaker.db` (un solo file SQLite) e le immagini in `assets/`;
+nessuna delle due cartelle è versionata. La scheda **Salvataggio**, per gli amministratori,
+scarica entrambe in un solo zip e lo ricarica, su questo PC o su un altro.
 
 ## Lingua
 
@@ -199,7 +242,7 @@ python tests/run_all.py
 ```
 
 costruisce una scena da zero in `tests/scene/` (senza toccare `saves/`) e lancia tutta la suite —
-circa 1.150 asserzioni in 43 file. `python tools/check_i18n.py`, `check_texts.py`,
+circa 1.300 asserzioni in 46 file. `python tools/check_i18n.py`, `check_texts.py`,
 `check_data.py` e `check_names.py` sono i quattro controlli di coerenza (cataloghi completi,
 nessuna etichetta scritta fuori dai cataloghi, stessa forma dei dati nelle due lingue, nessun
 nome indefinito); la suite lancia i primi tre. Due banchi nel
@@ -208,11 +251,13 @@ browser in `tests/benches/` confrontano l'aritmetica del righello nel browser co
 ## Struttura del progetto
 
 ```
-launch.py              avvio dell'app (locale, --lan, --online)
+launch.py              avvio dell'app (locale, --lan, --online, --launcher)
 launch_test.py         l'app su una copia dei dati, sulla porta 8081
 kingmaker/             il pacchetto, una cartella per strato
   main.py              le pagine, l'intestazione, il Manuale in app
+  cli.py               la riga di comando condivisa da launch.py e dall'app installata
   config.py            percorsi, porta e rete dall'ambiente
+  launcher/            la finestra che avvia e ferma il server
   state.py             il regno in memoria e le statistiche derivate
   rules/               le regole: il caricatore (rules/__init__.py), il calendario,
                        le meccaniche in data/*.json e i testi in data/lang/{en,it}/
@@ -231,6 +276,8 @@ kingmaker/             il pacchetto, una cartella per strato
                        clock, gm_screen
     hexmap/            la mappa, nove moduli dietro una facciata (hexmap/__init__.py)
     static/            i quattro script del browser (righello, gomma, corrente, scorrimento)
+packaging/             l'app installata: spec PyInstaller, script Inno Setup, build.py, icona
+.github/workflows/     le prove a ogni push; gli installatori a ogni tag di versione
 tests/                 la suite, la scena costruita da zero, i banchi, le fixture
 tools/                 i quattro controlli e gli strumenti una tantum della 1.0.0
 docs/                  guida utente, manuale del codice, il modello dell'acqua, il diario

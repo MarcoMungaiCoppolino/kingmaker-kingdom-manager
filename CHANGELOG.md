@@ -8,6 +8,58 @@ what broke, what was learned — is in [docs/devlog.md](docs/devlog.md).
 The versions before 1.0.0 were never tagged: the app was played from a working copy and the
 numbers below were assigned afterwards, one per day of development, from the session history.
 
+## [1.1.0] — 2026-09-16
+
+The app for people without a terminal: an installer, a launcher window, and the same web app
+behind it. Running from source is unchanged.
+
+### Added
+- **Installers**: a Windows setup (`Kingmaker-Kingdom-Manager-<version>-Setup.exe`, per-user,
+  no administrator rights, English and Italian) and a Linux tarball, both with Python and
+  every dependency inside, built by `packaging/build.py` (PyInstaller, Inno Setup) and
+  attached to each release by the new GitHub Actions workflow. The uninstaller asks whether to
+  delete the game too. The executable is unsigned: the README explains the SmartScreen click.
+- **The launcher** (`kingmaker/launcher/`): a window that starts and stops the server, with
+  *On this computer* / *On the same network* / *Online* modes, the On Air token entry with the
+  steps to get one, the links to copy for the players, the first-start password in a dialog,
+  a log pane, settings (port, language, browser), *Open the game folder*, *Reset the
+  administrator password*, *Load a save file…* (the game of another PC, looked at and
+  confirmed before it replaces the current one), and an update check against GitHub Releases
+  with a one-click download on Windows, and *Versions on GitHub…* to install any release,
+  an older one included. From source: `python launch.py --launcher`.
+- **The Save tab** (administrators only, after the GM Screen): *Download everything (.zip)*
+  — database, kingdom JSON and every image in one file (`storage/bundle.py`) — *Load a save*
+  (that zip or a bare `kingmaker.db`, looked at and confirmed first, images unpacked into
+  `assets/`) and *Start over*. The separate `.db` and JSON downloads of the Manual tab are
+  gone; the JSON travels inside the zip.
+- **Already have a save file?** on the kingdom creation page: the same *Load a save* control,
+  for whoever arrives with a game played elsewhere.
+- **The cloud** (`kingmaker/launcher/{dropbox,sync,wizard}.py`): the hosting moves between
+  the administrator and the GMs flagged *Can host* (new checkbox in the accounts dialog,
+  `users.can_host`, schema 29, `permissions.HOST_GAME`) through a folder in the
+  administrator's Dropbox. One host at a time, decided by a record with a compare-and-swap
+  and a heartbeat; five recent copies and thirty daily ones; the images once, by hash; the
+  administrator's *Force take-over*. The launcher guides the administrator through the
+  Dropbox set-up with pictures, and the other hosts receive the credential from a running
+  host over `POST /_launcher/credential` with their username and password. Four more local
+  routes for the launcher (`status`, `snapshot`, `synced`). Tested against a one-process
+  Dropbox (`tests/fake_dropbox.py`, `tests/test_sync.py`).
+- **`--serve`** and a shared command line (`kingmaker/cli.py`) for `launch.py` and the
+  installed app; `KM ready` / `KM lan` / `KM admin-password` lines on stdout for the launcher;
+  `POST /_launcher/shutdown`, registered only when `KINGMAKER_LAUNCHER_SECRET` is set, for a
+  clean stop from the launcher (the last save is written).
+- `tests/test_launcher.py`; `packaging/` (spec, Inno Setup script, build script, the icon
+  cut from the crest of the author's party);
+  `.github/workflows/release.yml` and `ci.yml`; chapter 12 of the manual; a *Download*
+  section in the README.
+
+### Changed
+- When the app is frozen, `saves/`, `assets/` and the sessions live next to the executable
+  (`config._root`), so the installed folder has the same shape as the repository and an update
+  or an uninstall never touches the game. From source nothing moves, and a test pins it.
+- The Linux tarball is built on Ubuntu 22.04 and needs glibc 2.35 or newer (Ubuntu 22.04+,
+  Debian 12+).
+
 ## [1.0.0] — 2026-09-15
 
 The first public release. The whole codebase, the storage and the documentation are in

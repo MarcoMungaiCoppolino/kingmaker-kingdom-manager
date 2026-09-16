@@ -49,7 +49,41 @@ and from the Italian wiki [pf2.altervista.org](https://pf2.altervista.org/wiki/R
 
 More screenshots and the full walkthrough are in the [user guide](docs/user-guide.md).
 
-## Requirements
+## Download
+
+The easiest way, no Python and no terminal: the installed app, from the
+[latest release](https://github.com/MarcoMungaiCoppolino/kingmaker-kingdom-manager/releases/latest).
+
+- **Windows** — `Kingmaker-Kingdom-Manager-<version>-Setup.exe`. It installs for your user
+  only (no administrator rights), under `%LOCALAPPDATA%\Programs` unless you choose another
+  folder, and puts a *Kingmaker Kingdom Manager* entry in the Start menu. The file is not
+  signed with a paid certificate, so Windows shows *Windows protected your PC* the first time:
+  click **More info**, then **Run anyway**.
+- **Linux** — `Kingmaker-Kingdom-Manager-<version>-linux-x86_64.tar.gz`: extract it anywhere
+  you can write to and run `kingmaker-kingdom-manager`. Needs Ubuntu 22.04 or newer, Debian 12
+  or newer, or any distribution with glibc 2.35+.
+
+What opens is the **launcher**: choose where you play (this computer, the same network, online
+with distant friends), press *Start*, and the game opens in your browser. The first time it
+shows the administrator's password in a dialog; the links to give the players have a *Copy*
+button; *Online* has a field for your On Air token and the steps to get one. Played before,
+on another PC or from source? *Load a save file…* in the launcher, or the same box on the
+kingdom creation page, takes the zip from its Save tab (or its `kingmaker.db`) and brings
+everything back, images included. Your game lives in
+`saves\` and `assets\` **inside the installed folder**: an update replaces the program and
+leaves them, and the uninstaller asks whether to delete them too. The launcher tells you when a
+new version is out and, on Windows, downloads it for you.
+
+**Several PCs.** The launcher can also move the hosting between the administrator and the
+GMs marked *Can host*, through a folder in the administrator's free Dropbox: whoever starts
+first hosts, the others join, the game follows. The administrator sets it up once, guided by
+pictures; the other hosts type their account once. See the [user guide](docs/user-guide.md).
+
+![The launcher](docs/manual/img/screenshots/launcher.jpg)
+
+macOS has no installer yet: install from source, below.
+
+## Requirements (from source)
 
 - **Python 3.11 or newer** ([python.org](https://www.python.org/downloads/); on Windows tick
   *Add python.exe to PATH* in the installer).
@@ -59,9 +93,9 @@ More screenshots and the full walkthrough are in the [user guide](docs/user-guid
 - Optional: [Pillow](https://pypi.org/project/Pillow/), only for reading the water from the map
   image.
 
-## Install
+## Install from source
 
-Open a terminal in the folder where you want the app.
+For whoever wants the code, or macOS. Open a terminal in the folder where you want the app.
 
 **Windows (PowerShell)**
 
@@ -69,9 +103,13 @@ Open a terminal in the folder where you want the app.
 git clone https://github.com/MarcoMungaiCoppolino/kingmaker-kingdom-manager.git
 cd kingmaker-kingdom-manager
 python -m venv .venv
-.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
+
+On Windows the commands below call the environment's own interpreter,
+`.\.venv\Scripts\python.exe`, in place of `python`: nothing has to be activated, and no
+PowerShell setting has to change (running `Activate.ps1` is refused by the default execution
+policy).
 
 **macOS / Linux**
 
@@ -86,13 +124,17 @@ pip install -r requirements.txt
 No Git? Download the ZIP from the green *Code* button on GitHub, unpack it, and run the same
 commands from the `python -m venv` line on.
 
+The launcher window of the installed app is available from source too, with
+`python launch.py --launcher`; the commands below run the server directly.
+
 ## First run
 
 ```bash
 python launch.py
 ```
 
-The app opens at <http://127.0.0.1:8080>. On the very first start it creates the `admin` account
+(on Windows: `.\.venv\Scripts\python.exe launch.py`, and the same for every `python launch.py`
+below.) The app opens at <http://127.0.0.1:8080>. On the very first start it creates the `admin` account
 and **prints a random password in the terminal, once**: write it down. At the first login you
 are asked to change it; from there you create the accounts of the players (the 👤⚙ icon next to
 your name in the header, visible only to administrators).
@@ -106,8 +148,9 @@ Then:
    origin with the sliders until the polygons match the printed hexes. It is done once.
 3. **Found the kingdom.** The guided creation walks through the ten steps of the rules.
 
-Your game lives in `saves/kingmaker.db` (a single SQLite file: back it up by copying it while
-the app is closed) and the images in `assets/`. Neither folder is versioned.
+Your game lives in `saves/kingmaker.db` (a single SQLite file) and the images in `assets/`;
+neither folder is versioned. The **Save** tab, for administrators, downloads both as one zip
+and loads it back, on this PC or another.
 
 ## Language
 
@@ -197,7 +240,7 @@ python tests/run_all.py
 ```
 
 builds a test scene from scratch in `tests/scene/` (never touching `saves/`) and runs the whole
-suite — some 1,150 assertions in 43 files. `python tools/check_i18n.py`, `check_texts.py`,
+suite — some 1,300 assertions in 46 files. `python tools/check_i18n.py`, `check_texts.py`,
 `check_data.py` and `check_names.py` are the four consistency checks (catalogs complete, no
 label written outside the catalogs, both languages with the same data shape, no undefined
 name); the suite runs the first three. Two browser benches in
@@ -206,11 +249,13 @@ name); the suite runs the first three. Two browser benches in
 ## Project layout
 
 ```
-launch.py              start the app (local, --lan, --online)
+launch.py              start the app (local, --lan, --online, --launcher)
 launch_test.py         the app on a copy of the data, on port 8081
 kingmaker/             the package, one folder per layer
   main.py              the pages, the header, the in-app Manual
+  cli.py               the command line shared by launch.py and the installed app
   config.py            paths, port and network from the environment
+  launcher/            the window that starts and stops the server
   state.py             the kingdom in memory and the derived statistics
   rules/               the game rules: the loader (rules/__init__.py), the calendar,
                        the mechanics in data/*.json and the texts in data/lang/{en,it}/
@@ -229,6 +274,8 @@ kingmaker/             the package, one folder per layer
                        clock, gm_screen
     hexmap/            the map, nine modules behind a facade (hexmap/__init__.py)
     static/            the four browser scripts (travel ruler, water eraser, current, scroll)
+packaging/             the installed app: PyInstaller spec, Inno Setup script, build.py, icon
+.github/workflows/     the tests on every push; the installers on every version tag
 tests/                 the suite, the scene built from scratch, the benches, the fixtures
 tools/                 the four checkers and the one-off tools of the 1.0.0 release
 docs/                  the user guide, the code manual, the water model, the devlog

@@ -104,6 +104,13 @@ translation pipeline), `extract_strings.py` (the interface texts into the catalo
 `fetch_aon.py` and `aon_to_texts.py` (the English rules texts from Archives of Nethys), and
 `rename_local.py`.
 
+## The build
+
+`packaging/build.py` freezes the app with PyInstaller, smoke-tests what it built and makes
+the Windows installer or the Linux tarball; `.github/workflows/release.yml` runs it on every
+version tag. Chapter 12 has the details. `tests/test_launcher.py` covers the launcher's logic;
+`tests/test_sync.py` the cloud, against the one-process Dropbox of `tests/fake_dropbox.py`.
+
 ## The figures
 
 - `docs/manual/water_figures.py`: the figures of chapter 9, from the real geometry.
@@ -118,7 +125,11 @@ on 8081, with the scene built from scratch: no data of the table), after a login
 with one of the test accounts, in release 0.9 — hence the Italian labels. The page photographed
 itself with `html2canvas` loaded in the browser and sent the PNG to a small local receiver;
 then Pillow reduced them to 1400 px in JPEG. To retake them, repeat the round: there is no
-script, because the login is not automated.
+script, because the login is not automated. `launcher.jpg` is the tkinter window of chapter 12,
+grabbed with Pillow's `ImageGrab` on a scratch game folder, and so is `wizard.jpg`. The
+pictures of the wizard itself, `kingmaker/launcher/guide/*.png`, are crops of the Dropbox App
+Console grabbed from the screen while the owner was signed in, the account avatar and the
+App key blurred.
 
 ## Verifying in the browser
 

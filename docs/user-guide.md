@@ -2,14 +2,66 @@
 
 *In italiano: [it/guida-utente.md](it/guida-utente.md) (longer, with the history of every choice).*
 
-This guide describes the app as it is in version 1.0.0, tab by tab, with the reason behind
+This guide describes the app as it is in version 1.1.0, tab by tab, with the reason behind
 each choice where it matters at the table. To install and start it see the
-[README](../README.md). The screenshots in [`manual/img/screenshots/`](manual/img/screenshots/)
+[README](../README.md); the window of the installed app is the first chapter below. The screenshots in [`manual/img/screenshots/`](manual/img/screenshots/)
 were taken with the Italian interface; the English one is the same, label for label.
 
 The rules quoted are those of the Kingmaker kingdom subsystem for Pathfinder 2e (Archives of
 Nethys in English, pf2.altervista.org in Italian). Where the app follows a choice of the table
 rather than a rule, the data carries `"source": "table"` and the in-app Manual marks it.
+
+## The launcher
+
+![The launcher](manual/img/screenshots/launcher.jpg)
+
+The installed app (the Windows setup or the Linux tarball from the releases page) opens this
+window instead of a terminal; from source it is `python launch.py --launcher`. It starts and
+stops the server, nothing else: the game is still played in the browser.
+
+**Where do you play?** *On this computer only* is the default: the game opens in your browser
+and nobody else can reach it. *On the same network* is for friends in the same house: they
+open the network link in their browser. *Online, with distant friends* publishes the game
+through the NiceGUI On Air relay; your computer must stay on, because the kingdom lives there.
+The choice is remembered.
+
+**The On Air token.** Choosing *Online* shows a field for it and the three steps: press *Get a
+token*, register on nicegui.io (free), copy the token the page shows, paste it here. With the
+token your address stays the same at every start; without it you get a new random address
+each time. The token is kept in clear in the game folder; the relay carries the game traffic
+and could read it, which is fine for a game and not for secrets.
+
+**Start, Stop, the links.** *Start* runs the server; when it is ready the status line turns
+green, the browser opens, and the links appear with a *Copy* button each: this computer, the
+network (one line per address the machine has; try the one that looks like your home network),
+online. *Stop* closes the server cleanly, with the last save written. Closing the window stops
+it too, after a confirmation. If the port is busy the launcher takes the next one and says so.
+On Windows, the first *On the same network* start is preceded by a notice: Windows will ask to
+allow the app through the firewall, and you must click *Allow access*.
+
+**The first start.** The administrator's password is shown in a dialog, with *Copy*; it is not
+shown again. At the first login the app asks you to change it. If it is lost, *Settings →
+Reset the administrator password* (server stopped) generates a new one and shows it once.
+
+**A game from elsewhere.** *Load a save file…* (server stopped) takes the zip downloaded from
+the Save tab of another PC, or its bare `kingmaker.db`: it shows the kingdom's name, the
+accounts and the images, asks once, copies everything in and keeps the previous save next to
+it. You
+then sign in with the accounts of that file. The same box is on the kingdom creation page,
+for whoever runs from source without the launcher.
+
+**Settings.** The port, the language of the launcher (the app has its own toggle), whether the
+browser opens on start, *Open the game folder* (where `saves` and `assets` are, for backups),
+and the administrator reset. *Show the log* at the bottom unfolds what the server prints, which
+is where to look when it stops on its own.
+
+**Updates.** When a newer release is on GitHub, a line at the top says so. On Windows
+*Download the update* fetches the installer and starts it, keeping your game; on Linux it opens
+the release page. *Settings → Versions on GitHub…* lists every release, newest first, with the
+installed one marked, and installs the one you pick; going back to an older version is allowed,
+with a warning, since a save written by a newer version can be refused by an older one. The game is in `saves` and `assets` inside the installed folder: an update
+replaces the program and leaves them, and the uninstaller (in *Add or remove programs*) asks
+whether to delete them too.
 
 ## Accounts and roles
 
@@ -150,6 +202,10 @@ If the server restarts with the clock running, you find it stopped: making days 
 nobody watched is not what whoever started it wanted.
 
 ## Kingdom creation
+
+Under the ten steps, whoever can reset the kingdom sees **Already have a save file?**: the same
+*Load a save* control as the Save tab, for a game played on another PC or before
+the installer. Nothing to redo: the file is looked at, confirmed and copied in.
 
 A guided procedure over the ten steps of the rules: Concept, Charter, Heartland, Government,
 Finalize Ability Scores, Details, Leadership Roles (with the four invested roles and the skills
@@ -529,11 +585,62 @@ costs and terrain features, each entry marked when it is a choice of the table. 
 follow the language of the interface: in English they come from Archives of Nethys, in Italian
 from pf2.altervista.org.
 
-At the bottom, the administrator manages the save: **Download the save file (.db)** writes a
-complete copy of the database — kingdom, map, water, characters, vehicles, journeys, accounts
-and journal — to keep as a backup or to carry to another PC; **Load a save file (.db)** puts
-one back, after a dialog saying what the file holds and a confirmation, with the current save
-copied next to itself first (`kingmaker.db.before-restore-<date>.bak`). A file from an older
-release is migrated on the way in; one from a newer release is refused. If the file's accounts
-are not the current ones, everybody signs in again. The JSON export of the kingdom document
-and *Start over* are here too.
+## Playing from several PCs (the cloud)
+
+Without it, the game lives on one PC and its owner must be online for anyone to play. With
+it, the hosting can move between the trusted people of the table — the administrator and the
+GMs the administrator marks *Can host* in the accounts dialog — through a folder in the
+administrator's Dropbox. Players never host and never hold the save: they open the table's
+address, which stays the same whoever hosts, because the hosts share one On Air token.
+
+![The set-up wizard](manual/img/screenshots/wizard.jpg)
+
+**The administrator, once.** In the launcher's *Cloud* box press *Set up Dropbox…*: seven
+steps with a picture each. A free Dropbox account; *Create app* in Dropbox's App Console
+with *Scoped access* and *App folder* (the app sees only its own folder); the five
+permissions; the *App key* pasted into the launcher, with the table's name; the
+authorisation page (Continue, then Allow); the code it shows, pasted back; done. Only the administrator needs a
+Dropbox account.
+
+**The other hosts.** While the administrator is hosting, the DM opens *Connect to a table…*
+in their launcher: the table's address, their username and password. The host checks that
+the account may host and hands over what the launcher needs; the password is used once and
+not kept. From then on that launcher can host too.
+
+**Playing.** *Start* first asks the cloud who hosts. Nobody: the launcher takes the game,
+loads the newest copy from the cloud if it is newer than its own, brings the images it lacks,
+and starts. Somebody: the box says "hosted by X since…", with *Join* to open the game there.
+While you host, the cloud receives a copy of the game every few minutes when something
+changed, the images once, and a last copy when you press *Stop*. Five recent copies and one
+per day for thirty days are kept in the folder; the total stays under a hundred megabytes for
+years.
+
+**The administrator's *Force take-over*.** Shown when someone else hosts: their server stops
+within a minute (they may lose their last minutes of play) and the game moves to you.
+
+**What to know.** A host's PC holds the whole game, secrets and password hashes included:
+that is why hosting is a trust decision, not a checkbox for everyone. The cloud credential is
+kept in clear in each host's game folder, like the On Air token; *Forget the cloud* removes
+it, and the administrator can also revoke it at Dropbox, after which every host connects
+again. If the cloud does not answer, the launcher offers to host without it, and says so.
+
+## Save (administrators)
+
+The tab with the download icon, after the GM Screen, exists only for administrators. Three
+cards:
+
+- **Download everything (.zip)** — one file with the whole game: the database (kingdom, map,
+  water, characters, vehicles, journeys, accounts, journal), the kingdom as readable JSON, and
+  every image in `assets` (the map, portraits, tokens). Keep it as a backup, or carry it to
+  another PC. A copy stays in `saves/backups/`.
+- **Load a save** — the zip downloaded here, or a bare `kingmaker.db`. A dialog says what the
+  file holds (kingdom, accounts, images) and asks; the current save is copied next to itself
+  first (`kingmaker.db.before-restore-<date>.bak`), then the database is replaced and the
+  images unpacked into `assets`. A file from an older release is migrated on the way in; one
+  from a newer release is refused. If the file's accounts are not the current ones, everybody
+  signs in again.
+- **Start over from scratch** — empties the game and returns to the kingdom creation; the
+  accounts stay.
+
+The same *Load a save* control is on the kingdom creation page, and the launcher has *Load a
+save file…* for the same zip.

@@ -8,8 +8,8 @@
 
 `main.page_` (`/`) does five things in a row: checks the user, applies the theme, sets the
 window's language, draws the header, and opens the **tabs**: Map, Kingdom, Kingdom Turn, City,
-Party, Transport, Manual, and GM Screen (only with `SEE_SECRETS`: if the panel is never created
-there is nothing to discover). Every tab is a `*_panel` function of its module. The tabs are
+Party, Transport, Manual, GM Screen (only with `SEE_SECRETS`: if the panel is never created
+there is nothing to discover) and Save (only with `EXPORT_SAVE`, the same way). Every tab is a `*_panel` function of its module. The tabs are
 `ui.tab("map", label=t("tabs.map"))`: the value is a language-neutral id (`theme._TABS`, the
 ruler and the refresh bus compare against it), only the label is translated.
 

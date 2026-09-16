@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Kingmaker Kingdom Manager
+Comment=Kingdom manager for the Pathfinder 2e Kingmaker campaign
+Exec=kingmaker-kingdom-manager
+Icon=kingmaker
+Terminal=false
+Categories=Game;

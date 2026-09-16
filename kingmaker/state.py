@@ -168,8 +168,10 @@ class State:
         self.save()
 
     def restore(self, path) -> Path:
-        """The whole game from a save file; returns the copy kept of the old one."""
-        kept = self.archive.restore_from(path)
+        """The whole game from a save file — a zip with the images, or the
+        database alone; returns the copy kept of the old one."""
+        from kingmaker.storage import bundle
+        kept = bundle.restore(self.archive, config.ASSETS_DIR, path)
         self.k = new_kingdom()
         self.load()
         return kept

@@ -1,0 +1,12 @@
+Kingmaker Kingdom Manager — Linux
+
+Extract this folder anywhere you can write to (your home is fine), then run
+./kingmaker-kingdom-manager: the launcher window opens. Your game is kept in
+saves/ and assets/ inside this same folder. Needs Ubuntu 22.04 or newer (or
+another distribution with glibc 2.35+).
+
+To uninstall, delete the folder. To update, extract the new version over it:
+saves/ and assets/ are untouched.
+
+Terminal users: ./kingmaker-kingdom-manager --serve [--lan] [--online] runs
+the server without the window, with the same flags as launch.py.

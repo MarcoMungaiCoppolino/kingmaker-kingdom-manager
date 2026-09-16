@@ -1,0 +1,32 @@
+# The suite and the checkers, on every push and pull request.
+
+name: Tests
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install
+        run: python -m pip install -r requirements.txt
+
+      - name: Checkers
+        run: |
+          python tools/check_names.py
+          python tools/check_i18n.py
+          python tools/check_texts.py
+          python tools/check_data.py
+
+      - name: Suite
+        run: python tests/run_all.py

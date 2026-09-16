@@ -52,9 +52,11 @@ __pycache__/
 .coverage.*
 htmlcov/
 
-# Packaging and build output
+# Packaging and build output (packaging/build.py: PyInstaller's folders and
+# the finished installers)
 build/
 dist/
+/packaging/out/
 *.egg-info/
 .eggs/
 

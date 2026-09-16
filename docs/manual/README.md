@@ -29,6 +29,8 @@ hurry reads the **Overview** and then jumps to the chapter they need. Every conc
 | 9 | [Water travel](09-water-travel.md) | The water end to end: borders, banks, sections, crossings, currents, lakes, the boats' network, the route, the ruler on the water, what the others see |
 | 10 | [Party, Transport, Time](10-party-transport-time.md) | Characters, vehicles, boarding, images, calendar and clock |
 | 11 | [Tests and tools](11-tests-and-tools.md) | The suite in `tests/`, the ruler benches, the checkers, the figures, how to test without touching the real game |
+| 12 | [The launcher and the installers](12-launcher-and-packaging.md) | The window that starts the server, the frozen executable, `packaging/`, the release workflow |
+| 13 | [The cloud](13-cloud-sync.md) | Hosting from several PCs through a Dropbox folder: the record, the claim, the copies, the credential hand-out |
 
 ## The three rules that hold everywhere
 
@@ -54,11 +56,14 @@ them. The geometric figures of the water (chapter 9) are made by `water_figures.
 ## Where things are
 
 ```
-launch.py                start (local, --lan, --online with NiceGUI On Air)
+launch.py                start (local, --lan, --online with NiceGUI On Air; --launcher)
 launch_test.py           a copy of the app on port 8081, on separate data
 kingmaker/               the package, one folder per layer of the graph in chapter 1
   main.py                the pages, the header, the in-app Manual
+  cli.py                 the command line shared by launch.py and the installed app
   config.py              paths and network from the environment
+  launcher/              the window that starts and stops the server (core.py, window.py),
+                         the cloud (dropbox.py, sync.py, wizard.py, guide/)
   state.py               STATE: the kingdom in memory and the derived statistics
   rules/                 the rules: __init__.py (loader, indexes, dice), almanac.py
                          (calendar), data/ (mechanics) and data/lang/<code>/ (texts)
@@ -76,6 +81,7 @@ kingmaker/               the package, one folder per layer of the graph in chapt
                          gm_screen); hexmap/ (the map: nine modules and the facade in
                          __init__.py); static/ (travel_drag, water_eraser, water_current,
                          map_scroll .js)
+packaging/               the frozen app: PyInstaller spec, Inno Setup script, build.py, the icon
 tests/                   the suite: run_all.py, the scene built from scratch, the benches
 tools/                   the four checkers and the 1.0.0 release tools
 docs/                    this manual, the user guide, the devlog
