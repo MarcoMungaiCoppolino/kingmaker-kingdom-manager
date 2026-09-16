@@ -22,7 +22,9 @@ python tests/run_all.py test_lake.py        # a single file
 
 `run_all.py` builds **a scene from scratch** (`scene.py` → `tests/scene/`, not versioned:
 three test accounts, four characters with neutral fantasy names, a wagon, the grid with the
-terrains alone from `scene_hexes.json`), then runs every `test_*.py` in its own process,
+terrains alone from `scene_hexes.json`, and a one-pixel placeholder as the map image in the
+scene's own `assets/` folder — `KINGMAKER_ASSETS_DIR` points there, so no test depends on
+the images of this PC), then runs every `test_*.py` in its own process,
 resetting the scene first (`stage.py`: the test river, the boat, everyone in their place, no
 journey in progress) so a file does not inherit the state left by another, and adds up the
 counts. The tests print ` ok`/` NO` per assertion and end with `N/M passed`. Today they are

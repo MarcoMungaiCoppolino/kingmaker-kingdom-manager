@@ -338,7 +338,8 @@ sovrascriverebbe le modifiche dell'altro.
 
 Se arrivi da una versione precedente non devi fare niente: al primo avvio il vecchio
 `saves/regno.json` viene importato da solo nel database, e il file resta dov'è come copia di
-sicurezza. Dal Manuale puoi comunque scaricare il salvataggio in JSON quando vuoi.
+sicurezza. Dalla scheda Salvataggio scarichi tutta la partita in un solo zip, con dentro il
+regno in JSON.
 
 Puoi spostare i dati altrove con la variabile d'ambiente `KINGMAKER_DATA_DIR` (e le immagini con
 `KINGMAKER_ASSETS_DIR`): serve per il giorno in cui l'app girerà su un servizio di hosting invece

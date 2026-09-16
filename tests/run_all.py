@@ -16,8 +16,11 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 BASE = os.path.dirname(HERE)
 DATA = os.path.join(HERE, "scene")
+# The suite has its own images too: the scene's map is a placeholder written
+# by scene.py, never the table's real one, so a test that looks for the file
+# passes on any machine and not only where the live assets are.
 ENVIRONMENT = dict(os.environ, PYTHONPATH=BASE, PYTHONIOENCODING="utf-8",
-                KINGMAKER_DATA_DIR=DATA)
+                KINGMAKER_DATA_DIR=DATA, KINGMAKER_ASSETS_DIR=os.path.join(DATA, "assets"))
 SUITE = ["test_atoms.py", "test_ring.py", "test_faces.py", "test_redraw.py",
          "test_bank_model.py", "test_borders.py", "test_modes.py",
          "test_real_map.py", "test_map_banks.py", "test_cut.py",

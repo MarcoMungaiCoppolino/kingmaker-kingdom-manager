@@ -112,7 +112,8 @@ The game lives in `saves/kingmaker.db`, written at most every two seconds and at
 `KINGMAKER_DATA_DIR` moves the data folder, `KINGMAKER_ASSETS_DIR` the images. A save from
 release 0.x is migrated at the first start, after an automatic copy named
 `kingmaker.db.pre-v27.bak`; an old `saves/regno.json` is imported into an empty database and
-left where it is. From the Manual tab the administrator can download the save as JSON.
+left where it is. From the Save tab the administrator downloads the whole game as one zip, the
+kingdom as JSON inside it.
 
 ### Characters
 

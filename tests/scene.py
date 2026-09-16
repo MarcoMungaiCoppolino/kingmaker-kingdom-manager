@@ -11,6 +11,7 @@ map — connectivity, costs, shores — stay true.
 
 Accounts: admin / gm / player, all with password `prova-<name>-1234`.
 """
+import base64
 import json
 import os
 import sys
@@ -60,6 +61,12 @@ def build() -> None:
     data = json.loads((HERE / "scene_hexes.json").read_text(encoding="utf-8"))
     k["name"] = "Test Kingdom"
     k["map"].update(data["map"])
+    # The map image the scene names: a one-pixel PNG in the scene's own
+    # assets folder, so the file exists wherever the suite runs.
+    from kingmaker import config
+    config.ASSETS_DIR.mkdir(parents=True, exist_ok=True)
+    (config.ASSETS_DIR / data["map"]["image"]).write_bytes(base64.b64decode(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="))
     k["hexes"] = {f'{e["col"]},{e["row"]}': {
         "col": e["col"], "row": e["row"], "status": e["status"],
         "terrains": e["terrains"], "features": [], "roads": e["roads"],

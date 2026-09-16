@@ -53,12 +53,20 @@ behind it. Running from source is unchanged.
   `.github/workflows/release.yml` and `ci.yml`; chapter 12 of the manual; a *Download*
   section in the README.
 
+- The party's crest as the face of the app: the launcher's icon, the installer's, the browser
+  tab's favicon and the badge next to the kingdom's name in the header and on the login page
+  (`kingmaker/ui/static/crest*.png`, `theme.crest`).
+- Chapter 13 of the manual (the cloud), a "Playing from several PCs" chapter in both user
+  guides, the launcher and wizard screenshots.
+
 ### Changed
 - When the app is frozen, `saves/`, `assets/` and the sessions live next to the executable
   (`config._root`), so the installed folder has the same shape as the repository and an update
   or an uninstall never touches the game. From source nothing moves, and a test pins it.
 - The Linux tarball is built on Ubuntu 22.04 and needs glibc 2.35 or newer (Ubuntu 22.04+,
   Debian 12+).
+- The test scene brings its own map image (a placeholder in `tests/scene/assets/`) instead of
+  naming the author's, so the suite passes on any machine.
 
 ## [1.0.0] — 2026-09-15
 
