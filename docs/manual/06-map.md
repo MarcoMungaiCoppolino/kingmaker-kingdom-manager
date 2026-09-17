@@ -37,8 +37,8 @@ flowchart TB
     subgraph window[per window · hexmap._mine]
         MINE[map state:<br/>col/row, zoom, *_mode,<br/>travel_pcs, plan, path…]
     end
-    IMG[ui.interactive_image<br/>background = map image<br/>content = SVG] -->|click, contextmenu| CLICK[_click]
-    DRAW["draw(): _background + _svg_grid(mine, view)"] --> IMG
+    IMG[ui.interactive_image<br/>background = map image<br/>content = the live SVG<br/>+ a ground box under it] -->|click, contextmenu| CLICK[_click]
+    DRAW["draw(): _background + _svg_layers(mine, view)"] --> IMG
     REF[_Refresher · map.refresh / soon / scroll<br/>timer 0.12 s] --> DRAW
     theme.register_refresh -->|hexmap.map| REF
     CLICK --> MINE
@@ -55,21 +55,30 @@ flowchart TB
     SRV[server] -->|window.kmTravelField<br/>window.kmCurrent<br/>window.kmOthersTrace<br/>window.kmWaterEraser| JS
 ```
 
-- The map is **an interactive image with an SVG on top**: `_background()` gives the image (or a
-  dark rectangle if missing), `_svg_grid` everything else. `set_content` replaces the whole SVG
-  at every redraw: that is why the panels are selective and why `MAX_GRID_CELLS` exists. The
-  layers that do not change (grid, fog, chosen ones, icons: `_ground_layers`; and the water)
-  stay in `mine` until `archive.rev` and `STATE.k["_rev"]` change: a normal redraw redoes only
-  markers, journeys and proposal.
-- `_Refresher` exposes `.refresh()` like a refreshable but redraws in place; `soon()` asks for
-  the redraw at the next tick of the timer (0.12 s) instead of doing ten in a second.
+- The map is **an interactive image with two SVGs on top**: `_background()` gives the image (or
+  a dark rectangle if missing), `_svg_layers` the rest as two strings. The **ground** (grid,
+  fog, chosen ones, water, icons and names) goes to a `ui.html` box placed inside the image
+  under its own SVG (`.km-ground-box`, z-index 1); the **live layer** (journeys, the decided
+  route, the markers, the chosen hex, a proposal) is the image's `content` (z-index 2). Each is
+  sent only when it changed: a moved marker costs a window a couple of KB, not the 93 KB of
+  the whole map. The browser scripts (the ruler, the others' arrows, the water tools) append
+  their groups to the image's SVG, which is still the first `<svg>` in the box, so they draw
+  above the markers as they always did. The ground layers stay cached in `mine` until
+  `archive.rev` and `STATE.k["_rev"]` change. `_svg_grid` is the two strings joined, for the
+  tests. One consequence of the split: a journey's arrow passes over a hex's icons and name.
+- `_Refresher` exposes `.refresh()` like a refreshable but redraws in place: at once when
+  asked from the window's own handler (the click that boarded), at the next tick of the timer
+  (0.12 s) when asked from elsewhere (the bus); `soon()` always waits for the tick, so a slider
+  does not draw ten times a second.
 - The **calibration** (`_calibration_panel`, `_fit_grid`): `size` (radius in pixels),
   `origin_x/y`, `columns/rows`, orientation; «Fit the grid» spreads the columns over the width
   of the image. `image_width/image_height` come from `imgsize.dimensions` at upload.
 - **The edge of the map is the image**: `inside_map(m)` → a hex belongs to the map if its center
   falls on the image. The grid, the click and every travel count use it.
 
-## The SVG layers (`_svg_grid`), from the bottom
+## The SVG layers (`_svg_layers`), from the bottom
+
+The ground box holds 1 to 5, the image's SVG 6 to 8.
 
 1. **ground**: one `<path>` per combination (fill, stroke, width): the cells with the same look
    go together, or 720 separate polygons weigh. The colour comes from the first terrain
@@ -82,9 +91,10 @@ flowchart TB
    edge → currents → seams (only with the Bridge/Ford in hand) → the lake names
    (`_svg_lake_names`; drawn right after the lakes instead, under the lines, while the Waters
    mode is on). Chapter 7.
-5. **journeys in progress** (dashed amber) and under them the **proposal** (blue).
-6. **parts**: icons and names of the hexes (`_hex_icons`, `_hex_label`), then the **markers**.
-7. **proposal**: the water reading in orange, the lake in progress, the current's vertex, the
+5. **icons and names** of the hexes (`_hex_icons`, `_hex_label`).
+6. **journeys in progress** (dashed amber) and under them the **proposal** (blue).
+7. **markers**, and the ring of the chosen hex.
+8. **proposal**: the water reading in orange, the lake in progress, the current's vertex, the
    outlines of the candidates of the Water brush.
 
 ## The click modes (`_click`, in `page.py`)

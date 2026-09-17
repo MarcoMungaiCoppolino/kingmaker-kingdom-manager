@@ -35,7 +35,8 @@ SUITE = ["test_atoms.py", "test_ring.py", "test_faces.py", "test_redraw.py",
          "test_arrival.py", "test_atom_count.py", "test_rendezvous.py", "test_edges.py",
          "test_water_atoms.py", "test_pointed_shore.py", "test_cleanup.py", "test_security.py",
          "test_structures.py", "test_migration_v27.py", "test_i18n.py",
-         "test_backup.py", "test_launcher.py", "test_sync.py"]
+         "test_backup.py", "test_launcher.py", "test_sync.py", "test_refresh.py",
+         "test_windows.py", "test_layers.py"]
 
 
 def run_file(script: str) -> subprocess.CompletedProcess:

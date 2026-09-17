@@ -59,7 +59,7 @@ def _effect_rows(entries: list[dict]) -> list[dict]:
             ui.label(rules.entry_label(v, value)).style("font-size:.82rem;flex:1;min-width:0")
             if v["t"] != "mod":
                 ui.number(value=value, format="%d",
-                          on_change=lambda e, r=row: r.update(value=int(e.value or 0))) \
+                          on_change=lambda e, r=row: r.update(valore=int(e.value or 0))) \
                     .props("outlined dense").classes("w-20")
             tgt = rules.entry_target(v)
             if tgt:
@@ -75,13 +75,30 @@ def _effect_rows(entries: list[dict]) -> list[dict]:
     return rows
 
 
+# Which figures an effect kind touches (`State.apply_effect`); a kind not
+# listed — a modifier, or a kind added later — redraws everything.
+_EFFECT_FIELDS = {
+    "unrest": ("unrest",), "ruin": ("ruins",), "ruin_choice": ("ruins",),
+    "rp": ("rp",), "xp": ("xp",), "fame": ("fame_points",),
+    "commodity": ("commodities",), "commodity_choice": ("commodities",),
+    "resource_die": ("rp", "bonus_dice"), "bonus_dice": ("bonus_dice",),
+}
+
+
+
 @theme.requires(permissions.EDIT_KINGDOM)
 def _apply_rows(rows: list[dict], title: str) -> list[str]:
-    done_ones = [d for r in rows if r["active"]
+    active = [r for r in rows if r["active"]]
+    done_ones = [d for r in active
              for d in [STATE.apply_effect(r["entry"], r["valore"], r["target"])] if d]
     if done_ones:
         STATE.record(f"{title}: " + "; ".join(done_ones), "activities")
-    theme.save_and_refresh()
+        fields = [_EFFECT_FIELDS.get(r["entry"]["t"]) for r in active]
+        if any(f is None for f in fields):
+            theme.save_and_refresh()
+        else:
+            theme.save_and_refresh_panels(
+                theme.stat_panels(*(x for f in fields for x in f), extra=("turn.journal",)))
     return done_ones
 
 
@@ -179,6 +196,7 @@ def run_activity(act: dict) -> None:
                 theme.notify(t("turn.cost_paid") + "; ".join(spent), "info")
             STATE.mark_activity(act["id"])
             res = sheet.roll_skill(choice["skills"], choice["dc"], act["name"], show=False)
+            theme.refresh_panels(("turn.uses",))
             _outcome_dialog(act, res)
 
         @ui.refreshable
@@ -233,81 +251,93 @@ def _outcome_dialog(act: dict, res: rules.Result) -> None:
 
 
 # --------------------------------------------------------------------------
+@theme.requires(permissions.EDIT_KINGDOM)
+def _adjust_field(field: str, delta: int) -> None:
+    k = STATE.k
+    k[field] = max(0, k[field] + delta)
+    theme.save_and_refresh_panels(theme.stat_panels(field))
+
+
+@theme.requires(permissions.EDIT_KINGDOM)
+def _adjust_ruin(rid: str, delta: int) -> None:
+    STATE.modify_ruin(rid, delta)
+    theme.save_and_refresh_panels(theme.stat_panels("ruins"))
+
+
+@theme.requires(permissions.EDIT_KINGDOM)
+def _adjust_commodity(char_id: str, delta: int) -> None:
+    k = STATE.k
+    if delta > 0:
+        STATE.add_commodity(char_id, delta)
+    else:
+        k["commodities"][char_id] = max(0, k["commodities"][char_id] + delta)
+    theme.save_and_refresh_panels(theme.stat_panels("commodities"))
+
+
+_ADJUSTABLE = ("unrest", "rp", "xp", "fame_points")
+
+
+def _adjust(key) -> None:
+    """A click in the adjustments block: `field|delta`, or `turn|dialog`.
+
+    The key comes from the browser, so it is read like any other input:
+    a field not in the short list, a ruin or a commodity the kingdom does not
+    have, a delta that is not a number — nothing happens.
+    """
+    field, _sep, what = str(key).partition("|")
+    if field == "turn" and what == "dialog":
+        _turn_dialog()
+        return
+    try:
+        delta = int(what)
+    except ValueError:
+        return
+    if field == "turn":
+        _move_turn(delta)
+    elif field.startswith("ruin.") and field[5:] in STATE.k["ruins"]:
+        _adjust_ruin(field[5:], delta)
+    elif field.startswith("com.") and field[4:] in STATE.k["commodities"]:
+        _adjust_commodity(field[4:], delta)
+    elif field in _ADJUSTABLE:
+        _adjust_field(field, delta)
+
+
 @ui.refreshable
 def quick_adjustments(compact: bool = False) -> None:
+    """The figures with a minus and a plus each, as one element.
+
+    Seventeen rows of four elements and two buttons were four hundred
+    elements per window, redone at every change of a figure. The block is
+    now a single piece of markup; the browser reports which control was
+    clicked (`data-km`) and `_adjust` does the rest.
+    """
     k = STATE.k
+    rows = []
 
-    @theme.requires(permissions.EDIT_KINGDOM)
-    def d(field: str, delta: int) -> None:
-        k[field] = max(0, k[field] + delta)
-        theme.save_and_refresh()
-        quick_adjustments.refresh()
-        sheet.identity_block.refresh()
-        sheet.resources_block.refresh()
-        sheet.skills_block.refresh()
+    def row(key: str, label: str, value, extra: str = "", step: int = 1,
+            dialog: bool = False) -> None:
+        number = (f'<b class="km-adj-num km-adj-link" data-km="{key}|dialog">{theme.esc(value)}</b>'
+                  if dialog else f'<b class="km-adj-num">{theme.esc(value)}</b>')
+        rows.append(
+            f'<div class="km-adj-row"><div class="km-adj-name"><div class="n">{theme.esc(label)}</div>'
+            f'<div class="x">{theme.esc(extra)}</div></div><div class="km-adj-ctl">'
+            f'<i class="material-icons km-adj-btn" data-km="{key}|{-step}">remove</i>{number}'
+            f'<i class="material-icons km-adj-btn plus" data-km="{key}|{step}">add</i></div></div>')
 
-    @theme.requires(permissions.EDIT_KINGDOM)
-    def ruin_(rid: str, delta: int) -> None:
-        STATE.modify_ruin(rid, delta)
-        theme.save_and_refresh()
-        quick_adjustments.refresh()
-        sheet.abilities_block.refresh()
-        sheet.skills_block.refresh()
-
-    @theme.requires(permissions.EDIT_KINGDOM)
-    def com(char_id: str, delta: int) -> None:
-        if delta > 0:
-            STATE.add_commodity(char_id, delta)
-        else:
-            k["commodities"][char_id] = max(0, k["commodities"][char_id] + delta)
-        theme.save_and_refresh()
-        quick_adjustments.refresh()
-        sheet.resources_block.refresh()
-
-    def row(label: str, value, less, more, extra: str = "",
-             on_click_=None) -> None:
-        # Name on the left, controls on the right: if the column is narrow
-        # the name shortens by itself instead of overrunning the next entry.
-        with ui.element("div").style("display:grid;grid-template-columns:1fr auto;"
-                                     "align-items:center;column-gap:4px;min-width:0"):
-            with ui.element("div").style("min-width:0;overflow:hidden"):
-                ui.html(f'<div style="font-size:.82rem;white-space:nowrap;overflow:hidden;'
-                        f'text-overflow:ellipsis">{label}</div>'
-                        f'<div style="font-size:.68rem;color:var(--km-muted);min-height:1.05em;'
-                        f'white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{extra}</div>')
-            with ui.row().classes("items-center gap-0 no-wrap"):
-                ui.button(icon="remove", on_click=less).props("dense flat round size=sm color=grey")
-                number = ui.html(
-                    f'<b style="min-width:38px;text-align:center;display:inline-block;'
-                    f'color:var(--km-gold)'
-                    f'{";cursor:pointer;text-decoration:underline dotted" if on_click_ else ""}'
-                    f'">{value}</b>')
-                if on_click_ is not None:
-                    number.on("click", on_click_)
-                ui.button(icon="add", on_click=more).props("dense flat round size=sm color=amber")
-
-    with ui.element("div").classes("w-full" if compact else "km-panel w-full") \
-            .style("padding:8px;display:grid;"
-                   "grid-template-columns:repeat(auto-fit,minmax(200px,1fr));"
-                   "column-gap:16px;row-gap:2px"):
-        row(t("turn.kingdom_turn"), k["turn"], lambda: _move_turn(-1),
-             lambda: _move_turn(1), t("turn.click_number_type"),
-             on_click_=_turn_dialog)
-        row(t("turn.unrest"), k["unrest"], lambda: d("unrest", -1), lambda: d("unrest", 1),
-             f'{rules.unrest_penalty(k["unrest"])} status')
-        row(t("turn.rp"), k["rp"], lambda: d("rp", -1), lambda: d("rp", 1))
-        row(t("turn.xp"), k["xp"], lambda: d("xp", -10), lambda: d("xp", 10), "±10")
-        row(t("turn.fame_infamy"), k["fame_points"], lambda: d("fame_points", -1), lambda: d("fame_points", 1),
-             f'max {STATE.max_fame}')
-        for r in rules.RUINS:
-            rd = k["ruins"][r["id"]]
-            row(r["name"], f'{rd["points"]}/{rd["threshold"]}',
-                 lambda rid=r["id"]: ruin_(rid, -1), lambda rid=r["id"]: ruin_(rid, 1),
-                 t("turn.penalty_short", n=rd["penalty"]) if rd["penalty"] else "")
-        for p in rules.COMMODITIES:
-            row(f'{p["icon"]} {p["name"]}', k["commodities"][p["id"]],
-                 lambda char_id=p["id"]: com(char_id, -1), lambda char_id=p["id"]: com(char_id, 1),
-                 f'max {STATE.storage(p["id"])}')
+    row("turn", t("turn.kingdom_turn"), k["turn"], t("turn.click_number_type"), dialog=True)
+    row("unrest", t("turn.unrest"), k["unrest"], f'{rules.unrest_penalty(k["unrest"])} status')
+    row("rp", t("turn.rp"), k["rp"])
+    row("xp", t("turn.xp"), k["xp"], "±10", step=10)
+    row("fame_points", t("turn.fame_infamy"), k["fame_points"], f'max {STATE.max_fame}')
+    for r in rules.RUINS:
+        rd = k["ruins"][r["id"]]
+        row(f'ruin.{r["id"]}', r["name"], f'{rd["points"]}/{rd["threshold"]}',
+            t("turn.penalty_short", n=rd["penalty"]) if rd["penalty"] else "")
+    for c in rules.COMMODITIES:
+        row(f'com.{c["id"]}', f'{c["icon"]} {c["name"]}', k["commodities"][c["id"]],
+            f'max {STATE.storage(c["id"])}')
+    ui.html("".join(rows)).classes("km-adj w-full" + ("" if compact else " km-panel")) \
+        .on("click", lambda e: _adjust(e.args), js_handler=theme.PICK)
 
 
 # --------------------------------------------------------------------------
@@ -589,7 +619,7 @@ def _set_turn(new: int, reason: str = "") -> None:
                if m.get("expiry") is not None and before > m["expiry"] >= new]
     STATE.record(t("turn.kingdom_turn_corrected_from", before=before, new=new), "turn", reason)
     theme.save_and_refresh()
-    turn_panel.refresh()
+    _turn_column.refresh()
     quick_adjustments.refresh()
     sheet.identity_block.refresh()
     if returned:
@@ -643,89 +673,73 @@ def _new_turn() -> None:
     advance_turn()
     theme.save_and_refresh()
     theme.notify(t("turn.kingdom_turn_started_1", turn=STATE.k['turn'], v=t("turn.fame") if STATE.k["reputation"] == "fame" else t("turn.infamy")))
-    turn_panel.refresh()
+    _turn_column.refresh()
     sheet.identity_block.refresh()
 
 
 # --------------------------------------------------------------------------
 def _activity_card(act: dict) -> None:
+    """One element per card, clickable as a whole.
+
+    A card, a row, a column of labels, a button and a tooltip were eight
+    elements, forty-nine times per window at every redraw of the column. The
+    card is now a single block of markup with the dice drawn in it, and a
+    click anywhere on it does what the button did; the requirements are the
+    browser's own tooltip.
+    """
     cd, note = _activity_dc(act)
     reference_ = act.get("reference")
     block = "" if reference_ else STATE.activities_block(act)
-    with ui.card().classes("km-panel").style("padding:8px 12px;min-width:260px;flex:1"
-                                             + (";opacity:.55" if block else "")):
-        with ui.row().classes("items-center gap-2 w-full no-wrap"):
-            with ui.column().classes("gap-0").style("flex:1;min-width:0"):
-                ui.html(f'<b class="km-title">{theme.esc(act["name"])}</b>')
-                skill = ", ".join(rules.BY_ID["skills"][a]["name"] for a in act["skills"] if a != "*") \
-                    or t("turn.any_skill")
-                ui.label(skill).style("font-size:.72rem;color:var(--km-muted)")
-                ui.label(note).style("font-size:.7rem;color:var(--km-gold-dim)")
-                if act["cost"]:
-                    ui.label(t("turn.cost_3", cost=act["cost"])).style(
-                        "font-size:.7rem;color:var(--km-muted);white-space:nowrap;"
-                        "overflow:hidden;text-overflow:ellipsis")
-                if block:
-                    ui.html(f'<div class="km-fc" style="font-size:.7rem;white-space:normal">{block}</div>')
-            ui.button(icon=REFERENCES[reference_][0] if reference_ else "casino",
-                      on_click=lambda a=act: run_activity(a)) \
-                .props("dense flat round color=amber")
-        if act["requirements"]:
-            ui.tooltip(act["requirements"])
+    icon = REFERENCES[reference_][0] if reference_ else "casino"
+    skill = ", ".join(rules.BY_ID["skills"][a]["name"] for a in act["skills"] if a != "*")         or t("turn.any_skill")
+    lines = [f'<b class="km-title">{theme.esc(act["name"])}</b>',
+             f'<div style="font-size:.72rem;color:var(--km-muted)">{theme.esc(skill)}</div>',
+             f'<div style="font-size:.7rem;color:var(--km-gold-dim)">{theme.esc(note)}</div>']
+    if act["cost"]:
+        lines.append('<div style="font-size:.7rem;color:var(--km-muted);white-space:nowrap;'
+                     'overflow:hidden;text-overflow:ellipsis">'
+                     f'{theme.esc(t("turn.cost_3", cost=act["cost"]))}</div>')
+    if block:
+        lines.append(f'<div class="km-fc" style="font-size:.7rem;white-space:normal">{block}</div>')
+    title = f' title="{theme.esc(act["requirements"])}"' if act["requirements"] else ""
+    ui.html(f'<div{title} style="display:flex;align-items:center;gap:8px;width:100%">'
+            f'<div style="flex:1;min-width:0">{"".join(lines)}</div>'
+            f'<i class="material-icons" style="color:#ffc107;font-size:22px;flex:none">{icon}</i></div>')         .classes("km-panel km-activity")         .style("padding:8px 12px;min-width:260px;flex:1;cursor:pointer" + (";opacity:.55" if block else ""))         .on("click", lambda _e=None, a=act: run_activity(a))
 
 
 # --------------------------------------------------------------------------
 @ui.refreshable
+def _step_body(phase_id: str, step_id: str) -> None:
+    """The live part of an upkeep or event step — the figures it reads, the
+    buttons it offers — as a panel of its own: a change of a figure redoes
+    the steps, not the column of activity cards around them."""
+    phase = next(f for f in rules.TURN_PHASES if f["id"] == phase_id)
+    step = next(s for s in phase["steps"] if s["id"] == step_id)
+    if phase_id == "upkeep":
+        _upkeep_step(step)
+    else:
+        _event_step(step)
+
+
+@ui.refreshable
+def _uses_chip(phase_id: str, step_id: str) -> None:
+    """How many times a step was used this turn: a panel of its own, so an
+    activity marks its use without redoing the whole column."""
+    max_ = STATE.step_limit(phase_id, step_id)
+    if max_ is None:
+        return
+    used_ones = STATE.step_uses(phase_id, step_id)
+    exhausted = used_ones >= max_
+    ui.html(t("turn.span_class_km_chip", v="km-fc" if exhausted else "", used_ones=used_ones, max=max_))
+
+
 def turn_panel() -> None:
-    k = STATE.k
+    """The tab: the turn column on the left, adjustments and journal on the
+    right. Three panels, not one inside another: redoing the column does not
+    rebuild the journal, nor the other way round."""
     with ui.row().classes("w-full items-start gap-4 no-wrap"):
         with ui.column().classes("gap-3").style("flex:1;min-width:0"):
-            with ui.card().classes("km-panel w-full"):
-                with ui.row().classes("items-center gap-3 flex-wrap"):
-                    theme.title(t("turn.kingdom_turn_2", turn=k['turn']), 1)
-                    ui.element("div").style("flex:1")
-                    ui.button(t("turn.new_turn"), on_click=_new_turn).props("dense color=amber")
-                    # The button above only knows how to go forward: if you
-                    # pressed it once too often, it is corrected from here.
-                    ui.button(icon="edit", on_click=_turn_dialog)                         .props("dense flat round size=sm color=grey")                         .tooltip(t("turn.correct_turn_number"))
-                ui.label(t("turn.start_every_turn_you", v=t("turn.fame") if k["reputation"] == "fame" else t("turn.infamy"))) \
-                    .style("font-size:.8rem;color:var(--km-muted)")
-
-            journeys_in_progress()
-
-            for phase in rules.TURN_PHASES:
-                with ui.expansion(phase["name"], value=(phase["id"] in ("upkeep", "activity"))) \
-                        .classes("km-panel w-full"):
-                    for step in phase["steps"]:
-                        with ui.card().classes("km-panel w-full").style("padding:10px 14px"):
-                            ui.html(f'<b class="km-title">{theme.esc(step["name"])}</b>')
-                            ui.label(step["desc"]).style("font-size:.82rem;color:var(--km-muted)")
-                            if phase["id"] == "upkeep":
-                                _upkeep_step(step)
-                            elif phase["id"] == "event":
-                                _event_step(step)
-
-                            atts = rules.activities_for_step(phase["id"], step["id"])
-                            if atts:
-                                max_ = STATE.step_limit(phase["id"], step["id"])
-                                if max_ is not None:
-                                    used_ones = STATE.step_uses(phase["id"], step["id"])
-                                    exhausted = used_ones >= max_
-                                    ui.html(t("turn.span_class_km_chip", v="km-fc" if exhausted else "", used_ones=used_ones, max=max_))
-                                if phase["id"] == "activities" and step["id"] == "government":
-                                    ui.label(t("turn.every_pc_leader_may", max_leadership_activities=STATE.max_leadership_activities())) \
-                                        .style("font-size:.78rem;color:var(--km-gold-dim)")
-                                if phase["id"] == "activities" and step["id"] == "region":
-                                    ui.label(t("turn.claim_hex_max_times", claims_per_turn=STATE.claims_per_turn())) \
-                                        .style("font-size:.78rem;color:var(--km-gold-dim)")
-                                if phase["id"] == "activities" and step["id"] == "civic":
-                                    ui.label(t("turn.build_structure_performed_from")) \
-                                        .style("font-size:.78rem;color:var(--km-gold-dim)")
-                                with ui.element("div").style(
-                                        "display:flex;flex-wrap:wrap;gap:8px;margin-top:6px"):
-                                    for act in atts:
-                                        _activity_card(act)
-
+            _turn_column()
         with ui.column().classes("gap-3").style("width:400px;min-width:340px"):
             with ui.card().classes("km-panel w-full"):
                 theme.title(t("turn.quick_adjustments"), 2)
@@ -736,15 +750,69 @@ def turn_panel() -> None:
 
 
 @ui.refreshable
+def _turn_column() -> None:
+    k = STATE.k
+    with ui.card().classes("km-panel w-full"):
+        with ui.row().classes("items-center gap-3 flex-wrap"):
+            theme.title(t("turn.kingdom_turn_2", turn=k['turn']), 1)
+            ui.element("div").style("flex:1")
+            ui.button(t("turn.new_turn"), on_click=_new_turn).props("dense color=amber")
+            # The button above only knows how to go forward: if you
+            # pressed it once too often, it is corrected from here.
+            ui.button(icon="edit", on_click=_turn_dialog)                         .props("dense flat round size=sm color=grey")                         .tooltip(t("turn.correct_turn_number"))
+        ui.label(t("turn.start_every_turn_you", v=t("turn.fame") if k["reputation"] == "fame" else t("turn.infamy"))) \
+            .style("font-size:.8rem;color:var(--km-muted)")
+
+    journeys_in_progress()
+
+    for phase in rules.TURN_PHASES:
+        with ui.expansion(phase["name"], value=(phase["id"] in ("upkeep", "activity"))) \
+                .classes("km-panel w-full"):
+            for step in phase["steps"]:
+                with ui.card().classes("km-panel w-full").style("padding:10px 14px"):
+                    ui.html(f'<b class="km-title">{theme.esc(step["name"])}</b>')
+                    ui.label(step["desc"]).style("font-size:.82rem;color:var(--km-muted)")
+                    if phase["id"] in ("upkeep", "event"):
+                        _step_body(phase["id"], step["id"])
+
+                    atts = rules.activities_for_step(phase["id"], step["id"])
+                    if atts:
+                        max_ = STATE.step_limit(phase["id"], step["id"])
+                        if max_ is not None:
+                            _uses_chip(phase["id"], step["id"])
+                        if phase["id"] == "activities" and step["id"] == "government":
+                            ui.label(t("turn.every_pc_leader_may", max_leadership_activities=STATE.max_leadership_activities())) \
+                                .style("font-size:.78rem;color:var(--km-gold-dim)")
+                        if phase["id"] == "activities" and step["id"] == "region":
+                            ui.label(t("turn.claim_hex_max_times", claims_per_turn=STATE.claims_per_turn())) \
+                                .style("font-size:.78rem;color:var(--km-gold-dim)")
+                        if phase["id"] == "activities" and step["id"] == "civic":
+                            ui.label(t("turn.build_structure_performed_from")) \
+                                .style("font-size:.78rem;color:var(--km-gold-dim)")
+                        with ui.element("div").style(
+                                "display:flex;flex-wrap:wrap;gap:8px;margin-top:6px"):
+                            for act in atts:
+                                _activity_card(act)
+
+
+@ui.refreshable
 def _journal() -> None:
+    """The last eighty lines, as one block of markup.
+
+    A row, a chip and a column per line made seven hundred elements, rebuilt
+    in every window at every roll; nothing in a line is clickable, so the
+    whole list is one element now.
+    """
+    rows = []
     for entry in STATE.journal(80):
-        with ui.row().classes("items-start gap-2 no-wrap"):
-            ui.html(f'<span style="color:var(--km-muted);font-size:.7rem;min-width:56px">'
-                    f'T{int(entry["turn"])} {theme.esc(str(entry["logged_at"])[-5:])}</span>')
-            with ui.column().classes("gap-0"):
-                ui.label(entry["text"]).style("font-size:.8rem")
-                if entry.get("detail"):
-                    ui.label(entry["detail"]).style("font-size:.7rem;color:var(--km-muted)")
+        detail = (f'<div style="font-size:.7rem;color:var(--km-muted)">{theme.esc(entry["detail"])}</div>'
+                  if entry.get("detail") else "")
+        rows.append('<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:6px">'
+                    f'<span style="color:var(--km-muted);font-size:.7rem;min-width:56px;flex:none">'
+                    f'T{int(entry["turn"])} {theme.esc(str(entry["logged_at"])[-5:])}</span>'
+                    f'<div style="min-width:0"><div style="font-size:.8rem">{theme.esc(entry["text"])}</div>'
+                    f'{detail}</div></div>')
+    ui.html("".join(rows)).classes("w-full")
 
 
 # --------------------------------------------------------------------------
@@ -838,6 +906,11 @@ def _cancel_journey(v: dict) -> None:
 
 # --------------------------------------------------------------------------
 theme.register_refresh("turn.journeys", journeys_in_progress)
-theme.register_refresh("turn.panel", turn_panel)
-theme.register_refresh("turn.adjustments", quick_adjustments)
+theme.register_refresh("turn.panel", _turn_column)
+theme.register_refresh("turn.uses", _uses_chip)
+theme.register_refresh("turn.steps", _step_body)
+theme.register_refresh("turn.adjustments", quick_adjustments, depends=lambda: [
+    [STATE.k[f] for f in ("turn", "unrest", "rp", "xp", "fame_points")],
+    STATE.max_fame, STATE.k["ruins"], STATE.k["commodities"],
+    {c["id"]: STATE.storage(c["id"]) for c in rules.COMMODITIES}])
 theme.register_refresh("turn.journal", _journal)

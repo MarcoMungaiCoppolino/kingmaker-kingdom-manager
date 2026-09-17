@@ -29,7 +29,9 @@ def roll_skill(skill_id: str, cd: int, extra_title: str = "", outcome_text: str 
 
     label = f"{extra_title} · {name}" if extra_title else name
     STATE.record(t("sheet.vs_dc", label=label, label2=res.label, total=res.total, cd=cd), "check")
-    theme.save_and_refresh()
+    # A roll writes a line in the journal and, on a critical, moves the fame:
+    # those two panels, not the whole interface of every window.
+    theme.save_and_refresh_panels(("turn.journal", "sheet.identita"))
     if show:
         theme.show_result(res, label, outcome_text)
     return res
@@ -101,34 +103,71 @@ def _set_ruin(rid: str, field: str, val) -> None:
 # --------------------------------------------------------------------------
 @ui.refreshable
 def skills_block() -> None:
+    """The sixteen skills as one element.
+
+    A card, a column, two chips, a Quasar select, a modifier and two buttons
+    with tooltips were twelve elements per skill, and the select carried its
+    options every time; the block is now one piece of markup with a native
+    select per skill and the dice drawn as icons. The browser says which
+    control was used (`data-km`); `_skill_click` and `_skill_change` do the
+    rest, reading the key as untrusted input.
+    """
     k = STATE.k
     with ui.card().classes("km-panel w-full"):
         with ui.row().classes("items-center gap-3 w-full"):
             theme.title(t("sheet.kingdom_skills"), 2)
             ui.element("div").style("flex:1")
             ui.html(t("sheet.span_class_km_chip", control_dc=STATE.control_dc))
-        with ui.element("div").style("display:grid;grid-template-columns:repeat(2,1fr);gap:6px"):
-            for a in rules.SKILLS:
-                prof = k["proficiencies"].get(a["id"], "untrained")
-                mod = STATE.skill_mod(a["id"])
-                ability = rules.BY_ID["ability"][a["ability"]]
-                with ui.element("div").classes("km-skill"):
-                    with ui.column().classes("gap-0"):
-                        ui.html(f'<b>{theme.esc(a["name"])}</b>')
-                        ui.html(f'<span style="font-size:.68rem;color:var(--km-muted)">'
-                                f'{ability["abbr"]} · {rules.BY_ID["proficiency"][prof]["name"]}</span>')
-                        ui.tooltip(a["desc"])
-                    ui.select({c["id"]: c["name"][:3] for c in rules.PROFICIENCIES}, value=prof,
-                              on_change=lambda e, aid=a["id"]: _set_proficiency(aid, e.value)) \
-                        .props("outlined dense borderless").style("width:64px")
-                    ui.html(f'<div class="km-mod">{mod:+d}</div>')
-                    with ui.row().classes("gap-0 no-wrap"):
-                        ui.button(icon="casino",
-                                  on_click=lambda _e, aid=a["id"]: roll_skill(aid, STATE.control_dc)) \
-                            .props("dense flat round color=amber").tooltip(
-                                t("sheet.basic_check_against_dc", control_dc=STATE.control_dc))
-                        ui.button(icon="tune", on_click=lambda _e, aid=a["id"]: _dc_dialog(aid)) \
-                            .props("dense flat round color=grey").tooltip(t("sheet.roll_against_different_dc"))
+        roll_hint = theme.esc(t("sheet.basic_check_against_dc", control_dc=STATE.control_dc))
+        dc_hint = theme.esc(t("sheet.roll_against_different_dc"))
+        cells = []
+        for a in rules.SKILLS:
+            prof = k["proficiencies"].get(a["id"], "untrained")
+            mod = STATE.skill_mod(a["id"])
+            ability = rules.BY_ID["ability"][a["ability"]]
+            options = "".join(
+                f'<option value="{c["id"]}"{" selected" if c["id"] == prof else ""}>'
+                f'{theme.esc(c["name"][:3])}</option>' for c in rules.PROFICIENCIES)
+            cells.append(
+                f'<div class="km-skill" title="{theme.esc(a["desc"])}">'
+                f'<div><b>{theme.esc(a["name"])}</b><br><span style="font-size:.68rem;color:var(--km-muted)">'
+                f'{theme.esc(ability["abbr"])} · {theme.esc(rules.BY_ID["proficiency"][prof]["name"])}</span></div>'
+                f'<select class="km-select" data-km="prof.{a["id"]}">{options}</select>'
+                f'<div class="km-mod">{mod:+d}</div>'
+                f'<div class="km-icons"><i class="material-icons km-icon-btn amber" data-km="roll.{a["id"]}" '
+                f'title="{roll_hint}">casino</i>'
+                f'<i class="material-icons km-icon-btn" data-km="dc.{a["id"]}" title="{dc_hint}">tune</i></div>'
+                f'</div>')
+        block = "".join(cells)
+        ui.html(block, sanitize=False).classes("km-skills w-full") \
+            .on("click", lambda e: _skill_click(e.args), js_handler=theme.PICK) \
+            .on("change", lambda e: _skill_change(e.args), js_handler=theme.PICK_VALUE)
+
+
+_SKILL_IDS = {a["id"] for a in rules.SKILLS}
+_PROFICIENCY_IDS = {c["id"] for c in rules.PROFICIENCIES}
+
+
+def _skill_click(key) -> None:
+    kind, _sep, aid = str(key).partition(".")
+    if aid not in _SKILL_IDS:
+        return
+    if kind == "roll":
+        roll_skill(aid, STATE.control_dc)
+    elif kind == "dc":
+        _dc_dialog(aid)
+
+
+def _skill_change(args) -> None:
+    key, value = theme.key_value(args)
+    kind, _sep, aid = key.partition(".")
+    if kind == "prof" and aid in _SKILL_IDS and value in _PROFICIENCY_IDS:
+        _set_proficiency(aid, value)
+
+
+def _skills_inputs() -> list:
+    return [STATE.control_dc, STATE.k["proficiencies"],
+            [STATE.skill_mod(a["id"]) for a in rules.SKILLS]]
 
 
 @theme.requires(permissions.EDIT_KINGDOM)
@@ -141,51 +180,105 @@ def _set_proficiency(aid: str, val: str) -> None:
 # --------------------------------------------------------------------------
 @ui.refreshable
 def roles_block() -> None:
+    """The eight leadership roles as one element.
+
+    Each row had a select of every character, an input, three checkboxes
+    with tooltips and its chips: a dozen elements per role and the character
+    list eight times over. The block is one piece of markup: a native select
+    or input for who holds the role, the three ticks drawn as icons, the
+    chips as before. `_role_click` and `_role_change` read the keys.
+    """
     k = STATE.k
     characters = STATE.characters()
     by_id = {p["id"]: p for p in characters}
-    options = {"": t("sheet.nobody")} | {p["id"]: p["name"] for p in characters}
 
     with ui.card().classes("km-panel w-full"):
         with ui.row().classes("items-center w-full no-wrap"):
             theme.title(t("sheet.leadership_roles"), 2)
             ui.element("div").style("flex:1")
             if permissions.can(theme.user(), permissions.MANAGE_CHARACTERS):
-                ui.button(icon="groups", on_click=characters_dialog)                     .props("flat dense round size=sm").tooltip(t("sheet.characters_campaign"))
+                ui.button(icon="groups", on_click=characters_dialog) \
+                    .props("flat dense round size=sm").tooltip(t("sheet.characters_campaign"))
         n_inv = sum(1 for d in k["roles"].values() if d["invested"])
-        ui.label(t("sheet.invested_4_invested_role", n_inv=n_inv, role_status_bonus=rules.role_status_bonus(STATE.level)))             .style("font-size:.78rem;color:var(--km-muted)")
-        ui.label(t("sheet.distinct_pc_leaders_they", leader_pc=STATE.leader_pc()))             .style("font-size:.78rem;color:var(--km-muted)")
+        ui.label(t("sheet.invested_4_invested_role", n_inv=n_inv,
+                   role_status_bonus=rules.role_status_bonus(STATE.level))) \
+            .style("font-size:.78rem;color:var(--km-muted)")
+        ui.label(t("sheet.distinct_pc_leaders_they", leader_pc=STATE.leader_pc())) \
+            .style("font-size:.78rem;color:var(--km-muted)")
 
+        def tick(key: str, on: bool, label: str, hint: str = "") -> str:
+            title = f' title="{theme.esc(hint)}"' if hint else ""
+            return (f'<span class="km-check{" on" if on else ""}" data-km="{key}"{title}>'
+                    f'<i class="material-icons">{"check_box" if on else "check_box_outline_blank"}</i>'
+                    f'{theme.esc(label)}</span>')
+
+        rows = []
         for r in rules.ROLES:
             d = k["roles"][r["id"]]
-            # Without `no-wrap`: the row carries a varying number of chips (the
-            # linked account, the absence penalty), and forcing them onto a
-            # single line pushed them out of the box instead of wrapping.
-            with ui.row().classes("items-center gap-2 w-full"):
-                ui.html(f'<b class="km-title" style="min-width:104px">{theme.esc(r["name"])}</b>')
-                ui.html(f'<span class="km-chip" style="font-size:.68rem">'
-                        f'{rules.BY_ID["ability"][r["ability"]]["abbr"]}</span>')
-                if d["pc"]:
-                    # A PC is chosen among the campaign's characters: this way
-                    # two roles held by the same character are really the same person.
-                    ui.select(options, value=d.get("character_id") or "",
-                              on_change=lambda e, rid=r["id"]: _set_character(rid, e.value))                         .props("outlined dense options-dense").classes("w-48")
-                else:
-                    ui.input(value=d["name"], placeholder=t("sheet.npc_name"),
-                             on_change=lambda e, rid=r["id"]: _set_role(rid, "name", e.value))                         .props("outlined dense").classes("w-48")
-                ui.checkbox(t("sheet.pc"), value=d["pc"],
-                            on_change=lambda e, rid=r["id"]: _set_pc(rid, e.value))                     .tooltip(t("sheet.ticked_player_plays_them"))
-                ui.checkbox(t("sheet.invested"), value=d["invested"],
-                            on_change=lambda e, rid=r["id"]: _set_role(rid, "invested", e.value))
-                ui.checkbox(t("sheet.vacant"), value=d["absent"],
-                            on_change=lambda e, rid=r["id"]: _set_role(rid, "absent", e.value))                     .tooltip(r["absence_penalty"])
-                char = by_id.get(d.get("character_id") or "")
-                if char and char.get("user_id"):
-                    ui.html(f'<span class="km-chip" style="font-size:.62rem">{t("sheet.linked_account")}</span>')
-                if d["absent"] or not _role_name(d, by_id):
-                    ui.html(f'<span class="km-chip km-fc" style="font-size:.68rem;'
-                            f'white-space:normal">{theme.esc(r["absence_penalty"])}'
-                            f'</span>')
+            rid = r["id"]
+            if d["pc"]:
+                # A PC is chosen among the campaign's characters: this way two
+                # roles held by the same character are really the same person.
+                current = d.get("character_id") or ""
+                options = f'<option value=""{" selected" if not current else ""}>{theme.esc(t("sheet.nobody"))}</option>'
+                options += "".join(
+                    f'<option value="{theme.esc(p["id"])}"{" selected" if p["id"] == current else ""}>'
+                    f'{theme.esc(p["name"])}</option>' for p in characters)
+                holder = f'<select class="km-select" data-km="char.{rid}" style="width:12rem">{options}</select>'
+            else:
+                holder = (f'<input class="km-input" data-km="name.{rid}" style="width:12rem" '
+                          f'value="{theme.esc(d["name"])}" placeholder="{theme.esc(t("sheet.npc_name"))}">')
+            chips = ""
+            char = by_id.get(d.get("character_id") or "")
+            if char and char.get("user_id"):
+                chips += f'<span class="km-chip" style="font-size:.62rem">{theme.esc(t("sheet.linked_account"))}</span>'
+            if d["absent"] or not _role_name(d, by_id):
+                chips += (f'<span class="km-chip km-fc" style="font-size:.68rem;white-space:normal">'
+                          f'{theme.esc(r["absence_penalty"])}</span>')
+            rows.append(
+                f'<div class="km-role"><b class="km-title" style="min-width:104px">{theme.esc(r["name"])}</b>'
+                f'<span class="km-chip" style="font-size:.68rem">{theme.esc(rules.BY_ID["ability"][r["ability"]]["abbr"])}</span>'
+                f'{holder}'
+                + tick(f"pc.{rid}", bool(d["pc"]), t("sheet.pc"), t("sheet.ticked_player_plays_them"))
+                + tick(f"inv.{rid}", bool(d["invested"]), t("sheet.invested"))
+                + tick(f"abs.{rid}", bool(d["absent"]), t("sheet.vacant"), r["absence_penalty"])
+                + f'{chips}</div>')
+        block = "".join(rows)
+        ui.html(block, sanitize=False).classes("w-full") \
+            .on("click", lambda e: _role_click(e.args), js_handler=theme.PICK) \
+            .on("change", lambda e: _role_change(e.args), js_handler=theme.PICK_VALUE)
+
+
+def _role_click(key) -> None:
+    kind, _sep, rid = str(key).partition(".")
+    roles = STATE.k["roles"]
+    if rid not in roles:
+        return
+    d = roles[rid]
+    if kind == "pc":
+        _set_pc(rid, not d["pc"])
+    elif kind == "inv":
+        _set_role(rid, "invested", not d["invested"])
+    elif kind == "abs":
+        _set_role(rid, "absent", not d["absent"])
+
+
+def _role_change(args) -> None:
+    key, value = theme.key_value(args)
+    kind, _sep, rid = key.partition(".")
+    if rid not in STATE.k["roles"]:
+        return
+    if kind == "char":
+        if value == "" or STATE.archive.character(value) is not None:
+            _set_character(rid, value)
+    elif kind == "name":
+        _set_role(rid, "name", value.strip()[:80])
+
+
+def _roles_inputs() -> list:
+    return [STATE.k["roles"],
+            [(p["id"], p["name"], p.get("user_id")) for p in STATE.characters()],
+            STATE.level, STATE.leader_pc()]
 
 
 @ui.refreshable
@@ -434,27 +527,53 @@ def _roll_resources() -> None:
 # --------------------------------------------------------------------------
 @ui.refreshable
 def feats_block() -> None:
+    """The kingdom feats as one element, grouped by level.
+
+    Thirty-four rows of a checkbox, three chips, a summary and a tooltip
+    were six hundred elements per window; the list is one piece of markup,
+    the tick an icon, the description the browser's own tooltip, and the
+    feats sit under the level they need, the ones above the kingdom's level
+    dimmed. A click anywhere on a feat toggles it, for the ones above the
+    level too, as the checkbox did.
+    """
     k = STATE.k
     with ui.card().classes("km-panel w-full"):
         theme.title(t("sheet.kingdom_feats"), 2)
         expected = 1 + (STATE.level // 2)   # government bonus + one every 2 levels from the 2nd
         ui.label(t("sheet.feats_owned_about_expected", len=len(k['feats']), expected=expected)) \
             .style("font-size:.78rem;color:var(--km-muted)")
-        for f in rules.FEATS:
-            is_owned = f["id"] in k["feats"]
+        rows = []
+        last_level = None
+        for f in sorted(rules.FEATS, key=lambda x: (x["level"], x["name"])):
+            if f["level"] != last_level:
+                last_level = f["level"]
+                rows.append(f'<div class="km-feat-level">{theme.esc(t("common.level_short", level=f["level"]))}</div>')
+            owned = f["id"] in k["feats"]
             available = f["level"] <= STATE.level
-            with ui.row().classes("items-start gap-2 w-full no-wrap") \
-                    .style("opacity:" + ("1" if available else ".45")):
-                ui.checkbox(value=is_owned, on_change=lambda e, fid=f["id"]: _toggle_feat(fid, e.value))
-                with ui.column().classes("gap-0").style("flex:1"):
-                    with ui.row().classes("items-center gap-2"):
-                        ui.html(f'<b class="km-title">{theme.esc(f["name"])}</b>')
-                        ui.html(f'<span class="km-chip" style="font-size:.65rem">{t("common.level_short", level=f["level"])}</span>')
-                        if f["prerequisites"]:
-                            ui.html(f'<span class="km-chip" style="font-size:.65rem;color:var(--km-muted)">'
-                                    f'{f["prerequisites"]}</span>')
-                    ui.label(f["summary"]).style("font-size:.8rem;color:var(--km-muted)")
-                    ui.tooltip(f["description"])
+            prerequisites = (f'<span class="km-chip" style="font-size:.65rem;color:var(--km-muted)">'
+                             f'{theme.esc(f["prerequisites"])}</span>' if f["prerequisites"] else "")
+            rows.append(
+                f'<div class="km-feat{" on" if owned else ""}" data-km="feat.{f["id"]}" '
+                f'style="opacity:{"1" if available else ".45"}" title="{theme.esc(f["description"])}">'
+                f'<i class="material-icons">{"check_box" if owned else "check_box_outline_blank"}</i>'
+                f'<div><b class="km-title">{theme.esc(f["name"])}</b> {prerequisites}'
+                f'<div class="s">{theme.esc(f["summary"])}</div></div></div>')
+        block = "".join(rows)
+        ui.html(block, sanitize=False).classes("w-full") \
+            .on("click", lambda e: _feat_click(e.args), js_handler=theme.PICK)
+
+
+_FEAT_IDS = {f["id"] for f in rules.FEATS}
+
+
+def _feat_click(key) -> None:
+    kind, _sep, fid = str(key).partition(".")
+    if kind == "feat" and fid in _FEAT_IDS:
+        _toggle_feat(fid, fid not in STATE.k["feats"])
+
+
+def _feats_inputs() -> list:
+    return [STATE.k["feats"], STATE.level]
 
 
 @theme.requires(permissions.EDIT_KINGDOM)
@@ -558,22 +677,51 @@ def _set_unrest(val) -> None:
 
 # --------------------------------------------------------------------------
 def sheet_panel() -> None:
+    # Three fifths and two fifths: the right column holds the resources with
+    # their five commodities, the roles with a name and three ticks each,
+    # and the feats; at a fixed 520 px they ran out of room while the left
+    # column had more than the skills needed.
     with ui.row().classes("w-full items-start gap-4 no-wrap"):
-        with ui.column().classes("gap-4").style("flex:1;min-width:0"):
+        with ui.column().classes("gap-4").style("flex:3 1 0;min-width:0"):
             identity_block()
             abilities_block()
             skills_block()
-        with ui.column().classes("gap-4").style("width:520px;min-width:420px"):
+        with ui.column().classes("gap-4").style("flex:2 1 0;min-width:520px"):
             resources_block()
             roles_block()
             feats_block()
 
 
 # --------------------------------------------------------------------------
-for _name, _ref in (("sheet.identita", identity_block),
-                    ("sheet.caratteristiche", abilities_block),
-                    ("sheet.abilita", skills_block),
-                    ("sheet.risorse", resources_block),
-                    ("sheet.ruoli", roles_block),
-                    ("sheet.talenti", feats_block)):
-    theme.register_refresh(_name, _ref)
+def _identity_inputs() -> list:
+    k = STATE.k
+    cap = STATE.capital()
+    return [[k[f] for f in ("name", "level", "party_level", "xp", "charter", "heartland",
+                            "government", "fame_points", "unrest", "reputation")],
+            STATE.size_, STATE.size_entry()["kind"], cap["name"] if cap else None,
+            STATE.max_fame, STATE.in_anarchy]
+
+
+def _abilities_inputs() -> list:
+    return [STATE.k["abilities"], STATE.k["ruins"]]
+
+
+def _resources_inputs() -> list:
+    k = STATE.k
+    return [{f: k[f] for f in ("rp", "rp_spent_turn", "bonus_dice", "penalty_dice",
+                               "army_consumption", "consumption_extra", "commodities")},
+            STATE.resource_dice_count, STATE.resource_die, STATE.consumption(),
+            {c["id"]: STATE.storage(c["id"]) for c in rules.COMMODITIES},
+            [h["work_site"] for h in STATE.claimed_hexes() if h.get("work_site")]]
+
+
+# Every block says what it reads: a copy whose inputs have not moved is not
+# rebuilt (`theme.register_refresh`), and a full refresh after a roll costs
+# the sheet nothing.
+for _name, _ref, _inputs in (("sheet.identita", identity_block, _identity_inputs),
+                             ("sheet.caratteristiche", abilities_block, _abilities_inputs),
+                             ("sheet.abilita", skills_block, _skills_inputs),
+                             ("sheet.risorse", resources_block, _resources_inputs),
+                             ("sheet.ruoli", roles_block, _roles_inputs),
+                             ("sheet.talenti", feats_block, _feats_inputs)):
+    theme.register_refresh(_name, _ref, depends=_inputs)

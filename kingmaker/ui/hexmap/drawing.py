@@ -22,7 +22,16 @@ from kingmaker.locale import i18n
 log = logging.getLogger(__name__)
 
 
-def _svg_grid(sel: dict, view) -> str:
+def _svg_layers(sel: dict, view) -> tuple[str, str]:
+    """The drawing in two strings: the ground and what moves on it.
+
+    The ground — fills, fog, the ctrl selection, the water, the icons and
+    the names — changes when a hex or the water is edited; the live layer —
+    journeys, the decided route, the markers, the chosen hex, a water
+    proposal — changes at every marker moved. Each goes to an element of its
+    own in the page, so a boarding sends a couple of KB to a window instead
+    of the whole map. `_svg_grid` is the two joined, the ground first.
+    """
     m = STATE.k["map"]
     size = float(m["size"])
     origin = (float(m["origin_x"]), float(m["origin_y"]))
@@ -169,9 +178,15 @@ def _svg_grid(sel: dict, view) -> str:
                 f'<circle cx="{point[0]:.1f}" cy="{point[1]:.1f}" '
                 f'r="{max(size * 0.09, 3):.1f}" fill="{PROPOSAL_COLOR}" '
                 f'stroke="#ffffff" stroke-width="{max(size * 0.02, 1):.1f}"/>')
-    return (ground_layer + veil_layer + chosen_layer + borders_layer
-            + journeys_layer + path_layer + icons_layer + "".join(parts)
-            + proposal_layer)
+    ground = ground_layer + veil_layer + chosen_layer + borders_layer + icons_layer
+    live = journeys_layer + path_layer + "".join(parts) + proposal_layer
+    return ground, live
+
+
+def _svg_grid(sel: dict, view) -> str:
+    """The whole drawing as one string: the ground under the live layer."""
+    ground, live = _svg_layers(sel, view)
+    return ground + live
 
 def _ground_layers(sel: dict, view, m: dict, size: float, origin, orient: str,
                      show: bool, name_width: float, coverage: float,

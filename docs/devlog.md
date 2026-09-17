@@ -298,3 +298,54 @@ and a real install and uninstall cycle in a scratch folder is part of the checks
 crest, freshly put next to the kingdom's name, wrapped under it: a flex item without a width
 of its own. Small things, all three found by playing, none by the suite.
 
+## 1.1.2 — 17 September 2026 · Four seconds per dice roll
+
+The first evening with the whole table on the relay: every roll took two to four seconds, and
+the launcher, the frozen build and the cloud all looked guilty. None was. A headless replay of
+the evening — eight simulated windows on a copy of the database, one roll — put the blame on
+the refresh bus. A roll called the full redraw; the shared panels (the Turn column, the Kingdom
+blocks) are one refreshable with a copy per window; and NiceGUI's `refresh()` redoes every
+copy whatever tab the window is on. Eight windows, four seconds of server time, two megabytes
+for a home upload link to push through the relay. Three fixes, in the order of their weight:
+the bus rebuilds the copies one by one and only where the tab is in front, queues the requests
+and flushes once per action; a roll redraws the two panels it changes; and the Turn column
+lost five of every six elements, an activity card being one block of markup with the click on
+it. The lesson was already written in a docstring: NiceGUI elements cost per element, in
+building and in bytes, and "redraw everything" scales with windows times tabs. The other
+lesson is the stress script: measure with eight windows before the table does.
+
+The second pass went after the second that was left. Three things: the flush became a task
+that does one window per turn of the loop, the actor's first, so nobody waits for anybody
+else's window and a second action mid-flush simply takes over the windows not yet done; the
+figures got a map of the panels that show them, so a +1 redraws a header and a sheet and not a
+column of cards; and the adjustments and the stat boxes became one element each, a `data-km`
+attribute per control. The map of panels is the risky piece — a figure read by a panel nobody
+listed is a stale screen that no unit test sees — so the safety net is a test that builds
+eight real windows with NiceGUI's own simulation, plays sixty random changes and compares every
+panel in front with a fresh render of itself. It earned its keep on the first run: the quick
+adjustments drawn in the City tab were stale, because the first version of the bus asked
+whether the *panel's* tab was in front, not whether *that copy* was. Now it asks the copy.
+
+The third pass took the Kingdom sheet, the one tab still over a second with eight windows on
+it, and did the two things that had been sketched: a fingerprint per copy, so a block whose
+inputs have not moved is not rebuilt at all — the six blocks and the adjustments say what they
+read, the bus compares — and the three heaviest blocks drawn as one element each, skills, roles
+and feats, native selects and inputs dressed in the theme, ticks as icons, the feats grouped by
+level. The random-windows test grew a menu of the sheet's own setters and of the keys those
+blocks send from the browser, since a fingerprint that forgets an input is the one bug this
+design can have, and it is invisible until somebody compares the screen with the truth. From
+1.45 s to 0.34 s, and the sheet no longer pays for a roll.
+
+The fourth pass was the map, where a boarding felt slow at the table. Not CPU: a draw is
+25 ms after a write and half a millisecond otherwise. Bytes: the map is one SVG of 93 KB, sent
+whole to every window on the map each time a marker moves, and the boarding also refreshed
+the whole interface everywhere. Three changes. The drawing is two strings now, the ground in an
+element of its own under the image's SVG and the live things in that SVG, each sent only when
+it changed — the ruler and the water tools were left exactly where they draw, because they
+find the image's SVG and append to it, and moving them would have been the one way to break
+the travel system. The actions that move somebody redraw the panels that show positions and
+nothing else. And the hex outline is relative commands on whole pixels, with the corners
+rounded first so neighbours share an edge exactly. A boarding with eight windows: 983 KB to
+92. The layers test checks that the two strings joined are the old drawing, that a moved
+marker touches only the live one, and that the outline still walks through the corners.
+

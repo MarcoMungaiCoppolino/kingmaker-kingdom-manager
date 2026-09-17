@@ -111,7 +111,11 @@ translation pipeline), `extract_strings.py` (the interface texts into the catalo
 `packaging/build.py` freezes the app with PyInstaller, smoke-tests what it built and makes
 the Windows installer or the Linux tarball; `.github/workflows/release.yml` runs it on every
 version tag. Chapter 12 has the details. `tests/test_launcher.py` covers the launcher's logic;
-`tests/test_sync.py` the cloud, against the one-process Dropbox of `tests/fake_dropbox.py`.
+`tests/test_sync.py` the cloud, against the one-process Dropbox of `tests/fake_dropbox.py`;
+`tests/test_refresh.py` the refresh bus of chapter 4, with fake panels and windows;
+`tests/test_windows.py` eight real windows (NiceGUI's user simulation, no browser), random
+changes, every panel in front compared with a fresh render of itself; `tests/test_layers.py`
+the map's two layers and the compact hex outline.
 
 ## The figures
 

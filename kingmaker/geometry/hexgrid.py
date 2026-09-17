@@ -121,9 +121,20 @@ def polygon_path(col: int, row: int, size: float, origin: tuple[float, float],
     # piece of the whole drawing. If the calibration changes, the arguments
     # change and the cache fills up again with the right ones: nothing to
     # invalidate by hand.
+    # Relative commands and whole pixels: the corners are rounded first and
+    # the steps taken between the rounded corners, so two neighbours share an
+    # edge to the pixel. A hex went from ninety characters to forty, and the
+    # grid is drawn once per window at every change of the ground.
     cx, cy = hex_center(col, row, size, origin, orientation)
-    pts = hex_corners(cx, cy, size, orientation)
-    return "M" + " ".join(f"{x:.1f} {y:.1f}".replace(".0", "") for x, y in pts) + "Z"
+    pts = [(round(x), round(y)) for x, y in hex_corners(cx, cy, size, orientation)]
+    x0, y0 = pts[0]
+    steps = []
+    px, py = x0, y0
+    for x, y in pts[1:]:
+        dx, dy = x - px, y - py
+        steps.append(f"l{dx}{dy}" if dy < 0 else f"l{dx} {dy}")
+        px, py = x, y
+    return f"M{x0} {y0}" + "".join(steps) + "z"
 
 
 # -------------------------------------------------------------------- borders

@@ -1,15 +1,17 @@
 """Visual theme and shared widgets."""
 from __future__ import annotations
 
+import asyncio
 import base64
 import functools
 import html
+import json
 import logging
 import time
 from contextlib import contextmanager
 from pathlib import Path
 
-from nicegui import app, context, ui
+from nicegui import app, background_tasks, context, helpers, ui
 from nicegui.client import Client
 from nicegui.slot import Slot
 
@@ -66,6 +68,48 @@ body, .nicegui-content { background: var(--km-bg); color: var(--km-text);
   border-radius: 8px; padding: 4px 10px;
   /* inline-block: as a <span> the box broke in half when it wrapped */
   display: inline-block; max-width: 100%; }
+/* an activity card: one element, the whole of it a button */
+.km-activity:hover { border-color: var(--km-gold); }
+/* the quick adjustments: one element, every control a data-km attribute */
+.km-adj { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  column-gap: 16px; row-gap: 2px; padding: 8px; }
+.km-adj-row { display: grid; grid-template-columns: 1fr auto; align-items: center;
+  column-gap: 4px; min-width: 0; }
+.km-adj-name { min-width: 0; overflow: hidden; }
+.km-adj-name .n { font-size: .82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.km-adj-name .x { font-size: .68rem; color: var(--km-muted); min-height: 1.05em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.km-adj-ctl { display: flex; align-items: center; }
+.km-adj-btn { font-size: 18px; padding: 5px; border-radius: 50%; cursor: pointer;
+  color: #9e9e9e; user-select: none; }
+.km-adj-btn.plus { color: #ffc107; }
+.km-adj-btn:hover { background: rgba(255, 255, 255, .08); }
+.km-adj-num { min-width: 38px; text-align: center; display: inline-block; color: var(--km-gold); }
+.km-adj-link { cursor: pointer; text-decoration: underline dotted; }
+/* the blocks of the sheet drawn as one element: native controls in the theme's clothes */
+.km-select, .km-input { background: var(--km-panel-2); color: inherit; border: 1px solid var(--km-line);
+  border-radius: 6px; padding: 4px 6px; font: inherit; font-size: .82rem; }
+.km-select:focus, .km-input:focus { outline: none; border-color: var(--km-gold-dim); }
+.km-icon-btn { font-size: 20px; padding: 4px; border-radius: 50%; cursor: pointer; color: #9e9e9e;
+  user-select: none; }
+.km-icon-btn.amber { color: #ffc107; }
+.km-icon-btn:hover { background: rgba(255, 255, 255, .08); }
+.km-icons { display: flex; align-items: center; }
+.km-skills { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+.km-check { display: inline-flex; align-items: center; gap: 2px; cursor: pointer; font-size: .82rem;
+  user-select: none; }
+.km-check i { font-size: 20px; color: #9e9e9e; }
+.km-check.on i { color: #ffc107; }
+.km-role { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 4px 0;
+  border-bottom: 1px solid var(--km-line); }
+.km-role:last-child { border-bottom: none; }
+.km-feat-level { font-family: 'Cinzel', serif; font-size: .8rem; letter-spacing: .08em; color: var(--km-gold-dim);
+  text-transform: uppercase; margin: 8px 0 2px; border-bottom: 1px solid var(--km-line); }
+.km-feat { display: flex; align-items: flex-start; gap: 6px; padding: 3px 0; cursor: pointer; }
+.km-feat:hover { background: rgba(255, 255, 255, .04); }
+.km-feat i { font-size: 20px; color: #9e9e9e; flex: none; margin-top: 1px; }
+.km-feat.on i { color: #ffc107; }
+.km-feat .s { font-size: .8rem; color: var(--km-muted); }
 
 .km-stat { background: var(--km-panel-2); border: 1px solid var(--km-line);
   border-radius: 10px; padding: 6px 12px; min-width: 76px; text-align: center; }
@@ -100,6 +144,12 @@ body, .nicegui-content { background: var(--km-bg); color: var(--km-text);
 /* The hand shows only while dragging: at rest the arrow is needed, or nobody
    thinks a hex can be clicked to edit it any more. */
 .km-drag.km-running, .km-drag.km-running * { cursor: grabbing !important; }
+/* the map in two layers: the ground (fills, fog, water, icons) in a box of its
+   own under the image's SVG, which keeps the live things — markers, journeys,
+   the ruler's arrow — and stays the one the scripts draw into */
+.km-drag .km-ground-box { position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+  z-index: 1; pointer-events: none; }
+.km-drag svg:not(.km-ground) { z-index: 2; }
 
 /* A crossed-out icon, to say «this is off now». The stroke is drawn by the
    stylesheet instead of looking for a second icon in the set: so it works for
@@ -162,11 +212,29 @@ def esc(text) -> str:
     return html.escape(str(text), quote=True)
 
 
+# A block drawn as one element reports its clicks itself: the browser finds
+# the nearest ancestor with a `data-km` attribute and sends its key — and,
+# for a control with a value, the value too. The server reads the key like
+# any other input from outside.
+PICK = "(e) => { const t = e.target.closest('[data-km]'); if (t) emit(t.dataset.km); }"
+PICK_VALUE = ("(e) => { const t = e.target.closest('[data-km]'); "
+              "if (t) emit([t.dataset.km, t.value]); }")
+
+
+def key_value(args) -> tuple[str, str]:
+    """The `[key, value]` pair a `PICK_VALUE` event carries, as two strings;
+    anything else is `("", "")`."""
+    if isinstance(args, (list, tuple)) and len(args) == 2:
+        return str(args[0]), str(args[1])
+    return "", ""
+
+
 def stat_box(value, label: str, tooltip: str = "") -> None:
-    with ui.element("div").classes("km-stat"):
-        ui.html(f'<div class="v">{esc(value)}</div><div class="l">{esc(label)}</div>')
-        if tooltip:
-            ui.tooltip(tooltip)
+    """One element: the header draws eight of them in every window at every
+    change, and the box, its text and its tooltip were three."""
+    title = f' title="{esc(tooltip)}"' if tooltip else ""
+    ui.html(f'<div class="km-stat"{title}><div class="v">{esc(value)}</div>'
+            f'<div class="l">{esc(label)}</div></div>')
 
 
 def title(text: str, level: int = 1) -> None:
@@ -439,8 +507,56 @@ def other_windows() -> list[tuple[str, dict]]:
             if cid != myself and cid != _GLOBAL]
 
 
-def register_refresh(name: str, refreshable) -> None:
+def register_refresh(name: str, refreshable, depends=None) -> None:
+    """A panel on the bus, under a name that says which tab it belongs to.
+
+    `depends`, when given, is a function returning what the panel reads —
+    the figures, the lists, nothing else — as something `json` can write.
+    The bus keeps, for every copy, the fingerprint of the last rebuild, and
+    a copy whose fingerprint has not moved is not rebuilt. The language and
+    the account of the window are always part of it. A dependency left out
+    is a stale panel: `tests/test_windows.py` compares every copy in front
+    with a fresh render after random changes, so it does not stay left out.
+    """
     _REFRESH.setdefault(_window(), {})[name] = refreshable
+    _route_through_bus(refreshable)
+    if depends is not None:
+        _DEPENDS[id(refreshable)] = depends
+
+
+_DEPENDS: dict[int, object] = {}     # id(ref) → function of the panel's inputs
+
+
+def _route_through_bus(ref) -> None:
+    """A registered panel's own `refresh()` takes the bus too.
+
+    The panels call `.refresh()` on each other all over the tabs — a level
+    change redraws the skills block, a role change the roles — and every such
+    call rebuilt the panel in *all* the windows at once, whatever tab they
+    were on, and again when the bus itself got to it. From here on the call
+    is an entry in the queue like any other: the windows on the tab are
+    rebuilt once, the others owe a redraw. A call with arguments keeps
+    NiceGUI's own behaviour, and so does anything that is not a refreshable
+    (the map's `_Refresher`).
+    """
+    if not hasattr(ref, "targets") or getattr(ref, "_km_bus", False):
+        return
+    original = ref.refresh
+
+    def refresh(*args, **kwargs):
+        if args or kwargs:
+            return original(*args, **kwargs)
+        for cid, name in _registrations(ref):
+            _refresh(cid, {name: ref}, [name])
+        return None
+    ref.refresh = refresh
+    ref._km_bus = True
+
+
+def _registrations(ref) -> list[tuple[str, str]]:
+    """Under which windows and names a panel is registered."""
+    return [(cid, name) for cid, panels in _REFRESH.items()
+            for name, candidate in panels.items() if candidate is ref]
 
 
 def _live_windows() -> list[tuple[str, dict]]:
@@ -452,28 +568,123 @@ def _live_windows() -> list[tuple[str, dict]]:
     return list(_REFRESH.items())
 
 
-def _drop_dead_targets(ref) -> None:
-    """Removes from the panel the copies whose container no longer exists.
+# Which tab every registered panel belongs to. Redrawing the map (on a large
+# grid tens of KB of SVG) in the window of someone looking at the kingdom
+# sheet instead is wasted work, and in play it shows.
+_TABS = {"hexmap": "map", "sheet": "kingdom", "turn": "turn",
+         "city": "city", "party": "party", "gm_screen": "gm", "transport": "transport"}
+_DIRTY: dict[str, set[str]] = {}
 
-    A `@ui.refreshable` keeps a list of targets, one for every window it was
-    drawn in, and does not clean it up by itself. While redraws were rare it
-    went unnoticed; with the clock asking for one per game day, every closed
-    window left a dead target behind — and NiceGUI notices and warns. Here we
-    remove them before redrawing.
+
+def _tab_of(panel_name: str) -> str | None:
+    """The tab a panel belongs to; None for the header and the clock, which
+    are in front whatever the tab."""
+    return _TABS.get(panel_name.split(".")[0])
+
+
+def _visible(panel_name: str, tab_: str | None) -> bool:
+    panel_tab = _tab_of(panel_name)
+    if panel_tab is None or tab_ is None:
+        return True           # header, clock; or a window that has not chosen a tab yet
+    return panel_tab == tab_
+
+
+def _tab_of_target(target) -> str | None:
+    """The tab a copy of a panel sits in: the name of the `ui.tab_panel`
+    above it, or None when there is none above (the header, a dialog).
+
+    A shared panel is not always drawn in its own tab — the quick adjustments
+    sit in the City tab too, and in the outcome dialog — so the copy, not the
+    panel's name, says whether somebody is looking at it.
     """
+    element = getattr(target, "container", None)
+    seen = 0
+    while element is not None and seen < 10_000:
+        if getattr(element, "tag", None) == "q-tab-panel":
+            return getattr(element, "_props", {}).get("name")
+        slot = getattr(element, "parent_slot", None)
+        element = getattr(slot, "parent", None) if slot is not None else None
+        seen += 1
+    return None
+
+
+def target_in_front(target, window_tab: str | None) -> bool:
+    """Whether this copy is on the tab the window shows."""
+    tab = _tab_of_target(target)
+    return tab is None or window_tab is None or tab == window_tab
+
+
+def _windows_on(ref) -> tuple[set[str], set[str]]:
+    """Of the windows a shared panel is drawn in, those with a copy in front:
+    `(watching, reached)`."""
+    reached: set[str] = set()
+    watching: set[str] = set()
+    for target in _targets(ref) or []:
+        cid = _window_of(target)
+        if cid is None:
+            continue
+        reached.add(cid)
+        if target_in_front(target, _WINDOWS.get(cid, {}).get("tab")):
+            watching.add(cid)
+    return watching, reached
+
+
+# ------------------------------------------------------------- the targets
+# A `@ui.refreshable` keeps a target for every window it was drawn in: the
+# container element, the arguments, the instance. NiceGUI's `refresh()`
+# rebuilds them all; here they are rebuilt one by one, so a shared panel is
+# redone only in the windows that have it in front.
+def _targets(ref) -> list | None:
+    """The live targets of a refreshable, or None for something that only
+    has a `refresh()` of its own (the map's `_Refresher`, a test stub)."""
     targets = getattr(ref, "targets", None)
     if targets is None:
-        return
-    alive = [b for b in targets
-            if getattr(b, "container", None) is not None
-            and not getattr(b.container, "is_deleted", False)]
-    if len(alive) != len(targets):
-        targets[:] = alive
+        return None
+    prune = getattr(ref, "prune", None)
+    if callable(prune):
+        prune()                       # replaces the list: read it again
+        targets = getattr(ref, "targets", None) or []
+    else:
+        targets[:] = [b for b in targets
+                      if getattr(b, "container", None) is not None
+                      and not getattr(b.container, "is_deleted", False)]
+    return list(targets)
+
+
+def _window_of(target) -> str | None:
+    try:
+        return target.container.client.id
+    except AttributeError:
+        return None
+
+
+def _drawn_inside(element, containers: set[int]) -> bool:
+    """Whether the element sits under one of the containers listed."""
+    seen = 0
+    slot = getattr(element, "parent_slot", None)
+    while slot is not None and seen < 10_000:
+        parent = getattr(slot, "parent", None)
+        if parent is None:
+            return False
+        if id(parent) in containers:
+            return True
+        slot = getattr(parent, "parent_slot", None)
+        seen += 1
+    return False
+
+
+def _rebuild(ref, target) -> None:
+    """One target redone in place: what NiceGUI's `refresh()` does for each
+    of them, without the others."""
+    target.container.clear()
+    result = target.run(ref.func)
+    if helpers.should_await(result):
+        background_tasks.create(result, name=f"refresh {ref.func.__name__}")
 
 
 def _redraw(ref) -> None:
+    """Something with a `refresh()` of its own, redone whole."""
     try:
-        _drop_dead_targets(ref)
         ref.refresh()
     except Exception:
         # The normal case is that the panel is not instantiated on this window.
@@ -482,39 +693,203 @@ def _redraw(ref) -> None:
         log.debug("panel refresh failed: %r", ref, exc_info=True)
 
 
-# Which tab every registered panel belongs to. Redrawing the map (on a large
-# grid tens of KB of SVG) in the window of someone looking at the kingdom
-# sheet instead is wasted work, and in play it shows.
-_TABS = {"hexmap": "map", "sheet": "kingdom", "turn": "turn",
-         "city": "city", "party": "party", "gm_screen": "gm"}
-_DIRTY: dict[str, set[str]] = {}
+# ---------------------------------------------------------------- the queue
+# One action asks for the same panel several times — the actor's own window,
+# then the round over every window, then a panel that calls another — and
+# each request used to be a rebuild. They now land in a queue, flushed once
+# the running handler is over: one rebuild per panel and window. The flush
+# is a task of its own that does one window per turn of the event loop, the
+# actor's first: the actor sees the result at once, everybody's clicks are
+# served in between, and a request that arrives meanwhile goes to the next
+# batch — a window not yet redone in this one is left to that batch, so it
+# is rebuilt once, with the newest state. Without an event loop (the tests)
+# the flush is immediate, at the end of the bus call.
+_PENDING: dict[int, list] = {}      # id(ref) → [ref, windows or None for all]
+_flush_due = False
+_flush_task: asyncio.Task | None = None
+_batch_depth = 0
+_actor: str | None = None           # the window whose handler asked first
 
 
-def _watched_tabs() -> set:
-    """The tabs someone really has in front of them, in any window."""
-    return {data.get("tab") for cid, data in _WINDOWS.items()
-            if cid != _GLOBAL}
+@contextmanager
+def _batch():
+    """One bus call is one batch: without an event loop (the tests) the
+    queue is flushed at its end, not at every panel, so the nesting is seen."""
+    global _batch_depth
+    _batch_depth += 1
+    try:
+        yield
+    finally:
+        _batch_depth -= 1
+        if _batch_depth == 0 and _PENDING and not _flush_due:
+            try:
+                asyncio.get_running_loop()
+            except RuntimeError:
+                _flush_now()
 
 
-def _visible(panel_name: str, tab_: str | None,
-              cid: str | None = None) -> bool:
-    panel_tab = _TABS.get(panel_name.split(".")[0])
-    if panel_tab is None:
-        return True           # header, clock: always visible
-    if cid == _GLOBAL:
-        # Panels registered at import belong to no window: there is a single
-        # shared copy, and redrawing it updates all windows at once. The right
-        # question is therefore not «this window is on it» but «someone is on
-        # it». Without this distinction they were always redrawn, the filter
-        # never touched them, and they are the most expensive there are:
-        # rebuilding the kingdom journal — eighty rows, four elements per row —
-        # costs half a second, and it was paid even with the Map in front and
-        # the Turn tab closed.
-        watched = _watched_tabs()
-        return None in watched or panel_tab in watched
-    if tab_ is None:
-        return True           # window that has not chosen a tab yet
-    return panel_tab == tab_
+def _queue(ref, windows: set[str] | None) -> None:
+    global _actor
+    if _actor is None:
+        cid = _window()
+        if cid != _GLOBAL:
+            _actor = cid
+    entry = _PENDING.get(id(ref))
+    if entry is None:
+        _PENDING[id(ref)] = [ref, None if windows is None else set(windows)]
+    elif entry[1] is not None:
+        entry[1] = None if windows is None else entry[1] | set(windows)
+    _schedule_flush()
+
+
+def _schedule_flush() -> None:
+    global _flush_due
+    if _flush_due:
+        return
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        if _batch_depth == 0:
+            _flush_now()
+        return
+    _flush_due = True
+    loop.call_soon(_start_flush)
+
+
+def _start_flush() -> None:
+    global _flush_due, _flush_task
+    _flush_due = False
+    if _flush_task is not None and not _flush_task.done():
+        return              # the running task takes the new batch after its own
+    _flush_task = asyncio.ensure_future(_flush_async())
+
+
+def _take_batch() -> tuple[list, str | None]:
+    global _actor
+    batch = list(_PENDING.values())
+    _PENDING.clear()
+    actor, _actor = _actor, None
+    return batch, actor
+
+
+def _plan(batch: list, actor: str | None) -> tuple[list, dict]:
+    """The rebuilds of a batch grouped by window, in the order they ship:
+    the actor's window, then those on the map — the cheapest, and where the
+    shared things are watched — then the rest. Also the containers about to
+    be rebuilt, kept alive so their identities hold for the nesting check."""
+    rebuilt: dict[int, object] = {}
+    by_window: dict[str | None, list] = {}
+    base = _fingerprints(batch)
+    for ref, windows in batch:
+        targets = _targets(ref)
+        if targets is None:
+            by_window.setdefault(None, []).append((ref, None, None))
+            continue
+        for target in targets:
+            cid = _window_of(target)
+            if windows is not None and cid not in windows:
+                continue
+            stamp = None
+            if id(ref) in base:
+                stamp = base[id(ref)] + "|" + json.dumps(_window_bits(cid), default=str)
+                if getattr(target, "_km_print", None) == stamp:
+                    continue        # nothing it reads has moved: the copy stands
+            rebuilt[id(target.container)] = target.container
+            by_window.setdefault(cid, []).append((ref, target, stamp))
+
+    def rank(cid):
+        if cid is None:
+            return 0
+        if cid == actor:
+            return 1
+        return 2 if _WINDOWS.get(cid, {}).get("tab") == "map" else 3
+    return [(cid, by_window[cid]) for cid in sorted(by_window, key=rank)], rebuilt
+
+
+def _window_bits(cid: str | None) -> list:
+    """What a copy also depends on: the window's language, units and account."""
+    data = _WINDOWS.get(cid, {}) if cid else {}
+    user_ = data.get("user")
+    return [data.get("lang"), data.get("units"),
+            getattr(user_, "id", None), getattr(user_, "role", None),
+            getattr(user_, "can_host", None)]
+
+
+def _fingerprints(batch: list) -> dict:
+    """The inputs of every panel in the batch that declares them, computed
+    once per panel; None for the others."""
+    base = {}
+    for ref, _windows in batch:
+        fn = _DEPENDS.get(id(ref))
+        if fn is None:
+            continue
+        try:
+            base[id(ref)] = json.dumps(fn(), sort_keys=True, default=str)
+        except Exception:
+            log.debug("fingerprint failed: %r", ref, exc_info=True)
+    return base
+
+
+def _still_pending(ref, cid: str | None) -> bool:
+    entry = _PENDING.get(id(ref))
+    return entry is not None and (entry[1] is None or cid in entry[1])
+
+
+def _run_window(jobs: list, rebuilt: dict) -> None:
+    for ref, target, stamp in jobs:
+        if target is None:
+            _redraw(ref)
+            continue
+        if _still_pending(ref, _window_of(target)):
+            continue        # asked again meanwhile: the next batch redoes it, newer
+        if getattr(target.container, "is_deleted", False):
+            continue
+        if _drawn_inside(target.container, rebuilt):
+            continue
+        try:
+            _rebuild(ref, target)
+        except Exception:
+            log.debug("panel refresh failed: %r", ref, exc_info=True)
+            continue
+        if stamp is not None:
+            try:
+                target._km_print = stamp
+            except AttributeError:
+                pass
+
+
+def _flush_now() -> None:
+    """Everything queued, rebuilt at once: the path without an event loop."""
+    while _PENDING:
+        batch, actor = _take_batch()
+        groups, rebuilt = _plan(batch, actor)
+        for _cid, jobs in groups:
+            _run_window(jobs, rebuilt)
+
+
+async def _flush_async() -> None:
+    while _PENDING:
+        batch, actor = _take_batch()
+        try:
+            groups, rebuilt = _plan(batch, actor)
+        except Exception:
+            log.exception("planning the redraws failed")
+            continue
+        for _cid, jobs in groups:
+            _run_window(jobs, rebuilt)
+            await asyncio.sleep(0)
+
+
+def flush_redraws() -> None:
+    """Redoes at once whatever is queued: for whoever needs the panels
+    rebuilt before going on (the tests, a handler that reads them back)."""
+    _flush_now()
+
+
+def redraws_idle() -> bool:
+    """Nothing queued and no rebuild under way: what a test waits for."""
+    return (not _PENDING and not _flush_due
+            and (_flush_task is None or _flush_task.done()))
 
 
 def active_tab(name) -> None:
@@ -522,34 +897,57 @@ def active_tab(name) -> None:
     name = getattr(name, "name", name)
     cid = _window()
     _WINDOWS.setdefault(cid, {})["tab"] = name
-    # The backlog of the shared heap too: they were left behind precisely
-    # because nobody was looking at this tab, and now someone is.
-    for key in (cid, _GLOBAL):
-        arrears = _DIRTY.get(key)
-        if not arrears:
-            continue
-        panels = _REFRESH.get(key, {})
+    arrears = _DIRTY.get(cid)
+    if not arrears:
+        return
+    with _batch():
         for panel_name in sorted(arrears):
-            if _visible(panel_name, name):
+            ref = _REFRESH.get(cid, {}).get(panel_name)
+            if ref is not None:
+                if _visible(panel_name, name):
+                    arrears.discard(panel_name)
+                    _queue(ref, None)
+                continue
+            # A shared panel left behind in this window only: redone here
+            # alone, if one of its copies is on the tab now in front.
+            ref = _REFRESH.get(_GLOBAL, {}).get(panel_name)
+            if ref is None:
                 arrears.discard(panel_name)
-                ref = panels.get(panel_name)
-                if ref is not None:
-                    _redraw(ref)
+                continue
+            if any(_window_of(b) == cid and target_in_front(b, name)
+                   for b in _targets(ref) or []):
+                arrears.discard(panel_name)
+                _queue(ref, {cid})
 
 
-def _refresh(cid: str, panels: dict, names=None) -> None:
-    """Redraws the panels of the tab in the foreground; the others stay marked
-    and refresh when the window comes back to them."""
+def _refresh(cid: str, panels: dict, names=None, exclude: str | None = None) -> None:
+    """Queues the panels of one registration.
+
+    A window's own panels: redone if the window has their tab in front,
+    marked otherwise and redone when it comes back (`active_tab`). The shared
+    heap (`_GLOBAL`): each copy is redone in the windows on its tab, and the
+    other windows owe it. `exclude` is the window that just acted and has
+    already seen the result.
+    """
     tab_ = _WINDOWS.get(cid, {}).get("tab")
-    for name in (names if names is not None else list(panels)):
-        ref = panels.get(name)
-        if ref is None:
-            continue
-        if _visible(name, tab_, cid):
-            _DIRTY.get(cid, set()).discard(name)
-            _redraw(ref)
-        else:
-            _DIRTY.setdefault(cid, set()).add(name)
+    with _batch():
+        for name in (names if names is not None else list(panels)):
+            ref = panels.get(name)
+            if ref is None:
+                continue
+            if cid == _GLOBAL:
+                watching, reached = _windows_on(ref)
+                if exclude:
+                    watching.discard(exclude)
+                for other in reached - watching:
+                    if other != exclude:
+                        _DIRTY.setdefault(other, set()).add(name)
+                _queue(ref, watching)
+            elif _visible(name, tab_):
+                _DIRTY.get(cid, set()).discard(name)
+                _queue(ref, None)
+            else:
+                _DIRTY.setdefault(cid, set()).add(name)
 
 
 def refresh_ui() -> None:
@@ -559,8 +957,9 @@ def refresh_ui() -> None:
         return
     _refreshing = True
     try:
-        for cid, panels in _live_windows():
-            _refresh(cid, panels)
+        with _batch():
+            for cid, panels in _live_windows():
+                _refresh(cid, panels)
     finally:
         _refreshing = False
 
@@ -581,10 +980,11 @@ def refresh_locals(names) -> None:
 def refresh_panels(names, exclude: str | None = None) -> None:
     """Redraws only the panels listed, skipping the window that just acted
     (whoever is dragging a slider or typing must not be interrupted)."""
-    for cid, panels in _live_windows():
-        if cid == exclude:
-            continue
-        _refresh(cid, panels, names)
+    with _batch():
+        for cid, panels in _live_windows():
+            if cid == exclude:
+                continue
+            _refresh(cid, panels, names, exclude=exclude)
 
 
 # --------------------------------------------------------------------------
@@ -654,15 +1054,40 @@ def save_light(propagate: tuple[str, ...] = ()) -> None:
 def save_and_refresh() -> None:
     """Important change: every connected window sees it at once.
 
-    Redraws *everything*, and it is expensive: the panels registered at import
-    (the Turn tab, the Kingdom blocks, the stable) sit in a single heap without
-    a window, so the «foreground tab only» filter does not touch them and they
-    are rebuilt even if nobody is looking. They are the heaviest there are.
-    When one knows what changed, `save_and_refresh_panels` is better.
+    Redraws *everything* that is in front of somebody: every panel, in every
+    window that has its tab open; the other windows catch up when they get
+    there. Still the most expensive call there is — the Turn column alone is
+    hundreds of elements per window — so when one knows what changed,
+    `save_and_refresh_panels` is better.
     """
     STATE.notify(save=False)
     mark_dirty()
     refresh_ui()
+
+
+# The panels that show a kingdom figure, by figure: for the changes that
+# touch numbers only — a quick adjustment, an activity's costs and effects —
+# so they redraw the sheet and the turn's steps and leave the map alone.
+# `tests/test_windows.py` compares every window against a fresh render after
+# random changes: a panel missing here is a failed test, not a stale screen.
+PANELS_BY_STAT = {
+    "rp": ("sheet.risorse", "turn.steps", "city.content"),
+    "unrest": ("sheet.identita", "sheet.abilita", "turn.steps", "turn.panel"),
+    "xp": ("sheet.identita", "turn.steps"),
+    "fame_points": ("sheet.identita",),
+    "ruins": ("sheet.caratteristiche", "sheet.abilita"),
+    "commodities": ("sheet.risorse", "turn.steps", "city.content"),
+    "bonus_dice": ("sheet.risorse", "turn.steps"),
+}
+_STAT_ALWAYS = ("main.header", "turn.adjustments")
+
+
+def stat_panels(*fields: str, extra=()) -> tuple:
+    """The panels to redraw when these figures changed."""
+    names = list(_STAT_ALWAYS) + list(extra)
+    for field in fields:
+        names.extend(PANELS_BY_STAT[field])
+    return tuple(dict.fromkeys(names))
 
 
 def save_and_refresh_panels(names) -> None:

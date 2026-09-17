@@ -41,6 +41,15 @@ _MAX_COST = max(c["cost"] for c in travel_mod.CATEGORIES.values())
 #
 # The panel proposes and does not apply: the plan is looked at, discussed and
 # only then someone presses the button — the same rule as the turn activities.
+# The panels that show where the characters and the vehicles stand: what a
+# marker placed, boarded, landed, taken off the map or sent back to the shed
+# has to redraw. Not the sheet, not the turn column: they do not read
+# positions. `tests/test_windows.py` moves a marker and compares every panel
+# in front with a fresh render, so a panel missing here fails the suite.
+_MARKER_PANELS = ("hexmap.map", "hexmap.party", "hexmap.travel", "hexmap.detail",
+                  "party.characters", "transport.list", "turn.journeys", "turn.journal")
+
+
 def _travel_panel(mine: dict, mapping) -> None:
     user = theme.user()
     if not permissions.can(user, permissions.PLAN_TRAVEL):
@@ -167,9 +176,8 @@ def _remove_from_map(mine: dict, mapping) -> None:
     _common._forget_plan(mine)
     STATE.record(t("map.travel.removed_from_map", names=", ".join(sorted(names))), "map")
     theme.notify(t("map.travel.removed_from_map", names=", ".join(sorted(names))), "positive")
-    theme.save_and_refresh()
+    theme.save_and_refresh_panels(_MARKER_PANELS)
     _redraw_travel(mine, mapping)
-    theme.refresh_panels(("hexmap.map", "party.characters"))
 
 
 def _reset_journey(mine: dict, mapping) -> None:
@@ -953,9 +961,8 @@ def _place_marker(mine: dict, mapping, coord: tuple[int, int],
     mine["travel_mode"] = None
     mine["place_pc"] = None
     _boats._placing_done(mine)
-    theme.save_and_refresh()
+    theme.save_and_refresh_panels(_MARKER_PANELS)
     _redraw_travel(mine, mapping)
-    theme.refresh_panels(("hexmap.map", "party.characters"))
 
 def _redraw_travel(mine: dict, mapping) -> None:
     """Refreshes map, Travel box and row of portraits together.
@@ -2019,10 +2026,8 @@ def _put_back_in_depot(mine: dict, mapping, sid: str) -> None:
                    "map")
     theme.notify(t("map.travel.back_shed_whoever_was"),
                    "positive")
-    theme.save_and_refresh()
+    theme.save_and_refresh_panels(_MARKER_PANELS)
     _redraw_travel(mine, mapping)
-    theme.refresh_panels(("hexmap.map", "party.characters",
-                             "transport.list"))
 
 def _occupied_box(mine: dict, mapping, chosen: list[dict]) -> bool:
     """Warns that someone is already travelling, and offers the two ways out.
@@ -2055,9 +2060,8 @@ def _cancel_journey_of(journey: dict, mine: dict, mapping) -> None:
                                     turn_resolved=STATE.k["turn"])
     STATE.record(t("map.travel.journey_cancelled_leave_again", arrival=journey["arrival"]), "map")
     _common._forget_plan(mine)
-    theme.save_and_refresh()
+    theme.save_and_refresh_panels(_MARKER_PANELS)
     _redraw_travel(mine, mapping)
-    theme.refresh_panels(("hexmap.map", "hexmap.travel", "turn.journeys"))
 
 def _remove_from_group(char_id: str, mine: dict, mapping) -> None:
     mine["travel_pcs"] = [i for i in (mine.get("travel_pcs") or []) if i != char_id]

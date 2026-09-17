@@ -466,10 +466,8 @@ def _place_vehicle(mine: dict, mapping, coord, point=None) -> None:
         + (t("map.boats.aboard_short", names=boarded) if boarded else
            t("map.boats.now_get_whoever_that")),
         "positive")
-    theme.save_and_refresh()
+    theme.save_and_refresh_panels(_journey._MARKER_PANELS)
     _journey._redraw_travel(mine, mapping)
-    theme.refresh_panels(("hexmap.map", "party.characters",
-                             "transport.list"))
 
 def _junction_under(point, threshold: float | None = None, coord=None):
     """The water junction near the click: `(hex, spot)`, or None.
@@ -567,10 +565,8 @@ def _board(mine: dict, mapping, sid: str, char_ids) -> None:
     for why in rejected:
         theme.notify(why, "warning")
     if boarded:
-        theme.save_and_refresh()
+        theme.save_and_refresh_panels(_journey._MARKER_PANELS)
         _journey._redraw_travel(mine, mapping)
-        theme.refresh_panels(("hexmap.map", "party.characters",
-                                 "transport.list"))
 
 def _ask_landing(mine: dict, mapping, sid: str, char_ids) -> None:
     """Opens the question «where do you land»: the answer is a click on the map.
@@ -718,10 +714,8 @@ def _land_here(mine: dict, mapping, coord, spot=None) -> None:
     verb = t("map.boats.gets_off") if len(disembarked) == 1 else t("map.boats.get_off_plural")
     STATE.record(t("map.boats.got_off", name=name, coord=coord[0], coord2=coord[1], text=text), "map")
     theme.notify(t("map.boats.text_3", text=text, verb=verb, coord=coord[0], coord2=coord[1]), "positive")
-    theme.save_and_refresh()
+    theme.save_and_refresh_panels(_journey._MARKER_PANELS)
     _journey._redraw_travel(mine, mapping)
-    theme.refresh_panels(("hexmap.map", "party.characters",
-                             "transport.list"))
 
 def _choose_vehicle(mine: dict, mapping, entry: dict) -> None:
     """Takes a vehicle in hand: from here on one travels with it."""

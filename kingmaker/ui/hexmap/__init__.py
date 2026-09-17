@@ -86,6 +86,7 @@ from kingmaker.ui.hexmap.drawing import (
     _svg_currents,
     _svg_seams,
     _svg_grid,
+    _svg_layers,
     _svg_lakes,
     _svg_lake_names,
     _svg_lake_in_progress,

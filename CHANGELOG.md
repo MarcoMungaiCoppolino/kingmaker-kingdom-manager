@@ -8,6 +8,75 @@ what broke, what was learned — is in [docs/devlog.md](docs/devlog.md).
 The versions before 1.0.0 were never tagged: the app was played from a working copy and the
 numbers below were assigned afterwards, one per day of development, from the session history.
 
+## [1.1.2] — 2026-09-17
+
+The evening the whole table connected, and what it took to make eight windows cheap.
+
+### Fixed
+- With a full table connected — eight browser windows — every dice roll took two to four
+  seconds. A roll redrew the whole interface in every window, whatever tab each had in front:
+  with eight windows on the Turn tab that was 4 s of server time and 1.9 MB through the relay
+  per roll, measured on a copy of the evening's database. A roll now redraws the journal and
+  the fame line only (30 ms, 200 KB), and a full refresh redoes each shared panel only in the
+  windows that have its tab open, once per action however many times it is asked: 0.9 s and
+  1.3 MB with eight windows on the Turn tab (from 4.2 s and 1.9 MB), 1.0 s with the tabs
+  mixed (from 5.7 s). The windows on other tabs catch up when they come back to the tab.
+- The rebuilds are staged: once the action's handler is over, a task redoes one window per
+  turn of the event loop, the actor's window first, then the windows on the map, then the
+  rest. The actor sees the result at once and other players' clicks are served in between;
+  a second action arriving meanwhile leaves the windows not yet redone to its own batch, so
+  each is rebuilt once, with the newest state. A full refresh with eight windows on the Turn
+  tab is 0.34 s of server time in total with no pause longer than 0.1 s, and 1 MB.
+- A quick adjustment and the costs and effects of an activity redraw only the panels that
+  show the figures they changed (`theme.PANELS_BY_STAT`): a +1 to the RP with eight windows
+  costs 0.14 s and 250 KB instead of a full refresh. A new test, `tests/test_windows.py`,
+  builds eight real windows, plays sixty random changes from random windows and compares
+  every panel in front with a fresh render of itself, so a panel left out of the list fails
+  the suite instead of going stale at the table.
+- Whether a shared panel is in front is decided per copy, from the tab it sits in: the quick
+  adjustments in the City tab were left stale by the first version of the fix.
+- A panel whose inputs have not moved is not rebuilt: the six blocks of the Kingdom sheet and
+  the quick adjustments declare what they read, and the bus keeps a fingerprint per copy. A
+  full refresh with eight windows on the Kingdom sheet went from 1.45 s to 0.34 s of server
+  time, with no pause over 0.1 s.
+- Applying an activity's costs or effects that change nothing no longer redraws anything.
+- The value typed in an effect row of the outcome dialog was ignored: the row kept it under
+  the wrong key and applied the printed value instead.
+- Boarding, landing, placing a marker or a vehicle, sending a vehicle back to the shed,
+  taking someone off the map and cancelling a journey redrew the whole interface in every
+  window. They now redraw the panels that show positions — the map, the portraits, the Travel
+  box, the hex panel, the Party tab, the stable, the journeys and the journal — and nothing
+  else; the window that acted draws its map at once instead of at the next tick of its timer.
+  A boarding with eight windows, five on the map, went from 983 KB through the relay to 92 KB.
+
+### Changed
+- The Turn tab is lighter: an activity card is one element, clickable as a whole (the dice is
+  drawn in it, the requirements are the browser's own tooltip), the journal is one block, and
+  the quick adjustments and the journal sit beside the turn column instead of inside it, so
+  redoing one does not redo the others. From 1,860 elements per window to 300.
+- The quick adjustments are one element too — the same rows, the minus and plus drawn as
+  icons — and so is each stat box of the header, whose tooltip is the browser's own. The
+  live part of the upkeep and event steps is a panel of its own, so a figure that changed
+  redoes the steps and not the column of activity cards.
+- The Kingdom sheet's skills, leadership roles and feats are one element each. The
+  proficiency and the character of a role are native drop-downs in the theme's colours, the
+  NPC name a plain field saved when you leave it, the three ticks of a role and the tick of a
+  feat icons that toggle on a click anywhere on the row; the feats are grouped under the level
+  they need, the ones above the kingdom's level dimmed as before. Descriptions and hints are
+  the browser's own tooltips. Same rules, same setters underneath.
+- The Kingdom sheet's two columns are split three to two instead of a fixed 520 px on the
+  right: the resources, the roles and the feats have the room they need, the skills lose
+  nothing.
+- The map is drawn in two layers. The ground — fills, fog, water, icons and names — sits in an
+  element of its own under the image's SVG, which keeps what moves: markers, journeys, the
+  chosen hex, a water proposal. Each layer is sent only when it changed, so a moved marker
+  costs a window a couple of KB instead of the whole map (93 KB). The ruler, the other
+  players' arrows and the water tools keep drawing where they did, above the markers. One
+  visible difference: a journey's arrow now passes over a hex's icons and name rather than
+  under them.
+- The hex outlines are relative commands on whole pixels: the grid weighs a fifth less and
+  two neighbours share an edge to the pixel.
+
 ## [1.1.1] — 2026-09-16
 
 The first days with the launcher at the table: three things it showed.

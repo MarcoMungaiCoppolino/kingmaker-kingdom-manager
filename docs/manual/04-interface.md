@@ -86,24 +86,68 @@ flowchart TD
     L -->|within 0.5 s, skipping whoever acted| A1[refresh_panels]
     P --> A2[refresh_panels]
     T --> A3[refresh_ui: every panel, every window]
-    A1 & A2 & A3 --> V{is the panel in the<br/>foreground tab<br/>of that window?}
-    V -->|yes| D[ref.refresh]
+    A1 & A2 & A3 --> V{is a copy of the panel<br/>on the tab in front<br/>of that window?}
+    V -->|yes| K[queued in _PENDING · flushed by a task<br/>once the handler is over: the actor's<br/>window first, one window per loop turn]
     V -->|no| S[marked in _DIRTY:<br/>redone when the window<br/>comes back to that tab · active_tab]
 ```
 
-Two details that explain otherwise mysterious behaviours:
+Five details that explain otherwise mysterious behaviours:
 
-- **The `_GLOBAL` heap.** The panels registered **at import** (`turn.py` at the bottom, the
-  blocks of `sheet.py`) belong to no window: they are a single shared copy, and are redrawn if
-  *somebody* is looking at that tab. They are the most expensive (the kingdom journal: eighty
-  rows) and `save_and_refresh()` always redoes them. When you know what changed, list the panels.
-- **Dead targets.** A refreshable keeps a target for every window it was drawn in and does not
-  clean them up by itself; `_drop_dead_targets` does it before every refresh, or with the clock
-  running every closed window left a NiceGUI warning per day.
+- **The `_GLOBAL` heap, copy by copy.** The panels registered **at import** (`turn.py` at the
+  bottom, the blocks of `sheet.py`) belong to no window: one refreshable, drawn once per
+  window, a *target* per copy. NiceGUI's `refresh()` redoes every target at once, and that is
+  what made an evening with eight windows cost four seconds per dice roll: every copy was
+  rebuilt whatever tab its window had in front. The bus now rebuilds the targets one by one
+  (`_rebuild`, what NiceGUI does for each of them) and only where somebody is looking. Whether
+  somebody is looking is decided **per copy**, from the `ui.tab_panel` above it
+  (`_tab_of_target`), not from the panel's name: the quick adjustments are drawn in the Turn
+  tab, in the City tab and in the outcome dialog, and the copy in the City tab is in front of
+  whoever is on City. A window with no copy in front owes the panel (`_DIRTY[window]`) and gets
+  it, alone, when it switches to a tab that has one.
+- **The queue and its task.** One action asks for the same panel several times — the actor's
+  own window, the round over every window, a panel that calls another's `refresh()` — and each
+  request used to be a rebuild. Requests land in `_PENDING`; when the handler is over a task
+  (`_flush_async`) takes the batch and rebuilds **one window per turn of the event loop**: the
+  actor's window first, then the windows on the map (the cheapest, and where the shared things
+  are watched), then the rest. The actor sees the result at once, everybody's clicks are served
+  in between, and a request that arrives mid-flush goes to the next batch — a window not yet
+  redone in the current one is left to that batch, so it is rebuilt once, with the newest
+  state. A panel drawn inside another that is being rebuilt (the journeys inside the Turn
+  column) is skipped, because its container redoes it anyway. Without an event loop (the
+  tests) the flush is immediate, at the end of the bus call. `register_refresh` also routes the
+  panel's own `refresh()` through the bus.
+- **What a figure reaches.** A quick adjustment and the costs and effects of an activity change
+  numbers, and `theme.PANELS_BY_STAT` says which panels show each of them; `stat_panels(...)`
+  turns the fields into the list to redraw, the header and the adjustments always included. A
+  kind of effect not in `turn._EFFECT_FIELDS` (a modifier) still redraws everything. The list
+  is not trusted on its own: `tests/test_windows.py` builds eight real windows with NiceGUI's
+  user simulation, plays random changes from random windows, and after each compares every
+  panel in front of somebody with a fresh render of itself. A panel missing from the list is a
+  failed test, not a stale screen.
+- **A copy whose inputs have not moved is not rebuilt.** `register_refresh(name, fn,
+  depends=...)` takes a function returning what the panel reads — figures, lists, nothing that
+  is not state — and the bus keeps, on every copy, the fingerprint of its last rebuild (the
+  window's language, units and account are always part of it). A full refresh after a roll
+  then costs the Kingdom sheet nothing: six blocks say what they read, the quick adjustments
+  too. The fingerprints are computed once per panel per batch, at planning time, so a panel
+  drawn inside a skipped one is still redone on its own. A dependency left out is a stale
+  panel that no unit test sees, which is why `test_windows.py` plays the sheet's setters and
+  the keys its blocks send from the browser, and compares every copy with a fresh render.
+- **What a panel weighs.** Time and bytes go with the number of elements, not with the text.
+  The Turn column went from 1,860 elements per window to 300: an activity card is a single
+  `ui.html` with the click on it, the journal one block, the quick adjustments one block whose
+  `data-km` attributes say which control was clicked (`_adjust` reads the key as untrusted
+  input), a stat box one element, and the adjustments, the journal and the live part of the
+  upkeep and event steps (`turn.steps`) sit outside the column's refreshable. On the sheet the
+  skills, the roles and the feats are one element each as well, with native selects and inputs
+  in the theme's clothes and the ticks drawn as icons; `theme.PICK` and `theme.PICK_VALUE` are
+  the two browser-side handlers every such block uses, and `_skill_click`, `_role_change` and
+  company read the key and the value as input from outside.
 
 Whoever wants to **add a panel**: `@ui.refreshable`, `theme.register_refresh("tab.name", fn)`
 inside the body of the page (not at import), and then `save_and_refresh_panels(("tab.name",))`
-from whoever modifies it.
+from whoever modifies it. A panel that shows a kingdom figure goes in `PANELS_BY_STAT` too,
+and `test_windows.py` will say if it was forgotten.
 
 ## The deferred save
 

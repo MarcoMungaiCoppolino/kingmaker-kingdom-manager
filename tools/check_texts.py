@@ -39,6 +39,7 @@ SKIP_CALLS = {
     "ui.run_javascript", "ui.add_head_html", "ui.add_css", "ui.keyboard", "ui.timer",
     "ui.page", "ui.on", "ui.icon", "ui.radio", "ui.run", "theme.register_refresh",
     "theme.requires", "theme.protected", "theme.esc", "theme.with_prefix", "theme.active_tab",
+    "theme.stat_panels",
 }
 SKIP_FILES = {"legacy_names.py", "migrations.py", "archive.py"}
 TEXT_KEYWORDS = ("label", "text", "title", "placeholder", "caption")

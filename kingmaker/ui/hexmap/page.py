@@ -42,9 +42,18 @@ class _Refresher:
     def __init__(self, fn) -> None:
         self._fn = fn
         self._dirty = False
+        self.cid = theme.current_window()
 
     def refresh(self) -> None:
-        self._dirty = True
+        # Asked from this window's own handler — the click that boarded, the
+        # ruler let go — the map is drawn now, not at the next tick of the
+        # timer up to 120 ms away. Asked from anywhere else (the bus, the
+        # maintenance tick) it waits for the timer, which draws once.
+        if theme.current_window() == self.cid:
+            self._dirty = False
+            self._fn()
+        else:
+            self._dirty = True
 
     def soon(self) -> None:
         self._dirty = True
@@ -62,11 +71,23 @@ def map_panel() -> None:
         el = rif["img"]
         if el is None:
             return
-        src, _w, _h = _common._background()
+        src, w, h = _common._background()
         if src != rif["src"]:
             rif["src"] = src
             el.set_source(src)
-        el.set_content(_drawing._svg_grid(mine, _common._current_view(mine)))
+        # Two layers, two elements: the ground in a box under the image's own
+        # SVG, the live things in that SVG. Each is sent only when it changed,
+        # so a moved marker costs a window the markers, not the whole map. The
+        # scripts (the ruler, the water tools) keep drawing into the image's
+        # SVG, above the markers, as they always did.
+        ground, live = _drawing._svg_layers(mine, _common._current_view(mine))
+        box = rif.get("ground")
+        if box is not None:
+            box.set_content(
+                f'<svg class="km-ground" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {w} {h}" '
+                f'preserveAspectRatio="none" style="position:absolute;left:0;top:0;width:100%;height:100%">'
+                f'{ground}</svg>')
+        el.set_content(live)
         apply_zoom()
 
     def apply_zoom() -> None:
@@ -273,6 +294,8 @@ def map_panel() -> None:
                     rif["img"] = ui.interactive_image(
                         "", content="", events=["click", "contextmenu"], cross="#d7b263", on_mouse=_click) \
                         .style("display:block;max-width:none")
+                    with rif["img"]:
+                        rif["ground"] = ui.html("", sanitize=False).classes("km-ground-box")
                 draw()
                 if mine.get("apply_slider"):
                     mine["apply_slider"]()

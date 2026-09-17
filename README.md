@@ -240,7 +240,7 @@ python tests/run_all.py
 ```
 
 builds a test scene from scratch in `tests/scene/` (never touching `saves/`) and runs the whole
-suite — some 1,300 assertions in 46 files. `python tools/check_i18n.py`, `check_texts.py`,
+suite — some 1,360 assertions in 49 files. `python tools/check_i18n.py`, `check_texts.py`,
 `check_data.py` and `check_names.py` are the four consistency checks (catalogs complete, no
 label written outside the catalogs, both languages with the same data shape, no undefined
 name); the suite runs the first three. Two browser benches in

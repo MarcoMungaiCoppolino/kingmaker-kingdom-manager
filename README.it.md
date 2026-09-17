@@ -242,7 +242,7 @@ python tests/run_all.py
 ```
 
 costruisce una scena da zero in `tests/scene/` (senza toccare `saves/`) e lancia tutta la suite —
-circa 1.300 asserzioni in 46 file. `python tools/check_i18n.py`, `check_texts.py`,
+circa 1.360 asserzioni in 49 file. `python tools/check_i18n.py`, `check_texts.py`,
 `check_data.py` e `check_names.py` sono i quattro controlli di coerenza (cataloghi completi,
 nessuna etichetta scritta fuori dai cataloghi, stessa forma dei dati nelle due lingue, nessun
 nome indefinito); la suite lancia i primi tre. Due banchi nel
