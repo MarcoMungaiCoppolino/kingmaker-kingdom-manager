@@ -1,9 +1,11 @@
-"""The two dialogs that connect a launcher to the cloud.
+"""The three dialogs that set a launcher up for playing with others.
 
 `SetupWizard` walks the administrator through Dropbox once: an account,
 an app in the App Console (App folder, five permissions), the App key,
-the authorisation with PKCE and the code pasted back. Each step has a
-picture from `guide/` when one is there. `ConnectDialog` is the other
+the authorisation with PKCE and the code pasted back. `AirWizard` does
+the same for the On Air token that gives the table a fixed address: the
+site, the login, GitHub, the token pasted back. Each step of either has
+a picture from `guide/` when one is there. `ConnectDialog` is the other
 host's side: the table's address, a username and a password, exchanged
 for the credential over `POST /_launcher/credential`; the password is
 typed once and never kept.
@@ -24,6 +26,7 @@ from kingmaker.locale.i18n import t
 APP_CONSOLE = "https://www.dropbox.com/developers/apps/create"
 DROPBOX_HOME = "https://www.dropbox.com/register"
 STEPS = ("account", "create", "permissions", "key", "authorise", "code", "done")
+AIR_STEPS = ("site", "login", "github", "add", "token", "renew", "done")
 COLOURS = {"quiet": "#555555", "bad": "#b71c1c", "ok": "#2e7d32"}
 
 
@@ -31,6 +34,20 @@ def guide_folder() -> Path:
     if core.is_frozen():
         return Path(getattr(sys, "_MEIPASS", Path(sys.executable).parent / "_internal")) / "guide"
     return Path(__file__).resolve().parent / "guide"
+
+
+def picture(parent: ttk.Frame, path: Path) -> tk.PhotoImage | None:
+    """The picture of a step, shown when the folder has one. A missing or
+    unreadable file leaves the text of the step to stand on its own; the
+    caller keeps the returned image alive, or Tk throws it away."""
+    if not path.is_file():
+        return None
+    try:
+        image = tk.PhotoImage(file=str(path))
+    except tk.TclError:
+        return None
+    ttk.Label(parent, image=image).pack(anchor="w", pady=(0, 8))
+    return image
 
 
 class SetupWizard:
@@ -73,13 +90,7 @@ class SetupWizard:
                   font=("TkDefaultFont", 12, "bold")).pack(anchor="w")
         ttk.Label(self.body, text=t(f"launcher.wizard.{name}.text"), wraplength=600, justify="left"
                   ).pack(anchor="w", pady=(6, 8))
-        picture = guide_folder() / f"{name}.png"
-        if picture.is_file():
-            try:
-                self.image = tk.PhotoImage(file=str(picture))
-                ttk.Label(self.body, image=self.image).pack(anchor="w", pady=(0, 8))
-            except tk.TclError:
-                self.image = None
+        self.image = picture(self.body, guide_folder() / f"{name}.png")
         row = ttk.Frame(self.body)
         row.pack(fill="x")
         if name == "account":
@@ -177,6 +188,102 @@ class SetupWizard:
         self.settings.save()
         self.next.config(state="normal")
         self.step = len(STEPS) - 1
+        self.show()
+
+
+class AirWizard:
+    """The On Air token, step by step: what the relay does, the login the
+    site asks for, GitHub, and the token copied back into the launcher.
+    Nothing is asked of the network here — the token is only written down,
+    and whether it works is answered by the first Start."""
+
+    def __init__(self, root: tk.Tk, settings: core.Settings, on_done: Callable[[], None],
+                 start: str = AIR_STEPS[0]) -> None:
+        self.settings = settings
+        self.on_done = on_done
+        # Opened at a step of its own when the launcher asks for one: whoever
+        # has lost the token cannot reach the step that tells how to make
+        # another by walking from the beginning, because the step before it
+        # is the one that asks for the token they have not got.
+        self.step = AIR_STEPS.index(start)
+        self.entered = start
+        self.token = tk.StringVar(value=settings.token)
+        self.image: tk.PhotoImage | None = None
+
+        self.win = tk.Toplevel(root)
+        self.win.title(t("launcher.air.wizard.title"))
+        self.win.transient(root)
+        self.win.grab_set()
+        self.win.minsize(640, 420)
+        self.body = ttk.Frame(self.win)
+        self.body.pack(fill="both", expand=True, padx=14, pady=(12, 6))
+        nav = ttk.Frame(self.win)
+        nav.pack(fill="x", padx=14, pady=(0, 12))
+        self.back = ttk.Button(nav, text=t("common.back"), command=self.go_back)
+        self.back.pack(side="left")
+        self.next = ttk.Button(nav, text=t("common.next"), command=self.go_next)
+        self.next.pack(side="right")
+        ttk.Button(nav, text=t("common.cancel"), command=self.win.destroy).pack(side="right", padx=8)
+        self.show()
+
+    def show(self) -> None:
+        for child in self.body.winfo_children():
+            child.destroy()
+        name = AIR_STEPS[self.step]
+        ttk.Label(self.body, text=t(f"launcher.air.wizard.{name}.title",
+                                    n=self.step + 1, total=len(AIR_STEPS)),
+                  font=("TkDefaultFont", 12, "bold")).pack(anchor="w")
+        ttk.Label(self.body, text=t(f"launcher.air.wizard.{name}.text"), wraplength=600,
+                  justify="left").pack(anchor="w", pady=(6, 8))
+        self.image = picture(self.body, guide_folder() / "air" / f"{name}.png")
+        row = ttk.Frame(self.body)
+        row.pack(fill="x")
+        if name == "site":
+            ttk.Button(row, text=t("launcher.air.wizard.site.button"),
+                       command=lambda: webbrowser.open(core.ON_AIR_PAGE)).pack(side="left")
+        elif name == "token":
+            ttk.Label(row, text=t("launcher.air.wizard.token.label")).pack(side="left")
+            entry = ttk.Entry(row, textvariable=self.token, width=48)
+            entry.pack(side="left", padx=8)
+            entry.focus_set()
+        elif name == "renew" and self.entered == "renew":
+            # Opened here from the launcher, with a token to replace: the way
+            # on is the field, which is the step before and not after.
+            ttk.Button(row, text=t("launcher.air.wizard.renew.button"),
+                       command=self.to_token).pack(side="left")
+        elif name == "done":
+            # Only what is true: arriving here from the renewal step, nobody
+            # has necessarily written a token down.
+            if self.settings.token.strip():
+                ttk.Label(row, text=t("launcher.air.wizard.done.saved"),
+                          foreground=COLOURS["ok"]).pack(side="left")
+        self.back.config(state="normal" if 0 < self.step < len(AIR_STEPS) - 1 else "disabled")
+        self.next.config(text=t("launcher.wizard.finish") if name == "done"
+                         else t("common.save") if name == "token" else t("common.next"))
+
+    def to_token(self) -> None:
+        self.step = AIR_STEPS.index("token")
+        self.show()
+
+    def go_back(self) -> None:
+        if self.step > 0:
+            self.step -= 1
+            self.show()
+
+    def go_next(self) -> None:
+        name = AIR_STEPS[self.step]
+        if name == "token":
+            if not self.token.get().strip():
+                messagebox.showinfo(t("launcher.air.wizard.title"),
+                                    t("launcher.air.wizard.token.missing"), parent=self.win)
+                return
+            self.settings.token = self.token.get().strip()
+            self.settings.save()
+        if name == "done":
+            self.win.destroy()
+            self.on_done()
+            return
+        self.step += 1
         self.show()
 
 

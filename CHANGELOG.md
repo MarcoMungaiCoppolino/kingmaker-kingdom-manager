@@ -8,6 +8,50 @@ what broke, what was learned — is in [docs/devlog.md](docs/devlog.md).
 The versions before 1.0.0 were never tagged: the app was played from a working copy and the
 numbers below were assigned afterwards, one per day of development, from the session history.
 
+## [1.1.4] — 2026-09-20
+
+The Linux build tried on a system with nothing on it, and the road to an On Air token walked
+with the reader.
+
+### Added
+- **Set it up step by step…**, next to the On Air steps: the token, guided the way Dropbox
+  already was. Seven steps with a picture of each screen — the On Air site, the login dialog
+  it opens, GitHub's sign-in (which is where the password is typed, so that neither On Air nor
+  this app ever sees it), the empty table with *+ ADD DEVICE* that a new account really meets,
+  the dialog that hands out the token the moment that button is pressed, the token pasted
+  back, and last the cog with its *New token*, for the day the token is lost — and the wizard
+  saves the token itself. It asks nothing of the network: whether the token is good is
+  answered by the first Start, as before.
+- *Lost the token?*, the third button of the On Air box, opens the guide at that last step
+  and nowhere else. It has to: the step before it is the one that asks for the token, so
+  whoever has lost theirs could not have walked there from the beginning — the guide to
+  making a new token was locked behind having one. From that step *Paste the new token…*
+  goes to the field, and the closing step claims a token was saved only when one was.
+- The guided part is the part nobody had written down. The old three lines said to press a
+  button and "copy the token the page shows you", which is not what the page does: it shows a
+  table with a cog on it, and a new account does not even have the device that cog belongs to.
+  The wizard walks the one road a new account has — add the device, take the token it hands
+  out — and says the two things that bite: that the token is shown once and never again, and
+  that making another retires the one before. The cog and its *New token* come last, where
+  they are needed: not on the way in, but the day a token is lost or a device was already
+  there.
+
+### Changed
+- The two ways to a token — the wizard and *Get a token*, which opens the site — now sit
+  together directly under the step that asks for them. *Get a token* used to hang at the far
+  end of the box, after the field, three lines below the step that names it.
+
+### Fixed
+- *Get a token* opened `https://nicegui.io/on_air`, which answers 404: the On Air site lives
+  at `https://on-air.nicegui.io/login`. The same dead address was printed by `--online` when
+  it finds a token in the environment, and stood in the docstring of `main.start`.
+- The launcher window could not open from the Linux tarball on a bare Ubuntu 22.04: the
+  bundled Tcl/Tk asks for `libXss.so.1` and `ldd` leaves it unresolved there, because the
+  X screensaver library comes with a desktop and a server, a container or WSL has no reason
+  to carry it. Found by running the 1.1.3 tarball in a fresh WSL Ubuntu 22.04 — glibc 2.35,
+  the oldest system the build supports. `packaging/linux/INSTALL.txt` and both READMEs now
+  name the one package to install; every other library the tarball needs resolves on its own.
+
 ## [1.1.3] — 2026-09-20
 
 What the app tells the world about the people at the table, and the papers that say so.

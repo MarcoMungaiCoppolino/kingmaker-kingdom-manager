@@ -9,6 +9,11 @@
 credentials.*
 secrets.*
 TOKEN*.txt
+# The script that takes the guide's screenshots of on-air.nicegui.io, and
+# the raw windows it photographs: a tool of the author's desk, not part of
+# the app, and the raw shots carry a name and a token until it has cut them.
+tools/shoot_air_guide.py
+kingmaker/launcher/guide/air/account.*
 
 # The live game: the database, its backups, the browser sessions
 /saves/*

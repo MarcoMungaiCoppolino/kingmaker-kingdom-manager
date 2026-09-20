@@ -2,7 +2,7 @@
 
 *In English: [../user-guide.md](../user-guide.md).*
 
-Questa guida descrive l'app com'è alla versione 1.1.3, scheda per scheda, con il perché di ogni
+Questa guida descrive l'app com'è alla versione 1.1.4, scheda per scheda, con il perché di ogni
 scelta. Per installarla e avviarla vedi il [README.it.md](../../README.it.md); la finestra
 dell'app installata è il primo capitolo qui sotto. Le schermate in
 [`manual/img/screenshots/`](../manual/img/screenshots/) sono dell'interfaccia italiana.
@@ -27,8 +27,17 @@ aprono il link di rete nel loro browser. *Online, con amici lontani* pubblica il
 il relay NiceGUI On Air; il tuo computer deve restare acceso, perché il regno vive lì. La scelta
 viene ricordata.
 
-**Il token On Air.** Scegliendo *Online* compare il campo e i tre passi: premi *Ottieni un
-token*, registrati su nicegui.io (gratis), copia il token che la pagina mostra, incollalo qui.
+**Il token On Air.** Scegliendo *Online* compare il campo e, accanto ai passi, due pulsanti.
+*Configuralo passo passo…* apre una procedura che ti accompagna con l'immagine di ogni
+schermata: il sito di On Air, l'accesso, GitHub — dove scrivi la password, che né On Air né
+questa app vedono mai — il dispositivo da aggiungere sulla tua pagina On Air, che
+consegna il suo token appena lo aggiungi, e il token stesso, che salva lei. Un ultimo passo è
+lì per il giorno in cui il token si perde: On Air lo mostra una volta sola e mai più, quindi
+ne prendi uno nuovo dall'ingranaggio sulla riga del dispositivo, e manda in pensione il
+precedente. Quel passo ha un pulsante tutto suo, *Perso il token?*, accanto agli altri due:
+non devi ripercorrere la guida dall'inizio per arrivarci, il che sarebbe una beffa, visto che
+il passo prima ti chiede proprio il token che non hai più. *Ottieni un token* apre lo stesso sito subito, per quando sai già
+la strada.
 Con il token il tuo indirizzo resta lo stesso a ogni avvio; senza, ogni volta un indirizzo
 casuale nuovo. Il token è conservato in chiaro nella cartella della partita; il relay, gestito
 da Zauberzeug GmbH (Germania), gli autori di NiceGUI, vede l'indirizzo di ogni giocatore e

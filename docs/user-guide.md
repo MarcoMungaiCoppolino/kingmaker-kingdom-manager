@@ -2,7 +2,7 @@
 
 *In italiano: [it/guida-utente.md](it/guida-utente.md) (longer, with the history of every choice).*
 
-This guide describes the app as it is in version 1.1.3, tab by tab, with the reason behind
+This guide describes the app as it is in version 1.1.4, tab by tab, with the reason behind
 each choice where it matters at the table. To install and start it see the
 [README](../README.md); the window of the installed app is the first chapter below. The screenshots in [`manual/img/screenshots/`](manual/img/screenshots/)
 were taken with the Italian interface; the English one is the same, label for label.
@@ -25,8 +25,17 @@ open the network link in their browser. *Online, with distant friends* publishes
 through the NiceGUI On Air relay; your computer must stay on, because the kingdom lives there.
 The choice is remembered.
 
-**The On Air token.** Choosing *Online* shows a field for it and the three steps: press *Get a
-token*, register on nicegui.io (free), copy the token the page shows, paste it here. With the
+**The On Air token.** Choosing *Online* shows a field for it and, next to the steps, two
+buttons. *Set it up step by step…* opens a wizard that walks you through it with a picture of
+each screen: the On Air site, the login, GitHub — which is where you sign in, so that neither
+On Air nor this app ever sees your password — the device to add on your On Air page, which
+hands out its token as soon as you add it, and the token itself, which it saves for you. A
+last step is there for the day the token is lost: On Air shows a token once and never again,
+so you take a new one from the cog on the device's line, and it retires the one before. That
+step has its own button, *Lost the token?*, next to the other two — you do not have to walk
+the guide from the start to reach it, which would be cruel, since the step before it asks for
+the token you no longer have. *Get a token* opens the same site
+straight away, for when you know the road. With the
 token your address stays the same at every start; without it you get a new random address
 each time. The token is kept in clear in the game folder; the relay, run by Zauberzeug GmbH
 (Germany), the makers of NiceGUI, sees every player's address and carries the game traffic

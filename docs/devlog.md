@@ -349,3 +349,40 @@ rounded first so neighbours share an edge exactly. A boarding with eight windows
 92. The layers test checks that the two strings joined are the old drawing, that a moved
 marker touches only the live one, and that the outline still walks through the corners.
 
+## 1.1.3 — 20 September 2026 · What the app says about the table
+
+A question with no code in it: who learns something about the people playing. Three answers,
+none of them flattering at the start. Every page pulled its three typefaces from Google, so
+every player's browser announced its address to a third party the table had not chosen, and
+the host — the person running the launcher — answered for it under the GDPR; the faces are
+free, so they now come from the host's own server, and the security test refuses a stylesheet
+that names an outside host or a font that is not shipped. The launcher asked GitHub at every
+start whether a newer version existed, which is a small thing to do without being asked, so
+it has a switch. And the app shipped other people's work — Python packages, browser libraries,
+the fonts — without shipping their licences; the build now writes them from the environment it
+froze, so the file beside the program says what is inside it. The rest is writing:
+`PRIVACY.md`, a shorter copy inside the app where every player can read it, `SECURITY.md`, and
+the plain sentences the README owed — that the relay has an operator, that the cloud record
+carries a username and a machine name, that a hosting GM holds the administrator's Dropbox
+credential. The lesson is that privacy is a feature with a build step and a test, not a page.
+
+## 1.1.4 — 20 September 2026 · The road to a token, walked
+
+Two findings from trying the app the way a stranger meets it. The first: the address the app
+had been printing for the On Air token, `nicegui.io/on_air`, answers 404 — it was in the
+launcher's button, in the message `--online` prints, and in a docstring. Tracking that down
+led to the second: the three lines of instructions said to press a button and copy the token
+the page shows, and the page does no such thing. It shows a table with a cog on it, and a new
+account does not yet have the device the cog belongs to. So the On Air token got the wizard
+Dropbox already had — seven steps with a photograph of each screen, including GitHub's sign-in,
+where the password is typed and which is the reason neither the relay nor this app ever sees
+it — and it says the two things that bite: the token is shown once, and making another retires
+the one before. The step about making a new one sits last and has a door of its own, because
+the step before it asks for the token that whoever needs it has already lost. Nothing in the
+wizard touches the network: it writes the token down, and the first Start says whether it
+works. The other finding came from a bare Ubuntu 22.04 in WSL, the oldest system the build
+supports: the launcher would not open from the tarball, because the bundled Tcl/Tk asks for
+`libXss.so.1` and a system without a desktop has no reason to carry it. One package to
+install, named now in the install notes and in both READMEs. Both findings needed the same
+thing, which is meeting one's own app without knowing it already.
+

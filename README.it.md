@@ -62,7 +62,11 @@ release](https://github.com/MarcoMungaiCoppolino/kingmaker-kingdom-manager/relea
   Windows*: premi **Ulteriori informazioni**, poi **Esegui comunque**.
 - **Linux** — `Kingmaker-Kingdom-Manager-<versione>-linux-x86_64.tar.gz`: scompattalo in una
   cartella dove puoi scrivere e avvia `kingmaker-kingdom-manager`. Serve Ubuntu 22.04 o più
-  recente, Debian 12 o più recente, o una distribuzione con glibc 2.35+.
+  recente, Debian 12 o più recente, o una distribuzione con glibc 2.35+. Su un desktop non
+  serve altro; su un sistema spoglio — un server, un container, WSL — la finestra del launcher
+  vuole la libreria X screensaver, che un sistema così di solito non porta con sé:
+  `sudo apt install libxss1` (Debian, Ubuntu) o `sudo dnf install libXScrnSaver` (Fedora,
+  RHEL).
 
 Quello che si apre è il **launcher**: scegli dove si gioca (questo computer, la stessa rete,
 online con amici lontani), premi *Avvia*, e il gioco si apre nel browser. La prima volta mostra

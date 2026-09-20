@@ -98,7 +98,7 @@ def resolve_online(online) -> str | bool | None:
     print("  Check the address below: if it looks like")
     print("  https://europe.on-air.io/devices/XXXXXXXX/ the token was not")
     print("  accepted, usually because it was revoked or regenerated.")
-    print("  Get a new one at https://nicegui.io/on_air.")
+    print("  Get a new one at https://on-air.nicegui.io/login.")
     print()
     return online
 

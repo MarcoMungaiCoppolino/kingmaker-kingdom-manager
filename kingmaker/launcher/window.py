@@ -142,15 +142,27 @@ class Launcher:
 
         self.air = ttk.LabelFrame(body, text=t("launcher.air.title"))
         ttk.Label(self.air, text=t("launcher.air.steps"), wraplength=500, justify="left"
-                  ).pack(anchor="w", padx=8, pady=(4, 6))
+                  ).pack(anchor="w", padx=8, pady=(4, 4))
+        # The two ways to the token, next to the step that asks for them:
+        # the wizard with its pictures, or the site for who knows the way.
+        ways = ttk.Frame(self.air)
+        ways.pack(anchor="w", padx=8, pady=(0, 6))
+        self.air_button = ttk.Button(ways, text=t("launcher.air.setup"), command=self.open_air)
+        self.air_button.pack(side="left")
+        ttk.Button(ways, text=t("launcher.air.get"),
+                   command=lambda: webbrowser.open(core.ON_AIR_PAGE)).pack(side="left", padx=8)
+        # The way to a new token has a door of its own: whoever lost theirs
+        # cannot reach that step by walking the guide, because the step
+        # before it asks for the token they no longer have.
+        self.air_renew = ttk.Button(ways, text=t("launcher.air.renew"),
+                                    command=self.open_air_renew)
+        self.air_renew.pack(side="left")
         row = ttk.Frame(self.air)
         row.pack(fill="x", padx=8, pady=2)
         self.token_entry = ttk.Entry(row, textvariable=self.token_var, show="•")
         self.token_entry.pack(side="left", fill="x", expand=True)
         ttk.Checkbutton(row, text=t("launcher.air.show"), variable=self.show_token,
                         command=self.toggle_token).pack(side="left", padx=6)
-        ttk.Button(row, text=t("launcher.air.get"),
-                   command=lambda: webbrowser.open(core.ON_AIR_PAGE)).pack(side="left")
         ttk.Label(self.air, text=t("launcher.air.note"), foreground=COLOURS["quiet"],
                   wraplength=500, justify="left").pack(anchor="w", padx=8, pady=(4, 6))
 
@@ -518,6 +530,15 @@ class Launcher:
     def open_wizard(self) -> None:
         wizard.SetupWizard(self.root, self.settings, on_done=self.refresh_cloud, post=self.post)
 
+    def open_air(self) -> None:
+        wizard.AirWizard(self.root, self.settings, on_done=self.air_ready)
+
+    def open_air_renew(self) -> None:
+        wizard.AirWizard(self.root, self.settings, on_done=self.air_ready, start="renew")
+
+    def air_ready(self) -> None:
+        self.token_var.set(self.settings.token)
+
     def open_connect(self) -> None:
         wizard.ConnectDialog(self.root, self.settings, on_done=self.cloud_connected, post=self.post)
 
@@ -561,6 +582,8 @@ class Launcher:
             if isinstance(frame, ttk.LabelFrame):
                 found += [w for w in frame.winfo_children() if isinstance(w, ttk.Radiobutton)]
         found.append(self.token_entry)
+        found.append(self.air_button)
+        found.append(self.air_renew)
         return found
 
     def open_browser(self) -> None:

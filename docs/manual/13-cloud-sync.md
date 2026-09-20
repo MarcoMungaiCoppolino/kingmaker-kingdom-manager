@@ -106,7 +106,7 @@ the loop, with the same throttles by name and by address as the login page, then
 to the journal. All five paths are in `login.OPEN_PAGES`, or the access middleware would
 redirect them to `/login`.
 
-## The two dialogs (`launcher/wizard.py`)
+## The three dialogs (`launcher/wizard.py`)
 
 **Set up Dropbox…** (the administrator, once): seven steps with a picture each from
 `launcher/guide/` — a Dropbox account; *Create app* in the App Console with *Scoped access*
@@ -119,6 +119,29 @@ done. The pictures are the owner's screenshots of the console, numbered where th
 clicks matters. Each
 administrator creates their own Dropbox app, so no table depends on the author's app or on
 Dropbox's review of it.
+
+**Set up On Air…** (whoever hosts, when the table plays online): seven steps with a picture
+each from `launcher/guide/air/` — what the relay is and the site opened with `core.ON_AIR_PAGE`
+(`https://on-air.nicegui.io/login`, which is where the site lives; `nicegui.io/on_air` has been
+a 404 since 1.1.3 and was the old button's target); the login dialog, where On Air sends you to
+GitHub; GitHub's sign-in, which is where the password is typed, so neither On Air nor this app
+sees it; the table with no device in it and *+ ADD DEVICE*, which is what a new account really
+meets; the dialog that hands out the token, which pressing that button opens by itself, with
+the token pasted back — all `settings.token` ever is; the cog and its *New token*, for the day
+the token is lost or the device was already there; done. That last step has a door of its own:
+*Lost the token?* in the On Air box opens `AirWizard(..., start="renew")` straight at it, and
+from there *Paste the new token…* goes back to the field. Walking from the first step would not
+do, because the step before it is the one that asks for the token that has been lost; and the
+closing step says "Token saved" only when a token really is saved, since arriving from the
+renewal step nobody has necessarily written one down. The steps follow the one road a new
+account walks — add the device, take the token it hands out — and leave the making of another
+token to the end, where it belongs: needed once in a long while, and never on the way in. The wizard
+asks nothing of the network itself — whether the token works is answered by the first Start,
+and `cli.py` says what a refused token looks like.
+
+Its pictures are screenshots of the live site with the organization's name and the token
+blurred out, taken in September 2026; the site says it is moving its login to GitHub, so they
+will want taking again when it does.
 
 **Connect to a table…** (the other hosts): the table's address, username, password →
 `core.fetch_credential` → `core.adopt_credential` keeps the cloud, the table's token and our

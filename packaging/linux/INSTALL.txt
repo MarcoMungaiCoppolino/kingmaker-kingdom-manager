@@ -5,6 +5,13 @@ Extract this folder anywhere you can write to (your home is fine), then run
 saves/ and assets/ inside this same folder. Needs Ubuntu 22.04 or newer (or
 another distribution with glibc 2.35+).
 
+On a desktop nothing else is needed. On a bare system — a server, a
+container, WSL — the launcher window wants the X screensaver library,
+which such a system usually does not carry:
+
+    sudo apt install libxss1         (Debian, Ubuntu)
+    sudo dnf install libXScrnSaver   (Fedora, RHEL)
+
 To uninstall, delete the folder. To update, extract the new version over it:
 saves/ and assets/ are untouched.
 

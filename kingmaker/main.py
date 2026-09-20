@@ -437,7 +437,7 @@ def start(host: str = "127.0.0.1", port: int = 8080, show: bool = True,
 
     Traffic goes through a nicegui.io relay and reaches this PC, which must stay
     on. Without a token the address changes at every start; with a free token
-    from https://nicegui.io/on_air it stays the same.
+    from https://on-air.nicegui.io it stays the same.
     """
     # Browser sessions go with the data, not with the folder you launched the
     # command from: otherwise starting the app from another folder would log

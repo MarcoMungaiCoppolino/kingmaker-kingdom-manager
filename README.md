@@ -61,7 +61,10 @@ The easiest way, no Python and no terminal: the installed app, from the
   click **More info**, then **Run anyway**.
 - **Linux** — `Kingmaker-Kingdom-Manager-<version>-linux-x86_64.tar.gz`: extract it anywhere
   you can write to and run `kingmaker-kingdom-manager`. Needs Ubuntu 22.04 or newer, Debian 12
-  or newer, or any distribution with glibc 2.35+.
+  or newer, or any distribution with glibc 2.35+. On a desktop nothing else is needed; on a
+  bare system — a server, a container, WSL — the launcher window wants the X screensaver
+  library, which such a system usually does not carry: `sudo apt install libxss1` (Debian,
+  Ubuntu) or `sudo dnf install libXScrnSaver` (Fedora, RHEL).
 
 What opens is the **launcher**: choose where you play (this computer, the same network, online
 with distant friends), press *Start*, and the game opens in your browser. The first time it
