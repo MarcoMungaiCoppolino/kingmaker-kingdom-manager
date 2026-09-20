@@ -16,7 +16,14 @@ ruler and the refresh bus compare against it), only the label is translated.
 `theme.apply_theme` injects the CSS (variables `--km-*`, classes `km-panel`, `km-chip`,
 `km-stat`…) and the four scripts, all files in `ui/`: `map_scroll.js` (panning the map with the
 right button, remembering where one was looking), `travel_drag.js`, `water_eraser.js`,
-`water_current.js`.
+`water_current.js`. The CSS opens with the `@font-face` rules of the three typefaces (Cinzel,
+IBM Plex Sans, Press Start 2P), served by the app itself from `ui/static/fonts/` under
+`/_km/fonts` (`theme.FONTS_ROUTE`, mounted at import; `login.OPEN_PREFIXES` lets the login page
+have them too). Their addresses are relative (`_km/fonts/…`) on purpose: every page lives at
+the root of its prefix, so they resolve under On Air's `/name/device-0/` without
+`with_prefix`, which does not exist yet when the stylesheet is built. They used to come from
+Google Fonts, which handed every player's address to Google on every page;
+`test_security.py` now checks that the stylesheet names no outside host.
 
 ## Windows: what is the kingdom's and what is yours
 

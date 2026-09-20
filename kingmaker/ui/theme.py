@@ -38,8 +38,44 @@ def dialog(props: str = ""):
     with dlg:
         yield dlg
 
-CSS = """
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=Press+Start+2P&display=swap');
+# The three typefaces are served by the app itself, from `static/fonts/`:
+# nothing in a player's page is fetched from anyone but the host. They used
+# to come from Google Fonts, which meant every player's browser handed its
+# address to Google on every page — a request nobody at the table had
+# chosen, and a breach of the GDPR for the host under European case law.
+# The files are the subsetted woff2 Google serves (latin and latin-ext:
+# Italian and English need nothing more), under the SIL Open Font License,
+# whose texts sit next to them. The addresses are relative on purpose: every
+# page of the app lives at the root of its prefix (`/`, `/login`), so
+# `_km/fonts/…` resolves under the On Air prefix as well as at home, with
+# no `with_prefix` needed in a stylesheet written before any window exists.
+STATIC_DIR = Path(__file__).parent / "static"
+FONTS_ROUTE = "/_km/fonts"
+app.add_static_files(FONTS_ROUTE, str(STATIC_DIR / "fonts"))
+
+LATIN = ("U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, "
+         "U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, "
+         "U+FEFF, U+FFFD")
+LATIN_EXT = ("U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, "
+             "U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, "
+             "U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF")
+
+
+def _font_faces() -> str:
+    faces = []
+    for family, weights, stem in (("Cinzel", "500 700", "cinzel"),
+                                  ("IBM Plex Sans", "400 600", "ibm-plex-sans"),
+                                  ("Press Start 2P", "400", "press-start-2p")):
+        for subset, ranges in (("latin", LATIN), ("latin-ext", LATIN_EXT)):
+            faces.append(
+                f"@font-face {{ font-family: '{family}'; font-style: normal; "
+                f"font-weight: {weights}; font-display: swap; "
+                f"src: url('_km/fonts/{stem}-{subset}.woff2') format('woff2'); "
+                f"unicode-range: {ranges}; }}")
+    return "\n".join(faces)
+
+
+CSS = _font_faces() + """
 
 :root {
   --km-bg:      #14110d;

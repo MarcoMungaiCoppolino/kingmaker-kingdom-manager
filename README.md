@@ -72,7 +72,8 @@ kingdom creation page, takes the zip from its Save tab (or its `kingmaker.db`) a
 everything back, images included. Your game lives in
 `saves\` and `assets\` **inside the installed folder**: an update replaces the program and
 leaves them, and the uninstaller asks whether to delete them too. The launcher tells you when a
-new version is out and, on Windows, downloads it for you.
+new version is out and, on Windows, downloads it for you: that is one request to GitHub at
+every start, and *Settings* can switch it off.
 
 **Several PCs.** The launcher can also move the hosting between the administrator and the
 GMs marked *Can host*, through a folder in the administrator's free Dropbox: whoever starts
@@ -181,8 +182,9 @@ python launch.py --online
 ```
 
 [NiceGUI On Air](https://nicegui.io/on_air) publishes the game through a relay run by
-nicegui.io; the address to share appears in the terminal. Your PC must stay on, because the
-kingdom lives there. Without a token the address changes at every start; with a free token from
+Zauberzeug GmbH (Germany), the makers of NiceGUI; the address to share appears in the
+terminal. Your PC must stay on, because the kingdom lives there, and the relay sees every
+player's address and carries the traffic in the clear (see [PRIVACY.md](PRIVACY.md)). Without a token the address changes at every start; with a free token from
 the same page it stays yours (`https://europe.on-air.io/<your-name>/device-0/`):
 
 ```bash
@@ -232,6 +234,21 @@ Passwords are never stored: only a salted PBKDF2-HMAC-SHA256 hash, in your own d
 is no account with any external service. Uploads are checked to be real images and renamed;
 the `/assets` folder is served only to signed-in users. Players receive only the hexes they
 know: the filter is on the server, not in the page.
+
+## Privacy and data
+
+The author runs no service and receives nothing: no account, no statistics, no crash reports.
+Everything lives in the host's `saves/` and `assets/`: the accounts (username, salted password
+hash, role, language, last login), the game, the journal with the username of whoever acted,
+the uploaded images, and the one cookie, the signed session that keeps you logged in. On this
+PC or on the LAN nothing leaves the machine — pages, scripts and typefaces are all served by
+the host. Online, the On Air relay sees the players' addresses and the traffic; with the cloud,
+copies of the whole game (password hashes included) and a record with the host's username and
+computer name go to the administrator's Dropbox; the launcher asks GitHub for a newer version
+at start unless told not to. Whoever hosts holds the players' data and answers for it. The
+whole notice is [PRIVACY.md](PRIVACY.md), and every player can read it in the app under
+*Manual → Privacy & licences*. What the app protects and what it does not is in
+[SECURITY.md](SECURITY.md).
 
 ## Tests
 
@@ -296,4 +313,7 @@ Paizo Inc., and it is free of charge.
 
 The English rules texts are transcribed from [Archives of Nethys](https://2e.aonprd.com/), the
 Italian ones from [pf2.altervista.org](https://pf2.altervista.org/wiki/Regni). Built with
-[NiceGUI](https://nicegui.io/).
+[NiceGUI](https://nicegui.io/). The typefaces — Cinzel, IBM Plex Sans, Press Start 2P — are
+shipped under the SIL Open Font License. The installed app carries the licences of everything
+it bundles in `THIRD_PARTY_LICENSES.txt`, next to the program; from source,
+`python packaging/third_party.py` writes the same file for your environment.

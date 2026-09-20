@@ -85,7 +85,8 @@ class Launcher:
         self.body: ttk.Frame | None = None
         self.build()
         root.after(100, self.poll)
-        threading.Thread(target=self.check_updates, daemon=True).start()
+        if settings.check_updates:
+            threading.Thread(target=self.check_updates, daemon=True).start()
 
     def set_icon(self, root: tk.Tk) -> None:
         """The crest in the title bar and the taskbar, for every window of
@@ -827,17 +828,20 @@ class Launcher:
         browser_var = tk.BooleanVar(value=self.settings.open_browser)
         ttk.Checkbutton(grid, text=t("launcher.settings.browser"), variable=browser_var
                         ).grid(row=2, column=0, columnspan=2, sticky="w", pady=4)
+        updates_var = tk.BooleanVar(value=self.settings.check_updates)
+        ttk.Checkbutton(grid, text=t("launcher.settings.updates"), variable=updates_var
+                        ).grid(row=3, column=0, columnspan=2, sticky="w", pady=4)
 
         ttk.Label(grid, text=t("launcher.folder_label", folder=core.game_folder()),
-                  wraplength=380, foreground=COLOURS["quiet"]).grid(row=3, column=0, columnspan=2,
+                  wraplength=380, foreground=COLOURS["quiet"]).grid(row=4, column=0, columnspan=2,
                                                                     sticky="w", pady=(8, 2))
         ttk.Button(grid, text=t("launcher.settings.folder"),
                    command=lambda: core.open_folder(core.game_folder())
-                   ).grid(row=4, column=0, columnspan=2, sticky="w", pady=2)
-        ttk.Button(grid, text=t("launcher.settings.reset"), command=self.reset_password
                    ).grid(row=5, column=0, columnspan=2, sticky="w", pady=2)
+        ttk.Button(grid, text=t("launcher.settings.reset"), command=self.reset_password
+                   ).grid(row=6, column=0, columnspan=2, sticky="w", pady=2)
         ttk.Button(grid, text=t("launcher.versions.button"), command=self.open_versions
-                   ).grid(row=6, column=0, columnspan=2, sticky="w", pady=(10, 2))
+                   ).grid(row=7, column=0, columnspan=2, sticky="w", pady=(10, 2))
 
         def apply() -> None:
             try:
@@ -846,6 +850,11 @@ class Launcher:
                 port = self.settings.port
             self.settings.port = port if 1 <= port <= 65535 else self.settings.port
             self.settings.open_browser = browser_var.get()
+            was_checking = self.settings.check_updates
+            self.settings.check_updates = updates_var.get()
+            if self.settings.check_updates and not was_checking and self.release is None:
+                # Switched on just now: the check skipped at start runs once.
+                threading.Thread(target=self.check_updates, daemon=True).start()
             chosen = next((code for code in i18n.LANGUAGES if i18n.NAMES[code] == lang_var.get()),
                           self.settings.language)
             changed = chosen != self.settings.language

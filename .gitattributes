@@ -11,3 +11,4 @@
 *.webp binary
 *.db  binary
 *.ico binary
+*.woff2 binary

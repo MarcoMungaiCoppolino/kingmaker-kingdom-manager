@@ -73,7 +73,8 @@ pagina di creazione del regno, prende lo zip della sua scheda Salvataggio (o il 
 `kingmaker.db`) e riporta tutto, immagini comprese. La partita vive in
 `saves\` e `assets\` **dentro la cartella installata**: un aggiornamento sostituisce il programma
 e le lascia, e la disinstallazione chiede se cancellare anche loro. Il launcher ti avvisa quando
-esce una versione nuova e, su Windows, la scarica per te.
+esce una versione nuova e, su Windows, la scarica per te: è una richiesta a GitHub a ogni
+avvio, e le *Impostazioni* la spengono.
 
 **Più PC.** Il launcher può anche spostare l'ospitare tra l'amministratore e i GM segnati
 *Può ospitare*, tramite una cartella nel Dropbox gratuito dell'amministratore: chi avvia per
@@ -183,8 +184,10 @@ python launch.py --online
 ```
 
 [NiceGUI On Air](https://nicegui.io/on_air) pubblica la partita passando da un relè gestito da
-nicegui.io; l'indirizzo da passare agli amici compare nel terminale. Questo PC deve restare
-acceso, perché il regno vive qui. Senza token l'indirizzo cambia a ogni avvio; con un token
+Zauberzeug GmbH (Germania), gli autori di NiceGUI; l'indirizzo da passare agli amici compare
+nel terminale. Questo PC deve restare acceso, perché il regno vive qui, e il relè vede
+l'indirizzo di ogni giocatore e trasporta il traffico in chiaro (vedi
+[PRIVACY.it.md](PRIVACY.it.md)). Senza token l'indirizzo cambia a ogni avvio; con un token
 gratuito preso sulla stessa pagina resta il tuo (`https://europe.on-air.io/<tuo-nome>/device-0/`):
 
 ```bash
@@ -234,6 +237,21 @@ Le password non sono salvate: solo un'impronta PBKDF2-HMAC-SHA256 con sale, nel 
 Non esiste nessun account presso servizi esterni. I file caricati vengono controllati come
 immagini vere e rinominati; la cartella `/assets` si serve solo a chi è entrato. I giocatori
 ricevono solo gli esagoni che conoscono: il filtro è nel server, non nella pagina.
+
+## Privacy e dati
+
+L'autore non gestisce nessun servizio e non riceve niente: nessun account, nessuna statistica,
+nessun rapporto di errore. Tutto vive in `saves/` e `assets/` dell'host: gli account (nome
+utente, impronta della password con sale, ruolo, lingua, ultimo accesso), la partita, il diario
+con il nome utente di chi ha agito, le immagini caricate, e l'unico cookie, la sessione firmata
+che ti tiene collegato. Su questo PC o sulla LAN niente esce dalla macchina: pagine, script e
+caratteri li serve tutti l'host. Online, il relè On Air vede gli indirizzi dei giocatori e il
+traffico; con il cloud, copie dell'intera partita (impronte delle password comprese) e un record
+con il nome utente e il nome del computer dell'host vanno nel Dropbox dell'amministratore; il
+launcher chiede a GitHub una versione nuova all'avvio, se non gli si dice di no. Chi ospita
+detiene i dati dei giocatori e ne risponde. L'informativa completa è
+[PRIVACY.it.md](PRIVACY.it.md), e ogni giocatore la legge nell'app sotto *Manuale → Privacy e
+licenze*. Cosa l'app protegge e cosa no è in [SECURITY.md](SECURITY.md).
 
 ## Prove
 
@@ -299,4 +317,7 @@ Inc., ed è gratuito.
 
 I testi italiani delle regole vengono da [pf2.altervista.org](https://pf2.altervista.org/wiki/Regni),
 quelli inglesi da [Archives of Nethys](https://2e.aonprd.com/). Costruito con
-[NiceGUI](https://nicegui.io/).
+[NiceGUI](https://nicegui.io/). I caratteri — Cinzel, IBM Plex Sans, Press Start 2P — sono
+inclusi sotto SIL Open Font License. L'app installata porta con sé le licenze di tutto ciò che
+include in `THIRD_PARTY_LICENSES.txt`, accanto al programma; dal sorgente,
+`python packaging/third_party.py` scrive lo stesso file per il tuo ambiente.

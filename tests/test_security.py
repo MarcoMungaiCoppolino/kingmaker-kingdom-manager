@@ -153,6 +153,26 @@ js = open("kingmaker/ui/static/travel_drag.js", encoding="utf-8").read()
 results.append(("the label in the browser goes through the escape",
               "const esc = " in js and "${esc(text)}</text>" in js))
 
+# --- 11. a player's page talks to the host and to nobody else -------------
+# The typefaces used to come from Google Fonts: every player's browser told
+# Google its address on every page. Now they are served by the app, and the
+# stylesheet must name no outside host at all.
+results.append(("the stylesheet fetches nothing from outside",
+                "http://" not in theme.CSS and "https://" not in theme.CSS
+                and "@import" not in theme.CSS))
+fonts = theme.STATIC_DIR / "fonts"
+named = {f"{stem}-{subset}.woff2" for stem in ("cinzel", "ibm-plex-sans", "press-start-2p")
+         for subset in ("latin", "latin-ext")}
+results.append(("every font the stylesheet names is shipped",
+                all((fonts / name).is_file() for name in named)
+                and all(name in theme.CSS for name in named)))
+results.append(("the fonts' licences travel with them",
+                len(list(fonts.glob("OFL-*.txt"))) == 3))
+results.append(("the fonts reach the login page before anyone signs in",
+                login._is_free("/_km/fonts/cinzel-latin.woff2")
+                and login._is_free("/name/device-0/_km/fonts/cinzel-latin.woff2", "/name/device-0")
+                and not login._is_free("/_km/")))
+
 for name, ok in results:
     print(f" {'ok' if ok else 'NO'}  {name}")
 print(f"\n{sum(1 for _n, e in results if e)}/{len(results)} passed")

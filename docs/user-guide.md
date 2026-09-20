@@ -2,7 +2,7 @@
 
 *In italiano: [it/guida-utente.md](it/guida-utente.md) (longer, with the history of every choice).*
 
-This guide describes the app as it is in version 1.1.2, tab by tab, with the reason behind
+This guide describes the app as it is in version 1.1.3, tab by tab, with the reason behind
 each choice where it matters at the table. To install and start it see the
 [README](../README.md); the window of the installed app is the first chapter below. The screenshots in [`manual/img/screenshots/`](manual/img/screenshots/)
 were taken with the Italian interface; the English one is the same, label for label.
@@ -28,8 +28,10 @@ The choice is remembered.
 **The On Air token.** Choosing *Online* shows a field for it and the three steps: press *Get a
 token*, register on nicegui.io (free), copy the token the page shows, paste it here. With the
 token your address stays the same at every start; without it you get a new random address
-each time. The token is kept in clear in the game folder; the relay carries the game traffic
-and could read it, which is fine for a game and not for secrets.
+each time. The token is kept in clear in the game folder; the relay, run by Zauberzeug GmbH
+(Germany), the makers of NiceGUI, sees every player's address and carries the game traffic
+in the clear, so it could read it: fine for a game and not for secrets. On this computer or
+on the same network nothing leaves your PC at all — see [PRIVACY.md](../PRIVACY.md).
 
 **Start, Stop, the links.** *Start* runs the server; when it is ready the status line turns
 green, the browser opens, and the links appear with a *Copy* button each: this computer, the
@@ -51,13 +53,15 @@ then sign in with the accounts of that file. The same box is on the kingdom crea
 for whoever runs from source without the launcher.
 
 **Settings.** The port, the language of the launcher (the app has its own toggle), whether the
-browser opens on start, *Open the game folder* (where `saves` and `assets` are, for backups),
-and the administrator reset. *Show the log* at the bottom unfolds what the server prints, which
+browser opens on start, whether the launcher asks GitHub for a newer version at start (on by
+default; the request carries only the app's version), *Open the game folder* (where `saves`
+and `assets` are, for backups), and the administrator reset. *Show the log* at the bottom unfolds what the server prints, which
 is where to look when it stops on its own.
 
-**Updates.** When a newer release is on GitHub, a line at the top says so. On Windows
-*Download the update* fetches the installer and starts it, keeping your game; on Linux it opens
-the release page. *Settings → Versions on GitHub…* lists every release, newest first, with the
+**Updates.** When a newer release is on GitHub, a line at the top says so (unless the check is
+off in *Settings*). On Windows *Download the update* fetches the installer from GitHub and
+starts it, keeping your game; the installer is not signed with a paid certificate, so Windows
+warns the first time. On Linux it opens the release page. *Settings → Versions on GitHub…* lists every release, newest first, with the
 installed one marked, and installs the one you pick; going back to an older version is allowed,
 with a warning, since a save written by a newer version can be refused by an older one. The game is in `saves` and `assets` inside the installed folder: an update
 replaces the program and leaves them, and the uninstaller (in *Add or remove programs*) asks
@@ -586,7 +590,9 @@ Quick reference: the table of the 76 structures, every activity with its four ou
 kingdom feats, and the tables of Size, Settlement Types, Levels, milestone rewards, terrain
 costs and terrain features, each entry marked when it is a choice of the table. The rule texts
 follow the language of the interface: in English they come from Archives of Nethys, in Italian
-from pf2.altervista.org.
+from pf2.altervista.org. The last sub-tab, *Privacy & licences*, tells every player what the
+app stores, what leaves the host's computer and to whom, and under which licences the program,
+the rules and the bundled software come: the full text is [PRIVACY.md](../PRIVACY.md).
 
 ## Playing from several PCs (the cloud)
 
@@ -623,9 +629,14 @@ within a minute (they may lose their last minutes of play) and the game moves to
 
 **What to know.** A host's PC holds the whole game, secrets and password hashes included:
 that is why hosting is a trust decision, not a checkbox for everyone. The cloud credential is
-kept in clear in each host's game folder, like the On Air token; *Forget the cloud* removes
-it, and the administrator can also revoke it at Dropbox, after which every host connects
-again. If the cloud does not answer, the launcher offers to host without it, and says so.
+kept in clear in each host's game folder, like the On Air token, and it is the
+administrator's own Dropbox access to that folder: every host holds the same one, so it
+cannot be taken back from one host without taking it back from all. *Forget the cloud* removes
+it from a launcher, and the administrator can revoke it at Dropbox (*Connected apps*), after
+which every host connects again. The folder also holds a small record of who is hosting —
+the launcher's id, your Windows or Linux username and your computer's name, the game's
+address — which the other hosts read; Dropbox's own privacy policy applies to the folder. If
+the cloud does not answer, the launcher offers to host without it, and says so.
 
 ## Save (administrators)
 

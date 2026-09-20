@@ -108,7 +108,15 @@ python packaging/build.py                                    # folder, installer
 - `kingmaker.spec` — one folder (`dist/<name>/` with `_internal/`), windowed, the whole
   `nicegui` package as data (what `nicegui-pack` does), the app's `rules/data`, `locale/lang`
   and `ui/static` with their package layout kept, the licence files, the icon.
-- `build.py` — runs PyInstaller, then the **smoke test**: starts the built program with
+- `third_party.py` — writes `THIRD_PARTY_LICENSES.txt` into the built folder, so the
+  installer and the tarball ship it next to the program: every distribution of the build
+  environment (build tools excluded) with the licence files its wheel carries, read through
+  `importlib.metadata`; PyInstaller's bootloader licence; Python's and Tcl/Tk's from the
+  interpreter; the browser libraries and fonts NiceGUI serves from its `static/`, listed by
+  hand with the MIT or Apache text; and the three typefaces with their OFL files from
+  `ui/static/fonts/`. `python packaging/third_party.py` alone writes it at the repository
+  root (ignored by git) for a source install.
+- `build.py` — runs PyInstaller, then `third_party.py`, then the **smoke test**: starts the built program with
   `--serve` on a temporary game folder, waits for `KM ready`, fetches `/login`, asks it to
   stop through the shutdown route; a missing hidden import shows up here, not at a user's.
   Then Inno Setup on Windows (`kingmaker.iss`, found in its usual folders), or the tarball with

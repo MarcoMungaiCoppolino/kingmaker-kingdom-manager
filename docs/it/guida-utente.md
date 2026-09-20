@@ -2,7 +2,7 @@
 
 *In English: [../user-guide.md](../user-guide.md).*
 
-Questa guida descrive l'app com'è alla versione 1.1.2, scheda per scheda, con il perché di ogni
+Questa guida descrive l'app com'è alla versione 1.1.3, scheda per scheda, con il perché di ogni
 scelta. Per installarla e avviarla vedi il [README.it.md](../../README.it.md); la finestra
 dell'app installata è il primo capitolo qui sotto. Le schermate in
 [`manual/img/screenshots/`](../manual/img/screenshots/) sono dell'interfaccia italiana.
@@ -30,8 +30,11 @@ viene ricordata.
 **Il token On Air.** Scegliendo *Online* compare il campo e i tre passi: premi *Ottieni un
 token*, registrati su nicegui.io (gratis), copia il token che la pagina mostra, incollalo qui.
 Con il token il tuo indirizzo resta lo stesso a ogni avvio; senza, ogni volta un indirizzo
-casuale nuovo. Il token è conservato in chiaro nella cartella della partita; il relay trasporta
-il traffico del gioco e potrebbe leggerlo: va bene per una partita, non per dei segreti.
+casuale nuovo. Il token è conservato in chiaro nella cartella della partita; il relay, gestito
+da Zauberzeug GmbH (Germania), gli autori di NiceGUI, vede l'indirizzo di ogni giocatore e
+trasporta il traffico del gioco in chiaro, quindi potrebbe leggerlo: va bene per una partita,
+non per dei segreti. Su questo computer o sulla stessa rete niente esce dal tuo PC — vedi
+[PRIVACY.it.md](../../PRIVACY.it.md).
 
 **Avvia, Ferma, i link.** *Avvia* fa partire il server; quando è pronto la riga di stato
 diventa verde, il browser si apre e compaiono i link con un pulsante *Copia* ciascuno: questo
@@ -54,13 +57,16 @@ poi con gli account di quel file. Lo stesso riquadro è nella pagina di creazion
 chi usa il sorgente senza launcher.
 
 **Impostazioni.** La porta, la lingua del launcher (l'app ha il suo interruttore), se aprire
-il browser all'avvio, *Apri la cartella della partita* (dove stanno `saves` e `assets`, per le
-copie di sicurezza), e la reimpostazione dell'amministratore. *Mostra il registro* in basso
+il browser all'avvio, se chiedere a GitHub una versione nuova all'avvio (acceso di default; la
+richiesta porta solo la versione dell'app), *Apri la cartella della partita* (dove stanno
+`saves` e `assets`, per le copie di sicurezza), e la reimpostazione dell'amministratore. *Mostra il registro* in basso
 apre quello che il server stampa: è lì che si guarda quando si ferma da solo.
 
-**Aggiornamenti.** Quando su GitHub c'è una release più nuova, una riga in alto lo dice. Su
-Windows *Scarica l'aggiornamento* scarica l'installatore e lo avvia, conservando la partita; su
-Linux apre la pagina della release. *Impostazioni → Versioni su GitHub…* elenca tutte le
+**Aggiornamenti.** Quando su GitHub c'è una release più nuova, una riga in alto lo dice (a
+meno che il controllo sia spento nelle *Impostazioni*). Su Windows *Scarica l'aggiornamento*
+scarica l'installatore da GitHub e lo avvia, conservando la partita; l'installatore non è
+firmato con un certificato a pagamento, quindi Windows avverte la prima volta. Su Linux apre
+la pagina della release. *Impostazioni → Versioni su GitHub…* elenca tutte le
 release, dalla più recente, con quella installata segnata, e installa quella che scegli; tornare
 a una versione più vecchia è permesso, con un avviso, perché un salvataggio scritto da una
 versione più nuova può essere rifiutato da una più vecchia. La partita sta in `saves` e `assets` dentro la cartella
@@ -104,10 +110,14 @@ te.
 
 **Da sapere.** Il PC di un host ha tutta la partita, segreti e hash delle password compresi:
 per questo ospitare è una decisione di fiducia, non una casella per tutti. La credenziale del
-cloud è conservata in chiaro nella cartella della partita di ogni host, come il token On Air;
-*Dimentica il cloud* la toglie, e l'amministratore può anche revocarla su Dropbox, dopo di che
-ogni host si ricollega. Se il cloud non risponde, il launcher propone di ospitare senza, e lo
-dice.
+cloud è conservata in chiaro nella cartella della partita di ogni host, come il token On Air,
+ed è l'accesso Dropbox dell'amministratore a quella cartella: ogni host ha lo stesso, quindi
+non si può togliere a un host senza toglierla a tutti. *Dimentica il cloud* la toglie da un
+launcher, e l'amministratore può revocarla su Dropbox (*App collegate*), dopo di che ogni host
+si ricollega. La cartella contiene anche un piccolo record di chi ospita — l'id del launcher,
+il tuo nome utente di Windows o Linux e il nome del tuo computer, l'indirizzo della partita —
+che gli altri host leggono; alla cartella si applica l'informativa sulla privacy di Dropbox. Se
+il cloud non risponde, il launcher propone di ospitare senza, e lo dice.
 
 ## Salvataggio (amministratori)
 
@@ -1549,4 +1559,7 @@ Consultazione rapida: tabella delle 76 strutture, tutte le attività con i quatt
 i Talenti di Regno, e le tabelle di Dimensione, Tipi di Insediamento, Livelli, Ricompense
 Miliari, costi del Terreno Sconnesso ed Elementi del Terreno. Da qui si esporta il
 salvataggio o si ricomincia da capo. Con la 1.0.0 i testi delle regole seguono la lingua
-dell'interfaccia: in inglese vengono da Archives of Nethys.
+dell'interfaccia: in inglese vengono da Archives of Nethys. L'ultima sotto-scheda, *Privacy e
+licenze*, dice a ogni giocatore cosa conserva l'app, cosa esce dal computer di chi ospita e
+verso chi, e sotto quali licenze arrivano il programma, le regole e il software incluso: il
+testo completo è [PRIVACY.it.md](../../PRIVACY.it.md).

@@ -33,10 +33,12 @@ results.append(("junk is never newer", not core.is_newer("", "1.0.0")))
 # 2. settings round-trip, and a broken file falls back to the defaults
 path = folder / "launcher.json"
 saved = core.Settings(mode="online", port=8123, language="it", token="abc", open_browser=False,
-                      firewall_shown=True)
+                      firewall_shown=True, check_updates=False)
 saved.save(path)
 loaded = core.Settings.load(path)
 results.append(("settings round-trip", loaded == saved))
+results.append(("the update check is on unless switched off",
+                core.Settings().check_updates and not loaded.check_updates))
 path.write_text('{"mode": "sideways", "port": "eighty", "unknown": 1}', encoding="utf-8")
 loaded = core.Settings.load(path)
 results.append(("unknown mode falls back", loaded.mode == "local"))

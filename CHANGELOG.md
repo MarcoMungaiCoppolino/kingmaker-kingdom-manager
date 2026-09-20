@@ -8,6 +8,36 @@ what broke, what was learned — is in [docs/devlog.md](docs/devlog.md).
 The versions before 1.0.0 were never tagged: the app was played from a working copy and the
 numbers below were assigned afterwards, one per day of development, from the session history.
 
+## [1.1.3] — 2026-09-20
+
+What the app tells the world about the people at the table, and the papers that say so.
+
+### Changed
+- The three typefaces of the interface (Cinzel, IBM Plex Sans, Press Start 2P) are served by
+  the app itself, from `kingmaker/ui/static/fonts/`, under their SIL Open Font License. They
+  used to be loaded from Google Fonts by every player's browser, which handed Google the
+  player's address on every page — a request nobody at the table had chosen, and one the
+  host answered for under the GDPR. A player's page now talks to the host and to nobody
+  else; LAN and offline tables get the right faces too. `test_security.py` checks that the
+  stylesheet names no outside host and that every font it names is shipped.
+- The launcher's check for a newer release on GitHub has a switch, *Settings → Ask GitHub for
+  a newer version at start*, on by default; *Versions on GitHub…* still asks when pressed.
+- The installed app ships `THIRD_PARTY_LICENSES.txt` next to the program: the licences of
+  every Python package frozen into it, of the browser libraries and fonts NiceGUI serves, of
+  Python and Tcl/Tk, of PyInstaller's bootloader and of the typefaces, written at build time
+  by `packaging/third_party.py` from the build environment.
+
+### Added
+- `PRIVACY.md` (and `PRIVACY.it.md`): what the app stores, what leaves the host's computer in
+  each way of playing and to whom — the On Air relay's operator, the Dropbox folder and the
+  host record with the machine's username, the GitHub check — who is responsible for the
+  players' data, how to delete, and where the licences are. The same notice, shorter, is in
+  the app under *Manual → Privacy & licences*, readable by every player.
+- `SECURITY.md`: what the app protects and what it does not, and which version is supported.
+- The README and the user guide name the relay's operator, say that the cloud record carries
+  the host's username and computer name and that hosting GMs hold the administrator's
+  Dropbox credential, and point to the privacy notice and the licences file.
+
 ## [1.1.2] — 2026-09-17
 
 The evening the whole table connected, and what it took to make eight windows cheap.

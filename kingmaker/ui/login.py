@@ -19,7 +19,9 @@ from kingmaker.ui import theme
 # with its secret (`main.launcher_route`): nobody else gets past a 404.
 OPEN_PAGES = {"/login", "/favicon.ico", "/_launcher/shutdown", "/_launcher/status",
               "/_launcher/snapshot", "/_launcher/synced", "/_launcher/credential"}
-OPEN_PREFIXES = ("/_nicegui/", "/_nicegui_ws")
+# `/_km/fonts/` holds the typefaces the app serves itself (`theme.FONTS_ROUTE`):
+# the login page wears them too, before anyone has signed in.
+OPEN_PREFIXES = ("/_nicegui/", "/_nicegui_ws", "/_km/fonts/")
 
 
 def _is_free(path: str, prefix: str = "") -> bool:

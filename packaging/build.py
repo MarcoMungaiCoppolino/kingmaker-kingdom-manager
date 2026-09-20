@@ -62,6 +62,10 @@ def pack() -> Path:
     built = DIST / NAME
     if not built.is_dir():
         sys.exit(f"PyInstaller left nothing at {built}")
+    # The licences of what was just bundled, next to the program: the
+    # installer and the tarball take the folder whole.
+    say("third-party licences")
+    run([sys.executable, str(ROOT / "packaging" / "third_party.py"), str(built)])
     return built
 
 

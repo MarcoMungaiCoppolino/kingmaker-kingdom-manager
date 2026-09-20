@@ -15,7 +15,7 @@ from nicegui import app, run, ui
 from nicegui.storage import Storage
 
 from kingmaker.access import auth, permissions
-from kingmaker import config, rules
+from kingmaker import __version__, config, rules
 from kingmaker.locale import i18n
 from kingmaker.locale.i18n import t, tn
 from kingmaker.state import STATE
@@ -155,6 +155,7 @@ def manual_panel(user: auth.User) -> None:
         s2 = ui.tab(t("main.activities"))
         s3 = ui.tab(t("main.feats"))
         s4 = ui.tab(t("main.tables"))
+        s5 = ui.tab(t("main.privacy"))
     with ui.tab_panels(sub, value=s1).classes("w-full").style("background:transparent"):
         with ui.tab_panel(s1):
             _structures_table()
@@ -164,6 +165,18 @@ def manual_panel(user: auth.User) -> None:
             sheet.feats_block()
         with ui.tab_panel(s4):
             _tables(user)
+        with ui.tab_panel(s5):
+            _privacy_page()
+
+
+def _privacy_page() -> None:
+    """What the app keeps, what leaves the host's PC and to whom, and the
+    licences: the same notice as PRIVACY.md, where every player can read it
+    without leaving the game."""
+    with ui.card().classes("km-panel w-full").style("max-width:900px"):
+        ui.markdown(t("main.privacy_text")).style("font-size:.9rem;line-height:1.5")
+        ui.label(t("main.privacy_version", version=__version__)) \
+            .style("color:var(--km-muted);font-size:.8rem")
 
 
 def _structures_table() -> None:

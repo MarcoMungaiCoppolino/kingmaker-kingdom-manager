@@ -79,6 +79,10 @@ class Settings:
     token: str = ""
     open_browser: bool = True
     firewall_shown: bool = False
+    # Whether the launcher asks GitHub for a newer release at start. The
+    # only thing the request carries is this machine's address and the app's
+    # version, but it is a request nobody typed: hence the switch.
+    check_updates: bool = True
     # The cloud: the Dropbox credential (app_key, refresh_token, account_id,
     # account_name, app_name), the table's name, and who we are to it
     # (username, role). Empty until the administrator set it up here or

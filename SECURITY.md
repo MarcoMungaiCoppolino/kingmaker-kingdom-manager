@@ -1,0 +1,21 @@
+# Security
+
+Kingmaker Kingdom Manager is a self-hosted app: the person who runs it holds accounts with
+password hashes, a session-signing secret, and — with the cloud sync — a Dropbox credential.
+
+## What counts
+
+Anything that lets a player see or do what their role does not allow — a hex under the fog, a
+GM note, another account's session, the administrator's powers — and anything that reaches the
+host's machine from the network beyond the pages the app serves: the launcher routes, the
+upload of images, the save file loaded from a zip, the credential hand-out to other hosts.
+
+Out of scope: what the documentation already says is not protected. The On Air relay can read
+the traffic; a host's disk holds the whole game; whoever has the database file can rewrite a
+password; a rented server needs an HTTPS proxy in front. See *Hosting and security* in the
+[README](README.md#hosting-and-security) and [PRIVACY.md](PRIVACY.md).
+
+## Supported versions
+
+The latest release only. The launcher says when a newer one exists, and *Settings → Versions on
+GitHub…* installs it over the current copy, keeping the game.
