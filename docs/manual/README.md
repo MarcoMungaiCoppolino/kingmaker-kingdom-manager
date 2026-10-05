@@ -63,7 +63,8 @@ kingmaker/               the package, one folder per layer of the graph in chapt
   cli.py                 the command line shared by launch.py and the installed app
   config.py              paths and network from the environment
   launcher/              the window that starts and stops the server (core.py, window.py),
-                         the cloud (dropbox.py, sync.py, wizard.py, guide/)
+                         the cloud (dropbox.py, sync.py, wizard.py, guide/), the windows
+                         kept inside small screens (screen.py)
   state.py               STATE: the kingdom in memory and the derived statistics
   rules/                 the rules: __init__.py (loader, indexes, dice), almanac.py
                          (calendar), data/ (mechanics) and data/lang/<code>/ (texts)

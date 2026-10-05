@@ -20,7 +20,7 @@ from pathlib import Path
 from tkinter import messagebox, ttk
 from typing import Callable
 
-from kingmaker.launcher import core, dropbox
+from kingmaker.launcher import core, dropbox, screen
 from kingmaker.locale.i18n import t
 
 APP_CONSOLE = "https://www.dropbox.com/developers/apps/create"
@@ -28,6 +28,10 @@ DROPBOX_HOME = "https://www.dropbox.com/register"
 STEPS = ("account", "create", "permissions", "key", "authorise", "code", "done")
 AIR_STEPS = ("site", "login", "github", "add", "token", "renew", "done")
 COLOURS = {"quiet": "#555555", "bad": "#b71c1c", "ok": "#2e7d32"}
+# The sizes a picture may shrink to, largest first: Tk scales only by whole
+# ratios. Below a quarter a screenshot is unreadable, and is left out.
+FRACTIONS = ((4, 5), (3, 4), (2, 3), (3, 5), (1, 2), (2, 5), (1, 3), (1, 4))
+PAGE_PAD = 14
 
 
 def guide_folder() -> Path:
@@ -36,18 +40,41 @@ def guide_folder() -> Path:
     return Path(__file__).resolve().parent / "guide"
 
 
-def picture(parent: ttk.Frame, path: Path) -> tk.PhotoImage | None:
-    """The picture of a step, shown when the folder has one. A missing or
-    unreadable file leaves the text of the step to stand on its own; the
-    caller keeps the returned image alive, or Tk throws it away."""
+def picture(win: tk.Toplevel, parent: ttk.Frame, path: Path, before: tk.Widget) -> tk.PhotoImage | None:
+    """The picture of a step, shown when the folder has one, above `before`.
+    A missing or unreadable file leaves the text of the step to stand on its
+    own; the caller keeps the returned image alive, or Tk throws it away.
+
+    It is shrunk to the room the screen has left once the rest of the step
+    is laid out: at full size, a laptop's screen put the buttons of the
+    dialog below its bottom edge, where they could not be pressed. What
+    still does not fit scrolls (`screen.Scrolled`)."""
     if not path.is_file():
         return None
     try:
         image = tk.PhotoImage(file=str(path))
     except tk.TclError:
         return None
-    ttk.Label(parent, image=image).pack(anchor="w", pady=(0, 8))
+    wider, taller = screen.room(win)
+    image = fit(image, win.winfo_reqwidth() + wider - 2 * PAGE_PAD - screen.BAR, taller - 8)
+    if image is not None:
+        ttk.Label(parent, image=image).pack(anchor="w", pady=(0, 8), before=before)
     return image
+
+
+def fit(image: tk.PhotoImage, width: int, height: int) -> tk.PhotoImage | None:
+    """The image as it is when it fits in width × height, else the largest
+    of FRACTIONS of it that does; None when not even the smallest does."""
+    if image.width() <= width and image.height() <= height:
+        return image
+    for zoom, subsample in FRACTIONS:
+        if image.width() * zoom // subsample <= width and image.height() * zoom // subsample <= height:
+            smaller = tk.PhotoImage(master=image.tk)
+            # One pass in Tk: zooming first and subsampling after would hold
+            # an image three times the size in between.
+            smaller.tk.call(smaller, "copy", image, "-zoom", zoom, zoom, "-subsample", subsample, subsample)
+            return smaller
+    return None
 
 
 class SetupWizard:
@@ -66,20 +93,24 @@ class SetupWizard:
         self.result: dict | None = None
 
         self.win = tk.Toplevel(root)
+        self.win.withdraw()                 # shown by screen.present, sized and placed
         self.win.title(t("launcher.wizard.title"))
         self.win.transient(root)
-        self.win.grab_set()
         self.win.minsize(640, 420)
-        self.body = ttk.Frame(self.win)
-        self.body.pack(fill="both", expand=True, padx=14, pady=(12, 6))
+        # The buttons first and at the bottom: when the window is short of
+        # room, pack takes it from the step and not from them.
         nav = ttk.Frame(self.win)
-        nav.pack(fill="x", padx=14, pady=(0, 12))
+        nav.pack(side="bottom", fill="x", padx=14, pady=(0, 12))
+        self.scroller = screen.Scrolled(self.win)
+        self.scroller.pack(fill="both", expand=True, padx=PAGE_PAD, pady=(12, 6))
+        self.body = self.scroller.inner
         self.back = ttk.Button(nav, text=t("common.back"), command=self.go_back)
         self.back.pack(side="left")
         self.next = ttk.Button(nav, text=t("common.next"), command=self.go_next)
         self.next.pack(side="right")
         ttk.Button(nav, text=t("common.cancel"), command=self.win.destroy).pack(side="right", padx=8)
         self.show()
+        screen.present(self.win, grab=True)
 
     # ------------------------------------------------------------- steps
     def show(self) -> None:
@@ -90,7 +121,6 @@ class SetupWizard:
                   font=("TkDefaultFont", 12, "bold")).pack(anchor="w")
         ttk.Label(self.body, text=t(f"launcher.wizard.{name}.text"), wraplength=600, justify="left"
                   ).pack(anchor="w", pady=(6, 8))
-        self.image = picture(self.body, guide_folder() / f"{name}.png")
         row = ttk.Frame(self.body)
         row.pack(fill="x")
         if name == "account":
@@ -121,6 +151,8 @@ class SetupWizard:
         self.back.config(state="normal" if 0 < self.step < len(STEPS) - 1 else "disabled")
         self.next.config(text=t("launcher.wizard.finish") if name == "done"
                          else t("launcher.wizard.connect") if name == "code" else t("common.next"))
+        self.image = picture(self.win, self.body, guide_folder() / f"{name}.png", before=row)
+        self.scroller.to_top()
 
     def go_back(self) -> None:
         if self.step > 0:
@@ -211,20 +243,24 @@ class AirWizard:
         self.image: tk.PhotoImage | None = None
 
         self.win = tk.Toplevel(root)
+        self.win.withdraw()                 # shown by screen.present, sized and placed
         self.win.title(t("launcher.air.wizard.title"))
         self.win.transient(root)
-        self.win.grab_set()
         self.win.minsize(640, 420)
-        self.body = ttk.Frame(self.win)
-        self.body.pack(fill="both", expand=True, padx=14, pady=(12, 6))
+        # The buttons first and at the bottom: when the window is short of
+        # room, pack takes it from the step and not from them.
         nav = ttk.Frame(self.win)
-        nav.pack(fill="x", padx=14, pady=(0, 12))
+        nav.pack(side="bottom", fill="x", padx=14, pady=(0, 12))
+        self.scroller = screen.Scrolled(self.win)
+        self.scroller.pack(fill="both", expand=True, padx=PAGE_PAD, pady=(12, 6))
+        self.body = self.scroller.inner
         self.back = ttk.Button(nav, text=t("common.back"), command=self.go_back)
         self.back.pack(side="left")
         self.next = ttk.Button(nav, text=t("common.next"), command=self.go_next)
         self.next.pack(side="right")
         ttk.Button(nav, text=t("common.cancel"), command=self.win.destroy).pack(side="right", padx=8)
         self.show()
+        screen.present(self.win, grab=True)
 
     def show(self) -> None:
         for child in self.body.winfo_children():
@@ -235,7 +271,6 @@ class AirWizard:
                   font=("TkDefaultFont", 12, "bold")).pack(anchor="w")
         ttk.Label(self.body, text=t(f"launcher.air.wizard.{name}.text"), wraplength=600,
                   justify="left").pack(anchor="w", pady=(6, 8))
-        self.image = picture(self.body, guide_folder() / "air" / f"{name}.png")
         row = ttk.Frame(self.body)
         row.pack(fill="x")
         if name == "site":
@@ -260,6 +295,8 @@ class AirWizard:
         self.back.config(state="normal" if 0 < self.step < len(AIR_STEPS) - 1 else "disabled")
         self.next.config(text=t("launcher.wizard.finish") if name == "done"
                          else t("common.save") if name == "token" else t("common.next"))
+        self.image = picture(self.win, self.body, guide_folder() / "air" / f"{name}.png", before=row)
+        self.scroller.to_top()
 
     def to_token(self) -> None:
         self.step = AIR_STEPS.index("token")
@@ -297,11 +334,14 @@ class ConnectDialog:
         self.on_done = on_done
         self.post = post or (lambda fn: root.after(0, fn))
         self.win = tk.Toplevel(root)
+        self.win.withdraw()                 # shown by screen.present, sized and placed
         self.win.title(t("launcher.connect.title"))
         self.win.transient(root)
-        self.win.grab_set()
-        frame = ttk.Frame(self.win)
-        frame.pack(padx=16, pady=12, fill="x")
+        nav = ttk.Frame(self.win)
+        nav.pack(side="bottom", fill="x", padx=16, pady=(0, 12))
+        scroller = screen.Scrolled(self.win)
+        scroller.pack(padx=16, pady=12, fill="both", expand=True)
+        frame = scroller.inner
         ttk.Label(frame, text=t("launcher.connect.text"), wraplength=460, justify="left"
                   ).grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 8))
         self.address = tk.StringVar(value=settings.cloud.get("address", ""))
@@ -315,11 +355,10 @@ class ConnectDialog:
             ttk.Entry(frame, textvariable=var, width=44, show=show).grid(row=i + 1, column=1, sticky="w", padx=8)
         self.feedback = ttk.Label(frame, text="", wraplength=460, foreground=COLOURS["quiet"])
         self.feedback.grid(row=4, column=0, columnspan=2, sticky="w", pady=(8, 0))
-        nav = ttk.Frame(self.win)
-        nav.pack(fill="x", padx=16, pady=(0, 12))
         self.button = ttk.Button(nav, text=t("launcher.wizard.connect"), command=self.connect)
         self.button.pack(side="right")
         ttk.Button(nav, text=t("common.cancel"), command=self.win.destroy).pack(side="right", padx=8)
+        screen.present(self.win, grab=True)
 
     def connect(self) -> None:
         address, username, password = self.address.get().strip(), self.username.get().strip(), self.password.get()

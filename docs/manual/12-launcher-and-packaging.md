@@ -59,6 +59,26 @@ chapter 13.
 and takes the next one otherwise; the status line says so. A server that dies on its own is
 reported with its exit code and the log pane opens.
 
+**Small screens (`screen.py`).** A Tk window takes the size its content asks for, and Windows
+lets it run past the bottom of the screen. The main window asks for about 850 px with the log
+open and the wizards did too, while a 1366 × 768 laptop has about 720 once the taskbar is
+counted (and 560 at 125 %). The lower part — the log, the links, the wizards' *Next* — went
+where nothing could reach it. So every launcher window is built the same way: the content in
+a `screen.Scrolled` (a canvas that is exactly as tall as its content and grows a scroll bar
+only when the window is shorter); the buttons that close a dialog outside it, packed first at
+the bottom so pack takes room from the content and never from them; and `screen.settle`,
+which caps the window at the work area of its monitor (`MonitorFromWindow` on Windows, the
+screen less a panel elsewhere) and moves it inside. A `Scrolled` calls `settle` whenever its
+content changes size. A dialog is built withdrawn and shown by `screen.present`, because Tk's
+first layout pass would otherwise map it wherever the system puts it. The main window keeps
+the log below the scrolled part, where the room a taller window gives goes. The wizards'
+pictures are shrunk first (`wizard.fit`, by whole ratios, down to a quarter) to the room
+`screen.room` says is left, so scrolling there is a last resort. The wheel scrolls the
+`Scrolled` under the pointer, except over widgets that scroll themselves, and Tab onto a
+control out of view scrolls it into view. `tests/test_screens.py` opens every window in its
+tallest state on work areas from 1024 × 560 to 1536 × 816, in both languages, and requires
+every control to be in view or scrollable into view and the window to sit inside the area.
+
 **One at a time.** `core.SingleInstance` locks `launcher.lock` in the game folder
 (`msvcrt.locking` / `fcntl.flock`); a second launcher on the same folder says so and quits,
 because two servers on one database is the one thing the README forbids.

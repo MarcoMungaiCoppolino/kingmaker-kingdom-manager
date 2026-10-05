@@ -8,6 +8,21 @@ what broke, what was learned — is in [docs/devlog.md](docs/devlog.md).
 The versions before 1.0.0 were never tagged: the app was played from a working copy and the
 numbers below were assigned afterwards, one per day of development, from the session history.
 
+## [1.1.5] — 2026-10-05
+
+The launcher on a laptop's screen, every window of it.
+
+### Fixed
+- **The launcher on a laptop's screen.** The set-up wizards asked for more height than a
+  small screen has, and their *Next* went below its bottom edge: step 4 of *Set up Dropbox…*
+  (the App key) and step 6 of *Set up On Air…* (a new token) could not be passed. The main
+  window had the same problem, with the log open or in online mode: the links, the log and
+  on the smallest screens *Start* were out of reach. Now every launcher window fits in the
+  screen less its taskbar. The content scrolls when it has to, with the wheel or by tabbing
+  onto a control. The buttons that close a dialog stay pinned at the bottom. The wizards'
+  pictures shrink to the room there is before anything needs to scroll.
+- The list of versions in *Settings* has a scroll bar.
+
 ## [1.1.4] — 2026-09-20
 
 The Linux build tried on a system with nothing on it, and the road to an On Air token walked

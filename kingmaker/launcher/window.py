@@ -22,7 +22,7 @@ from tkinter import filedialog, messagebox, ttk
 from tkinter.scrolledtext import ScrolledText
 
 from kingmaker import __version__, config
-from kingmaker.launcher import core, dropbox, sync, wizard
+from kingmaker.launcher import core, dropbox, screen, sync, wizard
 from kingmaker.locale import i18n
 from kingmaker.locale.i18n import t
 
@@ -49,7 +49,7 @@ def run() -> None:
         return
     try:
         Launcher(root, settings)
-        root.deiconify()
+        screen.present(root)
         root.mainloop()
     finally:
         lock.release()
@@ -115,9 +115,16 @@ class Launcher:
             self.body.destroy()
         self.body = ttk.Frame(self.root)
         self.body.pack(fill="both", expand=True)
-        body = self.body
+        # The log first and at the bottom, where the room a taller window
+        # gives goes to it; the rest above scrolls when the screen is short
+        # of height, as a laptop's is (`screen`), so Start stays reachable.
+        foot = ttk.Frame(self.body)
+        foot.pack(side="bottom", fill="both", expand=True)
+        scroller = screen.Scrolled(self.body)
+        scroller.pack(side="top", fill="both")
+        body = scroller.inner
 
-        head = ttk.Frame(body)
+        self.head = head = ttk.Frame(body)
         head.pack(fill="x", **PAD)
         ttk.Label(head, text=core.APP_NAME, font=("TkDefaultFont", 15, "bold")).pack(side="left")
         ttk.Label(head, text=t("launcher.version", version=__version__),
@@ -131,7 +138,7 @@ class Launcher:
         self.update_button.pack(side="left", padx=8)
         self.show_release()
 
-        where = ttk.LabelFrame(body, text=t("launcher.where"))
+        self.where = where = ttk.LabelFrame(body, text=t("launcher.where"))
         where.pack(fill="x", **PAD)
         for mode in core.MODES:
             ttk.Radiobutton(where, text=t(f"launcher.mode.{mode}"), value=mode,
@@ -190,9 +197,9 @@ class Launcher:
         self.links_frame = ttk.Frame(body)
         self.links_frame.pack(fill="x", padx=12)
 
-        ttk.Checkbutton(body, text=t("launcher.log.show"), variable=self.show_log,
+        ttk.Checkbutton(foot, text=t("launcher.log.show"), variable=self.show_log,
                         command=self.toggle_log).pack(anchor="w", padx=12, pady=(6, 0))
-        self.log = ScrolledText(body, height=9, state="disabled", wrap="word",
+        self.log = ScrolledText(foot, height=9, state="disabled", wrap="word",
                                 font=("TkFixedFont", 9))
         self.refill_log()
 
@@ -576,11 +583,7 @@ class Launcher:
         self.load_button.config(state="disabled" if running else "normal")
 
     def mode_widgets(self) -> list:
-        assert self.body is not None
-        found = []
-        for frame in self.body.winfo_children():
-            if isinstance(frame, ttk.LabelFrame):
-                found += [w for w in frame.winfo_children() if isinstance(w, ttk.Radiobutton)]
+        found = [w for w in self.where.winfo_children() if isinstance(w, ttk.Radiobutton)]
         found.append(self.token_entry)
         found.append(self.air_button)
         found.append(self.air_renew)
@@ -655,13 +658,17 @@ class Launcher:
 
     def show_password(self, username: str, password: str, reset: bool = False) -> None:
         dialog = tk.Toplevel(self.root)
+        dialog.withdraw()                   # shown by screen.present, sized and placed
         dialog.title(t("launcher.password.title"))
         dialog.transient(self.root)
-        dialog.grab_set()
+        ttk.Button(dialog, text=t("launcher.password.ok"), command=dialog.destroy
+                   ).pack(side="bottom", pady=(12, 14))
+        scroller = screen.Scrolled(dialog)
+        scroller.pack(fill="both", expand=True)
         key = "launcher.password.reset_text" if reset else "launcher.password.text"
-        ttk.Label(dialog, text=t(key, username=username), wraplength=420, justify="left"
+        ttk.Label(scroller.inner, text=t(key, username=username), wraplength=420, justify="left"
                   ).pack(padx=16, pady=(14, 8))
-        row = ttk.Frame(dialog)
+        row = ttk.Frame(scroller.inner)
         row.pack(fill="x", padx=16)
         entry = ttk.Entry(row, state="readonly", font=("TkFixedFont", 12), justify="center")
         entry.var = tk.StringVar(value=password)     # type: ignore[attr-defined]
@@ -669,9 +676,8 @@ class Launcher:
         entry.pack(side="left", fill="x", expand=True)
         ttk.Button(row, text=t("launcher.copy"), command=lambda: self.copy(password)
                    ).pack(side="left", padx=(8, 0))
-        ttk.Button(dialog, text=t("launcher.password.ok"), command=dialog.destroy
-                   ).pack(pady=(12, 14))
         dialog.bind("<Return>", lambda _e: dialog.destroy())
+        screen.present(dialog, grab=True)
 
     # ------------------------------------------------------------- updates
     def check_updates(self) -> None:
@@ -689,7 +695,7 @@ class Launcher:
         has_file = self.release.installer() is not None and sys.platform == "win32"
         self.update_button.config(text=t("launcher.update_download") if has_file
                                   else t("launcher.update_open_page"))
-        self.update_bar.pack(fill="x", padx=12, pady=(0, 4), after=self.body.winfo_children()[0])
+        self.update_bar.pack(fill="x", padx=12, pady=(0, 4), after=self.head)
 
     def download_update(self, release: core.Release | None = None) -> None:
         release = release or self.release
@@ -734,16 +740,24 @@ class Launcher:
         """Every release on GitHub, to install any of them — the newest, or
         an older one when a new one misbehaves."""
         win = tk.Toplevel(self.root)
+        win.withdraw()                      # shown by screen.present, sized and placed
         win.title(t("launcher.versions.title"))
         win.transient(self.root)
+        # The buttons and the status first and at the bottom: on a short
+        # screen the list gives up its lines, and it scrolls.
+        row = ttk.Frame(win)
+        row.pack(side="bottom", fill="x", padx=14, pady=(0, 12))
+        status = ttk.Label(win, text=t("launcher.versions.loading"), foreground=COLOURS["quiet"])
+        status.pack(side="bottom", anchor="w", padx=14, pady=4)
         ttk.Label(win, text=t("launcher.versions.text"), wraplength=460, justify="left"
                   ).pack(anchor="w", padx=14, pady=(12, 6))
-        box = tk.Listbox(win, height=10, width=64, activestyle="none")
-        box.pack(fill="both", expand=True, padx=14)
-        status = ttk.Label(win, text=t("launcher.versions.loading"), foreground=COLOURS["quiet"])
-        status.pack(anchor="w", padx=14, pady=4)
-        row = ttk.Frame(win)
-        row.pack(fill="x", padx=14, pady=(0, 12))
+        listed = ttk.Frame(win)
+        listed.pack(fill="both", expand=True, padx=14)
+        box = tk.Listbox(listed, height=10, width=64, activestyle="none")
+        bar = ttk.Scrollbar(listed, orient="vertical", command=box.yview)
+        box.configure(yscrollcommand=bar.set)
+        bar.pack(side="right", fill="y")
+        box.pack(side="left", fill="both", expand=True)
         install = ttk.Button(row, text=t("launcher.versions.install"), state="disabled")
         install.pack(side="right")
         ttk.Button(row, text=t("launcher.settings.close"), command=win.destroy).pack(side="right", padx=8)
@@ -780,6 +794,7 @@ class Launcher:
             self.download_update(release)
 
         install.config(command=chosen)
+        screen.present(win)
         threading.Thread(target=lambda: self.post(lambda: fill(core.list_releases())),
                          daemon=True).start()
 
@@ -831,11 +846,15 @@ class Launcher:
             self.settings_window.lift()
             return
         win = tk.Toplevel(self.root)
+        win.withdraw()                      # shown by screen.present, sized and placed
         self.settings_window = win
         win.title(t("launcher.settings"))
         win.transient(self.root)
-        grid = ttk.Frame(win)
-        grid.pack(padx=16, pady=12, fill="x")
+        close = ttk.Button(win, text=t("launcher.settings.close"))
+        close.pack(side="bottom", pady=(4, 12))
+        scroller = screen.Scrolled(win)
+        scroller.pack(padx=16, pady=12, fill="both", expand=True)
+        grid = scroller.inner
 
         ttk.Label(grid, text=t("launcher.settings.port")).grid(row=0, column=0, sticky="w", pady=4)
         port_var = tk.StringVar(value=str(self.settings.port))
@@ -887,8 +906,9 @@ class Launcher:
             if changed:
                 self.build()
 
-        ttk.Button(win, text=t("launcher.settings.close"), command=apply).pack(pady=(4, 12))
+        close.config(command=apply)
         win.protocol("WM_DELETE_WINDOW", apply)
+        screen.present(win)
 
     def reset_password(self) -> None:
         if self.server.running:

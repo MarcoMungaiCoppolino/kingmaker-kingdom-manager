@@ -386,3 +386,23 @@ supports: the launcher would not open from the tarball, because the bundled Tcl/
 install, named now in the install notes and in both READMEs. Both findings needed the same
 thing, which is meeting one's own app without knowing it already.
 
+## 1.1.5 — 5 October 2026 · The bottom of the screen
+
+The admin was setting up Dropbox on a second, smaller PC and could not get past step 4: the
+wizard asked for more height than the screen had, and *Next* sat below its bottom edge. The
+step that hands out a new On Air token had the same fault. The first fix shrank the wizards'
+pictures and pinned the buttons. But the question it raised was whether this was the only
+window that did it, and measuring them all said no. The main window asked for 850 px with
+the log open, and a 1366 × 768 laptop has about 720 to give once the taskbar is counted, or
+560 at 125 %. The links, the log and on the smallest screens *Start* itself were out of
+reach, and on a big monitor nobody had noticed. So the launcher now has one way of building
+a window instead of seven. The content goes in a frame that scrolls only when it has to, the
+buttons that close a dialog are pinned outside it, and one function keeps the window inside
+the work area of its monitor and runs again whenever the content grows. A new test opens
+every window in its tallest state on three screen sizes, in both languages, and requires
+every control to be in view or scrollable into view. With the fix switched off it fails on
+exactly the two steps that started this, which is how one knows the test checks the right
+thing. One detail cost more than the rest: the canvas first scrolled in 16-pixel steps, Tk
+rounds positions to the step, and the last few pixels of the content could never be
+reached. The test found that, not a person.
+
