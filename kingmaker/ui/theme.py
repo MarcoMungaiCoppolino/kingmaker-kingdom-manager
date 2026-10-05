@@ -131,7 +131,9 @@ body, .nicegui-content { background: var(--km-bg); color: var(--km-text);
 .km-icon-btn.amber { color: #ffc107; }
 .km-icon-btn:hover { background: rgba(255, 255, 255, .08); }
 .km-icons { display: flex; align-items: center; }
-.km-skills { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+/* As many columns as the panel has room for: two in a wide column, one in a
+   narrow one (a smaller screen, a narrow window) — no breakpoint needed. */
+.km-skills { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 6px; }
 .km-check { display: inline-flex; align-items: center; gap: 2px; cursor: pointer; font-size: .82rem;
   user-select: none; }
 .km-check i { font-size: 20px; color: #9e9e9e; }
@@ -194,6 +196,28 @@ body, .nicegui-content { background: var(--km-bg); color: var(--km-text);
 .km-strike::after { content: ''; position: absolute; left: -1px; right: -1px;
   top: calc(50% - 1px); height: 2px; border-radius: 1px; background: currentColor;
   transform: rotate(-45deg); box-shadow: 0 0 0 1px rgba(0,0,0,.55); }
+
+/* A card lays its children out at their own width, not at the card's: a row
+   sized by its texts came out wider than its panel in Italian (the activity
+   cards of the turn). Nothing inside a panel is wider than the panel. */
+.km-panel > * { max-width: 100%; }
+
+/* Smaller screens and narrow windows. Only the stylesheet changes — no
+   element more, nothing that runs on a resize, no second layout to draw and
+   send: the browser lays the same page out otherwise. `.km-split` is a tab's
+   row of side-by-side columns (the sheet, the turn, the city, the map): below
+   900 px the columns stack at full width instead of running off the screen,
+   or of squeezing one of them to a strip nobody can read. */
+@media (max-width: 900px) {
+  .km-split { flex-wrap: wrap !important; }
+  .km-split > * { flex: 1 1 100% !important; width: 100% !important;
+    min-width: 0 !important; max-width: none !important; }
+}
+/* A very narrow window: the dialogs fit it instead of keeping a fixed
+   minimum wider than it. The text keeps its size. */
+@media (max-width: 600px) {
+  .q-dialog .q-card { min-width: 0 !important; max-width: calc(100vw - 24px) !important; }
+}
 """
 
 # Panning the map by holding the right (or middle) button, as on Roll20: with

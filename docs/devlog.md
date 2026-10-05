@@ -432,3 +432,33 @@ The tests now close their windows before they end. Two smaller finds along the w
 line that was always Italian, because a local variable hid the translation function, and
 settlement names written into HTML unescaped.
 
+## 1.1.7 — 6 October 2026 · The narrow window
+
+The app opened on a smaller screen and several tabs broke. On the Kingdom Turn the activity
+cards ran out of their panel, and on the kingdom sheet the roles column ran off the screen.
+The app had no rule for narrow windows: not one media query. Every tab's columns sat side by
+side and were forbidden to wrap, one of them with a fixed minimum of 520 px. The fix had one
+condition, that it must not make the app heavier, and that ruled out a second layout of every
+panel, drawn and sent to every window. It is all in the stylesheet. The browser stacks a tab's
+columns below 900 px, lets grids take as many columns as their panel has room for, and fits
+the dialogs to a very narrow window. Nothing runs when the window changes size.
+
+The measuring took longer than the fix. A script reported, per tab and per width, what stuck
+out of the screen or of its panel. The first numbers were worthless twice. The first time,
+the tabs left behind were parked off-screen and counted as overflow. The second time, the
+browser pane was hidden, its animation frames paused, and every tab froze mid-slide, so the
+script measured empty space and reported it as clean. Looking at a screenshot is what showed
+the clean result was wrong. The real baseline found what had been seen, and one thing nobody
+had reported: even on a 1024 px screen the sheet's skills ran out of their column, because the
+grid always had two columns, however narrow the panel. That one is fixed by the grid sizing
+itself to its panel, not by any breakpoint.
+
+The check still missed the activity cards, and they broke on a wide screen. The Activity phase
+starts collapsed, so its cards were never on screen when the tabs were measured, and they were
+measured in English. A card lays its children out at their own width, and the row of activity
+cards had none of its own: it took the width of its texts. That gave one card per line in
+English, and in Italian a row wider than its panel, with the last cards over the journal. The
+row now takes the width of its step. Nothing inside a panel can be wider than the panel. The
+tabs were measured again in Italian, with every section opened, from 1775 px down. A section
+left collapsed is not measured at all.
+

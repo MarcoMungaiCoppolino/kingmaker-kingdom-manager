@@ -569,7 +569,7 @@ def city_panel() -> None:
         sett = STATE.settlement(ui_state["sel"])
         kind = rules.BY_ID["settlement"][sett["kind"]]
 
-        with ui.row().classes("w-full items-start gap-4 no-wrap"):
+        with ui.row().classes("w-full items-start gap-4 no-wrap km-split"):
             # ---------------------------------------------------- left column
             with ui.column().classes("gap-3").style("min-width:340px;max-width:380px"):
                 with ui.card().classes("km-panel w-full"):

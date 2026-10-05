@@ -8,6 +8,35 @@ what broke, what was learned — is in [docs/devlog.md](docs/devlog.md).
 The versions before 1.0.0 were never tagged: the app was played from a working copy and the
 numbers below were assigned afterwards, one per day of development, from the session history.
 
+## [1.1.7] — 2026-10-06
+
+The app on smaller screens.
+
+### Fixed
+- **The app on smaller screens.** On a smaller screen, or in a narrower window, the tabs ran
+  off the right edge or squeezed a column into an unreadable strip: the Kingdom sheet's skills
+  and abilities, the Kingdom Turn's activities, the city, the map's side panel. The app had no
+  rule for narrow windows at all. Now:
+  - below 900 px the side-by-side columns of a tab stack at full width;
+  - the skills take as many columns as their panel has room for;
+  - the ability and Ruin rows go to two lines when the column is narrow;
+  - in a very narrow window the dialogs fit it;
+  - the tab bars show arrows when their tabs do not fit.
+
+  All of it is in the stylesheet: no element added, nothing that runs on a resize, no second
+  layout to draw or send, and the text keeps its size.
+- **The activity cards of the Kingdom Turn ran out of their step**, on wide screens too. Each
+  step's row of cards had no width of its own: inside its panel it took the width of its
+  texts. In English that meant one card per line; in Italian, whose texts are longer, the row
+  came out wider than the panel and the last cards stuck out over the journal. The row now
+  takes the full width of its step and wraps there, and nothing inside a panel can be wider
+  than the panel any more.
+
+  Checked on every tab, in Italian, with every collapsible section opened, at window widths
+  from 1775 down to 390 px: nothing sticks out of the screen or of its panel.
+- The "Release" runs started by hand on the Actions page now show the version they build,
+  not just "Release".
+
 ## [1.1.6] — 2026-10-05
 
 Farmland by the book, and every roll seen by the whole table.

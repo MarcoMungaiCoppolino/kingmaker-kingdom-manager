@@ -168,6 +168,34 @@ to the *other* windows, and writes to disk if more than 2 seconds passed since t
 in normal conditions; with a crash at most two seconds of the document are lost (the separate
 tables are already written).
 
+## Small screens
+
+The layout adapts in the stylesheet only (`theme.CSS`), so a narrow screen costs nothing: no
+element is added, nothing runs on a resize, and no second layout is drawn or sent.
+- `.km-split` marks a tab's row of side-by-side columns (the sheet, the turn, the city, the
+  map). Below 900 px its columns stack at full width. A new tab with columns side by side
+  takes this class, or its side column runs off a smaller screen.
+- Below 600 px the dialogs fit the window (`max-width: calc(100vw - 24px)`) instead of
+  keeping their fixed minimum.
+- Grids size themselves to their panel, not to the screen. `.km-skills` uses
+  `repeat(auto-fill, minmax(260px, 1fr))`, and the ability rows may wrap. A column narrowed by
+  its neighbour gets one column of skills even on a wide screen.
+- The tab bars carry `mobile-arrows outside-arrows`: when the tabs do not fit they scroll,
+  and the arrows say there are more (on touch screens too, which is what `mobile-arrows` is
+  for).
+- Wide content that is read across stays wide and scrolls in its own frame: the manual's
+  tables and the strip of character tokens under the map.
+
+- A card (`ui.card`) lays its children out at their own width, not at the card's. A row
+  that wraps (the activity cards of a turn step) must say `width:100%`, or it takes the width
+  of its texts, wider than the panel in Italian. `.km-panel > * { max-width: 100% }` keeps
+  anything from coming out wider than its panel.
+
+They were checked by measuring the elements sticking out of the screen or of their panel, on
+every tab, in Italian (the longer texts), with every collapsible section opened, at 1775,
+1280, 1024, 768 and 390 px. A section left collapsed is not measured at all, which is how the
+activity cards slipped through the first check.
+
 ## Dialogs, notifications, escaping
 
 - `theme.dialog()` creates the dialog **anchored to the root of the client**: one created inside

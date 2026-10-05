@@ -276,7 +276,7 @@ def map_panel() -> None:
     mine["counts"] = counts
     theme.register_refresh("hexmap.counts", counts)
 
-    with ui.row().classes("w-full items-start gap-4 no-wrap"):
+    with ui.row().classes("w-full items-start gap-4 no-wrap km-split"):
         with ui.column().classes("gap-2").style("flex:1;min-width:0"):
             with ui.card().classes("km-panel w-full"):
                 with ui.row().classes("items-center gap-3 flex-wrap"):

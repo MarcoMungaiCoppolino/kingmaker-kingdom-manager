@@ -746,7 +746,7 @@ def turn_panel() -> None:
     """The tab: the turn column on the left, adjustments and journal on the
     right. Three panels, not one inside another: redoing the column does not
     rebuild the journal, nor the other way round."""
-    with ui.row().classes("w-full items-start gap-4 no-wrap"):
+    with ui.row().classes("w-full items-start gap-4 no-wrap km-split"):
         with ui.column().classes("gap-3").style("flex:1;min-width:0"):
             _turn_column()
         with ui.column().classes("gap-3").style("width:400px;min-width:340px"):
@@ -798,8 +798,14 @@ def _turn_column() -> None:
                         if phase["id"] == "activities" and step["id"] == "civic":
                             ui.label(t("turn.build_structure_performed_from")) \
                                 .style("font-size:.78rem;color:var(--km-gold-dim)")
+                        # The whole width of the step's panel, said out loud: the
+                        # card around it lays its children out at their own
+                        # width, and this row took the width of its texts —
+                        # one card per line in English, wider than the panel
+                        # in Italian, with the cards running out of it.
                         with ui.element("div").style(
-                                "display:flex;flex-wrap:wrap;gap:8px;margin-top:6px"):
+                                "display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;"
+                                "width:100%;min-width:0"):
                             for act in atts:
                                 _activity_card(act)
 

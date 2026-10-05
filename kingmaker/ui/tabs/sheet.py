@@ -63,7 +63,10 @@ def abilities_block() -> None:
         for c in rules.ABILITIES:
             ruin_ = next(r for r in rules.RUINS if r["ability"] == c["id"])
             rd = k["ruins"][ruin_["id"]]
-            with ui.row().classes("items-center gap-3 w-full no-wrap"):
+            # Allowed to wrap: where the column is narrow (a smaller screen,
+            # a narrow window) the Ruin half goes to a second line instead of
+            # running out of the panel; where it is wide nothing changes.
+            with ui.row().classes("items-center gap-3 w-full").style("row-gap:6px"):
                 ui.number(value=k["abilities"][c["id"]], format="%d", min=0, max=30,
                           on_change=lambda e, cid=c["id"]: _set_ability(cid, e.value)) \
                     .props("outlined dense").classes("w-20")
@@ -686,7 +689,7 @@ def sheet_panel() -> None:
     # their five commodities, the roles with a name and three ticks each,
     # and the feats; at a fixed 520 px they ran out of room while the left
     # column had more than the skills needed.
-    with ui.row().classes("w-full items-start gap-4 no-wrap"):
+    with ui.row().classes("w-full items-start gap-4 no-wrap km-split"):
         with ui.column().classes("gap-4").style("flex:3 1 0;min-width:0"):
             identity_block()
             abilities_block()

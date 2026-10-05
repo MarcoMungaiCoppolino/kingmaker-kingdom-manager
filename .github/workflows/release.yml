@@ -6,11 +6,17 @@
 #   git tag -a v1.1.0 -m "Kingmaker Kingdom Manager 1.1.0"
 #   git push origin v1.1.0
 #
-# "Run workflow" on the Actions page builds without a tag, to try it out;
-# then nothing is attached anywhere, the files are only in the run's
-# artifacts.
+# "Run workflow" on the Actions page builds by hand. Started from a tag
+# ("Use workflow from" → Tags → v1.1.6) it attaches the files to that
+# release, as a push of the tag would: the way to redo a cancelled or failed
+# release run. Started from a branch it only tries the build: nothing is
+# attached anywhere, the files are only in the run's artifacts.
 
 name: Release
+# A run started by hand has no commit message to show, and the Actions list
+# called it only «Release»: the run says which version it builds instead.
+run-name: >-
+  Kingmaker Kingdom Manager ${{ github.ref_name }}${{ github.event_name == 'workflow_dispatch' && ' (run by hand)' || '' }}
 
 on:
   push:

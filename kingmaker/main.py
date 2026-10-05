@@ -104,7 +104,10 @@ def page_() -> None:
     # the kingdom changes: the others wait to be reopened.
     # The tab names are language-neutral ids (`theme._TABS` and the ruler
     # compare against them); only the labels are translated.
-    with ui.tabs(on_change=lambda e: theme.active_tab(e.value)).classes("w-full") as tabs:
+    # In a narrow window the tabs do not fit: they scroll, and the arrows say
+    # so (`mobile-arrows` shows them on touch screens too).
+    with ui.tabs(on_change=lambda e: theme.active_tab(e.value)).classes("w-full") \
+            .props("mobile-arrows outside-arrows") as tabs:
         t_map = ui.tab("map", label=t("tabs.map"), icon="map")
         t_kingdom = ui.tab("kingdom", label=t("tabs.kingdom"), icon="shield")
         t_turn = ui.tab("turn", label=t("tabs.turn"), icon="event")
@@ -150,7 +153,7 @@ def page_() -> None:
 
 def manual_panel(user: auth.User) -> None:
     """Quick reference: structures, activities, feats, tables."""
-    with ui.tabs().classes("w-full") as sub:
+    with ui.tabs().classes("w-full").props("mobile-arrows outside-arrows") as sub:
         s1 = ui.tab(t("main.structures"))
         s2 = ui.tab(t("main.activities"))
         s3 = ui.tab(t("main.feats"))
