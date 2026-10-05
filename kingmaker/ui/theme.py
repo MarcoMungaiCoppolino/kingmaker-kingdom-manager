@@ -309,9 +309,29 @@ def result_block(res: rules.Result) -> None:
                 ui.html(f'<span class="km-chip" style="font-size:.72rem">{esc(name)} {val:+d}</span>')
 
 
-def show_result(res: rules.Result, check_title: str, outcome_text: str = "") -> None:
-    """Dialog with the outcome of a check, Roll20 style."""
+def _text(value) -> str:
+    return value() if callable(value) else (value or "")
+
+
+def show_result(res: rules.Result, check_title, outcome_text="",
+                where: tuple[int, int] | None = None) -> None:
+    """Dialog with the outcome of a check, Roll20 style — here, and read-only
+    in every other open window (`share_roll`).
+
+    `check_title` and `outcome_text` are strings, or functions returning one:
+    a function is called again in each window, so that everybody reads the
+    roll in the language of their own window. `where` is the hex the roll is
+    about, for the windows that may not see it."""
+    _result_dialog(res, _text(check_title), _text(outcome_text))
+    share_roll(res, check_title, outcome_text, where)
+
+
+def _result_dialog(res: rules.Result, check_title: str, outcome_text: str,
+                   roller: str = "") -> None:
     with dialog() as dlg, ui.card().classes("km-panel").style("min-width:420px;max-width:560px"):
+        if roller:
+            ui.label(t("theme.rolled_by", name=roller)) \
+                .style("font-size:.8rem;color:var(--km-muted)")
         title(check_title, 2)
         result_block(res)
         if outcome_text:
@@ -319,6 +339,80 @@ def show_result(res: rules.Result, check_title: str, outcome_text: str = "") -> 
             ui.markdown(outcome_text).style("font-size:.9rem")
         ui.button(t("common.close"), on_click=dlg.close).props("flat color=amber")
     dlg.open()
+
+
+def share_roll(res: rules.Result, check_title, outcome_text="",
+               where: tuple[int, int] | None = None) -> None:
+    """The roll, read-only, in every other open window: the GM sees what the
+    players roll, and the players see each other's — the screen of whoever
+    rolled, with only Close, and their account's name above it."""
+    _broadcast(lambda roller: _result_dialog(res, _text(check_title), _text(outcome_text),
+                                             roller=roller), where)
+
+
+def show_dice(check_title, rolls: list[int], faces: int, outcome_text="",
+              dc: int | None = None, verdict=None,
+              where: tuple[int, int] | None = None) -> None:
+    """Plain dice — the Resource Dice, the d20 of a random event, the 1d4 of
+    Unrest — on screen here and, read-only, in every other open window.
+
+    `dc` adds «vs DC» and Success or Failure on the total, for a flat check;
+    `verdict` replaces that line with a text of its own (the event check says
+    whether an event happens, not «Success»). Texts may be functions, as in
+    `show_result`, so each window reads them in its own language."""
+    _dice_dialog(_text(check_title), rolls, faces, _text(outcome_text), dc, _text(verdict))
+    _broadcast(lambda roller: _dice_dialog(_text(check_title), rolls, faces, _text(outcome_text),
+                                           dc, _text(verdict), roller=roller), where)
+
+
+def _dice_dialog(check_title: str, rolls: list[int], faces: int, outcome_text: str,
+                 dc: int | None, verdict: str, roller: str = "") -> None:
+    total = sum(rolls)
+    with dialog() as dlg, ui.card().classes("km-panel").style("min-width:360px;max-width:560px"):
+        if roller:
+            ui.label(t("theme.rolled_by", name=roller)) \
+                .style("font-size:.8rem;color:var(--km-muted)")
+        title(check_title, 2)
+        with ui.row().classes("items-center gap-3"):
+            ui.html(f'<div class="km-pixel" style="font-size:1.6rem;color:var(--km-gold)">{total}</div>')
+            ui.label(t("theme.dice_rolled", dice=f"{len(rolls)}d{faces}",
+                       rolls=" + ".join(map(str, rolls)))).classes("text-lg")
+            if dc is not None:
+                ui.label(t("theme.vs_dc", cd=dc)).style("color:var(--km-muted)")
+        if verdict:
+            ui.html(verdict)
+        elif dc is not None:
+            grade = "success" if total >= dc else "failure"
+            ui.html(f'<div class="{GRADE_CLASSES[grade]}" style="font-family:Cinzel;font-size:1.2rem">'
+                    f'{rules.grade_label(grade)}</div>')
+        if outcome_text:
+            sep()
+            ui.markdown(outcome_text).style("font-size:.9rem")
+        ui.button(t("common.close"), on_click=dlg.close).props("flat color=amber")
+    dlg.open()
+
+
+def _broadcast(draw, where: tuple[int, int] | None = None) -> None:
+    """`draw(roller)` in every other open window, inside it — so that `t()`
+    and the rules tables answer in that window's language.
+
+    A roll about a hex (`where`) skips the windows whose account cannot see
+    that hex: the GM working under the fog does not tell the players where.
+    A window that fails to draw it does not stop the others, nor the roll."""
+    from kingmaker.access.view import MapView
+    roller = getattr(user(), "username", "") or "?"
+    for cid, data in other_windows():
+        viewer = data.get("user")
+        client = Client.instances.get(cid)
+        if client is None or not isinstance(viewer, auth.User):
+            continue          # a closed window, or one still on the login page
+        if where is not None and not MapView(viewer, STATE).can_see(*where):
+            continue
+        try:
+            with client:
+                draw(roller)
+        except Exception:
+            log.warning("roll not shown in window %s", cid, exc_info=True)
 
 
 def notify(text: str, kind: str = "positive") -> None:
@@ -1008,9 +1102,27 @@ def refresh_locals(names) -> None:
     without rebuilding panels nobody is looking at.
     """
     cid = _window()
-    panels = _REFRESH.get(cid)
-    if panels:
-        _refresh(cid, panels, names)
+    tab_ = _WINDOWS.get(cid, {}).get("tab")
+    with _batch():
+        panels = _REFRESH.get(cid)
+        if panels:
+            _refresh(cid, panels, names)
+        # The shared panels (registered at import: the header, the turn's
+        # steps) have copies in this window too. They were skipped here, and
+        # `save_light` sends them to every window but the actor's: whoever
+        # ticked a Farmland read the old Consumption in the turn until a
+        # reload. Redone here alone when a copy is in front, owed otherwise,
+        # as `active_tab` does.
+        shared = _REFRESH.get(_GLOBAL, {})
+        for name in names:
+            ref = shared.get(name)
+            if ref is None:
+                continue
+            copies = [b for b in _targets(ref) or [] if _window_of(b) == cid]
+            if any(target_in_front(b, tab_) for b in copies):
+                _queue(ref, {cid})
+            elif copies:
+                _DIRTY.setdefault(cid, set()).add(name)
 
 
 def refresh_panels(names, exclude: str | None = None) -> None:

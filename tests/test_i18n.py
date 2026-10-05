@@ -56,6 +56,22 @@ try:
     results.append(("the mechanics are the same in both",
                   rules.data("it")["BY_ID"]["structure"]["brewery"]["cost"]
                   == rules.data("en")["BY_ID"]["structure"]["brewery"]["cost"]))
+
+    # The Unrest step's chip of the overcrowded settlements was Italian in
+    # every window, and the names went into its HTML as typed.
+    from kingmaker.ui.tabs import turn
+    from kingmaker.ui.tabs.city import new_settlement
+    crowded = [new_settlement('Nova<script>x()</script>')]
+    chip_en = turn.overcrowded_chip(crowded)
+    theme._window = lambda: "fake-it"
+    chip_it = turn.overcrowded_chip(crowded)
+    results.append(("the overcrowded chip reads English in an English window",
+                  "Overcrowded:" in chip_en and "Residential" in chip_en
+                  and "Sovrappopolati" not in chip_en and "Residenziali" not in chip_en))
+    results.append(("and Italian in an Italian one",
+                  "Sovrappopolati:" in chip_it and "Residenziali" in chip_it))
+    results.append(("a settlement's name is escaped in it",
+                  "<script>" not in chip_en and "&lt;script&gt;" in chip_en))
 finally:
     theme._window = real_window
     theme._WINDOWS.pop("fake-it", None)

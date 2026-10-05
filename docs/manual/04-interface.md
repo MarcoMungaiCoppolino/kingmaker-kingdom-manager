@@ -110,7 +110,11 @@ Five details that explain otherwise mysterious behaviours:
   (`_tab_of_target`), not from the panel's name: the quick adjustments are drawn in the Turn
   tab, in the City tab and in the outcome dialog, and the copy in the City tab is in front of
   whoever is on City. A window with no copy in front owes the panel (`_DIRTY[window]`) and gets
-  it, alone, when it switches to a tab that has one.
+  it, alone, when it switches to a tab that has one. `refresh_locals`, the actor's instant
+  redraw after a hex edit, treats the actor's copies of these shared panels the same way. It used
+  to look only at the window's own panels, and `save_light` sends to every window but
+  the actor's. So whoever ticked a Farmland read the old Consumption in the Turn tab, and the
+  old kingdom size in the header, until a reload.
 - **The queue and its task.** One action asks for the same panel several times — the actor's
   own window, the round over every window, a panel that calls another's `refresh()` — and each
   request used to be a rebuild. Requests land in `_PENDING`; when the handler is over a task
@@ -170,6 +174,20 @@ tables are already written).
   a refreshable would vanish at the next refresh.
 - `theme.notify(text, kind)`: top right; `kind` is `positive`, `warning`, `negative`, `info`. It
   is the only way the app explains why something did not happen.
+- `theme.show_result(res, title, outcome, where=None)`: the result screen of a check, here and,
+  through `share_roll`, read-only in every other open window (`other_windows()`), with
+  "<account> rolled" above it. `title` and `outcome` may be functions. A function is called
+  again inside each window (`with client:`), so `t()` and the rules tables answer in that
+  window's language. A string is shown as the roller wrote it. `where`, the hex the roll is
+  about, skips the windows whose account cannot see it (`MapView.can_see`). The kingdom-turn
+  activities call `share_roll` themselves: their own screen carries the effects to apply,
+  which stay with whoever rolled.
+- `theme.show_dice(title, rolls, faces, outcome, dc=None, verdict=None, where=None)`: the same
+  for plain dice (Resource Dice, the event d20, the 1d4 of Unrest, a flat check). `dc` adds
+  "vs DC" and Success/Failure on the total, and `verdict` replaces that line with its own text.
+  Both screens reach the other windows through `_broadcast(draw, where)`. Activity effects
+  that roll Resource Dice hand them back through `apply_effect(..., dice=[])`, and
+  `turn._apply_rows` shows them.
 - `theme.esc(text)`: **everything a user can type** that ends up in a `ui.html` passes through
   here (names of the kingdom, hexes, characters). `ui.label` escapes by itself, `ui.html` does
   not. The browser side has its own `esc` in `travel_drag.js` for the labels of the arrows.

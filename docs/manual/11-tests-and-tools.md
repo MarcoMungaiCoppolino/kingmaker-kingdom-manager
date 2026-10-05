@@ -116,7 +116,10 @@ version tag. Chapter 12 has the details. `tests/test_launcher.py` covers the lau
 `tests/test_windows.py` eight real windows (NiceGUI's user simulation, no browser), random
 changes, every panel in front compared with a fresh render of itself; `tests/test_layers.py`
 the map's two layers and the compact hex outline; `tests/test_screens.py` every launcher window
-on small screens, every control in reach (it needs a display, and says so when there is none).
+on small screens, every control in reach (it needs a display, and says so when there is none);
+`tests/test_farmland.py` Farmland, influence and Consumption; `tests/test_shared_rolls.py` a
+roll seen from three windows (admin, GM, player), in each one's language, with a hex under the
+fog kept from the player.
 
 ## The figures
 

@@ -33,7 +33,9 @@ def roll_skill(skill_id: str, cd: int, extra_title: str = "", outcome_text: str 
     # those two panels, not the whole interface of every window.
     theme.save_and_refresh_panels(("turn.journal", "sheet.identita"))
     if show:
-        theme.show_result(res, label, outcome_text)
+        # The skill's name again in each window's language, for the others.
+        theme.show_result(res, lambda: " · ".join(
+            x for x in (extra_title, rules.BY_ID["skills"][skill_id]["name"]) if x), outcome_text)
     return res
 
 
@@ -462,7 +464,9 @@ def resources_block() -> None:
 
         theme.sep()
         cons = STATE.consumption()
-        ui.label(t("sheet.consumption_settlements_armies_influenced", settlements=cons["settlements"], armies=cons["armies"], farms=cons["farms"], events=cons["events"], total=cons["total"])).style("font-size:.8rem;color:var(--km-muted)")
+        ui.label(t("sheet.consumption_settlements_armies_influenced", settlements=cons["settlements"], armies=cons["armies"], farms=cons["farms"], events=cons["events"], total=cons["total"])
+                 + (" · " + t("common.farmland_outside", n=cons["farms_outside"]) if cons["farms_outside"] else "")) \
+            .style("font-size:.8rem;color:var(--km-muted)")
         with ui.row().classes("gap-2 items-center"):
             ui.number(t("sheet.army_consumption"), value=k["army_consumption"], format="%d", min=0,
                       on_change=lambda e: _set_in(k, "army_consumption", e.value)) \
@@ -521,7 +525,8 @@ def _roll_resources() -> None:
     STATE.record(t("sheet.resource_dice_d", n=n, faces=faces, tot=tot), "resources", str(rolls))
     theme.save_and_refresh()
     resources_block.refresh()
-    theme.notify(t("sheet.d_rp", n=n, faces=faces, tot=tot, join=', '.join(map(str, rolls))))
+    theme.show_dice(lambda: t("theme.resource_dice"), rolls, faces,
+                    lambda: t("theme.resource_dice_outcome", tot=tot))
 
 
 # --------------------------------------------------------------------------

@@ -2,7 +2,7 @@
 
 *In italiano: [it/guida-utente.md](it/guida-utente.md) (longer, with the history of every choice).*
 
-This guide describes the app as it is in version 1.1.5, tab by tab, with the reason behind
+This guide describes the app as it is in version 1.1.6, tab by tab, with the reason behind
 each choice where it matters at the table. To install and start it see the
 [README](../README.md); the window of the installed app is the first chapter below. The screenshots in [`manual/img/screenshots/`](manual/img/screenshots/)
 were taken with the Italian interface; the English one is the same, label for label.
@@ -234,6 +234,14 @@ attempt the Region activities on the selected hex — Claim, Clear, Establish Wo
 Establish Farmland, Build Roads, Fortify, Establish Settlement — and **Reconnoiter**, which
 costs what the rules say and brings the hex to Reconnoitered, the requirement to claim it.
 Costs in RP, XP and milestone rewards are proposed and applied on confirmation.
+
+**Farmland and influence.** A Farmland hex reduces Consumption by 1 only inside a settlement's
+influence: a village influences only its own hex, a town the adjacent ones too, a city two
+hexes out, a metropolis three. Establish Farmland requires such a hex, mainly plains or hills
+(the first terrain listed on the hex), so its button stays disabled elsewhere; the cost and the
+DC follow that main terrain (plains 1 RP, hills 2 RP and DC + 5). Ticking Farmland by hand is still possible, and the box then says the hex
+does not count. The Consumption in the turn, the City tab and the sheet shows how much Farmland
+is left out. On a critical success the app asks which adjacent hex gets the second Farmland.
 
 **Background image.** Open *Grid calibration and background image* and upload the map of the
 Stolen Lands (PNG or JPG), or copy the file into `assets/` and pick it from the dropdown. The
@@ -578,6 +586,15 @@ activity opens a sheet with requirements, cost, description, choice of skill, DC
 outcomes; after the roll the exact outcome to apply appears, with the **quick adjustments**
 beside it (Unrest, RP, XP, Fame, Ruins, commodities). At the top the **journeys under way**
 queued from the map can be resolved by hand.
+
+**Everybody sees the rolls.** When someone rolls, the result screen opens in every other open
+window too. That covers the activities, the skill checks of the sheet, the hex activities,
+building a structure, and the plain dice: Resource Dice (from the sheet, the turn, or an
+activity's effect), the random-event check, the flat check for losing a hex, the 1d10 of Ruin
+points, the 1d4 of Unrest when Consumption is not paid, and the d6 of founding a settlement. It is the same screen, read-only, with the name of whoever rolled above it, in each
+window's own language. The GM sees the players' rolls without asking, and the players see each
+other's. The effects to apply stay with whoever rolled. A roll on a hex a player cannot see (the
+GM working under the fog) is not shown to that player.
 
 *New turn* only goes forward. To correct the number use the ✏ pencil next to it or the
 *Kingdom Turn* row of the quick adjustments: it is bookkeeping only, it undoes nothing and does

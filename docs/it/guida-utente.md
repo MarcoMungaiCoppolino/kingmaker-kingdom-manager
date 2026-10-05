@@ -2,7 +2,7 @@
 
 *In English: [../user-guide.md](../user-guide.md).*
 
-Questa guida descrive l'app com'è alla versione 1.1.5, scheda per scheda, con il perché di ogni
+Questa guida descrive l'app com'è alla versione 1.1.6, scheda per scheda, con il perché di ogni
 scelta. Per installarla e avviarla vedi il [README.it.md](../../README.it.md); la finestra
 dell'app installata è il primo capitolo qui sotto. Le schermate in
 [`manual/img/screenshots/`](../manual/img/screenshots/) sono dell'interfaccia italiana.
@@ -410,6 +410,17 @@ Terreni Agricoli e Siti di Lavoro. Dal pannello laterale tiri direttamente le At
 Regione sull'esagono selezionato: Rivendicare, Liberare, Stabilire un Sito di Lavoro,
 Stabilire Terreno Agricolo, Costruire Strade, Fortificare, Stabilire un Insediamento.
 Costi in PR, PE e Ricompense Miliari sono applicati automaticamente.
+
+**Terreni Agricoli e influenza.** Un esagono di Terreno Agricolo riduce il Consumo di 1 solo
+nell'area di influenza di un insediamento: un villaggio influenza solo il proprio esagono, un
+paese anche quelli adiacenti, una città fino a due esagoni, una metropoli fino a tre.
+Stabilire Terreno Agricolo richiede un esagono così, prevalentemente di pianura o collina (il
+primo terreno indicato sull'esagono), e altrove il pulsante resta disattivato; costo e CD
+seguono quel terreno prevalente (pianura 1 PR, collina 2 PR e CD + 5).
+Spuntare Terreno Agricolo a mano resta possibile, e il pannello avvisa che l'esagono non conta.
+Il Consumo nel turno, nella scheda Città e nella scheda del regno dice quanti terreni agricoli
+restano fuori. Con un successo critico l'app chiede quale esagono adiacente riceve il secondo
+Terreno Agricolo.
 
 **Icone:** il pulsante *Icone* in cima alla mappa nasconde icone e nomi degli esagoni e lascia
 solo il disegno. Servono a dire cosa c'è su un esagono, e per quello sono giuste; ma quando stai
@@ -1545,6 +1556,17 @@ i PR in PE, salire di livello. Ogni attività apre una scheda con requisiti, cos
 scelta dell'abilità, CD e i quattro esiti; dopo il tiro compare l'esito esatto da applicare con
 le regolazioni rapide a fianco (Malcontento, PR, PE, Fama, Rovine, Prodotti).
 In cima alla scheda compaiono i **viaggi in corso** messi in coda dalla mappa: si risolvono da lì, quando il gruppo arriva.
+
+**I tiri li vedono tutti.** Quando qualcuno tira, la schermata del risultato si apre anche in
+ogni altra finestra aperta. Vale per le attività, le prove di abilità della scheda, le attività
+sugli esagoni, la costruzione di una struttura e i dadi semplici: i Dadi Risorsa (dalla scheda,
+dal turno o dall'effetto di un'attività), il controllo degli eventi casuali, la prova semplice
+per la perdita di un esagono, l'1d10 di punti Rovina, l'1d4 di Malcontento quando il Consumo non
+è pagato e i d6 della fondazione di un insediamento. È la stessa schermata, in sola lettura, con sopra
+il nome di chi ha tirato, nella lingua di ciascuna finestra. Il GM vede i tiri dei giocatori senza
+doverli chiedere, e i giocatori quelli degli altri. Gli effetti da applicare restano a chi ha
+tirato. Un tiro su un esagono che un giocatore non può vedere (il GM che lavora sotto la nebbia)
+a quel giocatore non viene mostrato.
 
 Il pulsante *Nuovo turno* sa solo andare avanti. Se lo hai premuto una volta di troppo, o stai
 provando qualcosa e vuoi tornare indietro, il numero si corregge dalla matita ✏ lì accanto,

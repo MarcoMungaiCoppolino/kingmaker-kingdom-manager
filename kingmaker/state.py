@@ -385,10 +385,8 @@ class State:
             sett_tot += kind["consumption"] + sett.get("consumption_extra", 0)
 
         influenced = self.influenced_hexes()
-        farms = sum(
-            1 for h in self.claimed_hexes()
-            if h.get("farmland") and (h["col"], h["row"]) in influenced
-        )
+        farmland = [(h["col"], h["row"]) for h in self.claimed_hexes() if h.get("farmland")]
+        farms = sum(1 for pos in farmland if pos in influenced)
         armies = self.k["army_consumption"]
         extra = self.k["consumption_extra"]
         total = max(0, sett_tot + armies - farms + extra)
@@ -396,9 +394,52 @@ class State:
             "settlements": sett_tot,
             "armies": armies,
             "farms": farms,
+            # Farmland the kingdom has but that counts for nothing, being out
+            # of every settlement's influence (a village's is its own hex):
+            # shown, so that «farmland 0» with a field on the map is explained.
+            "farms_outside": len(farmland) - farms,
             "events": extra,
             "total": total,
         }
+
+    # -------------------------------------------------------------- farmland
+    def in_influence(self, col: int, row: int) -> bool:
+        """The requirement of Establish Farmland, and the condition for a
+        Farmland hex to reduce Consumption."""
+        return (col, row) in self.influenced_hexes()
+
+    @staticmethod
+    def farmland_ground(h: dict) -> str | None:
+        """What Establish Farmland is attempted on: "plains" or "hills" when
+        that is the hex's predominant terrain — the first listed, the one the
+        map colours it with — and None otherwise (a forest, a swamp). A hex
+        whose terrain nobody has set yet counts as plains: the table judges.
+
+        The predominant terrain, not any listed: a hex of plains with a few
+        hills is attempted as plains, at 1 RP and the plain DC."""
+        if not h.get("terrains"):
+            return "plains"
+        main = h["terrains"][0]
+        return main if main in ("plains", "hills") else None
+
+    def farmland_partners(self, col: int, row: int, hills: bool) -> list[dict]:
+        """The hexes next to (col, row) that can take the second Farmland of
+        a critical success: claimed, in a settlement's influence, without a
+        settlement or Farmland already, and plains — or plains or hills when
+        the attempt was in hills (`farmland_ground`)."""
+        allowed = {"plains", "hills"} if hills else {"plains"}
+        influenced = self.influenced_hexes()
+        towns = {tuple(s["hex"][:2]) for s in self.k["settlements"] if s.get("hex")}
+        found = []
+        for c, r in hexgrid.neighbours(col, row, self.orientation):
+            h = self.existing_hex(c, r)
+            if (h is None or h["status"] != "claimed" or (c, r) not in influenced
+                    or h.get("farmland") or h.get("settlement") or (c, r) in towns):
+                continue
+            if self.farmland_ground(h) not in allowed:
+                continue
+            found.append(h)
+        return found
 
     # ----------------------------------------------------------- settlements
     def settlement(self, sid: str) -> dict | None:
@@ -694,17 +735,21 @@ class State:
         return ""
 
     # ------------------------------------------------- activity effects
-    def apply_effect(self, entry: dict, value: int, target: str | None = None) -> str:
-        """Applies a single effect and returns how to describe it in the journal."""
-        t = entry["t"]
-        if t == "note":
+    def apply_effect(self, entry: dict, value: int, target: str | None = None,
+                     dice: list | None = None) -> str:
+        """Applies a single effect and returns how to describe it in the journal.
+
+        The Resource Dice an effect rolls go into `dice`, when given, as
+        `{"rolls", "faces", "total", "spent"}`: the caller shows them to the table."""
+        kind = entry["t"]
+        if kind == "note":
             return ""
-        if t != "mod" and value == 0:
+        if kind != "mod" and value == 0:
             return ""
-        if t == "unrest":
+        if kind == "unrest":
             self.modify_unrest(value)
-        elif t in ("ruin", "ruin_choice"):
-            rid = entry["r"] if t == "ruin" else target
+        elif kind in ("ruin", "ruin_choice"):
+            rid = entry["r"] if kind == "ruin" else target
             if not rid:
                 return ""
             self.modify_ruin(rid, value)
@@ -712,17 +757,17 @@ class State:
                 r = self.k["ruins"][rid]
                 r["penalty"] = max(0, r["penalty"] + entry["pen"])
             return f"{rules.BY_ID['ruin'][rid]['name']} {value:+d}"
-        elif t == "rp":
+        elif kind == "rp":
             if value < 0:
                 self.spend_rp(-value)
             else:
                 self.k["rp"] += value
-        elif t == "xp":
+        elif kind == "xp":
             self.k["xp"] = max(0, self.k["xp"] + value)
-        elif t == "fame":
+        elif kind == "fame":
             self.k["fame_points"] = max(0, min(self.max_fame, self.k["fame_points"] + value))
-        elif t in ("commodity", "commodity_choice"):
-            char_id = entry["p"] if t == "commodity" else target
+        elif kind in ("commodity", "commodity_choice"):
+            char_id = entry["p"] if kind == "commodity" else target
             if not char_id:
                 return ""
             if value < 0:
@@ -730,17 +775,21 @@ class State:
             else:
                 self.add_commodity(char_id, value)
             return f"{rules.BY_ID['commodity'][char_id]['name']} {value:+d}"
-        elif t == "resource_die":
+        elif kind == "resource_die":
             tot, rolls = rules.roll(abs(value), self.resource_die)
             if value < 0:
                 self.spend_rp(tot)
             else:
                 self.k["rp"] += tot
-            return (f"{abs(value)}d{self.resource_die} = {tot} PR "
-                    f"{'spesi' if value < 0 else 'guadagnati'} {rolls}")
-        elif t == "bonus_dice":
+            if dice is not None:
+                dice.append({"rolls": rolls, "faces": self.resource_die, "total": tot,
+                             "spent": value < 0})
+            return t("state.resource_dice_spent" if value < 0 else "state.resource_dice_gained",
+                     dice=f"{abs(value)}d{self.resource_die}", tot=tot,
+                     rolls=", ".join(map(str, rolls)))
+        elif kind == "bonus_dice":
             self.k["bonus_dice"] += value
-        elif t == "mod":
+        elif kind == "mod":
             self.add_modifier(entry["name"], entry["v"], entry["dur"],
                                        ability=entry.get("ability"), skills=entry.get("skill"))
         return rules.entry_label(entry, value)

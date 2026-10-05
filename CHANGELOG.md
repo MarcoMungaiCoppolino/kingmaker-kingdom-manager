@@ -8,6 +8,57 @@ what broke, what was learned — is in [docs/devlog.md](docs/devlog.md).
 The versions before 1.0.0 were never tagged: the app was played from a working copy and the
 numbers below were assigned afterwards, one per day of development, from the session history.
 
+## [1.1.6] — 2026-10-05
+
+Farmland by the book, and every roll seen by the whole table.
+
+### Added
+- **Everybody at the table sees the rolls.** When someone rolls, the result screen opens
+  read-only in every other open window, with the name of whoever rolled. That covers the
+  kingdom-turn activities, the skill checks of the sheet, the hex activities and building a
+  structure. It also covers the plain dice: Resource Dice (sheet, turn, activity effects), the
+  random-event check, the flat check for losing a hex, the 1d10 of Ruin points, the 1d4 of
+  Unrest for unpaid Consumption, and the d6 of founding a settlement, now on the check's own
+  screen. Each window reads it in its own language. The effects to apply stay with whoever
+  rolled. A roll on a hex a player cannot see is not shown to that player.
+
+### Changed
+- **Establish Farmland asks for what the rules ask**: a hex in a settlement's influence (a
+  village influences only its own hex, a town the adjacent ones too), mainly plains or hills.
+  Elsewhere the button is disabled and says why, and the action refuses even when triggered
+  from the browser console. Ticking Farmland by hand stays possible, for the GM.
+- The cost and DC of Establish Farmland follow the hex's main terrain, the first listed. A
+  plains hex with some hills used to be charged as hills (2 RP, DC + 5) because "hills"
+  appeared anywhere in its list; it is now attempted as plains.
+- **A critical success on Establish Farmland gives two adjacent hexes**, as the rules say. The
+  app asks which adjacent hex gets the second, among those that qualify: claimed, in influence,
+  no settlement or Farmland yet, plains (or hills, for an attempt in hills).
+- "Fattorie" in the Italian Consumption breakdown is now "terreni agricoli", the word the rest
+  of the app uses ("farms" became "farmland" in English).
+
+### Fixed
+- **Farmland that does not reduce Consumption now says so.** A Farmland hex next to a village
+  read as "farmland 0", which looked like a bug, though the count followed the rules. The
+  Consumption in the turn, the City tab and the sheet now adds how much Farmland lies outside
+  every settlement's influence, and the hex panel notes it next to the box.
+- The turn step and the header no longer show stale figures to whoever edits a hex. After
+  ticking Farmland or changing a hex's status, the Consumption in the Turn tab and the kingdom
+  size in the header stayed old until a reload, in the window that made the change only.
+- The 1d4 of Unrest for unpaid Consumption showed nothing, not even to whoever rolled; it went
+  only into the journal. It now has its screen like every other roll.
+- The journal line of Resource Dice rolled by an activity's effect was always in Italian
+  ("PR spesi/guadagnati"), whatever the language: a local variable in `apply_effect` hid the
+  translation function. It now speaks the roller's language.
+- The Unrest step of the Kingdom Turn listed the overcrowded settlements in Italian
+  ("Sovrappopolati", "Residenziali") whatever the language; it now reads the window's.
+- Settlement names were written into that chip, and into the City tab's overcrowded chip, as
+  typed: a name containing HTML would have been run as HTML in every window showing it. They
+  are now escaped, like every other name in the app.
+- `tests/test_windows.py` could hang after passing, waiting forever at exit (about one run in
+  three once rolls reached every window). A NiceGUI window's outbox loop could swallow the
+  cancellation at shutdown, through `asyncio.wait_for` on Python 3.10. The simulation tests
+  now close their windows first, so the loops end on their own.
+
 ## [1.1.5] — 2026-10-05
 
 The launcher on a laptop's screen, every window of it.

@@ -347,7 +347,18 @@ def _hex_panel(mine: dict) -> None:
                         on_change=lambda e: (_set_field(h, "fortified", e.value),
                                              refresh_fields()))
             ui.checkbox(t("map.hex_panel.farmland"), value=h["farmland"],
-                        on_change=lambda e: _set_farmland(h, e.value, refresh_fields))
+                        on_change=lambda e: (_set_farmland(h, e.value, refresh_fields),
+                                             farm_note.refresh()))
+
+        @ui.refreshable
+        def farm_note() -> None:
+            # Farmland out of every settlement's influence is on the map but
+            # not in the Consumption: said where it is set, not only in the sum.
+            if h["farmland"] and not STATE.in_influence(col, row):
+                ui.label(t("map.hex_panel.farmland_outside_influence")) \
+                    .style("font-size:.78rem;color:var(--km-gold-dim)")
+
+        farm_note()
 
         sl = h.get("work_site")
         with ui.row().classes("items-center gap-2 w-full"):
@@ -726,10 +737,12 @@ def _link_existing(sid: str, col: int, row: int, mapping, detail) -> None:
     theme.notify(t("map.hex_panel.now_stands_hex", name=sett["name"], col=col, row=row))
 
 # Panels touched by an edit to a hex: the map, the counts by status, the
-# activity buttons, the header (kingdom size) and the City tab (consumption
-# depends on farms and influence). Nothing else.
+# activity buttons, the header (kingdom size), and the three places that show
+# the Consumption, which depends on Farmland and influence — the City tab,
+# the turn's step and the sheet's resources (rebuilt only if it moved).
+# Nothing else.
 _AFTER_HEX_EDIT = ("hexmap.map", "hexmap.counts", "hexmap.actions",
-                      "main.header", "city.content")
+                      "main.header", "city.content", "turn.steps", "sheet.risorse")
 
 @theme.requires(permissions.EDIT_KINGDOM)
 def _set_field(where: dict, key: str, value) -> None:
@@ -837,8 +850,13 @@ def _hex_actions(h: dict, mine: dict) -> None:
         with ui.row().classes("gap-2 flex-wrap"):
             ui.button(t("map.hex_panel.establish_work_site"), on_click=lambda: _work_site(h, mapping)) \
                 .props("dense outline color=amber")
+            # The activity's requirements: a hex in a settlement's influence,
+            # mainly plains or hills. Elsewhere the button waits, and says
+            # why. Ticking Farmland by hand above stays possible, for the GM.
+            farmable = STATE.in_influence(col, row) and STATE.farmland_ground(h) is not None
             ui.button(t("map.hex_panel.establish_farmland"), on_click=lambda: _farmland(h, mapping)) \
-                .props("dense outline color=amber")
+                .props(f'dense outline color=amber {"" if farmable else "disable"}') \
+                .tooltip(t("map.hex_panel.establish_farmland_requires"))
             ui.button(t("map.hex_panel.build_roads"), on_click=lambda: _roads(h, mapping)).props("dense outline color=amber")
             ui.button(t("map.hex_panel.fortify_hex"), on_click=lambda: _fortify(h, mapping)) \
                 .props("dense outline color=amber")
@@ -876,8 +894,8 @@ def _claim(h: dict, mine: dict) -> None:
         STATE.record(t("map.hex_panel.claimed_hex_10_xp", col=h['col'], row=h['row']), "map")
     theme.save_and_refresh()
     mapping.refresh()
-    theme.show_result(res, t("map.hex_panel.claim_hex", col=h['col'], row=h['row']),
-                           _dialog_result("claim_hex", res))
+    theme.show_result(res, lambda: t("map.hex_panel.claim_hex", col=h['col'], row=h['row']),
+                      lambda: _dialog_result("claim_hex", res), where=(h["col"], h["row"]))
 
 @theme.requires(permissions.EDIT_KINGDOM)
 def _reconnoiter(h: dict, mapping) -> None:
@@ -910,8 +928,8 @@ def _free(h: dict, mine: dict) -> None:
         STATE.k["unrest"] += 1
     theme.save_and_refresh()
     mapping.refresh()
-    theme.show_result(res, t("map.hex_panel.clear_hex_2", col=h['col'], row=h['row']),
-                           _dialog_result("clear_hex", res))
+    theme.show_result(res, lambda: t("map.hex_panel.clear_hex_2", col=h['col'], row=h['row']),
+                      lambda: _dialog_result("clear_hex", res), where=(h["col"], h["row"]))
 
 @theme.requires(permissions.EDIT_KINGDOM)
 def _work_site(h: dict, mapping) -> None:
@@ -944,8 +962,8 @@ def _work_site(h: dict, mapping) -> None:
                 STATE.k["unrest"] += 1
             theme.save_and_refresh()
             mapping.refresh()
-            theme.show_result(res, t("map.hex_panel.establish_work_site_3"),
-                                   _dialog_result("establish_work_site", res))
+            theme.show_result(res, lambda: t("map.hex_panel.establish_work_site_3"),
+                              lambda: _dialog_result("establish_work_site", res), where=(h["col"], h["row"]))
 
         with ui.row():
             ui.button(t("map.hex_panel.roll_engineering"), on_click=go).props("color=amber")
@@ -954,7 +972,13 @@ def _work_site(h: dict, mapping) -> None:
 
 @theme.requires(permissions.EDIT_KINGDOM)
 def _farmland(h: dict, mapping) -> None:
-    hills = "hills" in h["terrains"]
+    # The button is disabled when the requirements are not met; checked again
+    # here, because a click can come from the browser console too.
+    ground = STATE.farmland_ground(h)
+    if ground is None or not STATE.in_influence(h["col"], h["row"]):
+        theme.notify(t("map.hex_panel.establish_farmland_requires"), "warning")
+        return
+    hills = ground == "hills"
     cost = 2 if hills else 1
     cd = STATE.control_dc + (5 if hills else 0)
     if not STATE.spend_rp(cost):
@@ -964,14 +988,60 @@ def _farmland(h: dict, mapping) -> None:
     STATE.fame_on_critical(res)
     STATE.mark_activity("establish_farmland")
     if res.grade in ("success", "critical_success"):
-        # Only the dedicated field: the twin entry among the hex features
-        # doubled the icon on the map and the row in the panel.
-        h["farmland"] = True
-        h["features"] = [e for e in h["features"] if e["kind"] != "farmland"]
+        _make_farmland(h)
     theme.save_and_refresh()
     mapping.refresh()
-    theme.show_result(res, t("map.hex_panel.establish_farmland"),
-                           _dialog_result("establish_farmland", res))
+    if res.grade == "critical_success":
+        # Two adjacent Farmland hexes: the second is the table's choice. The
+        # choice opens first, so the outcome lies on top of it and is read
+        # before choosing.
+        partners = STATE.farmland_partners(h["col"], h["row"], hills)
+        if partners:
+            _second_farmland(partners, mapping)
+        else:
+            theme.notify(t("map.hex_panel.second_farmland_none"), "warning")
+    theme.show_result(res, lambda: t("map.hex_panel.establish_farmland"),
+                      lambda: _dialog_result("establish_farmland", res), where=(h["col"], h["row"]))
+
+
+def _make_farmland(h: dict) -> None:
+    # Only the dedicated field: the twin entry among the hex features
+    # doubled the icon on the map and the row in the panel.
+    h["farmland"] = True
+    h["features"] = [e for e in h["features"] if e["kind"] != "farmland"]
+
+
+def _second_farmland(partners: list[dict], mapping) -> None:
+    """The second hex of a critical success, among the adjacent ones that
+    meet the activity's requirements (`STATE.farmland_partners`)."""
+    def label(p: dict) -> str:
+        terrain = rules.BY_ID["terrain"].get(p["terrains"][0], {}).get("name", "") if p["terrains"] else ""
+        name = f' · {p["name"]}' if p.get("name") else ""
+        return f'{p["col"]},{p["row"]}{name}{" — " + terrain if terrain else ""}'
+
+    options = {f'{p["col"]},{p["row"]}': label(p) for p in partners}
+    with theme.dialog() as dlg, ui.card().classes("km-panel").style("min-width:360px"):
+        theme.title(t("map.hex_panel.second_farmland_title"), 2)
+        ui.label(t("map.hex_panel.second_farmland_text")).style("color:var(--km-muted);font-size:.85rem")
+        choice = ui.select(options, value=next(iter(options)), label=t("map.hex_panel.second_farmland_hex")) \
+            .props("outlined dense").classes("w-full")
+
+        @theme.requires(permissions.EDIT_KINGDOM)
+        def confirm() -> None:
+            # The choice comes from the browser: only a hex that was offered,
+            # and that still qualifies, becomes Farmland.
+            picked = next((p for p in partners if f'{p["col"]},{p["row"]}' == choice.value), None)
+            dlg.close()
+            if picked is None or not STATE.in_influence(picked["col"], picked["row"]):
+                return
+            _make_farmland(picked)
+            theme.save_and_refresh()
+            mapping.refresh()
+
+        with ui.row():
+            ui.button(t("map.hex_panel.second_farmland_confirm"), on_click=confirm).props("color=amber")
+            ui.button(t("map.hex_panel.second_farmland_skip"), on_click=dlg.close).props("flat")
+    dlg.open()
 
 @theme.requires(permissions.EDIT_KINGDOM)
 def _roads(h: dict, mapping) -> None:
@@ -987,7 +1057,8 @@ def _roads(h: dict, mapping) -> None:
         STATE.k["unrest"] += 1
     theme.save_and_refresh()
     mapping.refresh()
-    theme.show_result(res, t("map.hex_panel.build_roads"), _dialog_result("build_roads", res))
+    theme.show_result(res, lambda: t("map.hex_panel.build_roads"),
+                      lambda: _dialog_result("build_roads", res), where=(h["col"], h["row"]))
 
 @theme.requires(permissions.EDIT_KINGDOM)
 def _fortify(h: dict, mapping) -> None:
@@ -1010,7 +1081,8 @@ def _fortify(h: dict, mapping) -> None:
         STATE.k["unrest"] += 1
     theme.save_and_refresh()
     mapping.refresh()
-    theme.show_result(res, t("map.hex_panel.fortify_hex"), _dialog_result("fortify_hex", res))
+    theme.show_result(res, lambda: t("map.hex_panel.fortify_hex"),
+                      lambda: _dialog_result("fortify_hex", res), where=(h["col"], h["row"]))
 
 @theme.requires(permissions.EDIT_KINGDOM)
 def _settlement(h: dict, mapping) -> None:
@@ -1036,8 +1108,15 @@ def _settlement(h: dict, mapping) -> None:
             STATE.fame_on_critical(res)
             STATE.mark_activity("establish_settlement")
             costs = {"critical_success": 1, "success": 3, "failure": 6}
+            cost_line = None
             if res.grade in costs:
-                tot, _ = rules.roll(costs[res.grade], 6)
+                tot, rolls = rules.roll(costs[res.grade], 6)
+                # The d6 of the cost on the same screen as the check, for
+                # everybody: the table sees what founding cost, not only the
+                # journal.
+                dice = f'{len(rolls)}d6'
+                cost_line = lambda: t("map.hex_panel.settlement_cost_rolled",  # noqa: E731
+                                      dice=dice, rolls=" + ".join(map(str, rolls)), tot=tot)
                 if STATE.k["rp"] < tot:
                     res.grade = "critical_failure"
                 else:
@@ -1054,8 +1133,10 @@ def _settlement(h: dict, mapping) -> None:
                     STATE.record(t("map.hex_panel.founded_village_rp", value=name.value, col=h['col'], row=h['row'], tot=tot), "settlement")
             theme.save_and_refresh()
             mapping.refresh()
-            theme.show_result(res, t("map.hex_panel.establish_settlement"),
-                                   _dialog_result("establish_settlement", res))
+            theme.show_result(res, lambda: t("map.hex_panel.establish_settlement"),
+                              lambda: "\n\n".join(x for x in (_dialog_result("establish_settlement", res),
+                                                              cost_line() if cost_line else "") if x),
+                              where=(h["col"], h["row"]))
 
         with ui.row():
             ui.button(t("map.hex_panel.roll"), on_click=go).props("color=amber")

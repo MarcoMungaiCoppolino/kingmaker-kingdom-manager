@@ -89,8 +89,9 @@ _EFFECT_FIELDS = {
 @theme.requires(permissions.EDIT_KINGDOM)
 def _apply_rows(rows: list[dict], title: str) -> list[str]:
     active = [r for r in rows if r["active"]]
+    dice: list[dict] = []
     done_ones = [d for r in active
-             for d in [STATE.apply_effect(r["entry"], r["valore"], r["target"])] if d]
+             for d in [STATE.apply_effect(r["entry"], r["valore"], r["target"], dice)] if d]
     if done_ones:
         STATE.record(f"{title}: " + "; ".join(done_ones), "activities")
         fields = [_EFFECT_FIELDS.get(r["entry"]["t"]) for r in active]
@@ -99,6 +100,11 @@ def _apply_rows(rows: list[dict], title: str) -> list[str]:
         else:
             theme.save_and_refresh_panels(
                 theme.stat_panels(*(x for f in fields for x in f), extra=("turn.journal",)))
+    # Resource Dice rolled by an effect or a cost: on screen for the table.
+    for roll in dice:
+        key = "theme.effect_dice_spent" if roll["spent"] else "theme.effect_dice_gained"
+        theme.show_dice(lambda: t("theme.resource_dice"), roll["rolls"], roll["faces"],
+                        lambda key=key, roll=roll: t(key, tot=roll["total"], what=title))
     return done_ones
 
 
@@ -217,6 +223,10 @@ def _outcome_dialog(act: dict, res: rules.Result) -> None:
     """Outcome of the activity with the proposed effects, to confirm before applying."""
     text = act["outcomes"].get(res.grade, "")
     entries = (act.get("effects") or {}).get(res.grade, [])
+    # The others see the roll and its outcome, read-only and in their own
+    # language; the effects to apply stay with whoever rolled.
+    theme.share_roll(res, lambda: rules.BY_ID["activities"][act["id"]]["name"],
+                     lambda: rules.BY_ID["activities"][act["id"]]["outcomes"].get(res.grade, ""))
     with theme.dialog() as dlg, ui.card().classes("km-panel") \
             .style("min-width:520px;max-width:680px;max-height:85vh;overflow-y:auto"):
         theme.title(act["name"], 2)
@@ -341,25 +351,28 @@ def quick_adjustments(compact: bool = False) -> None:
 
 
 # --------------------------------------------------------------------------
-def _simple_check(cd: int, title: str, on_success: str = "", on_failure: str = "") -> None:
+def _simple_check(cd: int, title, on_success="", on_failure="") -> None:
+    """A flat check: a d20 against `cd`, on screen for everybody. The texts
+    may be functions, so each window reads them in its own language."""
     tot, rolls = rules.roll(1, 20)
     ok = tot >= cd
-    STATE.record(t("turn.d20_vs_dc", title=title, tot=tot, cd=cd, v=rules.grade_label('success' if ok else 'failure')), "check")
+    STATE.record(t("turn.d20_vs_dc", title=theme._text(title), tot=tot, cd=cd, v=rules.grade_label('success' if ok else 'failure')), "check")
     theme.save_and_refresh()
-    with theme.dialog() as dlg, ui.card().classes("km-panel"):
-        theme.title(title, 2)
-        ui.html(f'<div class="km-pixel" style="font-size:1.6rem;color:var(--km-gold)">{tot}</div>')
-        ui.label(t("turn.flat_check_dc", cd=cd)).style("color:var(--km-muted)")
-        ui.html(f'<div class="{"km-s" if ok else "km-f"}" style="font-family:Cinzel;font-size:1.2rem">'
-                f'{rules.grade_label("success" if ok else "failure")}</div>')
-        text = on_success if ok else on_failure
-        if text:
-            ui.markdown(text)
-        ui.button(t("common.close"), on_click=dlg.close).props("flat color=amber")
-    dlg.open()
+    theme.show_dice(title, rolls, 20, on_success if ok else on_failure, dc=cd)
 
 
 # --------------------------------------------------------------------------
+def overcrowded_chip(over: list[dict]) -> str:
+    """The chip of the overcrowded settlements, with their Residential lots
+    out of the built blocks, in the window's language. The names are typed
+    by the players and go into HTML: escaped."""
+    details = ", ".join(
+        t("turn.residential_of_built", name=theme.esc(i["name"]),
+          residential=lot["residential_count"], built=lot["built_blocks"])
+        for i in over for lot in [STATE.lot_detail(i)])
+    return f'<div class="km-chip km-fc">{t("turn.overcrowded", details=details)}</div>'
+
+
 def _upkeep_step(step: dict) -> None:
     k = STATE.k
     if step["id"] == "unrest":
@@ -370,18 +383,15 @@ def _upkeep_step(step: dict) -> None:
                       on_click=lambda: _add_unrest(n_over)) \
                 .props(f'dense outline color=amber {"" if n_over else "disable"}')
             if over:
-                details = ", ".join(
-                    f'{i["name"]} (Residenziali {STATE.lot_detail(i)["residential_count"]}/'
-                    f'{STATE.lot_detail(i)["built_blocks"]})' for i in over)
-                ui.html(f'<div class="km-chip km-fc">Sovrappopolati: {details}</div>')
+                ui.html(overcrowded_chip(over))
             if k["unrest"] >= 10:
                 ui.button(t("turn.unrest_10_roll_1d10"),
                           on_click=_ruin_from_unrest).props("dense color=red")
                 ui.button(t("turn.flat_check_dc_11"),
                           on_click=lambda: _simple_check(
-                              11, t("turn.loss_hex"),
-                              t("turn.kingdom_loses_no_hex"),
-                              t("turn.kingdom_loses_hex_pcs"))).props("dense outline color=red")
+                              11, lambda: t("turn.loss_hex"),
+                              lambda: t("turn.kingdom_loses_no_hex"),
+                              lambda: t("turn.kingdom_loses_hex_pcs"))).props("dense outline color=red")
             if STATE.in_anarchy:
                 ui.html(t("turn.div_class_km_chip"))
 
@@ -395,7 +405,8 @@ def _upkeep_step(step: dict) -> None:
     elif step["id"] == "consumption":
         cons = STATE.consumption()
         with ui.row().classes("gap-2 flex-wrap items-center"):
-            ui.label(t("turn.turn_consumption_settlements_armies", total=cons["total"], settlements=cons["settlements"], armies=cons["armies"], farms=cons["farms"], events=cons["events"])) \
+            ui.label(t("turn.turn_consumption_settlements_armies", total=cons["total"], settlements=cons["settlements"], armies=cons["armies"], farms=cons["farms"], events=cons["events"])
+                     + (" · " + t("common.farmland_outside", n=cons["farms_outside"]) if cons["farms_outside"] else "")) \
                 .style("color:var(--km-muted)")
             ui.button(t("turn.pay_food"), on_click=lambda: _pay_consumption("food")).props("dense color=amber")
             ui.button(t("turn.pay_5_rp_per"), on_click=lambda: _pay_consumption("rp")).props("dense outline color=amber")
@@ -421,10 +432,11 @@ def _add_unrest(n: int) -> None:
 
 @theme.requires(permissions.EDIT_KINGDOM)
 def _ruin_from_unrest() -> None:
-    tot, _ = rules.roll(1, 10)
-    theme.notify(t("turn.1d10_ruin_points_distribute", tot=tot), "warning")
+    tot, rolls = rules.roll(1, 10)
     STATE.record(t("turn.unrest_10_ruin_points", tot=tot), "ruin")
     theme.save_and_refresh()
+    theme.show_dice(lambda: t("turn.unrest_ruin_title"), rolls, 10,
+                    lambda: t("turn.1d10_ruin_points_distribute", tot=tot))
 
 
 @theme.requires(permissions.EDIT_KINGDOM)
@@ -439,7 +451,8 @@ def _roll_resources() -> None:
     theme.save_and_refresh()
     sheet.resources_block.refresh()
     quick_adjustments.refresh()
-    theme.notify(t("turn.d_rp", n=n, faces=faces, tot=tot, join=', '.join(map(str, rolls))))
+    theme.show_dice(lambda: t("theme.resource_dice"), rolls, faces,
+                    lambda: t("theme.resource_dice_outcome", tot=tot))
 
 
 @theme.requires(permissions.EDIT_KINGDOM)
@@ -488,13 +501,17 @@ def _pay_consumption(mode: str) -> None:
             theme.notify(t("turn.not_enough_rp_increase"), "warning")
         STATE.record(t("turn.paid_consumption_rp", cost=cost), "consumption")
     else:
-        tot, _ = rules.roll(1, 4)
+        tot, rolls = rules.roll(1, 4)
         k["unrest"] += tot
         STATE.record(t("turn.consumption_not_paid_unrest", tot=tot), "consumption")
     theme.save_and_refresh()
     sheet.resources_block.refresh()
     sheet.identity_block.refresh()
     quick_adjustments.refresh()
+    if mode not in ("food", "rp"):
+        # The 1d4 used to go only into the journal: not even whoever rolled saw it.
+        theme.show_dice(lambda: t("turn.unpaid_consumption_title"), rolls, 4,
+                        lambda: t("turn.consumption_not_paid_unrest", tot=tot))
 
 
 # --------------------------------------------------------------------------
@@ -527,8 +544,9 @@ def _event_step(step: dict) -> None:
 @theme.requires(permissions.EDIT_KINGDOM)
 def _check_event() -> None:
     k = STATE.k
-    tot, _ = rules.roll(1, 20)
-    ok = tot >= k["event_dc"]
+    tot, rolls = rules.roll(1, 20)
+    dc = k["event_dc"]
+    ok = tot >= dc
     if ok:
         k["event_dc"] = 16
         STATE.record(t("turn.random_kingdom_event_d20", tot=tot), "event")
@@ -536,22 +554,13 @@ def _check_event() -> None:
         k["event_dc"] = max(1, k["event_dc"] - 5)
         STATE.record(t("turn.no_event_d20_next", tot=tot, event_dc=k['event_dc']), "event")
     theme.save_and_refresh()
-    _simple_check_result(tot, ok)
-
-
-def _simple_check_result(tot: int, ok: bool) -> None:
-    with theme.dialog() as dlg, ui.card().classes("km-panel"):
-        theme.title(t("turn.check_random_events"), 2)
-        ui.html(f'<div class="km-pixel" style="font-size:1.6rem;color:var(--km-gold)">{tot}</div>')
-        if ok:
-            ui.html(t("turn.div_class_km_s"))
-            ui.label(t("turn.gm_rolls_events_table")).style("color:var(--km-muted)")
-        else:
-            ui.html(t("turn.div_class_km_f"))
-            ui.label(t("turn.next_turn_s_dc", event_dc=STATE.k["event_dc"])) \
-                .style("color:var(--km-muted)")
-        ui.button(t("common.close"), on_click=dlg.close).props("flat color=amber")
-    dlg.open()
+    # The whole table waits on this one: everybody sees whether an event comes.
+    next_dc = k["event_dc"]
+    theme.show_dice(lambda: t("turn.check_random_events"), rolls, 20,
+                    (lambda: t("turn.gm_rolls_events_table")) if ok
+                    else (lambda: t("turn.next_turn_s_dc", event_dc=next_dc)),
+                    dc=dc,
+                    verdict=lambda: t("turn.div_class_km_s") if ok else t("turn.div_class_km_f"))
 
 
 @theme.requires(permissions.EDIT_KINGDOM)

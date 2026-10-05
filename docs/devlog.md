@@ -406,3 +406,29 @@ thing. One detail cost more than the rest: the canvas first scrolled in 16-pixel
 rounds positions to the step, and the last few pixels of the content could never be
 reached. The test found that, not a person.
 
+## 1.1.6 — 5 October 2026 · The field next to the village
+
+A table read "farmland 0" in its Consumption with a Farmland hex plainly on the map, next to
+its village, and called it a bug. The count was right: a Farmland hex reduces Consumption only
+inside a settlement's influence, and a village's influence is its own hex. What was wrong was
+everything around the count. The app had let the field be established there, though the rules
+ask for a hex in influence, mainly plains or hills. It charged a plains hex with a few hills as
+hills. A critical success gave one field where the book gives two. Nothing on screen said why
+the field did not count. Each of those is now what the rules say, and the screen says why.
+Checking it in a browser found a second problem: whoever ticked the Farmland kept reading the
+old Consumption in the Turn tab until a reload. The panels shared between windows were redrawn
+everywhere except in the window that made the change.
+
+The other half came from the table too: the GM wanted to see the players' rolls without asking.
+Every roll now opens its result screen in every open window, read-only, with who rolled. That
+covers the checks, the activities, and the plain dice down to the 1d4 of unpaid Consumption,
+which until now nobody saw, not even whoever rolled it. Each window builds its copy itself, so
+an Italian player reads it in Italian. A roll on a hex under the fog stays away from the players
+who cannot see that hex. The test that opens eight windows then began to hang after passing,
+about one run in three. The cause was a NiceGUI message loop waiting with `asyncio.wait_for`,
+which on Python 3.10 can lose a cancellation, and the rolls had given those loops more to do.
+Measuring the hang rate against the previous release was what showed the new code had caused it.
+The tests now close their windows before they end. Two smaller finds along the way: a journal
+line that was always Italian, because a local variable hid the translation function, and
+settlement names written into HTML unescaped.
+

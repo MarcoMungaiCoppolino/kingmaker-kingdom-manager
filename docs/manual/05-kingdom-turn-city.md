@@ -36,8 +36,11 @@ parse from the Italian prose).
 | `size_` | `claimed` hexes |
 | `control_dc` | level table + size modifier + 2 if the Ruler is absent |
 | `skill_detail(sid)` | ability, proficiency, the status bonus of the invested role (the best), Unrest penalty, Ruin penalty, temporary modifiers (the best per type) |
-| `consumption()` | settlements + armies − influenced farmlands + events |
-| `influenced_hexes()` | within the influence of a placed settlement (`hexgrid.distance`) |
+| `consumption()` | settlements + armies − influenced farmlands + events; `farms_outside` counts the claimed Farmland out of every influence, shown so that «farmland 0» with a field on the map explains itself |
+| `influenced_hexes()` | claimed hexes within the influence of a placed settlement (`hexgrid.distance`): a village 0 (its own hex), a town 1, a city 2, a metropolis 3; 0 for a settlement bordered only by water without a bridge |
+| `in_influence(col, row)` | the requirement of Establish Farmland, and the condition for Farmland to count |
+| `farmland_ground(h)` | the other requirement: "plains" or "hills" when that is the predominant terrain (the first listed), None otherwise; no terrain set counts as plains. Cost and DC follow it |
+| `farmland_partners(col, row, hills)` | the hexes that can take the second Farmland of a critical success: adjacent, claimed, in influence, no settlement or Farmland yet, plains (or hills, for an attempt in hills) |
 | `step_limit(phase, step)` | Leadership: `max_leadership_activities × pc_leaders`; Region: 3; Civic: number of settlements |
 | `activity_block(act)` | why an activity cannot be attempted: proficiency, per-turn limit, anarchy, step used up |
 | `apply_effect(entry, value)` | the single point that modifies the kingdom by effect of an activity |

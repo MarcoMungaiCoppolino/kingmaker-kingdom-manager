@@ -310,7 +310,10 @@ def _build(st: dict, sett: dict, gi: int, bi: int, li: int, dlg, refresh, with_c
         refresh()
         dlg.close()
 
-    theme.show_result(res, t("city.build_structure", name=st['name']), outcome)
+    # Functions, not strings: the other windows read the roll in their own
+    # language, structure name and outcome included.
+    theme.show_result(res, lambda: t("city.build_structure", name=rules.BY_ID["structure"][st["id"]]["name"]),
+                      lambda: rules.BY_ID["activities"]["build_structure"]["outcomes"][res.grade])
 
 
 @theme.requires(permissions.EDIT_KINGDOM)
@@ -538,9 +541,11 @@ def _kingdom_stats_block() -> None:
         theme.title(t("city.kingdom_statistics"), 3)
         over = STATE.overcrowded_settlements()
         if over:
-            ui.html(t("city.div_class_km_chip_3", len=len(over), v=t("city.overcrowded_settlement") if len(over) == 1 else t("city.overcrowded_settlements"), len2=len(over), join=", ".join(i["name"] for i in over)))
+            ui.html(t("city.div_class_km_chip_3", len=len(over), v=t("city.overcrowded_settlement") if len(over) == 1 else t("city.overcrowded_settlements"), len2=len(over), join=", ".join(theme.esc(i["name"]) for i in over)))
         cons = STATE.consumption()
-        ui.html(t("city.span_class_km_chip_5", total=cons["total"], settlements=cons["settlements"], armies=cons["armies"], farms=cons["farms"], events=cons["events"]))
+        ui.html(t("city.span_class_km_chip_5", total=cons["total"], settlements=cons["settlements"], armies=cons["armies"], farms=cons["farms"], events=cons["events"])
+                + (f' <span class="km-chip">{t("common.farmland_outside", n=cons["farms_outside"])}</span>'
+                   if cons["farms_outside"] else ""))
         turn.quick_adjustments(compact=True)
 
 

@@ -207,6 +207,18 @@ def changes() -> list:
     ]
 
 
+def close_all(users) -> None:
+    """Closes the simulated windows before the test ends.
+
+    A window's outbox loop stops on its own once the window is deleted. Left
+    to asyncio's cancellation at exit, one loop could swallow it — it waits
+    with `asyncio.wait_for`, which on Python 3.10 can lose a cancellation
+    that lands at the wrong moment — and the process never ended. It hung
+    about one run in three once rolls began reaching every window."""
+    for user in users:
+        user.client.delete()
+
+
 async def drain() -> None:
     for _ in range(500):
         await asyncio.sleep(0)
@@ -286,6 +298,8 @@ async def run() -> None:
         problems = [p for _n, u in users for p in check_window(u.client.id)]
         results.append(("a window that closed is forgotten, the others stay right",
                         not problems and gone.client.id not in theme._REFRESH))
+
+        close_all(u for _n, u in users)
 
 
 asyncio.run(run())
