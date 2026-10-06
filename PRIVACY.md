@@ -43,7 +43,9 @@ with the internet unplugged.
 [Zauberzeug GmbH](https://zauberzeug.com/) (Germany), the makers of NiceGUI, under their
 [terms](https://nicegui.io/on_air). The relay sees each player's address and the traffic passes
 through it in the clear: the operator could read it. Fine for a game, not for anything you
-would call a secret. The On Air token, if you use one, is stored in clear in the game folder.
+would call a secret. The On Air token, if you use one, is stored in clear in the game folder;
+with the cloud (below) it is stored in the table's folder instead, and read from there at every
+start.
 
 **With the cloud (hosting from several PCs)** — the hosting launcher uploads, to a folder in the
 administrator's Dropbox: a copy of the whole database (accounts and password hashes included)

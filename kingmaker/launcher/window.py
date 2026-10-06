@@ -10,11 +10,12 @@ the widgets.
 """
 from __future__ import annotations
 
-import json
 import queue
+import secrets
 import sys
 import tempfile
 import threading
+import time
 import tkinter as tk
 import webbrowser
 from pathlib import Path
@@ -73,6 +74,17 @@ class Launcher:
         self.hoster: sync.Hoster | None = None
         self.other: sync.HostRecord | None = None
         self.cloud_busy = False
+        # Whether this process has held the record once: a living record
+        # with our own identity is then a crash and a restart, otherwise it
+        # may be a copied game folder on another PC, and we ask.
+        self.hosted_before = False
+        # Hosting without the cloud, after it did not answer: no token, no
+        # uploads, and the next cloud start asks what to do with the fork.
+        self.offline = False
+        # The table's file as last read, and the token it gave for this
+        # start: read at every Start, handed to the server, never saved here.
+        self.table: sync.TableRecord | None = None
+        self.token_for_start: str | None = None
 
         root.title(core.APP_NAME)
         root.minsize(560, 420)
@@ -164,14 +176,20 @@ class Launcher:
         self.air_renew = ttk.Button(ways, text=t("launcher.air.renew"),
                                     command=self.open_air_renew)
         self.air_renew.pack(side="left")
-        row = ttk.Frame(self.air)
+        self.token_row = row = ttk.Frame(self.air)
         row.pack(fill="x", padx=8, pady=2)
         self.token_entry = ttk.Entry(row, textvariable=self.token_var, show="•")
         self.token_entry.pack(side="left", fill="x", expand=True)
         ttk.Checkbutton(row, text=t("launcher.air.show"), variable=self.show_token,
                         command=self.toggle_token).pack(side="left", padx=6)
-        ttk.Label(self.air, text=t("launcher.air.note"), foreground=COLOURS["quiet"],
-                  wraplength=500, justify="left").pack(anchor="w", padx=8, pady=(4, 6))
+        # With the cloud the token is not here but in the table's folder:
+        # this line stands where the field would be.
+        self.air_from_table = ttk.Label(self.air, text=t("launcher.air.from_table"),
+                                        foreground=COLOURS["quiet"], wraplength=500, justify="left")
+        self.air_note = ttk.Label(self.air, text=t("launcher.air.note"), foreground=COLOURS["quiet"],
+                                  wraplength=500, justify="left")
+        self.air_note.pack(anchor="w", padx=8, pady=(4, 6))
+        self.refresh_air()
 
         self.cloud = ttk.LabelFrame(body, text=t("launcher.cloud.title"))
         self.cloud.pack(fill="x", **PAD)
@@ -207,6 +225,22 @@ class Launcher:
         self.reflect_running()
         self.rebuild_links()
         self.toggle_log()
+
+    def refresh_air(self) -> None:
+        """The token field, or the line that says the token lives in the
+        table's folder; and the renewal door for whoever may use it."""
+        with_cloud = self.settings.cloud_ready
+        admin = self.settings.cloud.get("role") == "admin"
+        if with_cloud:
+            self.token_row.pack_forget()
+            self.air_from_table.pack(anchor="w", padx=8, pady=2, before=self.air_note)
+        else:
+            self.air_from_table.pack_forget()
+            self.token_row.pack(fill="x", padx=8, pady=2, before=self.air_note)
+        if with_cloud and not admin:
+            self.air_renew.pack_forget()
+        else:
+            self.air_renew.pack(side="left")
 
     def mode_changed(self) -> None:
         mode = self.mode_var.get()
@@ -304,8 +338,10 @@ class Launcher:
         else:
             self.set_status(t("launcher.status.starting"), "busy")
         self.append_log("$ " + " ".join(core.server_command(self.settings, port)))
+        if self.offline:
+            self.append_log(t("launcher.log.offline"))
         try:
-            self.server.start(self.settings, port)
+            self.server.start(self.settings, port, cloud=not self.offline, token=self.token_for_start)
         except OSError as error:
             self.set_status(str(error), "bad")
             self.drop_record()
@@ -323,6 +359,8 @@ class Launcher:
             hoster.stop(final=True)
             self.record = None
         self.server.stop()
+        self.offline = False
+        self.token_for_start = None
         self.reflect_running()
         self.refresh_cloud()
 
@@ -342,15 +380,18 @@ class Launcher:
         if self.record is not None:
             text = t("launcher.cloud.you_host", table=cloud.get("table", ""), epoch=self.record.epoch)
             colour = COLOURS["ok"]
+        elif self.offline and self.server.running:
+            text = t("launcher.cloud.offline", table=cloud.get("table", ""))
+            colour = COLOURS["bad"]
         elif self.other is not None and self.other.held():
-            text = t("launcher.cloud.hosted_by", host=self.other.host_name or self.other.host_id,
-                     since=self.other.since.replace("T", " ").rstrip("Z"))
+            text = self.hosted_text(self.other)
             colour = COLOURS["busy"]
         else:
             text = t("launcher.cloud.ready", table=cloud.get("table", ""), who=who,
                      role=cloud.get("role", ""), account=cloud.get("account_name", ""))
             colour = COLOURS["quiet"]
         self.cloud_label.config(text=text, foreground=colour)
+        self.refresh_air()
         if self.record is None:
             ttk.Button(self.cloud_row, text=t("launcher.cloud.check"), command=self.check_host
                        ).pack(side="left")
@@ -369,8 +410,20 @@ class Launcher:
         assert credential is not None
         return dropbox.Client(credential)
 
+    def hosted_text(self, record: sync.HostRecord) -> str:
+        """"Hosted by X (version) since…" — with a word for a host whose
+        launcher predates the table's version and cannot know it."""
+        since = record.since.replace("T", " ").rstrip("Z")
+        host = record.host_name or record.host_id
+        version = record.app_version or "?"
+        known = core.version_tuple(version)
+        if known and known < (1, 3, 0):
+            return t("launcher.cloud.hosted_by_old", host=host, version=version, since=since)
+        return t("launcher.cloud.hosted_by", host=host, version=version, since=since)
+
     def check_host(self) -> None:
-        """Who holds the record right now, without claiming it."""
+        """Who holds the record right now, without claiming it; and what
+        the table's file says."""
         if self.cloud_busy:
             return
         self.cloud_busy = True
@@ -378,24 +431,42 @@ class Launcher:
 
         def work() -> None:
             try:
-                record = sync.read_record(self.cloud_client())
+                client = self.cloud_client()
+                record = sync.read_record(client)
+                table = sync.read_table(client)
             except dropbox.DropboxError as error:
                 err = error
                 self.post(lambda: self.cloud_failed(err))
                 return
-            self.post(lambda: self.checked(record))
+            self.post(lambda: self.checked(record, table))
 
         threading.Thread(target=work, daemon=True).start()
 
-    def checked(self, record: sync.HostRecord | None) -> None:
+    def checked(self, record: sync.HostRecord | None, table: sync.TableRecord | None = None) -> None:
         self.cloud_busy = False
+        self.table = table
         self.other = record if record is not None and record.held() else None
         if self.other is None:
             self.set_status(t("launcher.cloud.nobody"), "quiet")
+            if table is not None and table.air_token and table.air_address and not self.server.running:
+                threading.Thread(target=self.probe_idle, args=(table.air_address,), daemon=True).start()
         else:
-            self.set_status(t("launcher.cloud.hosted_by", host=self.other.host_name or self.other.host_id,
-                              since=self.other.since.replace("T", " ").rstrip("Z")), "busy")
+            self.set_status(self.hosted_text(self.other), "busy")
         self.refresh_cloud()
+
+    def probe_idle(self, address: str) -> None:
+        """Nobody hosts, says the record: does anything of ours answer at
+        the table's address all the same? Then somebody else holds the
+        token, and the table should know."""
+        data, _why = core.probe_address(address, secrets.token_hex(8))
+        if data is not None and not self.server.running:
+            self.post(lambda: self.idle_alarm(address))
+
+    def idle_alarm(self, address: str) -> None:
+        text = t("launcher.cloud.address_idle", address=address)
+        self.append_log(f"cloud: {text}")
+        self.set_status(text, "bad")
+        messagebox.showwarning(t("launcher.cloud.address_other_title"), text)
 
     def cloud_failed(self, error: Exception) -> None:
         self.cloud_busy = False
@@ -416,27 +487,85 @@ class Launcher:
         def say(text: str) -> None:
             self.post(lambda: self.set_status(text, "busy"))
 
+        def cloud_log(m: str) -> None:
+            self.events.put(("line", f"cloud: {m}"))
+
         def work() -> None:
             try:
                 client = self.cloud_client()
+                current = sync.read_record(client)
+                if (current is not None and current.held() and current.host_id == host_id
+                        and not self.hosted_before and not force):
+                    # Our own identity, alive, and this process never held
+                    # it: a crash and a restart, or a copied game folder on
+                    # another PC. Only the person knows which.
+                    age = int(current.age)
+                    if not self.ask(lambda: messagebox.askyesno(
+                            t("launcher.cloud.title"), t("launcher.cloud.same_identity", age=age))):
+                        self.post(self.cancelled)
+                        return
+                # The table's file: the version every host must run, and
+                # the token for this start. Nothing is claimed on a
+                # mismatch: the way on is to install, or (the
+                # administrator) to move the table.
+                table = self.settle_table(client, host_name)
+                move = False
+                if table.mismatch():
+                    decision = self.ask(lambda: self.version_dialog(table))
+                    if decision == "install":
+                        wanted = table.app_version
+                        self.post(lambda: self.install_version(wanted))
+                        return
+                    if decision != "move":
+                        self.post(self.cancelled)
+                        return
+                    move = True
+                token = table.air_token or self.settings.token.strip()
                 record = sync.claim(client, host_id, host_name, force=force)
                 say(t("launcher.cloud.pulling"))
-                pulled = sync.newest_usable(client, core.game_folder() / "cloud",
-                                            log=lambda m: self.events.put(("line", f"cloud: {m}")))
+                try:
+                    pulled = sync.newest_usable(client, core.game_folder() / "cloud",
+                                                log=cloud_log, record=record)
+                except sync.NewerCopy as newer:
+                    sync.release(client, record)
+                    found = newer
+                    self.post(lambda: self.claim_failed_newer(found))
+                    return
                 loaded = None
+                local = core.local_state()
                 if pulled is not None:
                     marks = sync.marks_of(pulled)
-                    local = self.local_marks()
-                    if marks > local:
-                        say(t("launcher.cloud.loading", name=pulled.name))
-                        core.load_save(pulled)
-                        loaded = pulled.name
+                    keep_mine = False
+                    if marks > local.marks:
+                        if local.diverged:
+                            # Both sides moved on: the cloud since we last
+                            # matched it, this file since then too. Asked,
+                            # never decided here.
+                            name, when = pulled.name, local.forked_at
+                            choice = self.ask(lambda: self.fork_dialog(name, when))
+                            if choice == "cancel":
+                                sync.release(client, record)
+                                self.post(self.cancelled)
+                                return
+                            keep_mine = choice == "mine"
+                        if not keep_mine:
+                            say(t("launcher.cloud.loading", name=pulled.name))
+                            core.load_save(pulled)
+                            loaded = pulled.name
                     wanted = bundle_manifest(pulled).get("assets") or {}
                     if wanted:
-                        sync.pull_assets(client, assets_dir, wanted,
-                                         log=lambda m: self.events.put(("line", f"cloud: {m}")))
+                        sync.pull_assets(client, assets_dir, wanted, log=cloud_log)
                     record.seq = max(record.seq, marks[1] if marks[0] == record.epoch - 1 else record.seq)
-                self.post(lambda: self.claimed(record, loaded))
+                if local.forked_at:
+                    core.mark_fork("")           # the fork is settled either way
+                if move:
+                    # Only now, with the newest copy read: a move down that
+                    # could not read it stopped above, the table untouched.
+                    table.app_version = __version__
+                    sync.write_table(client, table, by=host_name)
+                    self.post(lambda: self.append_log(
+                        "cloud: " + t("launcher.cloud.version.moved", version=__version__)))
+                self.post(lambda: self.claimed(record, loaded, token))
             except sync.Held as held:
                 other = held.record
                 self.post(lambda: self.refused(other))
@@ -449,22 +578,158 @@ class Launcher:
 
         threading.Thread(target=work, daemon=True).start()
 
-    def local_marks(self) -> tuple[int, int]:
-        """The (epoch, seq) the local database last matched in the cloud."""
-        try:
-            from kingmaker.storage.archive import Archive
-            archive = Archive(config.DB_FILE)
-            try:
-                raw = archive.read_meta("sync_marks")
-            finally:
-                archive.close()
-            data = json.loads(raw) if raw else {}
-            return int(data.get("epoch") or 0), int(data.get("seq") or 0)
-        except Exception:
-            return 0, 0
+    def settle_table(self, client, host_name: str) -> sync.TableRecord:
+        """The table's file, read or created, and the token put where it
+        belongs. The administrator's local token goes into the file (a
+        renewal made while the cloud was away arrives this way); a GM's
+        local copy fills an empty file, and is forgotten once the file has
+        one. Called from the claim thread."""
+        admin = self.settings.cloud.get("role") == "admin"
+        local = self.settings.token.strip()
+        name = self.settings.cloud.get("table") or "Kingmaker"
+        table, created = sync.ensure_table(client, name, token=local, by=host_name)
+        if created:
+            self.post(lambda: self.append_log(t("launcher.log.table_created", version=table.app_version)))
+        elif local and ((admin and local != table.air_token) or not table.air_token):
+            table.air_token = local
+            table.air_generation += 1
+            sync.write_table(client, table, by=host_name)
+        if local and table.air_token:
+            self.post(self.token_moved)
+        if table.air_generation:
+            self.post(lambda: self.append_log(
+                t("launcher.log.token_generation", generation=table.air_generation)))
+        if table.name:
+            self.settings.cloud["table"] = table.name
+        self.table = table
+        return table
 
-    def claimed(self, record: sync.HostRecord, loaded: str | None) -> None:
+    def token_moved(self) -> None:
+        """The token is in the table's folder now: forgotten here, said once."""
+        self.settings.token = ""
+        self.token_var.set("")
+        self.settings.save()
+        self.append_log("cloud: " + t("launcher.cloud.token_moved"))
+        self.refresh_air()
+
+    def ask(self, fn):
+        """Runs `fn` on the Tk thread and waits for what it returns: a
+        question asked by a thread that may not touch the widgets. Never
+        to be called from the Tk thread itself, which would wait for its
+        own answer."""
+        done = threading.Event()
+        answer: list = []
+
+        def run() -> None:
+            try:
+                answer.append(fn())
+            finally:
+                done.set()
+
+        self.post(run)
+        done.wait()
+        return answer[0] if answer else None
+
+    def choose(self, title: str, text: str, options: list[tuple[str, str]]) -> str:
+        """A question with its answers as buttons, one under the other, on
+        the Tk thread: the value of the one pressed, or the last option's
+        when the window is closed instead."""
+        win = tk.Toplevel(self.root)
+        win.withdraw()                      # shown by screen.present, sized and placed
+        win.title(title)
+        win.transient(self.root)
+        answer = [options[-1][1]]
+
+        def pick(what: str) -> None:
+            answer[0] = what
+            win.destroy()
+
+        ttk.Label(win, text=text, wraplength=460, justify="left").pack(padx=16, pady=(14, 10))
+        for label, what in options:
+            ttk.Button(win, text=label, command=lambda w=what: pick(w)).pack(fill="x", padx=16, pady=3)
+        ttk.Frame(win, height=10).pack()
+        win.protocol("WM_DELETE_WINDOW", lambda: pick(options[-1][1]))
+        screen.present(win, grab=True)
+        self.root.wait_window(win)
+        return answer[0]
+
+    def fork_dialog(self, name: str, forked_at: str) -> str:
+        """Which copy is the game: the cloud's, newer, or this PC's, played
+        on since. Answers "cloud", "mine" or "cancel"."""
+        when = t("launcher.cloud.fork.when", date=forked_at) if forked_at else ""
+        return self.choose(t("launcher.cloud.fork.title"),
+                           t("launcher.cloud.fork.text", name=name, when=when),
+                           [(t("launcher.cloud.fork.keep_cloud"), "cloud"),
+                            (t("launcher.cloud.fork.keep_mine"), "mine"),
+                            (t("launcher.cloud.fork.cancel"), "cancel")])
+
+    def version_dialog(self, table: sync.TableRecord) -> str:
+        """The table plays on another version: "install" it, or (the
+        administrator) "move" the table to this one, or "cancel"."""
+        admin = self.settings.cloud.get("role") == "admin"
+        mine, theirs = __version__, table.app_version
+        title = t("launcher.cloud.version.title")
+        install = (t("launcher.cloud.version.install", version=theirs), "install")
+        move = (t("launcher.cloud.version.move", mine=mine), "move")
+        cancel = (t("common.cancel"), "cancel")
+        if admin and core.is_newer(mine, theirs):
+            return self.choose(title, t("launcher.cloud.version.move_text", table=theirs, mine=mine),
+                               [move, install, cancel])
+        if admin:
+            return self.choose(title, t("launcher.cloud.version.move_down_text", table=theirs, mine=mine),
+                               [install, move, cancel])
+        return self.choose(title, t("launcher.cloud.version.mismatch", table=theirs, mine=mine),
+                           [install, cancel])
+
+    def install_version(self, version: str) -> None:
+        """The table's version, from GitHub, over this copy: nothing was
+        claimed, the game folder is kept."""
         self.cloud_busy = False
+        self.record = None
+        self.start_button.config(state="normal")
+        self.set_status(t("launcher.cloud.version.status", table=version, mine=__version__), "bad")
+        self.refresh_cloud()
+
+        def work() -> None:
+            release = core.find_release(version)
+            self.post(lambda: self.install_found(version, release))
+
+        threading.Thread(target=work, daemon=True).start()
+
+    def install_found(self, version: str, release: core.Release | None) -> None:
+        if release is None:
+            messagebox.showinfo(t("launcher.cloud.version.title"),
+                                t("launcher.cloud.version.no_release", version=version))
+            return
+        self.download_update(release)
+
+    def cancelled(self) -> None:
+        """The person said no at one of the questions: nothing was taken."""
+        self.cloud_busy = False
+        self.record = None
+        self.start_button.config(state="normal")
+        self.set_status(t("launcher.cloud.cancelled"), "quiet")
+        self.refresh_cloud()
+
+    def claim_failed_newer(self, newer: sync.NewerCopy) -> None:
+        """The cloud's newest copy comes from a newer app: nothing was
+        loaded, the record was released, and the way on is to install it."""
+        self.cloud_busy = False
+        self.record = None
+        self.start_button.config(state="normal")
+        self.append_log(f"cloud: {newer}")
+        self.set_status(t("launcher.cloud.newer_copy_status", app=newer.app or "?"), "bad")
+        self.refresh_cloud()
+        if messagebox.askyesno(t("launcher.cloud.title"), t(
+                "launcher.cloud.newer_copy", app=newer.app or "?", version=newer.version,
+                mine=newer.mine, name=newer.name)):
+            self.open_versions()
+
+    def claimed(self, record: sync.HostRecord, loaded: str | None, token: str | None = None) -> None:
+        self.cloud_busy = False
+        self.hosted_before = True
+        self.offline = False
+        self.token_for_start = token
         self.record = record
         self.other = None
         if loaded:
@@ -476,8 +741,7 @@ class Launcher:
         self.cloud_busy = False
         self.other = record
         self.start_button.config(state="normal")
-        self.set_status(t("launcher.cloud.hosted_by", host=record.host_name or record.host_id,
-                          since=record.since.replace("T", " ").rstrip("Z")), "busy")
+        self.set_status(self.hosted_text(record), "busy")
         self.refresh_cloud()
 
     def claim_failed(self, error: Exception) -> None:
@@ -486,6 +750,12 @@ class Launcher:
         self.append_log(f"cloud: {error}")
         if messagebox.askyesno(t("launcher.cloud.title"), t("launcher.cloud.host_without", error=error)):
             self.record = None
+            self.offline = True
+            self.token_for_start = None
+            try:
+                core.mark_fork(time.strftime("%Y-%m-%d"))
+            except Exception as marking:     # a database that cannot be opened: the server will say
+                self.append_log(f"cloud: {marking}")
             self.start_server()
         else:
             self.set_status(t("launcher.cloud.unreachable", error=error), "bad")
@@ -545,6 +815,30 @@ class Launcher:
 
     def air_ready(self) -> None:
         self.token_var.set(self.settings.token)
+        if (self.settings.cloud_ready and self.settings.cloud.get("role") == "admin"
+                and self.settings.token.strip()):
+            threading.Thread(target=self.publish_token, daemon=True).start()
+
+    def publish_token(self) -> None:
+        """The administrator's new token into the table's folder, so every
+        host reads it at its next Start. When the cloud is away the token
+        stays here and the next Start carries it (`settle_table`)."""
+        _host_id, host_name = self.settings.identity()
+        token = self.settings.token.strip()
+        try:
+            client = self.cloud_client()
+            table, _created = sync.ensure_table(client, self.settings.cloud.get("table") or "Kingmaker",
+                                                token=token, by=host_name)
+            if table.air_token != token:
+                table.air_token = token
+                table.air_generation += 1
+                sync.write_table(client, table, by=host_name)
+        except Exception as error:          # unreachable, refused: kept locally for now
+            err = error
+            self.post(lambda: self.append_log(f"cloud: {err}"))
+            return
+        self.table = table
+        self.post(self.token_moved)
 
     def open_connect(self) -> None:
         wizard.ConnectDialog(self.root, self.settings, on_done=self.cloud_connected, post=self.post)
@@ -629,7 +923,7 @@ class Launcher:
             self.append_log("KM admin-password ********")
             self.show_password("admin", parsed[1])
             return
-        self.append_log(text)
+        self.append_log(core.mask_secrets(text))
         if not parsed:
             return
         kind, value = parsed
@@ -652,6 +946,55 @@ class Launcher:
             self.rebuild_links()
             if self.record is not None:
                 self.record.address = value      # the next heartbeat tells the others
+            if (core.is_random_air_address(value) and self.table is not None
+                    and self.table.air_token and not self.offline):
+                # The relay gave an anonymous device: the table's token
+                # was refused, and the fixed address leads nowhere.
+                self.set_status(t("launcher.cloud.token_refused"), "bad")
+                self.append_log("cloud: " + t("launcher.cloud.token_refused"))
+            elif self.record is not None:
+                threading.Thread(target=self.verify_address, args=(value, self.server.secret),
+                                 daemon=True).start()
+
+    def verify_address(self, address: str, secret: str) -> None:
+        """Asks the public address who answers there, three times over half
+        a minute (the relay takes a moment to route a new device): this
+        server, proven by its own secret, or another program."""
+        why = ""
+        for attempt in range(3):
+            nonce = secrets.token_hex(8)
+            data, why = core.probe_address(address, nonce)
+            if data is not None:
+                ok = data.get("proof") == core.whoami_proof(secret, nonce)
+                self.post(lambda: self.address_checked(ok, address))
+                return
+            if attempt < 2:
+                time.sleep(10)
+        reason = why
+        self.post(lambda: self.append_log("cloud: " + t("launcher.cloud.address_unverified", error=reason)))
+
+    def address_checked(self, ok: bool, address: str) -> None:
+        if not self.server.running:
+            return
+        if ok:
+            self.append_log("cloud: " + t("launcher.cloud.address_ok"))
+            if self.table is not None and self.table.air_address != address:
+                self.table.air_address = address
+                table, host_name = self.table, self.settings.identity()[1]
+
+                def remember() -> None:
+                    try:
+                        sync.write_table(self.cloud_client(), table, by=host_name)
+                    except Exception as error:
+                        err = error
+                        self.post(lambda: self.append_log(f"cloud: {err}"))
+
+                threading.Thread(target=remember, daemon=True).start()
+            return
+        text = t("launcher.cloud.address_other")
+        self.append_log("cloud: " + text)
+        self.set_status(text, "bad")
+        messagebox.showwarning(t("launcher.cloud.address_other_title"), text)
 
     def handle_exit(self, code: int) -> None:
         if self.hoster is not None:
@@ -659,6 +1002,7 @@ class Launcher:
             threading.Thread(target=lambda: hoster.stop(final=False), daemon=True).start()
         if self.record is not None:
             threading.Thread(target=self.drop_record, daemon=True).start()
+        self.offline = False
         self.reflect_running()
         if code not in (0, None) and self.port_in_use is not None:
             self.set_status(t("launcher.status.died", code=code), "bad")

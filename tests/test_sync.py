@@ -6,10 +6,13 @@ their retention, the pull, the credential route of a real server.
 Runs on the test scene like the rest of the suite; the server started for
 the credential route uses a scratch folder of its own.
 """
+import base64
+import hashlib
 import json
 import os
 import shutil
 import socket
+import sqlite3
 import subprocess
 import sys
 import tempfile
@@ -36,6 +39,11 @@ os.environ["KINGMAKER_DROPBOX_WWW"] = box.url
 from kingmaker.launcher import dropbox, sync  # noqa: E402
 from kingmaker.state import STATE  # noqa: E402
 from kingmaker.storage import bundle  # noqa: E402
+from kingmaker.storage.archive import SCHEMA_VERSION  # noqa: E402
+
+# A one-pixel PNG: the pull now checks that what it fetches is an image,
+# so the test images must be ones. A trailer tells two of them apart.
+PNG = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==")
 
 A = STATE.archive
 credential = dropbox.Credential(app_key="key", refresh_token="rt-secret")
@@ -120,12 +128,12 @@ results.append(("a race is retried and lands on top", raced.epoch == 6))
 # 4. snapshots: recent five, daily once a day, thirty kept, assets by hash
 assets = folder / "assets"
 (assets / "characters").mkdir(parents=True)
-(assets / "map.jpg").write_bytes(b"JPEG-map")
-(assets / "characters" / "aldric.png").write_bytes(b"PNG-face")
+(assets / "map.png").write_bytes(PNG + b"map")
+(assets / "characters" / "aldric.png").write_bytes(PNG + b"face")
 (assets / "thumbnails").mkdir()
 (assets / "thumbnails" / "small.png").write_bytes(b"tiny")
 hashes = bundle.asset_hashes(assets)
-results.append(("asset hashes skip thumbnails", set(hashes) == {"map.jpg", "characters/aldric.png"}))
+results.append(("asset hashes skip thumbnails", set(hashes) == {"map.png", "characters/aldric.png"}))
 known = sync.push_assets(client, assets, hashes)
 uploaded = len(client.list_folder("assets"))
 calls_before = len(box.calls)
@@ -161,14 +169,111 @@ results.append(("a corrupt newest copy is skipped for the next usable",
 other_assets = folder / "other-assets"
 fetched = sync.pull_assets(client, other_assets, hashes)
 results.append(("the images a snapshot refers to are fetched",
-                fetched == 2 and (other_assets / "map.jpg").read_bytes() == b"JPEG-map"))
+                fetched == 2 and (other_assets / "map.png").read_bytes() == PNG + b"map"))
 results.append(("already present images are not fetched again",
                 sync.pull_assets(client, other_assets, hashes) == 0))
+
+# 5b. the pull refuses what a manifest cannot vouch for: a path that leaves
+#     the assets folder, bytes that are not their name's hash, bytes that
+#     are not an image, a name that is not an image's
+escaped = sync.pull_assets(client, other_assets, {"../escaped.png": hashes["map.png"]})
+results.append(("a path that climbs out of assets is refused",
+                escaped == 0 and not (other_assets.parent / "escaped.png").exists()))
+wrong = "0" * 64
+client.upload(f"assets/{wrong}.png", PNG + b"wrong-name", mode="overwrite")
+results.append(("bytes that are not the hash they are named after are refused",
+                sync.pull_assets(client, other_assets, {"liar.png": wrong}) == 0
+                and not (other_assets / "liar.png").exists()))
+junk = b"not an image at all"
+junk_hash = hashlib.sha256(junk).hexdigest()
+client.upload(f"assets/{junk_hash}.png", junk, mode="overwrite")
+results.append(("bytes that are not an image are refused, and no piece is left behind",
+                sync.pull_assets(client, other_assets, {"junk.png": junk_hash}) == 0
+                and not (other_assets / "junk.png").exists()
+                and not (other_assets / "junk.png.part").exists()))
+results.append(("a name that is not an image's is refused",
+                sync.pull_assets(client, other_assets, {"script.svg": hashes["map.png"]}) == 0
+                and not (other_assets / "script.svg").exists()))
+
+# 5c. a copy from a newer app stops the pull; a copy above the record's
+#     epoch is ignored
+newer_db = folder / "newer.db"
+A.backup_to(newer_db)
+c = sqlite3.connect(newer_db)
+c.execute("UPDATE meta SET value=? WHERE key='schema_version'", (str(SCHEMA_VERSION + 1),))
+c.commit()
+c.close()
+newer_zip = folder / "newer.zip"
+with zipfile.ZipFile(newer_zip, "w") as zf:
+    zf.writestr("manifest.json", json.dumps({"epoch": 7, "seq": 35, "schema": SCHEMA_VERSION + 1}))
+    zf.write(newer_db, "kingmaker.db")
+box.put("recent/save-e7-s35.zip", newer_zip.read_bytes())
+try:
+    sync.newest_usable(client, folder / "pulled3", record=sync.HostRecord(epoch=8))
+    results.append(("a copy from a newer app stops the pull instead of falling back", False))
+except sync.NewerCopy as stop:
+    results.append(("a copy from a newer app stops the pull instead of falling back",
+                    stop.name == "save-e7-s35.zip" and stop.version == SCHEMA_VERSION + 1
+                    and stop.mine == SCHEMA_VERSION))
+results.append(("the refused copy is not left on disk", not (folder / "pulled3" / "save-e7-s35.zip").exists()))
+# every recent copy is from epoch 7 or 9 by now (the epoch 6 ones were
+# pruned): with the record at epoch 6 the pull must fall through to a daily copy
+picked = sync.newest_usable(client, folder / "pulled4", record=sync.HostRecord(epoch=6))
+results.append(("copies above the record's epoch are ignored",
+                picked is not None and sync.DAILY_NAME.match(picked.name) is not None))
+client.delete("recent/save-e7-s35.zip")
 
 # 6. the record survives a round trip and ages with the server's clock
 record = sync.read_record(client)
 results.append(("the record is read back with its rev", record is not None and record.rev
                 and record.host_id == "host-A" and record.epoch == 6))
+
+# 6b. the heartbeat keeps the record alive even on a Dropbox that keeps an
+#     upload of identical bytes as the same revision
+box.dedupe = True
+box.clock += 30
+client.upload("a/same.txt", b"same", mode="overwrite")
+first = box.files["/a/same.txt"]["modified"]
+box.clock += 30
+client.upload("a/same.txt", b"same", mode="overwrite")
+results.append(("the fake keeps identical bytes as the old revision, like the real service",
+                box.files["/a/same.txt"]["modified"] == first))
+sync.heartbeat(client, record)
+beaten = box.files["/host.json"]["modified"]
+box.clock += 30
+sync.heartbeat(client, record)
+results.append(("a heartbeat with nothing new to say still moves server_modified",
+                box.files["/host.json"]["modified"] == box.clock
+                and box.files["/host.json"]["modified"] != beaten
+                and record.beat == 2 and bool(record.seen)))
+results.append(("the record still reads as held after the quiet heartbeats",
+                sync.read_record(client).held()))
+box.dedupe = False
+
+# 6c. the table's file: created once by the first new launcher, read by the
+#     others, written with a compare-and-swap, the version matched exactly
+results.append(("no table file yet", sync.read_table(client) is None))
+table, created = sync.ensure_table(client, "Testland", version="1.3.0", token="AIR-1", by="Alice")
+results.append(("the first launcher creates the table file with its version and token",
+                created and table.app_version == "1.3.0" and table.air_token == "AIR-1"
+                and table.air_generation == 1 and len(table.table_id) == 12 and table.rev))
+again, created = sync.ensure_table(client, "Other", version="9.9.9", token="AIR-9", by="Bob")
+results.append(("the next launcher reads what is there instead",
+                not created and again.table_id == table.table_id and again.app_version == "1.3.0"
+                and again.air_token == "AIR-1" and again.name == "Testland"))
+results.append(("the version must match exactly", again.mismatch("1.3.0") is False
+                and again.mismatch("1.3.1") and again.mismatch("1.4.0")))
+again.air_token = "AIR-2"
+again.air_generation += 1
+sync.write_table(client, again, by="Alice")
+results.append(("a new token is written with the next generation",
+                sync.read_table(client).air_token == "AIR-2" and sync.read_table(client).air_generation == 2))
+stale = table                                 # still holds the first rev
+stale.app_version = "1.3.1"
+sync.write_table(client, stale, by="Alice")
+fresh = sync.read_table(client)
+results.append(("a write on a stale rev reads again and lands on top, keeping what it set",
+                fresh.app_version == "1.3.1" and fresh.set_by == "Alice"))
 
 # 7. the credential route of a real server: a scratch game, first start
 game = folder / "game"
@@ -233,7 +338,23 @@ results.append(("the snapshot route returns a marked snapshot",
                 sync.marks_of(folder / "from-server.zip") == (3, 7)
                 and bundle.integrity_ok(folder / "from-server.zip")))
 local.synced(3, 7)
-results.append(("the synced marks are recorded", local.status().get("synced") == {"epoch": 3, "seq": 7}))
+synced = local.status().get("synced") or {}
+results.append(("the synced marks are recorded, with the document's revision",
+                synced.get("epoch") == 3 and synced.get("seq") == 7 and "krev" in synced))
+with urllib.request.urlopen(f"http://127.0.0.1:{port}/_launcher/whoami?nonce=0a1b2c", timeout=10) as answer_:
+    who = json.loads(answer_.read().decode("utf-8"))
+results.append(("whoami proves the server with its secret, to anyone who asks",
+                who.get("proof") == core.whoami_proof("shh", "0a1b2c") and "app" in who))
+try:
+    urllib.request.urlopen(f"http://127.0.0.1:{port}/_launcher/whoami?nonce=not-hex", timeout=10)
+    results.append(("a nonce that is not hex is a 404", False))
+except urllib.error.HTTPError as error:
+    results.append(("a nonce that is not hex is a 404", error.code == 404))
+probed, why = core.probe_address(f"http://127.0.0.1:{port}", "0a1b2c")
+results.append(("the launcher's probe reads the proof through the address",
+                probed is not None and probed["proof"] == core.whoami_proof("shh", "0a1b2c") and why == ""))
+nothing, why = core.probe_address(f"http://127.0.0.1:{port}/nowhere", "0a1b2c")
+results.append(("and says why when nothing of ours answers", nothing is None and bool(why)))
 stop = urllib.request.Request(f"http://127.0.0.1:{port}/_launcher/shutdown", method="POST",
                               headers={"X-Launcher-Secret": "shh"})
 try:

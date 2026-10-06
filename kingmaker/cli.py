@@ -16,6 +16,10 @@ import os
 import sys
 
 TOKEN_VARIABLE = "KINGMAKER_ON_AIR_TOKEN"
+# Set by the launcher when it hosts without the cloud: go online with a
+# random address whatever token the environment or the registry holds, so
+# the table's fixed address never points at a copy the cloud knows nothing of.
+ANONYMOUS_VARIABLE = "KINGMAKER_ON_AIR_ANONYMOUS"
 # The server's exit code when the save comes from a newer version of the app.
 NEWER_SAVE_EXIT = 3
 
@@ -75,6 +79,10 @@ def resolve_online(online) -> str | bool | None:
     token, True (an anonymous address) or None (not online at all)."""
     if online is not True:
         return online
+    if (os.environ.get(ANONYMOUS_VARIABLE) or "").strip().lower() in ("1", "true", "yes", "on"):
+        print("Going online with a random address, as the launcher asked: this copy of the")
+        print("  game is not the cloud's, and the table's fixed address must not point here.")
+        return True
     online = (os.environ.get(TOKEN_VARIABLE) or "").strip() or None
     if online is None:
         online = saved_token()

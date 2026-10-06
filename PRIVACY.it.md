@@ -48,7 +48,8 @@ L'app funziona anche con internet staccato.
 [condizioni](https://nicegui.io/on_air). Il relay vede l'indirizzo di ogni giocatore e il
 traffico lo attraversa in chiaro: il gestore potrebbe leggerlo. Va bene per una partita, non
 per qualcosa che chiameresti un segreto. Il token On Air, se ne usi uno, è conservato in chiaro
-nella cartella della partita.
+nella cartella della partita; con il cloud (sotto) è conservato invece nella cartella del tavolo,
+e letto da lì a ogni avvio.
 
 **Con il cloud (ospitare da più PC)** — il launcher che ospita carica, in una cartella nel
 Dropbox dell'amministratore: una copia dell'intero database (account e impronte delle password

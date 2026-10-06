@@ -18,7 +18,8 @@ from kingmaker.ui import theme
 # `/_launcher/shutdown` answers only the launcher that started the server,
 # with its secret (`main.launcher_route`): nobody else gets past a 404.
 OPEN_PAGES = {"/login", "/favicon.ico", "/_launcher/shutdown", "/_launcher/status",
-              "/_launcher/snapshot", "/_launcher/synced", "/_launcher/credential"}
+              "/_launcher/snapshot", "/_launcher/synced", "/_launcher/whoami",
+              "/_launcher/credential"}
 # `/_km/fonts/` holds the typefaces the app serves itself (`theme.FONTS_ROUTE`):
 # the login page wears them too, before anyone has signed in.
 OPEN_PREFIXES = ("/_nicegui/", "/_nicegui_ws", "/_km/fonts/")

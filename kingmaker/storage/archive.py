@@ -785,6 +785,16 @@ class Archive:
 
 
     # -------------------------------------------------------------- campaigns
+    def document_rev(self, campaign_id: str) -> int:
+        """The revision the kingdom document was last written with
+        (`STATE.k["_rev"]`, raised at every change), 0 when there is no
+        kingdom yet. The cloud compares it with the one recorded at the last
+        upload to tell a copy that fell behind from one that was played on."""
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT rev FROM kingdoms WHERE campaign_id=?", (campaign_id,)).fetchone()
+        return int(row["rev"] or 0) if row else 0
+
     def campaign_exists(self, campaign_id: str) -> bool:
         with self._lock:
             return self._conn.execute(

@@ -27,6 +27,10 @@ class FakeDropbox:
         self.calls: list[str] = []
         self.injected: list[tuple[int, dict]] = []
         self.refreshes = 0
+        # The real service keeps an upload of identical bytes as the same
+        # revision, `server_modified` included; switched on by the tests
+        # that must survive that.
+        self.dedupe = False
         self.lock = threading.Lock()
         self.server: ThreadingHTTPServer | None = None
         self.thread: threading.Thread | None = None
@@ -167,6 +171,9 @@ class FakeDropbox:
                 return
             if tag == "update" and (existing is None or existing["rev"] != mode.get("update")):
                 self._answer(h, 409, {"error_summary": "path/conflict/file/", "error": {".tag": "path"}})
+                return
+            if self.dedupe and existing is not None and existing["data"] == body:
+                self._answer(h, 200, self._meta(existing))     # nothing new: the old revision stays
                 return
             entry = self._write(path, body)
             self._answer(h, 200, self._meta(entry))

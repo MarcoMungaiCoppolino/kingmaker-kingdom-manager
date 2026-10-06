@@ -8,7 +8,13 @@ password hashes, a session-signing secret, and — with the cloud sync — a Dro
 Anything that lets a player see or do what their role does not allow — a hex under the fog, a
 GM note, another account's session, the administrator's powers — and anything that reaches the
 host's machine from the network beyond the pages the app serves: the launcher routes, the
-upload of images, the save file loaded from a zip, the credential hand-out to other hosts.
+upload of images, the save file loaded from a zip, the credential hand-out to other hosts, and
+what the launcher takes from the cloud folder — a snapshot is loaded only if it passes the
+same checks as a zip, and an image only under a path inside the images folder, with the bytes
+its name promises, and only if it is an image. The launcher also checks that the table's public
+address answers from its own server (a proof made with a secret of that start alone) and warns
+when another program holds it; that is detection, not prevention — whoever holds the On Air
+token can publish at that address until the administrator renews it.
 
 Out of scope: what the documentation already says is not protected. The On Air relay can read
 the traffic; a host's disk holds the whole game; whoever has the database file can rewrite a

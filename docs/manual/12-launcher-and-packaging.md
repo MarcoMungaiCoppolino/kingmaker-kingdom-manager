@@ -84,8 +84,12 @@ every control to be in view or scrollable into view and the window to sit inside
 because two servers on one database is the one thing the README forbids.
 
 **Settings.** `launcher.json` in the game folder (`core.Settings`): mode, port, language, On
-Air token, whether to open the browser, whether the firewall notice was shown. The token is in
-clear; the launcher says so under the entry.
+Air token, whether to open the browser, whether the firewall notice was shown, the cloud
+credential and this launcher's identity. Written whole through a `.tmp` sibling moved into
+place, owner-only on POSIX. The token is in clear, and the launcher says so under the entry —
+for whoever plays online **without** the cloud; with the cloud the token is not here at all but
+in the table's folder (`table.json`, chapter 13), read at every Start and handed to the server
+in its environment for that run.
 
 **Updates.** `core.latest_release` asks the GitHub API for the latest release, in a thread, with
 a five-second timeout and silence on failure; `core.is_newer` compares version tuples. On

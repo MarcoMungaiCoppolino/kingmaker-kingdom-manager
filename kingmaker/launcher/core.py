@@ -34,6 +34,7 @@ RELEASES_API = f"https://api.github.com/repos/{REPOSITORY}/releases/latest"
 RELEASES_LIST_API = f"https://api.github.com/repos/{REPOSITORY}/releases?per_page=30"
 ON_AIR_PAGE = "https://on-air.nicegui.io/login"
 TOKEN_VARIABLE = "KINGMAKER_ON_AIR_TOKEN"
+ANONYMOUS_VARIABLE = "KINGMAKER_ON_AIR_ANONYMOUS"
 SECRET_VARIABLE = "KINGMAKER_LAUNCHER_SECRET"
 CREDENTIAL_VARIABLE = "KINGMAKER_SYNC_CREDENTIAL"
 
@@ -130,7 +131,16 @@ class Settings:
     def save(self, path: Path | None = None) -> None:
         path = path or game_folder() / SETTINGS_FILE
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(asdict(self), indent=2), encoding="utf-8")
+        # Written whole into a sibling and moved over: a crash half-way must
+        # not leave an empty file where the credential was. On POSIX the
+        # file is the owner's alone; Windows keeps it in the user's profile.
+        part = path.with_name(path.name + ".tmp")
+        part.write_text(json.dumps(asdict(self), indent=2), encoding="utf-8")
+        try:
+            os.chmod(part, 0o600)
+        except OSError:
+            pass
+        os.replace(part, path)
 
 
 def guess_language() -> str:
@@ -230,6 +240,21 @@ def list_releases(timeout: float = 8.0) -> list[Release]:
     return releases
 
 
+def release_for(releases: list[Release], version: str) -> Release | None:
+    """The release of exactly that version among those listed, or None."""
+    wanted = version_tuple(version)
+    for release in releases:
+        if wanted and version_tuple(release.version) == wanted:
+            return release
+    return None
+
+
+def find_release(version: str) -> Release | None:
+    """The release of that version on GitHub, or None when offline or when
+    there is none: the way to the installer the table's version asks for."""
+    return release_for(list_releases(), version)
+
+
 def download(url: str, target: Path, progress: Callable[[int, int], None] | None = None,
              timeout: float = 30.0) -> Path:
     """Downloads `url` to `target`, calling `progress(done, total)` on the way."""
@@ -298,18 +323,32 @@ def server_command(settings: Settings, port: int) -> list[str]:
     return command
 
 
-def server_environment(settings: Settings, secret: str = "") -> dict[str, str]:
+def server_environment(settings: Settings, secret: str = "", cloud: bool = True,
+                       token: str | None = None) -> dict[str, str]:
     """The child's environment: the token and the shutdown secret travel
     here, not on the command line, where every process list would show
-    them."""
+    them.
+
+    `token` is the table's, read from the cloud folder for this one start
+    (None: the launcher's own, for whoever plays online without the cloud).
+    `cloud=False` is hosting without the cloud, after it did not answer:
+    no token, because the table's fixed address must not point at a copy
+    the cloud knows nothing about, and no credential to hand out from a
+    server nobody is told of."""
     env = dict(os.environ)
     env["PYTHONIOENCODING"] = "utf-8"
     env["PYTHONUNBUFFERED"] = "1"
-    if settings.mode == "online" and settings.token.strip():
-        env[TOKEN_VARIABLE] = settings.token.strip()
+    chosen = (settings.token if token is None else token).strip()
+    if settings.mode == "online" and chosen and cloud:
+        env[TOKEN_VARIABLE] = chosen
+    if not cloud:
+        # Leaving the token out is not enough: the server also reads it from
+        # the user's environment and, on Windows, from the registry.
+        env.pop(TOKEN_VARIABLE, None)
+        env[ANONYMOUS_VARIABLE] = "1"
     if secret:
         env[SECRET_VARIABLE] = secret
-    if settings.cloud_ready:
+    if cloud and settings.cloud_ready:
         # What another host's launcher receives from the credential route:
         # the cloud, the table's token and name. Never the database's business.
         handout = {**{k: settings.cloud.get(k, "") for k in
@@ -317,6 +356,16 @@ def server_environment(settings: Settings, secret: str = "") -> dict[str, str]:
                    "table": settings.cloud.get("table", ""), "token": settings.token.strip()}
         env[CREDENTIAL_VARIABLE] = json.dumps(handout)
     return env
+
+
+PASSWORD_LINE = re.compile(r"(password:\s*)(\S+)", re.IGNORECASE)
+
+
+def mask_secrets(line: str) -> str:
+    """A line the server printed, with whatever follows `password:` hidden.
+    The first-start block says the password in words, and the log pane —
+    which people paste into bug reports — must not keep it."""
+    return PASSWORD_LINE.sub(r"\1********", line)
 
 
 def parse_line(line: str) -> tuple[str, str] | None:
@@ -352,14 +401,15 @@ class Server:
     def running(self) -> bool:
         return self.process is not None and self.process.poll() is None
 
-    def start(self, settings: Settings, port: int) -> None:
+    def start(self, settings: Settings, port: int, cloud: bool = True, token: str | None = None) -> None:
         if self.running:
             return
         flags = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
         self.port = port
         self.secret = secrets.token_urlsafe(24)
         self.process = subprocess.Popen(
-            server_command(settings, port), env=server_environment(settings, self.secret),
+            server_command(settings, port),
+            env=server_environment(settings, self.secret, cloud=cloud, token=token),
             cwd=str(config.ROOT_DIR), stdin=subprocess.DEVNULL,
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
             text=True, encoding="utf-8", errors="replace", bufsize=1,
@@ -500,6 +550,66 @@ def load_save(path: Path, assets_dir: Path | None = None) -> Path:
         archive.close()
 
 
+@dataclass
+class LocalState:
+    """What the local database says of the cloud: the copy it last matched
+    (`epoch`, `seq`), the document revision it had at that moment
+    (`synced_krev`, None for a file synced before 1.3.0 recorded it), the
+    revision it has now, and the day it was hosted without the cloud, if
+    it was ("" otherwise)."""
+    epoch: int = 0
+    seq: int = 0
+    synced_krev: int | None = None
+    current_krev: int = 0
+    forked_at: str = ""
+
+    @property
+    def marks(self) -> tuple[int, int]:
+        return self.epoch, self.seq
+
+    @property
+    def diverged(self) -> bool:
+        """Whether the game changed here since it last matched the cloud.
+        Not knowable for a file synced before the revision was recorded:
+        then the cloud wins, as it always did."""
+        return self.synced_krev is not None and self.current_krev != self.synced_krev
+
+
+FORK_MARK = "forked_at"
+
+
+def local_state(db_file: Path | None = None, campaign: str | None = None) -> LocalState:
+    """Reads `LocalState` from the database; the server must be stopped."""
+    from kingmaker.storage.archive import Archive
+    archive = Archive(db_file or config.DB_FILE)
+    try:
+        raw = archive.read_meta("sync_marks")
+        current = archive.document_rev(campaign or config.DEFAULT_CAMPAIGN)
+        forked = archive.read_meta(FORK_MARK) or ""
+    finally:
+        archive.close()
+    try:
+        data = json.loads(raw) if raw else {}
+    except ValueError:
+        data = {}
+    synced = data.get("krev")
+    return LocalState(epoch=int(data.get("epoch") or 0), seq=int(data.get("seq") or 0),
+                      synced_krev=int(synced) if synced is not None else None,
+                      current_krev=current, forked_at=str(forked))
+
+
+def mark_fork(when: str = "", db_file: Path | None = None) -> None:
+    """Writes the day the game was hosted without the cloud into the
+    database (`""` clears it); the server must be stopped. The next cloud
+    start shows it when it asks which copy is the game."""
+    from kingmaker.storage.archive import Archive
+    archive = Archive(db_file or config.DB_FILE)
+    try:
+        archive.write_meta(FORK_MARK, when)
+    finally:
+        archive.close()
+
+
 def read_body(answer) -> bytes:
     """The bytes of an HTTP answer, gunzipped when a relay compressed them
     (the On Air relay does, whatever the request asked for)."""
@@ -508,6 +618,42 @@ def read_body(answer) -> bytes:
         import gzip
         data = gzip.decompress(data)
     return data
+
+
+def whoami_proof(secret: str, nonce: str) -> str:
+    """What the server started with `secret` answers to `whoami?nonce=`:
+    an HMAC nobody else can produce, of a nonce the caller chose."""
+    import hashlib
+    import hmac
+    return hmac.new(secret.encode("utf-8"), nonce.encode("ascii"), hashlib.sha256).hexdigest()
+
+
+def is_random_air_address(url: str) -> bool:
+    """Whether the relay handed out an anonymous device instead of the
+    token's: the address then has `/devices/` in it, as `cli.py` says."""
+    return "/devices/" in (url or "")
+
+
+def probe_address(address: str, nonce: str, timeout: float = 10.0) -> tuple[dict | None, str]:
+    """Asks whatever answers at `address` who it is: `(the JSON of
+    /_launcher/whoami, "")`, or `(None, why)` when nothing of ours answers.
+    Through the public address, so the answer says who holds it."""
+    address = address.strip().rstrip("/")
+    if not address.startswith(("http://", "https://")):
+        address = "https://" + address
+    request = urllib.request.Request(f"{address}/_launcher/whoami?nonce={nonce}",
+                                     headers={"Accept-Encoding": "identity",
+                                              "User-Agent": f"{APP_NAME}/{__version__}"})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as answer:
+            data = json.loads(read_body(answer).decode("utf-8"))
+    except urllib.error.HTTPError as error:
+        return None, str(error.code)
+    except (urllib.error.URLError, TimeoutError, ValueError, OSError) as error:
+        return None, str(error)
+    if not isinstance(data, dict) or not isinstance(data.get("proof"), str):
+        return None, "no proof in the answer"
+    return data, ""
 
 
 def fetch_credential(address: str, username: str, password: str, timeout: float = 20.0) -> dict:

@@ -2,7 +2,8 @@
 
 The folder (Dropbox's app folder, but any `Client`-shaped object works):
 
-    host.json                       who hosts: host_id, host_name, epoch, seq, since, released
+    host.json                       who hosts: host_id, host_name, epoch, seq, since, released,
+                                    beat, seen, address, app_version
     recent/save-e<epoch>-s<seq>.zip the last five database snapshots, written while playing
     daily/save-<YYYY-MM-DD>.zip     the first snapshot of each UTC day, thirty kept
     assets/<sha256>.<ext>           the images, uploaded once each
@@ -11,18 +12,25 @@ One host at a time: `claim` takes `host.json` with a compare-and-swap on
 its `rev`, and a record younger than `HEARTBEAT_STALE` seconds belongs to a
 living host. Time is the server's (`server_modified`), never a PC clock.
 `(epoch, seq)` orders the copies: epoch rises at every take-over, seq at
-every upload. Nothing here knows tkinter or the server: the window drives
-`claim`, `pull`, `Hoster` and `release`, and the server's snapshot route
-supplies the bytes.
+every upload. The copies are not trusted blindly: a copy from a newer app
+stops the pull instead of being skipped for an older one, a copy whose
+epoch no record ever had is ignored, and an image arrives only under a
+path inside the assets folder, with the bytes its name promises, and only
+if it is an image. Nothing here knows tkinter or the server: the window
+drives `claim`, `pull`, `Hoster` and `release`, and the server's snapshot
+route supplies the bytes.
 """
 from __future__ import annotations
 
 import calendar
+import hashlib
 import json
+import os
 import re
 import threading
 import time
 import urllib.request
+import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable
@@ -30,7 +38,9 @@ from typing import Callable
 from kingmaker import __version__
 from kingmaker.launcher.dropbox import DropboxError
 from kingmaker.locale.i18n import t
+from kingmaker.media import images, imgsize
 from kingmaker.storage import bundle
+from kingmaker.storage.archive import Archive
 
 HOST_FILE = "host.json"
 RECENT, DAILY, ASSETS = "recent", "daily", "assets"
@@ -59,6 +69,14 @@ class HostRecord:
     released: bool = False
     address: str = ""             # where the players find the game while this host runs
     app_version: str = __version__
+    # The heartbeat counts. Every rewrite of the record must change its
+    # bytes: a Dropbox that keeps identical content as the same revision
+    # would leave `server_modified` where it was, and a host with nothing
+    # new to say would look dead after HEARTBEAT_STALE seconds. `seen` is
+    # the server's time of the previous write, for whoever reads the record
+    # by eye; the staleness test never looks at it.
+    beat: int = 0
+    seen: str = ""
     rev: str = ""                 # Dropbox's, for the compare-and-swap
     age: float = 0.0              # seconds since the server last saw it written
 
@@ -72,7 +90,9 @@ class HostRecord:
                      epoch=int(raw.get("epoch") or 0), seq=int(raw.get("seq") or 0),
                      since=str(raw.get("since", "")), released=bool(raw.get("released")),
                      address=str(raw.get("address", "")),
-                     app_version=str(raw.get("app_version", "")), rev=str(meta.get("rev", "")))
+                     app_version=str(raw.get("app_version", "")),
+                     beat=int(raw.get("beat") or 0), seen=str(raw.get("seen", "")),
+                     rev=str(meta.get("rev", "")))
         modified = meta.get("server_modified")
         record.age = max(0.0, now - _parse_time(modified)) if modified else 0.0
         return record
@@ -81,7 +101,8 @@ class HostRecord:
         return json.dumps({"host_id": self.host_id, "host_name": self.host_name,
                            "epoch": self.epoch, "seq": self.seq, "since": self.since,
                            "released": self.released, "address": self.address,
-                           "app_version": self.app_version},
+                           "app_version": self.app_version,
+                           "beat": self.beat, "seen": self.seen},
                           indent=2).encode("utf-8")
 
     def held(self) -> bool:
@@ -145,19 +166,129 @@ def claim(client, host_id: str, host_name: str, force: bool = False,
 
 
 def heartbeat(client, record: HostRecord) -> HostRecord:
-    """Rewrite our record; a conflict means we were taken over."""
+    """Rewrite our record; a conflict means we were taken over. The beat
+    rises first, so the bytes differ from the last write (see `HostRecord`)."""
+    record.beat += 1
     meta = client.upload(HOST_FILE, record.body(), mode="update", rev=record.rev)
     record.rev = str(meta.get("rev", ""))
+    record.seen = str(meta.get("server_modified", ""))
     return record
 
 
-def release(client, record: HostRecord) -> None:
-    """On Stop: the next host need not wait for the record to go stale."""
+def release(client, record: HostRecord, attempts: int = 3, pause: float = 2.0) -> bool:
+    """On Stop: the next host need not wait for the record to go stale. A
+    Dropbox that does not answer is asked again a couple of times; False
+    when it never did, or when the record is no longer ours (the next host
+    then waits for it to go stale, as before)."""
     record.released = True
-    try:
-        heartbeat(client, record)
-    except DropboxError:
-        pass
+    for attempt in range(attempts):
+        try:
+            heartbeat(client, record)
+            return True
+        except DropboxError as error:
+            if error.conflict or attempt == attempts - 1:
+                return False
+            time.sleep(pause)
+    return False
+
+
+# ------------------------------------------------------------------ the table
+TABLE_FILE = "table.json"
+TABLE_FORMAT = 1
+
+
+@dataclass
+class TableRecord:
+    """`table.json`: what the table is, which version it plays on, and the
+    On Air token every host reads at Start instead of keeping a copy.
+
+    Any member of the folder can write it — Dropbox gives no finer right —
+    so the launcher's manners (only the administrator changes the version
+    and the token) are a convention, not a wall; the docs say so."""
+    format: int = TABLE_FORMAT
+    table_id: str = ""            # who we are: random, made once with the file
+    name: str = ""
+    app_version: str = ""         # the version every host must run to host
+    air_token: str = ""           # "" until the administrator's launcher writes it
+    air_address: str = ""         # the fixed address the token gives, once seen
+    air_generation: int = 0       # rises at every new token
+    access_generation: int = 1    # rises at every rotation of the cloud access
+    set_by: str = ""
+    set_at: str = ""
+    rev: str = ""                 # Dropbox's, for the compare-and-swap
+
+    @classmethod
+    def parse(cls, data: bytes, meta: dict) -> "TableRecord":
+        try:
+            raw = json.loads(data.decode("utf-8"))
+        except ValueError:
+            raw = {}
+        if not isinstance(raw, dict):
+            raw = {}
+        return cls(format=int(raw.get("format") or TABLE_FORMAT), table_id=str(raw.get("table_id", "")),
+                   name=str(raw.get("name", "")), app_version=str(raw.get("app_version", "")),
+                   air_token=str(raw.get("air_token", "")), air_address=str(raw.get("air_address", "")),
+                   air_generation=int(raw.get("air_generation") or 0),
+                   access_generation=int(raw.get("access_generation") or 1),
+                   set_by=str(raw.get("set_by", "")), set_at=str(raw.get("set_at", "")),
+                   rev=str(meta.get("rev", "")))
+
+    def body(self) -> bytes:
+        return json.dumps({"format": self.format, "table_id": self.table_id, "name": self.name,
+                           "app_version": self.app_version, "air_token": self.air_token,
+                           "air_address": self.air_address, "air_generation": self.air_generation,
+                           "access_generation": self.access_generation,
+                           "set_by": self.set_by, "set_at": self.set_at},
+                          indent=2).encode("utf-8")
+
+    def mismatch(self, mine: str = __version__) -> bool:
+        """Whether a launcher of version `mine` may not host: the match is
+        exact, because the same save format has carried different rules."""
+        return bool(self.app_version) and self.app_version != mine
+
+
+def read_table(client) -> TableRecord | None:
+    meta = client.metadata(TABLE_FILE)
+    if meta is None:
+        return None
+    data, meta = client.download(TABLE_FILE)
+    return TableRecord.parse(data, meta)
+
+
+def write_table(client, table: TableRecord, by: str = "") -> TableRecord:
+    """Writes the table file with a compare-and-swap on its rev (`add`
+    when it has none yet); a conflict reads it again and writes once more,
+    keeping what the caller set."""
+    mine = table.body()
+    for attempt in range(2):
+        if by:
+            table.set_by = by
+        table.set_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        mode, rev = ("update", table.rev) if table.rev else ("add", None)
+        try:
+            meta = client.upload(TABLE_FILE, table.body(), mode=mode, rev=rev)
+        except DropboxError as error:
+            if not error.conflict or attempt:
+                raise
+            current = read_table(client)
+            table.rev = current.rev if current is not None else ""
+            continue
+        table.rev = str(meta.get("rev", ""))
+        return table
+    raise DropboxError(409, "table.json: conflict twice")
+
+
+def ensure_table(client, name: str, version: str = __version__, token: str = "",
+                 by: str = "") -> tuple[TableRecord, bool]:
+    """The table file, created by the first launcher of 1.3.0 or newer that
+    finds none: its own version pins the table, its local token (if the
+    caller passes one) goes in. `(table, created)`."""
+    table = read_table(client)
+    if table is not None:
+        return table, False
+    table = TableRecord(table_id=uuid.uuid4().hex[:12], name=name, app_version=version,
+                        air_token=token, air_generation=1 if token else 0)
+    return write_table(client, table, by=by), True
 
 
 # --------------------------------------------------------------------- copies
@@ -174,12 +305,33 @@ def _snapshots(client, folder: str, pattern: re.Pattern) -> list[dict]:
     return found
 
 
-def newest_usable(client, into: Path, log: Callable[[str], None] = lambda _t: None) -> Path | None:
+class NewerCopy(Exception):
+    """The newest copy in the cloud was written by a newer app than this
+    one: nothing older may be loaded in its place."""
+
+    def __init__(self, name: str, version: int, mine: int, app: str) -> None:
+        super().__init__(f"{name}: schema {version} is newer than this app's {mine}")
+        self.name, self.version, self.mine, self.app = name, version, mine, app
+
+
+def newest_usable(client, into: Path, log: Callable[[str], None] = lambda _t: None,
+                  record: HostRecord | None = None) -> Path | None:
     """Downloads copies newest first, recent then daily, and returns the
-    first one that passes the checks, or None."""
+    first one that passes the checks, or None.
+
+    A corrupt copy is skipped for the next one. A copy from a **newer** app
+    stops the search with `NewerCopy`: falling back to an older copy there
+    would roll the game back to before the newer host played, and nobody
+    would know. A recent copy whose epoch is above the record's cannot have
+    been written by any host the record ever named (epochs come from the
+    record alone), so it is skipped and said in the log.
+    """
     into.mkdir(parents=True, exist_ok=True)
     for folder, pattern in ((RECENT, SNAPSHOT_NAME), (DAILY, DAILY_NAME)):
         for entry in _snapshots(client, folder, pattern):
+            if folder == RECENT and record is not None and entry["key"][0] > record.epoch:
+                log(t("launcher.log.skipping_epoch", name=entry["name"], epoch=record.epoch))
+                continue
             target = into / entry["name"]
             try:
                 data, _meta = client.download(entry["path"])
@@ -187,7 +339,15 @@ def newest_usable(client, into: Path, log: Callable[[str], None] = lambda _t: No
                 bundle.inspect(target)
                 if not bundle.integrity_ok(target):
                     raise ValueError("integrity")
-            except (DropboxError, ValueError, OSError) as error:
+            except ValueError as error:
+                target.unlink(missing_ok=True)
+                if error.args and error.args[0] == Archive.INSPECT_ERRORS["newer"]:
+                    params = error.args[1] if len(error.args) > 1 and isinstance(error.args[1], dict) else {}
+                    raise NewerCopy(entry["name"], int(params.get("version") or 0),
+                                    int(params.get("mine") or 0), str(params.get("app") or ""))
+                log(t("launcher.log.skipping", name=entry['name'], error=error))
+                continue
+            except (DropboxError, OSError) as error:
                 log(t("launcher.log.skipping", name=entry['name'], error=error))
                 target.unlink(missing_ok=True)
                 continue
@@ -202,21 +362,44 @@ def marks_of(path: Path) -> tuple[int, int]:
 
 def pull_assets(client, assets_dir: Path, wanted: dict[str, str],
                 log: Callable[[str], None] = lambda _t: None) -> int:
-    """Brings the images a snapshot refers to; returns how many arrived."""
+    """Brings the images a snapshot refers to; returns how many arrived.
+
+    The manifest was written by another host and is not trusted on its
+    word: a path that leaves the assets folder, a file whose bytes are not
+    the hash it is named after, or bytes that are not an image are refused
+    and said in the log — the same three refusals `bundle.restore` and the
+    uploads make.
+    """
     have = bundle.asset_hashes(assets_dir)
     remote = {str(e.get("name", "")).split(".")[0]: e for e in client.list_folder(ASSETS)}
     fetched = 0
     for relative, digest in wanted.items():
         if have.get(relative) == digest:
             continue
+        safe = bundle.safe_asset(f"{bundle.ASSETS}/{relative}")
+        if safe is None or safe.suffix.lower() not in images.EXTENSIONS:
+            log(t("launcher.log.image_refused", path=relative,
+                  reason=t("launcher.log.image_reason.path")))
+            continue
         entry = remote.get(digest)
         if entry is None:
             log(t("launcher.log.image_missing", path=relative))
             continue
         data, _meta = client.download(f"{ASSETS}/{entry['name']}")
-        target = Path(assets_dir) / relative
+        if hashlib.sha256(data).hexdigest() != digest:
+            log(t("launcher.log.image_refused", path=relative,
+                  reason=t("launcher.log.image_reason.hash")))
+            continue
+        target = Path(assets_dir) / safe
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_bytes(data)
+        part = target.with_name(target.name + ".part")
+        part.write_bytes(data)
+        if imgsize.sizes(part) is None:
+            part.unlink(missing_ok=True)
+            log(t("launcher.log.image_refused", path=relative,
+                  reason=t("launcher.log.image_reason.kind")))
+            continue
+        os.replace(part, target)
         fetched += 1
     return fetched
 

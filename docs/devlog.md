@@ -537,3 +537,39 @@ closes it at once; GitHub answered a moment later, into a listbox that was gone,
 climbed out of the launcher's polling loop, which never re-armed itself. In the app that is the
 launcher going deaf after a quick close on a slow connection. The late answer is dropped now,
 and the loop treats an error in one event as that event's problem, not its own.
+
+## 1.3.0 — 6 October 2026 · The table's file
+
+A security review of the cloud, done slowly and on paper first. The question that started it
+was small — renewing the On Air token broke every other host, silently, because each launcher
+kept its own copy — and the answer turned out to be a file: `table.json`, next to `host.json`,
+that says what the table is, which version it plays on, and holds the token. A launcher reads
+it at every Start, hands the token to the server for that run and keeps nothing. Renewing is
+one action again, and the field in the launcher gives way to a line that says where the token
+lives.
+
+The review found more than the token. The pull fell back to an older copy when the newest
+was unreadable, which is exactly what an older launcher meets after a newer one has played:
+it loaded a day-old copy and uploaded it as the newest, and the table went back in time with
+one line in the log. The heartbeat rewrote the record with identical bytes, and Dropbox keeps
+identical bytes as the same revision, so a host with nothing to say looked dead after three
+quiet minutes. Hosting without the cloud forked the game and the next cloud start threw the
+fork away. A copied game folder carried the launcher's identity and took the game from the PC
+it was copied from. And the images pulled from the cloud were written wherever the manifest
+said, with none of the checks the zip restore already had. Each of these is a question now,
+or a refusal with a reason, and none of them is decided in silence.
+
+The version rule was the one decision the review argued for longest. "Same save format" would
+have been the natural test, and it would have been wrong: 1.1.7 and 1.2.0 write the same
+format and play different rules, so a 1.1.7 host played a turn by the old book on a 1.2.0
+file. The match is exact, and the launcher that does not match is offered the right installer
+with one button, because a rule that costs a download nobody wants to find is a rule people
+switch off. The last piece is a small route, `whoami`, that answers with a proof only the
+running server can make: asked through the public address, it says whether the program the
+players reach is this one. It cannot take the address back from whoever holds the token; it
+can tell the table, which until now nothing could.
+
+The plan behind this release was written before any code and kept outside the repository. Two
+things could not be verified from code and were marked for a test on the real services: what
+Dropbox does with identical bytes (the fix is harmless either way), and what the relay does
+with two programs on one token.

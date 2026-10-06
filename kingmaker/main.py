@@ -468,7 +468,7 @@ SYNC_CREDENTIAL_VARIABLE = "KINGMAKER_SYNC_CREDENTIAL"
 # The paths the launcher uses; `login.OPEN_PAGES` lists them so the access
 # middleware lets them through to their own checks.
 LAUNCHER_PATHS = ("/_launcher/shutdown", "/_launcher/status", "/_launcher/snapshot",
-                  "/_launcher/synced", "/_launcher/credential")
+                  "/_launcher/synced", "/_launcher/whoami", "/_launcher/credential")
 
 
 def launcher_route(secret: str, credential_json: str = "") -> None:
@@ -487,7 +487,12 @@ def launcher_route(secret: str, credential_json: str = "") -> None:
       what the launcher uploads to the cloud; `?epoch=&seq=` go in its manifest.
     - `POST /_launcher/synced`: `{"epoch","seq"}` recorded in `meta`, so the
       database itself knows which cloud copy it matches.
-    - `POST /_launcher/credential`: the one route open to the network — the
+    - `GET /_launcher/whoami?nonce=<hex>`: open to the network, from anywhere:
+      `{"proof": HMAC-SHA256(secret, nonce), "app"}`. The launcher asks it
+      through the table's public address and knows whether the program that
+      answers there is this server; it reveals nothing, the secret being
+      this start's alone.
+    - `POST /_launcher/credential`: the other route open to the network — the
       launcher of another host sends `{"username","password"}` and, if that
       account may host (`permissions.HOST_GAME`), receives the cloud
       credential this server was given at start. Never registered without
@@ -543,8 +548,21 @@ def launcher_route(secret: str, credential_json: str = "") -> None:
             epoch, seq = int(payload["epoch"]), int(payload["seq"])
         except (ValueError, KeyError, TypeError):
             return Response(status_code=400)
-        STATE.archive.write_meta("sync_marks", json.dumps({"epoch": epoch, "seq": seq}))
+        # The document's revision travels with the marks: at the next start
+        # the launcher compares it with the one the file has, and knows a
+        # copy that fell behind the cloud from one that was played on since.
+        STATE.archive.write_meta("sync_marks", json.dumps(
+            {"epoch": epoch, "seq": seq, "krev": int(STATE.k.get("_rev", 0))}))
         return Response(status_code=204)
+
+    @app.get("/_launcher/whoami")
+    async def _whoami(request: Request) -> Response:
+        nonce = str(request.query_params.get("nonce", ""))[:64]
+        if not nonce or any(c not in "0123456789abcdef" for c in nonce):
+            return Response(status_code=404)
+        proof = hmac.new(secret.encode("utf-8"), nonce.encode("ascii"), "sha256").hexdigest()
+        return Response(json.dumps({"proof": proof, "app": __version__}),
+                        media_type="application/json")
 
     credential = None
     if credential_json:
@@ -590,7 +608,8 @@ def synced_marks() -> dict:
         return {}
     try:
         data = json.loads(raw)
-        return {"epoch": int(data["epoch"]), "seq": int(data["seq"])}
+        return {"epoch": int(data["epoch"]), "seq": int(data["seq"]),
+                "krev": int(data.get("krev") or 0)}
     except (ValueError, KeyError, TypeError):
         return {}
 
@@ -640,13 +659,16 @@ def _first_start() -> None:
     password = auth.ensure_admin(STATE.archive)
     if password is None:
         return
-    print()
-    print("=" * 64)
-    print("  First start: the administrator account has been created.")
-    print("      username:  admin")
-    print(f"      password:  {password}")
-    print("  It is shown only now, so write it down. At the first login you will")
-    print("  be asked to change it, and from there you can create the other accounts.")
-    print("=" * 64)
-    print()
+    if not os.environ.get(LAUNCHER_SECRET_VARIABLE, "").strip():
+        # Started by hand: the console is the one place to read it. Under
+        # the launcher a dialog shows it, and the log pane must not keep it.
+        print()
+        print("=" * 64)
+        print("  First start: the administrator account has been created.")
+        print("      username:  admin")
+        print(f"      password:  {password}")
+        print("  It is shown only now, so write it down. At the first login you will")
+        print("  be asked to change it, and from there you can create the other accounts.")
+        print("=" * 64)
+        print()
     announce("admin-password", password)

@@ -60,6 +60,26 @@ results.append(("the hand-out carries the cloud and the table's token",
                 handout["refresh_token"] == "r" and handout["token"] == "AIR" and handout["table"] == "T"))
 results.append(("no hand-out without a credential",
                 core.CREDENTIAL_VARIABLE not in core.server_environment(core.Settings(), "shh")))
+cloudy.mode = "online"
+offline = core.server_environment(cloudy, "shh", cloud=False)
+results.append(("hosting without the cloud passes neither the token nor the credential, and asks "
+                "for a random address",
+                offline.get(core.TOKEN_VARIABLE) != "AIR" and core.CREDENTIAL_VARIABLE not in offline
+                and offline.get(core.SECRET_VARIABLE) == "shh" and offline.get(core.ANONYMOUS_VARIABLE) == "1"))
+had = os.environ.get(cli.ANONYMOUS_VARIABLE)
+os.environ[cli.ANONYMOUS_VARIABLE] = "1"
+try:
+    results.append(("the server then goes online anonymously, whatever token the environment holds",
+                    cli.resolve_online(True) is True))
+finally:
+    if had is None:
+        os.environ.pop(cli.ANONYMOUS_VARIABLE, None)
+    else:
+        os.environ[cli.ANONYMOUS_VARIABLE] = had
+cloudy.mode = "local"
+cloudy.save(path)
+results.append(("the settings are written whole, with no half-written file left",
+                core.Settings.load(path) == cloudy and not path.with_name(path.name + ".tmp").exists()))
 
 # 3. the lines the server prints
 results.append(("ready line", core.parse_line("KM ready http://127.0.0.1:8080") == ("ready", "http://127.0.0.1:8080")))
@@ -70,6 +90,10 @@ results.append(("NiceGUI's on air line",
                 == ("air", "https://europe.on-air.io/marco/device-0/")))
 results.append(("a log line is not an event", core.parse_line("INFO: Uvicorn running on ...") is None))
 results.append(("an unknown KM kind is log", core.parse_line("KM whatever x") is None))
+results.append(("a password printed in words is masked for the log",
+                core.mask_secrets("      password:  abcd-efgh-ijkl") == "      password:  ********"
+                and core.mask_secrets("Password: x") == "Password: ********"
+                and core.mask_secrets("INFO: Uvicorn running") == "INFO: Uvicorn running"))
 
 # 4. a release as GitHub describes it
 release = core.parse_release({"tag_name": "v1.2.0", "html_url": "https://example/rel",
@@ -90,6 +114,16 @@ listed.sort(key=lambda r: core.version_tuple(r.version), reverse=True)
 results.append(("releases sort by version, not by text, and carry their date",
                 [r.version for r in listed] == ["1.10.0", "1.2.0", "1.1.0"] and listed[0].published == "2026-12-01"
                 and listed[1].prerelease))
+results.append(("the release of exactly the table's version is found, with or without the v",
+                core.release_for(listed, "v1.2.0") is listed[1] and core.release_for(listed, "1.2.0") is listed[1]
+                and core.release_for(listed, "1.2.1") is None and core.release_for(listed, "junk") is None))
+results.append(("an anonymous device's address is told from the token's",
+                core.is_random_air_address("https://europe.on-air.io/devices/abcdef12/")
+                and not core.is_random_air_address("https://europe.on-air.io/marco/device-0/")))
+results.append(("the whoami proof is an HMAC of the nonce under the start's secret",
+                core.whoami_proof("shh", "0a1b2c") == core.whoami_proof("shh", "0a1b2c")
+                and core.whoami_proof("shh", "0a1b2c") != core.whoami_proof("other", "0a1b2c")
+                and len(core.whoami_proof("shh", "0a1b2c")) == 64))
 
 # 5. ports: the chosen one when free, the next when busy
 with socket.socket() as blocker:
@@ -126,6 +160,11 @@ env = core.server_environment(settings, "shh")
 results.append(("online, the token and the secret travel in the environment",
                 env.get(core.TOKEN_VARIABLE) == "secret-token" and env.get(core.SECRET_VARIABLE) == "shh"
                 and "--online" in core.server_command(settings, 8090)))
+with_table = core.server_environment(settings, "shh", token="from-the-table")
+with_none = core.server_environment(settings, "shh", token="")
+results.append(("the table's token, read from the cloud, goes in place of the launcher's own",
+                with_table.get(core.TOKEN_VARIABLE) == "from-the-table"
+                and with_none.get(core.TOKEN_VARIABLE) != "secret-token"))
 
 import gzip  # noqa: E402
 
@@ -210,6 +249,36 @@ try:
                           iterations=before["iterations"], must_change_pw=before["must_change_pw"])
 finally:
     check.close()
+
+# 10b. what the cloud reads of the local database: the marks, the document
+#      revision it had at the last upload against the one it has now, the fork
+#      (`kingmaker.state` is not imported here: its STATE would open the
+#      scene's database and hold its journal through the restore below)
+import json  # noqa: E402
+state_db = folder / "state.db"
+probe_archive = Archive(state_db)
+k = {"name": "Probe", "created": True, "_rev": 5, "hexes": {}}
+probe_archive.write(config.DEFAULT_CAMPAIGN, k)
+probe_archive.write_meta("sync_marks", json.dumps({"epoch": 2, "seq": 9, "krev": 5}))
+probe_archive.close()
+state = core.local_state(state_db)
+results.append(("the local state reads the marks and the document revision",
+                state.marks == (2, 9) and state.current_krev == 5 and state.synced_krev == 5
+                and not state.diverged and state.forked_at == ""))
+probe_archive = Archive(state_db)
+k["_rev"] = 6
+probe_archive.write(config.DEFAULT_CAMPAIGN, k)
+probe_archive.close()
+results.append(("a change since the last upload is a divergence", core.local_state(state_db).diverged))
+probe_archive = Archive(state_db)
+probe_archive.write_meta("sync_marks", json.dumps({"epoch": 2, "seq": 9}))
+probe_archive.close()
+results.append(("marks from before the revision was recorded cannot tell, and the cloud wins",
+                not core.local_state(state_db).diverged))
+core.mark_fork("2026-10-06", state_db)
+results.append(("the day of a fork is read back", core.local_state(state_db).forked_at == "2026-10-06"))
+core.mark_fork("", state_db)
+results.append(("and cleared once settled", core.local_state(state_db).forked_at == ""))
 
 # 11. loading a save from the launcher: looked at, then copied in, the
 #     previous one kept; the scene is the same game afterwards

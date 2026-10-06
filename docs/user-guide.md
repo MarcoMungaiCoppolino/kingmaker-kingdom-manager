@@ -2,7 +2,7 @@
 
 *In italiano: [it/guida-utente.md](it/guida-utente.md) (longer, with the history of every choice).*
 
-This guide describes the app as it is in version 1.2.1, tab by tab, with the reason behind
+This guide describes the app as it is in version 1.3.0, tab by tab, with the reason behind
 each choice where it matters at the table. To install and start it see the
 [README](../README.md); the window of the installed app is the first chapter below. The screenshots in [`manual/img/screenshots/`](manual/img/screenshots/)
 were taken with the Italian interface; the English one is the same, label for label.
@@ -37,7 +37,9 @@ the guide from the start to reach it, which would be cruel, since the step befor
 the token you no longer have. *Get a token* opens the same site
 straight away, for when you know the road. With the
 token your address stays the same at every start; without it you get a new random address
-each time. The token is kept in clear in the game folder; the relay, run by Zauberzeug GmbH
+each time. Without the cloud the token is kept in clear in the game folder; with the cloud it
+lives in the table's folder and is read at every start, so the field gives way to a line that
+says so (see *Playing from several PCs*). The relay, run by Zauberzeug GmbH
 (Germany), the makers of NiceGUI, sees every player's address and carries the game traffic
 in the clear, so it could read it: fine for a game and not for secrets. On this computer or
 on the same network nothing leaves your PC at all — see [PRIVACY.md](../PRIVACY.md).
@@ -657,7 +659,8 @@ Without it, the game lives on one PC and its owner must be online for anyone to 
 it, the hosting can move between the trusted people of the table — the administrator and the
 GMs the administrator marks *Can host* in the accounts dialog — through a folder in the
 administrator's Dropbox. Players never host and never hold the save: they open the table's
-address, which stays the same whoever hosts, because the hosts share one On Air token.
+address, which stays the same whoever hosts, because the table's one On Air token sits in
+the folder and every host reads it at Start.
 
 ![The set-up wizard](manual/img/screenshots/wizard.jpg)
 
@@ -673,13 +676,43 @@ in their launcher: the table's address, their username and password. The host ch
 the account may host and hands over what the launcher needs; the password is used once and
 not kept. From then on that launcher can host too.
 
+**When the launcher asks.** Three questions appear only when something is off, and nothing
+happens until you answer. *Two copies of the game*: the cloud has a newer copy, but this PC's
+copy changed since it last matched the cloud (you hosted without the cloud one evening, or the
+server died before its last upload). Load the cloud's copy, and yours is kept next to it as a
+`.bak`; or keep yours, and it becomes the newest copy for everyone. *A host with this
+launcher's identity is still active*: answer yes only if this PC crashed a moment ago; a game
+folder copied to another PC carries the same identity, and taking the game from it would leave
+two hosts at once. *The cloud's newest copy needs a newer version*: the launcher loads nothing
+and offers the Versions window, because loading an older copy instead would have rolled the
+whole table back to before the newer host played.
+
 **Playing.** *Start* first asks the cloud who hosts. Nobody: the launcher takes the game,
 loads the newest copy from the cloud if it is newer than its own, brings the images it lacks,
-and starts. Somebody: the box says "hosted by X since…", with *Join* to open the game there.
-While you host, the cloud receives a copy of the game every few minutes when something
+and starts. Somebody: the box says "hosted by X (version) since…", with *Join* to open the game
+there. While you host, the cloud receives a copy of the game every few minutes when something
 changed, the images once, and a last copy when you press *Stop*. Five recent copies and one
 per day for thirty days are kept in the folder; the total stays under a hundred megabytes for
 years.
+
+**The table's version.** Every host must run the same version of the app, exactly: the same
+save format has carried different rules, and two hosts on different versions would play two
+different games on one file. The table's folder remembers which version it plays on; a
+launcher on another one is refused before it takes anything and offered *Install {version}*,
+which fetches that release from GitHub and runs it (on Linux, opens its page), keeping the
+game folder. The administrator on a newer version is asked whether to move the table to it —
+every other host is then asked to install it before hosting — or to install the table's
+version instead. A host whose launcher is too old to know the table's version shows as such
+in "hosted by"; ask them to update.
+
+**The token, renewed.** The administrator renews the table's token with *Lost the token?* as
+before; the new one goes into the table's folder, and every other host gets it at their next
+Start with nothing to do. If the relay refuses the token (a random address instead of the
+table's), the launcher says so in red. Once the game is on air, the launcher also checks that
+the table's address really answers from this PC, and warns when another program holds it:
+then the administrator renews the token. *Who is hosting?* makes the same check when nobody
+hosts: something answering at the table's address while no host runs the game means somebody
+else has the token.
 
 **The administrator's *Force take-over*.** Shown when someone else hosts: their server stops
 within a minute (they may lose their last minutes of play) and the game moves to you.
@@ -693,7 +726,11 @@ it from a launcher, and the administrator can revoke it at Dropbox (*Connected a
 which every host connects again. The folder also holds a small record of who is hosting —
 the launcher's id, your Windows or Linux username and your computer's name, the game's
 address — which the other hosts read; Dropbox's own privacy policy applies to the folder. If
-the cloud does not answer, the launcher offers to host without it, and says so.
+the cloud does not answer, the launcher offers to host without it, in plain words: the game
+forks, nothing is uploaded, the address is a random one and never the table's, and the next
+start with the cloud asks which copy is the game. Images that arrive from the cloud are
+checked before they are kept: a path that leaves the images folder, a file whose content is
+not what its name says, or a file that is not an image is refused and noted in the log.
 
 ## Save (administrators)
 

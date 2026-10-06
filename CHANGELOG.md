@@ -8,6 +8,73 @@ what broke, what was learned — is in [docs/devlog.md](docs/devlog.md).
 The versions before 1.0.0 were never tagged: the app was played from a working copy and the
 numbers below were assigned afterwards, one per day of development, from the session history.
 
+## [1.3.0] — 2026-10-06
+
+The cloud stops lying, and the table gets a file of its own: one version for every host, the
+On Air token read from the folder instead of copied to every PC, and a check that the table's
+address really answers from the host.
+
+### Added
+- **The table's file, `table.json`.** Created in the cloud folder by the first launcher of this
+  version that hosts; it names the table, pins the version the table plays on, and holds the
+  On Air token. Any member can write it, so the launcher's manners (the administrator changes
+  the version and the token) are a convention, which the manual says.
+- **One version for every host.** To host, the launcher's version must equal the table's,
+  exactly: the same save format has carried different rules, and two hosts on different
+  versions played different games on the same file. A launcher on another version is refused
+  before anything is claimed and offered *Install {version}*, which fetches that release from
+  GitHub (Windows: the installer runs; Linux: the release page). The administrator on a newer
+  version is asked whether to move the table to it; on an older one, the move down happens
+  only after the cloud's newest copy proved readable by it. "Hosted by X" now says the
+  version, and marks a launcher too old to know the table's.
+- **The On Air token lives in the table's folder.** Every host reads it at Start and hands it
+  to the server for that run; no copy is kept on a host's disk. At the first start after the
+  upgrade the administrator's launcher moves its token into the file and forgets it locally;
+  a GM's launcher forgets its copy once the file has one. *Lost the token?* now writes the new
+  token into the folder as well, so the other hosts get it at their next Start with nothing to
+  do — before, every other host kept a dead token and started at a random address. The launcher
+  shows "from the table's folder" in place of the field, and only the administrator sees the
+  renewal door.
+- **The address check.** Once the server is on air, the launcher asks the table's public
+  address who answers there (`/_launcher/whoami`, a proof only this start's secret can make):
+  "the table's address answers from this PC", or a warning that another program holds it. A
+  refused token (the relay handed out an anonymous device) is named for what it is. When
+  nobody hosts, *Who is hosting?* also probes the address: something of ours answering there
+  means somebody else holds the token.
+- **Two copies of the game: the launcher asks.** When the cloud has a newer copy but this PC's
+  copy changed since it last matched the cloud (an evening hosted without the cloud, a server
+  that died before its last upload), a dialog asks which one is the game: load the cloud's,
+  yours kept next to it as `.bak`, or keep yours and upload it as the newest. Before, the
+  cloud's copy replaced yours with one line in the log. The save now records the document's
+  revision with the marks of the copy it matches (`meta.sync_marks.krev`), which is how the
+  launcher tells "behind" from "diverged".
+- **A living record with this launcher's identity: the launcher asks.** A game folder copied
+  to another PC carries the same identity, and the copy used to take the game from a host
+  that was still playing, without a word.
+- **Hosting without the cloud says what it is.** The offer names the fork, the server starts
+  with no token (a random address, never the table's) and with no credential to hand out, the
+  Cloud box says so while it runs, and the day is remembered for the next cloud start's
+  question.
+
+### Fixed
+- **An older launcher could roll the whole table back.** A copy written by a newer version of
+  the app was skipped for the next readable one, which was then loaded and uploaded as the
+  newest. The pull now stops there, loads nothing, says which version wrote the copy and
+  offers the Versions window.
+- **A host with nothing new to say looked dead after three quiet minutes.** Dropbox keeps an
+  upload of identical bytes as the same revision, so the heartbeat did not move the record's
+  time; another Start could then take the game from a table that was only talking. Every
+  heartbeat now changes the record (`beat`).
+- **Images from the cloud were written wherever the manifest said.** A path that leaves the
+  images folder, a file whose bytes are not the hash it is named after, or a file that is not
+  an image is now refused and noted in the log, as the zip restore and the uploads already
+  did. A copy whose epoch no host ever had is ignored too.
+- **The first-start password reached the launcher's log pane** through the server's console
+  block; it is no longer printed under the launcher, and any `password:` line is masked.
+- **The launcher's settings are written whole**, through a sibling file moved into place, and
+  on Linux readable by their owner only; a crash half-way used to leave the credential gone.
+- **Stop asks Dropbox three times to release the record** before giving up quietly.
+
 ## [1.2.1] — 2026-10-06
 
 The save knows where it has been, and a newer one is never opened by an older app.

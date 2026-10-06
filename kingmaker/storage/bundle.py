@@ -134,9 +134,10 @@ def integrity_ok(path: Path) -> bool:
     return bool(row) and row[0] == "ok"
 
 
-def _safe_asset(name: str) -> Path | None:
+def safe_asset(name: str) -> Path | None:
     """The path inside the assets folder a member unpacks to, or None for a
-    member that is not an asset or tries to climb out."""
+    member that is not an asset or tries to climb out. The cloud pull asks
+    the same question of every path a snapshot's manifest names."""
     if not name.startswith(ASSETS + "/") or name.endswith("/"):
         return None
     relative = Path(name[len(ASSETS) + 1:])
@@ -175,7 +176,7 @@ def inspect(path: Path) -> dict:
         with zf.open(DB_NAME) as src, open(db, "wb") as dst:
             shutil.copyfileobj(src, dst)
         info = Archive.inspect(db)
-        assets = sum(1 for n in zf.namelist() if _safe_asset(n) is not None)
+        assets = sum(1 for n in zf.namelist() if safe_asset(n) is not None)
     return {"kind": "zip", "assets": assets, **info}
 
 
@@ -193,7 +194,7 @@ def restore(archive, assets_dir: Path, path: Path) -> Path:
             shutil.copyfileobj(src, dst)
         kept = archive.restore_from(db)
         for name in zf.namelist():
-            relative = _safe_asset(name)
+            relative = safe_asset(name)
             if relative is None:
                 continue
             target = assets_dir / relative

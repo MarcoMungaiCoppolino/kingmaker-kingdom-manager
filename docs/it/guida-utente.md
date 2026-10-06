@@ -2,7 +2,7 @@
 
 *In English: [../user-guide.md](../user-guide.md).*
 
-Questa guida descrive l'app com'è alla versione 1.2.1, scheda per scheda, con il perché di ogni
+Questa guida descrive l'app com'è alla versione 1.3.0, scheda per scheda, con il perché di ogni
 scelta. Per installarla e avviarla vedi il [README.it.md](../../README.it.md); la finestra
 dell'app installata è il primo capitolo qui sotto. Le schermate in
 [`manual/img/screenshots/`](../manual/img/screenshots/) sono dell'interfaccia italiana.
@@ -39,7 +39,9 @@ non devi ripercorrere la guida dall'inizio per arrivarci, il che sarebbe una bef
 il passo prima ti chiede proprio il token che non hai più. *Ottieni un token* apre lo stesso sito subito, per quando sai già
 la strada.
 Con il token il tuo indirizzo resta lo stesso a ogni avvio; senza, ogni volta un indirizzo
-casuale nuovo. Il token è conservato in chiaro nella cartella della partita; il relay, gestito
+casuale nuovo. Senza il cloud il token è conservato in chiaro nella cartella della partita; con
+il cloud vive nella cartella del tavolo e viene letto a ogni avvio, e al posto del campo c'è una
+riga che lo dice (vedi *Giocare da più PC*). Il relay, gestito
 da Zauberzeug GmbH (Germania), gli autori di NiceGUI, vede l'indirizzo di ogni giocatore e
 trasporta il traffico del gioco in chiaro, quindi potrebbe leggerlo: va bene per una partita,
 non per dei segreti. Su questo computer o sulla stessa rete niente esce dal tuo PC — vedi
@@ -88,8 +90,8 @@ Senza, la partita vive su un PC e il suo proprietario deve essere online perché
 giochi. Con il cloud, l'ospitare può passare tra le persone fidate del tavolo — l'amministratore
 e i GM che l'amministratore segna *Può ospitare* nella finestra degli account — tramite una
 cartella nel Dropbox dell'amministratore. I giocatori non ospitano mai e non hanno mai il
-salvataggio: aprono l'indirizzo del tavolo, che resta lo stesso chiunque ospiti, perché gli
-host condividono un solo token On Air.
+salvataggio: aprono l'indirizzo del tavolo, che resta lo stesso chiunque ospiti, perché l'unico
+token On Air del tavolo sta nella cartella e ogni host lo legge all'Avvia.
 
 ![La procedura guidata](../manual/img/screenshots/wizard.jpg)
 
@@ -105,13 +107,45 @@ suo launcher: l'indirizzo del tavolo, il suo nome utente e la password. L'host c
 l'account possa ospitare e consegna ciò che serve al launcher; la password è usata una volta
 e non conservata. Da lì in poi anche quel launcher può ospitare.
 
+**Quando il launcher chiede.** Tre domande compaiono solo quando qualcosa non torna, e niente
+succede finché non rispondi. *Due copie della partita*: il cloud ha una copia più recente, ma la
+copia di questo PC è cambiata da quando corrispondeva al cloud (una sera hai ospitato senza il
+cloud, o il server è morto prima dell'ultimo caricamento). Carica la copia del cloud, e la tua
+resta accanto come `.bak`; oppure tieni la tua, e diventa la copia più recente per tutti. *Un
+host con l'identità di questo launcher è ancora attivo*: rispondi sì solo se questo PC è andato
+in crash un attimo fa; una cartella della partita copiata su un altro PC porta con sé la stessa
+identità, e prendergli la partita lascerebbe due host insieme. *La copia più recente del cloud
+richiede una versione più nuova*: il launcher non carica niente e offre la finestra Versioni,
+perché caricare al suo posto una copia più vecchia avrebbe riportato tutto il tavolo a prima
+che l'host più nuovo giocasse.
+
 **Giocare.** *Avvia* chiede prima al cloud chi ospita. Nessuno: il launcher prende la
 partita, carica dal cloud la copia più recente se è più nuova della sua, porta le immagini
-che gli mancano e parte. Qualcuno: il riquadro dice «ospitata da X dal…», con *Entra* per
-aprire il gioco lì. Mentre ospiti, il cloud riceve una copia della partita ogni pochi minuti
-quando qualcosa è cambiato, le immagini una volta sola, e un'ultima copia quando premi
-*Ferma*. Nella cartella restano cinque copie recenti e una al giorno per trenta giorni; il
-totale resta sotto i cento megabyte per anni.
+che gli mancano e parte. Qualcuno: il riquadro dice «ospitata da X (versione) dal…», con
+*Entra* per aprire il gioco lì. Mentre ospiti, il cloud riceve una copia della partita ogni
+pochi minuti quando qualcosa è cambiato, le immagini una volta sola, e un'ultima copia quando
+premi *Ferma*. Nella cartella restano cinque copie recenti e una al giorno per trenta giorni;
+il totale resta sotto i cento megabyte per anni.
+
+**La versione del tavolo.** Ogni host deve avere la stessa versione dell'app, esattamente: lo
+stesso formato di salvataggio ha portato regole diverse, e due host con versioni diverse
+giocherebbero due partite diverse sullo stesso file. La cartella del tavolo ricorda con quale
+versione si gioca; un launcher con un'altra viene rifiutato prima di prendere qualsiasi cosa e
+gli viene offerto *Installa la {versione}*, che scarica quella release da GitHub e la avvia (su
+Linux apre la sua pagina), lasciando la cartella della partita. All'amministratore con una
+versione più nuova viene chiesto se portare il tavolo a quella — a ogni altro host verrà
+chiesto di installarla prima di ospitare — oppure installare la versione del tavolo. Un host
+con un launcher troppo vecchio per conoscere la versione del tavolo compare come tale in
+«ospitata da»; chiedigli di aggiornare.
+
+**Il token, rinnovato.** L'amministratore rinnova il token del tavolo con *Perso il token?*
+come prima; quello nuovo va nella cartella del tavolo, e ogni altro host lo riceve al suo
+prossimo Avvia senza fare niente. Se il relay rifiuta il token (un indirizzo casuale al posto di
+quello del tavolo), il launcher lo dice in rosso. Una volta che la partita è in rete, il launcher
+controlla anche che all'indirizzo del tavolo risponda davvero questo PC, e avverte quando lo
+tiene un altro programma: allora l'amministratore rinnova il token. *Chi ospita?* fa lo stesso
+controllo quando nessuno ospita: qualcosa che risponde all'indirizzo del tavolo mentre nessun
+host ha la partita in funzione vuol dire che qualcun altro ha il token.
 
 **Il *Prendi il controllo* dell'amministratore.** Compare quando ospita qualcun altro: il suo
 server si ferma entro un minuto (può perdere gli ultimi minuti di gioco) e la partita passa a
@@ -126,7 +160,12 @@ launcher, e l'amministratore può revocarla su Dropbox (*App collegate*), dopo d
 si ricollega. La cartella contiene anche un piccolo record di chi ospita — l'id del launcher,
 il tuo nome utente di Windows o Linux e il nome del tuo computer, l'indirizzo della partita —
 che gli altri host leggono; alla cartella si applica l'informativa sulla privacy di Dropbox. Se
-il cloud non risponde, il launcher propone di ospitare senza, e lo dice.
+il cloud non risponde, il launcher propone di ospitare senza, a chiare lettere: la partita si
+sdoppia, niente viene caricato, l'indirizzo è casuale e mai quello del tavolo, e il prossimo
+avvio con il cloud chiede quale copia è la partita. Le immagini che arrivano dal cloud sono
+controllate prima di essere tenute: un percorso che esce dalla cartella delle immagini, un file
+il cui contenuto non è quello che dice il nome, o un file che non è un'immagine viene rifiutato
+e annotato nel registro.
 
 ## Salvataggio (amministratori)
 
