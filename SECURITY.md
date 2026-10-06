@@ -14,7 +14,11 @@ same checks as a zip, and an image only under a path inside the images folder, w
 its name promises, and only if it is an image. The launcher also checks that the table's public
 address answers from its own server (a proof made with a secret of that start alone) and warns
 when another program holds it; that is detection, not prevention — whoever holds the On Air
-token can publish at that address until the administrator renews it.
+token can publish at that address until the administrator renews it. The launcher's secrets
+(the cloud credential, the On Air token of whoever plays online without the cloud) rest
+protected by Windows for the user (DPAPI) or in an owner-only file outside the game folder on
+Linux; that keeps them from a copied folder and from other users of the PC, not from a
+program running as you.
 
 Out of scope: what the documentation already says is not protected. The On Air relay can read
 the traffic; a host's disk holds the whole game; whoever has the database file can rewrite a

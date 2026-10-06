@@ -87,12 +87,23 @@ class Settings:
     # The cloud: the Dropbox credential (app_key, refresh_token, account_id,
     # account_name, app_name), the table's name, and who we are to it
     # (username, role). Empty until the administrator set it up here or
-    # this launcher connected to a table. In clear, like the token.
+    # this launcher connected to a table.
     cloud: dict = field(default_factory=dict)
     # This launcher's identity in `host.json`: a random id made once, and a
     # name the others read ("Marco's PC").
     host_id: str = ""
     host_name: str = ""
+    # The two secrets — the refresh token in `cloud`, and `token` — are plain
+    # here in memory and nowhere else: `save` moves them into this blob
+    # (`vault.protect`: Windows DPAPI, or an owner-only file outside the game
+    # folder) and writes the file without them; `load` brings them back. A
+    # file from before 1.4.0 still carries them in clear and is migrated by
+    # its first save. `vault_error` says when the blob could not be read
+    # (another user, another PC): the window then asks to connect again.
+    vault: dict = field(default_factory=dict)
+    vault_error: str = field(default="", compare=False)
+
+    SECRET_FIELDS = ("refresh_token",)
 
     @property
     def cloud_ready(self) -> bool:
@@ -118,24 +129,67 @@ class Settings:
             raw = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, ValueError):
             return cls()
-        known = {f: raw[f] for f in cls.__dataclass_fields__ if f in raw}
+        known = {f: raw[f] for f in cls.__dataclass_fields__ if f in raw and f != "vault_error"}
         if not isinstance(known.get("cloud", {}), dict):
             known["cloud"] = {}
+        if not isinstance(known.get("vault", {}), dict):
+            known["vault"] = {}
         settings = cls(**known)
         if settings.mode not in MODES:
             settings.mode = "local"
         if not isinstance(settings.port, int) or not 1 <= settings.port <= 65535:
             settings.port = config.PORT
+        if settings.vault:
+            from kingmaker.launcher import vault
+            try:
+                kept = json.loads(vault.unprotect(settings.vault).decode("utf-8"))
+            except (vault.VaultError, ValueError) as error:
+                settings.vault_error = str(error)
+                kept = {}
+            if not isinstance(kept, dict):
+                kept = {}
+            for name in cls.SECRET_FIELDS:
+                if kept.get(name) and not settings.cloud.get(name):
+                    settings.cloud[name] = str(kept[name])
+            if kept.get("token") and not settings.token:
+                settings.token = str(kept["token"])
         return settings
 
     def save(self, path: Path | None = None) -> None:
         path = path or game_folder() / SETTINGS_FILE
         path.parent.mkdir(parents=True, exist_ok=True)
+        written = asdict(self)
+        written.pop("vault_error", None)
+        # The secrets go into the vault, the file goes without them. A blob
+        # that could not be read is left as it is: the person connects
+        # again, and the new secrets replace it.
+        held = {name: str(self.cloud.get(name, "")) for name in self.SECRET_FIELDS}
+        held["token"] = self.token.strip()
+        if any(held.values()):
+            from kingmaker.launcher import vault
+            try:
+                blob = vault.protect(json.dumps(held).encode("utf-8"))
+            except vault.VaultError as error:
+                log_vault = error
+                blob = None
+                self.vault_error = str(log_vault)
+            if blob is not None:
+                if self.vault and self.vault != blob:
+                    vault.forget(self.vault)
+                self.vault = blob
+                written["vault"] = blob
+                written["cloud"] = {k: v for k, v in written["cloud"].items() if k not in self.SECRET_FIELDS}
+                written["token"] = ""
+        elif self.vault:
+            from kingmaker.launcher import vault
+            vault.forget(self.vault)
+            self.vault = {}
+            written["vault"] = {}
         # Written whole into a sibling and moved over: a crash half-way must
         # not leave an empty file where the credential was. On POSIX the
         # file is the owner's alone; Windows keeps it in the user's profile.
         part = path.with_name(path.name + ".tmp")
-        part.write_text(json.dumps(asdict(self), indent=2), encoding="utf-8")
+        part.write_text(json.dumps(written, indent=2), encoding="utf-8")
         try:
             os.chmod(part, 0o600)
         except OSError:

@@ -18,6 +18,8 @@ import secrets
 import time
 import uuid
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Callable
 
 from nicegui import app
 
@@ -38,10 +40,27 @@ WAIT_AFTER_ATTEMPTS = 30.0
 # By address, as well as by name: whoever changed name at every attempt found
 # the brake always reset.
 MAX_ATTEMPTS_PER_IP = 20
+# And by everyone together: under On Air every player arrives from the relay
+# with the same address, so the brake by address is off there, and a stranger
+# at the public address could try name after name, each with its own five
+# attempts. Past this many failures in the window, every login waits — a
+# nuisance for the table only while somebody is hammering it.
+GLOBAL_MAX = 50
+GLOBAL_WINDOW = 600.0
+GLOBAL_WAIT = 60.0
 # A username is an identifier, not free text: no spaces, no markup, so it ends
 # up in a label or in a log without a second thought.
 VALID_USERNAME = re.compile(r"[A-Za-z0-9._-]{2,32}")
 _attempts: dict[str, tuple[int, float]] = {}
+_failures: list[float] = []            # when each failure happened, everyone's
+# Called when a name's brake trips (`on_abuse(username, how_many)`): the login
+# page wires it to the journal, so the table sees guessing happen.
+on_abuse: "Callable[[str, int], None] | None" = None
+# The passwords nobody should choose: the most common ones, next to this
+# file, loaded once. A password in it, or one that is the username, is
+# refused at creation and at change — guessing starts from exactly these.
+COMMON_PASSWORDS_FILE = "common_passwords.txt"
+_common: set[str] | None = None
 
 
 @dataclass(frozen=True)
@@ -95,6 +114,32 @@ def random_password(words: int = 4) -> str:
                     for _ in range(words))
 
 
+def common_passwords() -> set[str]:
+    global _common
+    if _common is None:
+        try:
+            text = (Path(__file__).with_name(COMMON_PASSWORDS_FILE)).read_text(encoding="utf-8")
+        except OSError:
+            text = ""
+        _common = {line.strip().lower() for line in text.splitlines()
+                   if line.strip() and not line.startswith("#")}
+    return _common
+
+
+def check_password(password: str, username: str = "") -> None:
+    """Raises ValueError, with the reason to show, for a password the app
+    refuses: shorter than eight characters, one of the most common ones,
+    or the username itself (also with digits around it)."""
+    if len(password) < 8:
+        raise ValueError(t("auth.password_must_least_8"))
+    lowered = password.lower()
+    if lowered in common_passwords():
+        raise ValueError(t("auth.password_too_common"))
+    name = username.strip().lower()
+    if name and lowered.strip("0123456789!._-") == name:
+        raise ValueError(t("auth.password_is_username"))
+
+
 # ------------------------------------------------------------------ accounts
 def create_user(archive, username: str, password: str,
                 role: str = permissions.PLAYER,
@@ -104,8 +149,7 @@ def create_user(archive, username: str, password: str,
         raise ValueError(t("auth.username_cannot_empty"))
     if not VALID_USERNAME.fullmatch(username):
         raise ValueError(t("auth.username_2_32_letters"))
-    if len(password) < 8:
-        raise ValueError(t("auth.password_must_least_8"))
+    check_password(password, username)
     if role not in permissions.HIERARCHY:
         raise ValueError(t("auth.unknown_role", role=role))
     if archive.user_by_name(username):
@@ -131,8 +175,8 @@ def create_user(archive, username: str, password: str,
 def change_password(archive, user_id: str, password: str, from_=None) -> None:
     """New password for `user_id`. `by` is who asks: the user themself, or an
     administrator; whoever wears someone else's clothes cannot change it."""
-    if len(password) < 8:
-        raise ValueError(t("auth.password_must_least_8"))
+    owner = archive.user_by_id(user_id)
+    check_password(password, owner["username"] if owner else "")
     if from_ is not None:
         who = from_ if isinstance(from_, User) else _from_row(archive.user_by_id(str(from_)) or {}) \
             if archive.user_by_id(str(from_)) else None
@@ -172,12 +216,24 @@ def _ip_key(ip: str | None) -> str | None:
 
 
 def remaining_wait(username: str, ip: str | None = None) -> float:
-    """Seconds to wait before retrying, by name or by address."""
+    """Seconds to wait before retrying, by name, by address, or for
+    everyone (`global_wait`)."""
     wait = _wait_for(username.strip().lower(), MAX_ATTEMPTS)
     ip_key = _ip_key(ip)
     if ip_key:
         wait = max(wait, _wait_for(ip_key, MAX_ATTEMPTS_PER_IP))
-    return wait
+    return max(wait, global_wait())
+
+
+def global_wait() -> float:
+    """Seconds everyone waits while the failures of the last `GLOBAL_WINDOW`
+    seconds, all names together, exceed `GLOBAL_MAX`; 0 otherwise."""
+    now = time.monotonic()
+    while _failures and now - _failures[0] > GLOBAL_WINDOW:
+        _failures.pop(0)
+    if len(_failures) < GLOBAL_MAX:
+        return 0.0
+    return max(0.0, GLOBAL_WAIT - (now - _failures[-1]))
 
 
 def _wait_for(key: str, max_: int) -> float:
@@ -247,6 +303,15 @@ def _mark_failure(key: str) -> None:
         _attempts.pop(old_one, None)
     how_many, _ = _attempts.get(key, (0, 0.0))
     _attempts[key] = (how_many + 1, now)
+    if not key.startswith("ip:"):
+        _failures.append(now)
+        if (how_many + 1) % MAX_ATTEMPTS == 0 and on_abuse is not None:
+            # The brake just tripped for this name: worth a line where the
+            # table reads, because nothing else would show the guessing.
+            try:
+                on_abuse(key, how_many + 1)
+            except Exception:
+                log.exception("the abuse hook failed")
 
 
 # ------------------------------------------------------------------ session

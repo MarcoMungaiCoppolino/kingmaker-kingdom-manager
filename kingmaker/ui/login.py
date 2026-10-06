@@ -171,7 +171,9 @@ async def login_page() -> None:
                 ip = auth.client_ip(ui.context.client)
                 wait = auth.remaining_wait(name, ip)
                 if wait > 0:
-                    warning.set_text(t("login.too_many_attempts_try", wait=wait))
+                    key = ("login.everyone_waits" if auth.global_wait() >= wait
+                           else "login.too_many_attempts_try")
+                    warning.set_text(t(key, wait=wait))
                     return
 
                 button.props("loading")
@@ -470,4 +472,12 @@ def _confirm_deletion(row: dict) -> None:
     dlg.open()
 
 
+def _abuse_noted(username: str, how_many: int) -> None:
+    """A name's brake tripped: one line in the journal, where the GM and
+    the administrator read, because the login page says nothing to them."""
+    STATE.record(t("login.failed_attempts", username=username, count=how_many), "account")
+    theme.mark_dirty()
+
+
+auth.on_abuse = _abuse_noted
 app.add_middleware(AccessMiddleware)

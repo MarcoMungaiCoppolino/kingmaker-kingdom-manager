@@ -60,7 +60,13 @@ cartella si applica l'[informativa sulla privacy](https://www.dropbox.com/privac
 l'app Dropbox che l'amministratore crea per essa è sua, secondo le condizioni per sviluppatori
 di Dropbox. Ogni GM segnato *Può ospitare* riceve la credenziale Dropbox dell'amministratore per
 quella cartella: è lo stesso accesso che ha l'amministratore, e non si può revocare a un host
-senza revocarla a tutti (da *App collegate* di Dropbox, dopo di che tutti si ricollegano).
+senza revocarla a tutti (da *App collegate* di Dropbox, dopo di che tutti si ricollegano). Sul
+PC di ogni host la credenziale, e il token On Air di chi gioca online senza il cloud, sono
+conservati protetti: su Windows dal sistema per quell'utente di Windows (DPAPI), su Linux in un
+file che solo quell'utente può leggere, fuori dalla cartella della partita
+(`~/.local/share/kingmaker-kingdom-manager/`). Il file delle impostazioni del launcher non
+contiene nessun segreto in chiaro, e una cartella della partita copiata non porta con sé nulla
+che un altro PC possa usare.
 
 **Il launcher** — a ogni avvio chiede a GitHub se esiste una release più nuova, il che dice a
 GitHub l'indirizzo del PC dell'host e la versione dell'app, nient'altro. *Impostazioni → Chiedi a

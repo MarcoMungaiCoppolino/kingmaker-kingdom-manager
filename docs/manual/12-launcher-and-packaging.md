@@ -86,10 +86,16 @@ because two servers on one database is the one thing the README forbids.
 **Settings.** `launcher.json` in the game folder (`core.Settings`): mode, port, language, On
 Air token, whether to open the browser, whether the firewall notice was shown, the cloud
 credential and this launcher's identity. Written whole through a `.tmp` sibling moved into
-place, owner-only on POSIX. The token is in clear, and the launcher says so under the entry —
-for whoever plays online **without** the cloud; with the cloud the token is not here at all but
-in the table's folder (`table.json`, chapter 13), read at every Start and handed to the server
-in its environment for that run.
+place, owner-only on POSIX. The two secrets — the refresh token inside `cloud`, and `token`,
+which is only the launcher's own for whoever plays online **without** the cloud (with the
+cloud the token is in the table's folder, `table.json`, chapter 13, read at every Start) —
+are plain in memory and nowhere else: `Settings.save` moves them into `vault` (`launcher/vault.py`:
+on Windows a DPAPI blob in the scope of the current user, through `ctypes`; elsewhere an
+owner-only file under `~/.local/share/kingmaker-kingdom-manager/secrets/`, or `KINGMAKER_VAULT_DIR`,
+which the suite points at the scene) and writes the file without them; `Settings.load` brings
+them back, or records `vault_error` when the blob was made by another user or on another PC,
+and the Cloud box asks to connect again. A file from before 1.4.0, with the secrets in clear,
+is migrated by its first save. `tests/test_vault.py` covers both schemes.
 
 **Updates.** `core.latest_release` asks the GitHub API for the latest release, in a thread, with
 a five-second timeout and silence on failure; `core.is_newer` compares version tuples. On
@@ -148,7 +154,8 @@ python packaging/build.py                                    # folder, installer
   match `kingmaker.__version__`.
 - `kingmaker.iss` — per-user install, no administrator rights, the destination page shown with
   `%LOCALAPPDATA%\Programs\Kingmaker Kingdom Manager` as default; `[InstallDelete]` removes
-  `_internal` before an update and never touches `saves\` or `assets\`; the uninstaller asks
+  `_internal` before an update and never touches `saves\` or `assets\`; the uninstaller removes
+  the installers the launcher downloaded to `%TEMP%` and asks
   whether to delete the game too. English and Italian.
 - `icon/make_icon.py` — cuts `kingmaker.ico` (16 to 256 px, rounded corners) and
   `kingmaker.png` out of `icon/party.png`, the crest of the party that founded the kingdom at

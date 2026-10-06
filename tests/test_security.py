@@ -173,6 +173,44 @@ results.append(("the fonts reach the login page before anyone signs in",
                 and login._is_free("/name/device-0/_km/fonts/cinzel-latin.woff2", "/name/device-0")
                 and not login._is_free("/_km/")))
 
+# --- the brakes everyone shares, the line when a name's trips, weak passwords
+import time  # noqa: E402
+auth._failures.clear()
+quiet = auth.remaining_wait("someone")
+auth._failures.extend([time.monotonic()] * auth.GLOBAL_MAX)
+results.append(("past GLOBAL_MAX failures from everyone, everyone waits",
+                quiet == 0 and auth.global_wait() > 0 and auth.remaining_wait("someone") > 0))
+auth._failures.clear()
+results.append(("and the wait clears with the failures", auth.remaining_wait("someone") == 0))
+noted = []
+hook_before = auth.on_abuse
+auth.on_abuse = lambda name, how_many: noted.append((name, how_many))
+auth._attempts.pop("tripwire", None)
+for _ in range(auth.MAX_ATTEMPTS):
+    auth.verify(A, "tripwire", "wrong-password-1")
+results.append(("the hook fires once, when a name's brake trips",
+                noted == [("tripwire", auth.MAX_ATTEMPTS)]))
+results.append(("the login page wires that hook to the journal", hook_before is login._abuse_noted))
+auth.on_abuse = hook_before
+auth._attempts.pop("tripwire", None)
+auth._failures.clear()
+for password, why in (("password1", "a common"), ("Password123", "a common, whatever the case"),
+                      ("tmpuser1", "the username as"), ("tmpuser", "the username as")):
+    try:
+        auth.check_password(password, "tmpuser")
+        refused = False
+    except ValueError:
+        refused = True
+    results.append((f"{why} password is refused", refused))
+try:
+    auth.check_password("prova-tmp-9876", "tmpuser")
+    passes = True
+except ValueError:
+    passes = False
+results.append(("an ordinary password passes", passes))
+results.append(("the list of common passwords is there and long enough to matter",
+                len(auth.common_passwords()) >= 200 and "password" in auth.common_passwords()))
+
 for name, ok in results:
     print(f" {'ok' if ok else 'NO'}  {name}")
 print(f"\n{sum(1 for _n, e in results if e)}/{len(results)} passed")

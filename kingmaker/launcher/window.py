@@ -370,11 +370,19 @@ class Launcher:
             child.destroy()
         cloud = self.settings.cloud
         if not self.settings.cloud_ready:
-            self.cloud_label.config(text=t("launcher.cloud.not_set_up"), foreground=COLOURS["quiet"])
+            if self.settings.vault_error and cloud.get("app_key"):
+                # The secrets were protected by another Windows user or on
+                # another PC (a copied game folder): the rest of the cloud
+                # settings are here, the access is not. Connect again.
+                self.cloud_label.config(text=t("launcher.cloud.vault_error", table=cloud.get("table", "")),
+                                        foreground=COLOURS["bad"])
+            else:
+                self.cloud_label.config(text=t("launcher.cloud.not_set_up"), foreground=COLOURS["quiet"])
             ttk.Button(self.cloud_row, text=t("launcher.cloud.set_up"), command=self.open_wizard
                        ).pack(side="left")
             ttk.Button(self.cloud_row, text=t("launcher.cloud.connect"), command=self.open_connect
                        ).pack(side="left", padx=8)
+            self.refresh_air()
             return
         who = cloud.get("username") or cloud.get("account_name") or ""
         if self.record is not None:

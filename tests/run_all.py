@@ -20,7 +20,10 @@ DATA = os.path.join(HERE, "scene")
 # by scene.py, never the table's real one, so a test that looks for the file
 # passes on any machine and not only where the live assets are.
 ENVIRONMENT = dict(os.environ, PYTHONPATH=BASE, PYTHONIOENCODING="utf-8",
-                KINGMAKER_DATA_DIR=DATA, KINGMAKER_ASSETS_DIR=os.path.join(DATA, "assets"))
+                KINGMAKER_DATA_DIR=DATA, KINGMAKER_ASSETS_DIR=os.path.join(DATA, "assets"),
+                # The launcher's secrets file (Linux) goes in the scene too,
+                # never in the home folder of whoever runs the suite.
+                KINGMAKER_VAULT_DIR=os.path.join(DATA, "vault"))
 SUITE = ["test_atoms.py", "test_ring.py", "test_faces.py", "test_redraw.py",
          "test_bank_model.py", "test_borders.py", "test_modes.py",
          "test_real_map.py", "test_map_banks.py", "test_cut.py",
@@ -37,7 +40,8 @@ SUITE = ["test_atoms.py", "test_ring.py", "test_faces.py", "test_redraw.py",
          "test_structures.py", "test_migration_v27.py", "test_i18n.py",
          "test_backup.py", "test_launcher.py", "test_sync.py", "test_refresh.py",
          "test_windows.py", "test_layers.py", "test_screens.py", "test_farmland.py", "test_shared_rolls.py",
-         "test_fame.py", "test_feats.py", "test_rules.py", "test_save_formats.py"]
+         "test_fame.py", "test_feats.py", "test_rules.py", "test_save_formats.py",
+         "test_vault.py"]
 
 
 # A file that takes longer than this is stuck, not slow: the slowest, the

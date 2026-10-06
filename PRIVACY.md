@@ -56,7 +56,12 @@ hosts, the game's address and the app's version. Dropbox's own
 administrator creates for it is theirs, under Dropbox's developer terms. Every GM marked *Can
 host* receives the administrator's Dropbox credential for that app folder: it is the same
 access the administrator has, and it cannot be revoked for one host without revoking it for
-all (from Dropbox's *Connected apps*, after which everyone connects again).
+all (from Dropbox's *Connected apps*, after which everyone connects again). On each host's PC
+the credential, and the On Air token of whoever plays online without the cloud, are stored
+protected: on Windows by the system for that Windows user (DPAPI), on Linux in a file only
+that user can read, outside the game folder (`~/.local/share/kingmaker-kingdom-manager/`).
+The launcher's settings file holds no secret in clear, and a copied game folder carries none
+that another PC can use.
 
 **The launcher** — at every start it asks GitHub whether a newer release exists, which tells
 GitHub the address of the host's PC and the app's version, nothing more. *Settings → Ask

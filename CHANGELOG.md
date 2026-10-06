@@ -8,6 +8,29 @@ what broke, what was learned — is in [docs/devlog.md](docs/devlog.md).
 The versions before 1.0.0 were never tagged: the app was played from a working copy and the
 numbers below were assigned afterwards, one per day of development, from the session history.
 
+## [1.4.0] — 2026-10-06
+
+The secrets rest protected, and a chosen password is harder to guess and quicker to notice.
+
+### Added
+- **The launcher's secrets are protected at rest.** The cloud credential, and the On Air token
+  of whoever plays online without the cloud, no longer sit in clear in `saves/launcher.json`:
+  on Windows they are protected by the system for that Windows user (DPAPI, nothing to
+  install), on Linux they live in a file only that user can read, outside the game folder
+  (`~/.local/share/kingmaker-kingdom-manager/secrets/`). A settings file from before is
+  migrated by its first save. A copied game folder carries no access another PC can use: there,
+  the launcher says so and asks to connect to the table again. The uninstaller says the
+  settings stay with the game when the game is kept, and removes the installers the launcher
+  downloaded for its updates.
+- **Weak passwords are refused.** At creation and at change: shorter than eight characters as
+  before, and now also the few hundred most common ones (`password1`, `qwerty123`…) and the
+  username itself. Guessing starts from exactly these.
+- **The table sees guessing happen.** When a name's brake trips (five wrong attempts), the
+  journal gets a line saying so, where the GM and the administrator read. And a brake for
+  everyone: past fifty failed logins in ten minutes, all names together, every login waits a
+  minute — under the public address the brake by address is off, since every player arrives
+  from the relay, and a stranger could try name after name with five attempts each.
+
 ## [1.3.0] — 2026-10-06
 
 The cloud stops lying, and the table gets a file of its own: one version for every host, the

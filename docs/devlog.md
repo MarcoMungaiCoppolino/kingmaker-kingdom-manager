@@ -573,3 +573,27 @@ The plan behind this release was written before any code and kept outside the re
 things could not be verified from code and were marked for a test on the real services: what
 Dropbox does with identical bytes (the fix is harmless either way), and what the relay does
 with two programs on one token.
+
+## 1.4.0 — 6 October 2026 · At rest
+
+Two small releases' worth of the same review, shipped together. The first is where the
+secrets sleep. `launcher.json` held the Dropbox credential and the On Air token in clear, and
+the user guide told people to carry the `saves` folder to a new PC, which carried both with
+it. Windows has had an answer to this for twenty years, DPAPI, and Python reaches it with
+`ctypes` and no dependency: a blob that only the same Windows user on the same PC can open.
+Linux has no equivalent every desktop runs, so there the secrets go to a file only the owner
+can read, outside the game folder, which is the honest fallback rather than a keyring that
+the WSL bench does not have. The settings file now holds a blob and no secret; a file from
+before is migrated the first time it is saved; a copied folder on another PC says so and asks
+to connect again instead of failing in the dark. None of it stops a program running as you,
+and the security notes say so, because a protection that overstates itself is worse than one
+that does not.
+
+The second is the login page under the public address. The brake by address is off there —
+everyone arrives from the relay — and nothing stopped a stranger from trying name after name,
+five attempts each, forever, with nobody at the table any the wiser. So: a brake for everyone
+past fifty failures in ten minutes, a line in the journal whenever a name's brake trips, and
+a few hundred common passwords refused at creation and change, the username among them. The
+list is short on purpose and lives next to the code, where the owner can grow it; the point
+was to refuse what guessing tries first, not to make people invent passwords they will write
+on a sticky note.

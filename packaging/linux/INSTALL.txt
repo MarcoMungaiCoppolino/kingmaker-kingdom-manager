@@ -13,7 +13,9 @@ which such a system usually does not carry:
     sudo dnf install libXScrnSaver   (Fedora, RHEL)
 
 To uninstall, delete the folder. To update, extract the new version over it:
-saves/ and assets/ are untouched.
+saves/ and assets/ are untouched. The launcher keeps its secrets (the cloud
+access, the On Air token) in ~/.local/share/kingmaker-kingdom-manager/secrets/,
+readable by you alone: delete that folder too when this PC leaves the table.
 
 Terminal users: ./kingmaker-kingdom-manager --serve [--lan] [--online] runs
 the server without the window, with the same flags as launch.py.

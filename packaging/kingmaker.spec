@@ -21,6 +21,8 @@ datas = [
     (str(ROOT / "kingmaker" / "rules" / "data"), "kingmaker/rules/data"),
     (str(ROOT / "kingmaker" / "locale" / "lang"), "kingmaker/locale/lang"),
     (str(ROOT / "kingmaker" / "ui" / "static"), "kingmaker/ui/static"),
+    # The passwords nobody should choose, read next to auth.py.
+    (str(ROOT / "kingmaker" / "access" / "common_passwords.txt"), "kingmaker/access"),
     (str(ROOT / "packaging" / "icon" / "kingmaker.ico"), "icon"),
     (str(ROOT / "packaging" / "icon" / "kingmaker.png"), "icon"),
     (str(ROOT / "kingmaker" / "launcher" / "guide"), "guide"),

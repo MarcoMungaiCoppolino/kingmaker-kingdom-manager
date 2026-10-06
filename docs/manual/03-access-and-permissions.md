@@ -16,7 +16,15 @@
   address → 30 seconds for that address with any name (`_attempts`, in memory; old entries clean
   themselves up). The address comes from `login.py` via `auth.client_ip`, which honours
   `X-Forwarded-For` only with `KINGMAKER_TRUST_PROXY` and switches the per-address brake off
-  under On Air, where everyone arrives from the relay.
+  under On Air, where everyone arrives from the relay. A third brake is everyone's
+  (`auth.global_wait`): past `GLOBAL_MAX` (50) failures in ten minutes, all names together,
+  every login waits a minute — because under On Air a stranger could otherwise try name after
+  name, five attempts each, for as long as they liked. When a name's brake trips, `auth.on_abuse`
+  fires and `login._abuse_noted` writes one line in the journal: the only place the table would
+  ever see guessing happen.
+- Weak passwords are refused at creation and at change (`auth.check_password`): shorter than
+  eight characters, one of the most common ones (`access/common_passwords.txt`, loaded once,
+  compared in lower case; bundled by the spec), or the username itself with digits around it.
 - The session is `app.storage.user["user_id"]`, signed with `config.storage_secret()`: the
   `KINGMAKER_STORAGE_SECRET` environment variable or a `saves/.storage_secret` file generated at
   the first start. Whoever knows the key forges an administrator cookie: that is why it is not

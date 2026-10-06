@@ -2,7 +2,7 @@
 
 *In English: [../user-guide.md](../user-guide.md).*
 
-Questa guida descrive l'app com'è alla versione 1.3.0, scheda per scheda, con il perché di ogni
+Questa guida descrive l'app com'è alla versione 1.4.0, scheda per scheda, con il perché di ogni
 scelta. Per installarla e avviarla vedi il [README.it.md](../../README.it.md); la finestra
 dell'app installata è il primo capitolo qui sotto. Le schermate in
 [`manual/img/screenshots/`](../manual/img/screenshots/) sono dell'interfaccia italiana.
@@ -153,9 +153,12 @@ te.
 
 **Da sapere.** Il PC di un host ha tutta la partita, segreti e hash delle password compresi:
 per questo ospitare è una decisione di fiducia, non una casella per tutti. La credenziale del
-cloud è conservata in chiaro nella cartella della partita di ogni host, come il token On Air,
-ed è l'accesso Dropbox dell'amministratore a quella cartella: ogni host ha lo stesso, quindi
-non si può togliere a un host senza toglierla a tutti. *Dimentica il cloud* la toglie da un
+cloud è l'accesso Dropbox dell'amministratore a quella cartella, e ogni host ha lo stesso,
+quindi non si può togliere a un host senza toglierla a tutti. Su ogni PC è conservata protetta
+— da Windows, per quell'utente di Windows, o su Linux in un file che solo tu puoi leggere, fuori
+dalla cartella della partita — così il file delle impostazioni del launcher non contiene niente
+in chiaro, e copiare la cartella della partita su un altro PC non porta con sé nessun accesso:
+lì, collegati di nuovo al tavolo. *Dimentica il cloud* la toglie da un
 launcher, e l'amministratore può revocarla su Dropbox (*App collegate*), dopo di che ogni host
 si ricollega. La cartella contiene anche un piccolo record di chi ospita — l'id del launcher,
 il tuo nome utente di Windows o Linux e il nome del tuo computer, l'indirizzo della partita —
@@ -356,7 +359,12 @@ Accenderlo o spegnerlo su un viaggio già disegnato **non ne sceglie un altro**:
 quella che hai tracciato e cambiano solo i giorni, che è la domanda che ti stavi facendo. Vale
 anche per la marcia forzata.
 
-Le password non sono salvate: se ne conserva solo l'impronta PBKDF2-HMAC-SHA256, con un sale
+Una password deve avere almeno otto caratteri, e l'app rifiuta le più comuni (`password1`,
+`qwerty123` e qualche centinaio come loro) e il nome utente stesso. Dopo cinque tentativi
+sbagliati su un nome l'accesso aspetta trenta secondi, e nel diario compare una riga che lo
+dice: è così che il GM e l'amministratore vedono qualcuno tirare a indovinare; quando tutto il
+tavolo conta cinquanta accessi falliti in dieci minuti, aspettano tutti un minuto. Le password
+non sono salvate: se ne conserva solo l'impronta PBKDF2-HMAC-SHA256, con un sale
 diverso per ognuna, nella tabella `users` di `saves/kingmaker.db` — sul tuo disco, come tutto il
 resto. Nessun servizio esterno le vede: NiceGUI è solo la libreria che disegna le pagine, non
 tiene account. La chiave che firma i cookie di sessione sta in `saves/.storage_secret`, generata

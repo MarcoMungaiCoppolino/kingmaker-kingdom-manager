@@ -2,7 +2,7 @@
 
 *In italiano: [it/guida-utente.md](it/guida-utente.md) (longer, with the history of every choice).*
 
-This guide describes the app as it is in version 1.3.0, tab by tab, with the reason behind
+This guide describes the app as it is in version 1.4.0, tab by tab, with the reason behind
 each choice where it matters at the table. To install and start it see the
 [README](../README.md); the window of the installed app is the first chapter below. The screenshots in [`manual/img/screenshots/`](manual/img/screenshots/)
 were taken with the Italian interface; the English one is the same, label for label.
@@ -93,12 +93,19 @@ owner; it cannot be recovered, but you can always generate another one.
 | **Player** | Plays: activities, turn, cities, map. |
 | **Spectator** | Only watches. |
 
-Passwords are not stored: only a PBKDF2-HMAC-SHA256 digest with a salt per user, in the `users`
+A password must be at least eight characters, and the app refuses the most common ones
+(`password1`, `qwerty123` and a few hundred like them) and the username itself. After five
+wrong attempts on a name the login waits thirty seconds, and the journal gets a line saying so,
+which is how the GM and the administrator see guessing happen; when the whole table counts
+fifty failures in ten minutes, everyone waits a minute. Passwords are not stored: only a
+PBKDF2-HMAC-SHA256 digest with a salt per user, in the `users`
 table of `saves/kingmaker.db`, on your disk like everything else. No external service sees
 them. The key that signs the session cookies is in `saves/.storage_secret`, generated at the
 first start; `KINGMAKER_STORAGE_SECRET` overrides it. Deleting that file breaks nothing: it
 only sends everyone back to the login page. Note that copying the `saves/` folder copies that
-key too: fine on a home PC, but on a hosting service pass it as an environment variable.
+key too: fine on a home PC, but on a hosting service pass it as an environment variable. The
+launcher's cloud access does not travel that way: it is protected for the Windows user, or kept
+outside the game folder on Linux, so on another PC you connect to the table again.
 
 **Entering another account.** From the Accounts panel the administrator can look at the app
 through another account's eyes (the 🔓 icon on each row) without knowing or changing its
@@ -719,9 +726,11 @@ within a minute (they may lose their last minutes of play) and the game moves to
 
 **What to know.** A host's PC holds the whole game, secrets and password hashes included:
 that is why hosting is a trust decision, not a checkbox for everyone. The cloud credential is
-kept in clear in each host's game folder, like the On Air token, and it is the
-administrator's own Dropbox access to that folder: every host holds the same one, so it
-cannot be taken back from one host without taking it back from all. *Forget the cloud* removes
+the administrator's own Dropbox access to that folder, and every host holds the same one, so
+it cannot be taken back from one host without taking it back from all. On each PC it is kept
+protected — by Windows, for that Windows user, or on Linux in a file only you can read,
+outside the game folder — so the launcher's settings file holds nothing in clear, and copying
+the game folder to another PC carries no access with it: there, connect to the table again. *Forget the cloud* removes
 it from a launcher, and the administrator can revoke it at Dropbox (*Connected apps*), after
 which every host connects again. The folder also holds a small record of who is hosting —
 the launcher's id, your Windows or Linux username and your computer's name, the game's

@@ -60,8 +60,8 @@ Name: "italian"; MessagesFile: "compiler:Languages\Italian.isl"
 [CustomMessages]
 english.DeleteGame=Also delete your game — the saves and the images in%n%1 ?%n%nChoose No to keep them for a later install.
 italian.DeleteGame=Cancellare anche la partita — i salvataggi e le immagini in%n%1 ?%n%nScegli No per conservarli per una prossima installazione.
-english.KeptGame=Your game was kept in%n%1
-italian.KeptGame=La tua partita è rimasta in%n%1
+english.KeptGame=Your game was kept in%n%1%n%nThe launcher's settings are there too, the cloud access among them (protected for this Windows user). Delete the folder yourself if this PC is leaving the table.
+italian.KeptGame=La tua partita è rimasta in%n%1%n%nCi sono anche le impostazioni del launcher, accesso al cloud compreso (protetto per questo utente di Windows). Cancella la cartella tu stesso se questo PC lascia il tavolo.
 english.DesktopIcon=Create a &desktop shortcut
 italian.DesktopIcon=Crea un collegamento sul &desktop
 
@@ -109,6 +109,9 @@ end;
 function InitializeUninstall(): Boolean;
 begin
   StopTheApp;
+  // The installers the launcher downloaded for its updates sit in %TEMP%:
+  // not secrets, but not worth keeping either.
+  DelTree(GetEnv('TEMP') + '\Kingmaker-Kingdom-Manager-*-Setup.exe', False, True, False);
   Result := True;
 end;
 
