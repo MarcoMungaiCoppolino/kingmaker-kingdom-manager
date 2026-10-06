@@ -8,6 +8,33 @@ what broke, what was learned — is in [docs/devlog.md](docs/devlog.md).
 The versions before 1.0.0 were never tagged: the app was played from a working copy and the
 numbers below were assigned afterwards, one per day of development, from the session history.
 
+## [1.2.1] — 2026-10-06
+
+The save knows where it has been, and a newer one is never opened by an older app.
+
+### Added
+- **The save records the versions of the app that opened it.** `meta.app_history` lists them
+  oldest first, each with the save format it found and the date; a new save starts with the
+  version that created it. The format number (the schema) still decides how a file is read.
+  The list is for bug reports and for comparing hosts in the cloud. Saves written before this
+  version start their list at the first version that opens them.
+- `tests/fixtures/v29.db`, a save of today's format built from the test scene, and
+  `tests/test_save_formats.py`, which opens a save of every format the app has shipped.
+
+### Fixed
+- **A save from a newer version was opened anyway at start.** Only *Load a save* and the cloud
+  checked the format; a normal start opened the file, stamped it with the older format number
+  and kept writing to it. The launcher's warning before installing an older version said such a
+  save would be refused, and it was not. Now the server refuses it before writing anything,
+  exits with code 3, and says in the launcher's log which version wrote it.
+- **Loading a save from before 1.0.0** with *Load a save* stopped with a database error instead
+  of converting it. The check read the format number in English column names, which a save of
+  that age doesn't have.
+- **The launcher went deaf when the Versions window was closed before GitHub answered.** The
+  list arrived for a window that no longer existed, the error stopped the loop that reads the
+  server's output, and from then on the status line never changed. The late answer is now
+  dropped, and no single event can stop that loop any more.
+
 ## [1.2.0] — 2026-10-06
 
 The kingdom rules, checked against the book: Fame and Infamy spent, the kingdom feats and the

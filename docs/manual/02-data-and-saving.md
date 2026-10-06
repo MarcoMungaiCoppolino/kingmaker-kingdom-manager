@@ -121,10 +121,37 @@ applied on import. `rename_asset_folders` renames `assets/personaggi` → `chara
 `veicoli` → `vehicles`, `miniature` → `thumbnails` at the first start. `tests/test_migration_v27.py`
 drives it on `tests/fixtures/v26.db`.
 
-`SCHEMA_VERSION` (28: schema 27 plus the `users.units` column) is written in `meta`. Adding a
-column: one row in `ADDED_COLUMNS` with the new version **and** the same column in the `CREATE
-TABLE` (a test compares the two), then raise `SCHEMA_VERSION`. Adding a table: the `CREATE
-TABLE IF NOT EXISTS` in the `SCHEMA` is enough.
+`SCHEMA_VERSION` (29: schema 27, plus `users.units` in 28 and `users.can_host` in 29) is
+written in `meta`. Adding a column: one row in `ADDED_COLUMNS` with the new version **and** the
+same column in the `CREATE TABLE` (a test compares the two), then raise `SCHEMA_VERSION`. Adding
+a table: the `CREATE TABLE IF NOT EXISTS` in the `SCHEMA` is enough.
+
+**The save format and the app version.** The schema number belongs to the *file format*, not
+to a release: it goes up only when the tables or the way rows are written change, and many
+releases share one number (1.1.0 to 1.2.0 all write 29). The rules:
+
+- **Older files are upgraded one step at a time.** Each schema step has its migration, and
+  `_open` runs them in order, so a save of any age goes through every step after it. A step,
+  once released, is never edited. A large change of the database is one more step: it reads
+  the old layout and writes the new one, as `upgrade_storage_v27` did for the English rename.
+- **The number is trusted, the content is guessed only without it.** Recognising a format from
+  its tables or keys (`is_legacy_document`, the Italian table names) is the fallback for files
+  that carry no number.
+- **A copy is kept before a conversion.** See `kingmaker.db.pre-v27.bak`.
+- **A newer file is refused, untouched.** A schema higher than `SCHEMA_VERSION` makes `_open`
+  raise `NewerSaveError` before any write, the journal mode included. The server started on it
+  prints why and exits with `cli.NEWER_SAVE_EXIT` (3), and the launcher shows its log;
+  `Archive.inspect` refuses it with `main.newer_schema` for *Load a save* and the cloud.
+- **The file remembers who opened it.** `meta.app_history` lists, oldest first, each app
+  version that opened the file: `{"app", "schema", "at"}`, where `schema` is the number the
+  file had at that moment (0: that version created it). `Archive.app_history()` reads it,
+  `inspect` returns the last as `app`. It does not decide anything the schema decides. It is
+  there for bug reports, for comparing hosts in the cloud, and for a converter that one day
+  must tell apart two files of one schema. Releases before 1.2.1 kept no list, so a file they
+  wrote starts its list at the first newer version that opens it.
+- **One sample per format.** `tests/fixtures/v<schema>.db` holds a save of every format the
+  app has shipped (`v26.db`, `v29.db`), and `tests/test_save_formats.py` opens each one. When
+  the schema goes up, add the save of the outgoing format there before changing anything.
 
 ## Export, reset, copies
 

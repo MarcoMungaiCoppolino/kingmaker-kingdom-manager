@@ -28,12 +28,32 @@ import time
 import uuid
 from pathlib import Path
 
+from kingmaker import __version__
 from kingmaker.storage import migrations
 from kingmaker.geometry import waterways, hexgrid, sections as sections_mod
 
 log = logging.getLogger(__name__)
 
+# The number of the file's *format*. It changes only when the tables or the
+# way rows are written change, never at a release that leaves them alone:
+# 1.1.0 to 1.2.0 all write schema 29. Each step up has its migration, run in
+# order on an older file (see `_open`); a file with a higher number than this
+# is refused (`NewerSaveError`).
 SCHEMA_VERSION = 29
+
+
+class NewerSaveError(RuntimeError):
+    """The save comes from a newer version of the app: its schema number is
+    higher than the one this app knows.
+
+    Opening it anyway would stamp it with the older number and write rows the
+    newer version lays out differently, so it is refused before anything is
+    written. `version` is the file's schema, `mine` this app's, `app` the
+    newest app version that recorded itself in the file ("" if none did)."""
+
+    def __init__(self, path: Path, version: int, mine: int, app: str = "") -> None:
+        super().__init__(f"{path}: schema {version} is newer than this app's {mine}")
+        self.path, self.version, self.mine, self.app = Path(path), version, mine, app
 
 # Hex columns kept separate because one filters or searches on them. The rest
 # of the row goes into `extra`, so a new key is not lost.
@@ -424,15 +444,22 @@ class Archive:
         self._conn = sqlite3.connect(self.path, check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
         with self._lock:
+            version_before = self._recorded_version()
+            if version_before > SCHEMA_VERSION:
+                # Before any write, the journal mode included.
+                history = self._read_history(self._conn)
+                self._conn.close()
+                raise NewerSaveError(self.path, version_before, SCHEMA_VERSION,
+                                     history[-1].get("app", "") if history else "")
             self._conn.execute("PRAGMA journal_mode=WAL")
             self._conn.execute("PRAGMA foreign_keys=ON")
-            version_before = self._recorded_version()
             if 0 < version_before < 27:
                 migrations.upgrade_storage_v27(self._conn, self.path)
             self._stash_tables()
             self._conn.executescript(SCHEMA)
             self._add_missing_columns(version_before)
             self._set_meta("schema_version", str(SCHEMA_VERSION))
+            self._record_app(version_before)
             self._commit()
         # Last written version of every row, to rewrite only what changed.
         self._written_document: str | None = None
@@ -476,11 +503,12 @@ class Archive:
                       if "campaigns" in tables else {"meta", "campagne", "regni", "utenti"})
             if not needed <= tables:
                 raise ValueError(cls.INSPECT_ERRORS["tables"], {})
-            row = conn.execute("SELECT value FROM meta WHERE key='schema_version'").fetchone()
-            version = int(row["value"]) if row else 0
+            version = cls._schema_of(conn)
+            history = cls._read_history(conn)
+            app = history[-1].get("app", "") if history else ""
             if version > SCHEMA_VERSION:
                 raise ValueError(cls.INSPECT_ERRORS["newer"],
-                                 {"version": version, "mine": SCHEMA_VERSION})
+                                 {"version": version, "mine": SCHEMA_VERSION, "app": app})
             users_table = "users" if "users" in tables else "utenti"
             users = conn.execute(f"SELECT COUNT(*) FROM {users_table}").fetchone()[0]
             kingdom = ""
@@ -495,7 +523,7 @@ class Archive:
                 kingdom = ""
         finally:
             conn.close()
-        return {"version": version, "users": int(users), "kingdom": kingdom}
+        return {"version": version, "users": int(users), "kingdom": kingdom, "app": app}
 
     def restore_from(self, path: Path) -> Path:
         """Replaces the whole database with the given save file.
@@ -657,15 +685,51 @@ class Archive:
             self._commit()
 
     def _recorded_version(self) -> int:
+        return self._schema_of(self._conn)
+
+    @staticmethod
+    def _schema_of(conn: sqlite3.Connection) -> int:
+        """The schema number a file says it has; 0 for a new database."""
         for query in ("SELECT value FROM meta WHERE key='schema_version'",
                       # before schema 27 the meta table itself was in Italian
                       "SELECT valore AS value FROM meta WHERE chiave='schema_versione'"):
             try:
-                row = self._conn.execute(query).fetchone()
+                row = conn.execute(query).fetchone()
             except sqlite3.OperationalError:
                 continue
-            return int(row["value"]) if row else 0
+            return int(row[0]) if row else 0
         return 0                # not even the meta table exists: new database
+
+    # Which versions of the app have opened this file, oldest first: one entry
+    # per version, `{"app", "schema", "at"}`, where `schema` is the number the
+    # file had before that version opened it (0: that version created it).
+    # The schema number says what the file *is*; this says where it has been —
+    # for whoever reads a bug report, for the cloud comparing two hosts, and
+    # for a converter that one day has to tell apart two files of one schema.
+    # Versions before 1.2.1 kept no list: a file they wrote starts it later.
+    APP_HISTORY = "app_history"
+
+    @classmethod
+    def _read_history(cls, conn: sqlite3.Connection) -> list[dict]:
+        try:
+            row = conn.execute("SELECT value FROM meta WHERE key=?", (cls.APP_HISTORY,)).fetchone()
+            history = json.loads(row[0]) if row else []
+        except (sqlite3.Error, ValueError, TypeError):
+            return []                   # an old file, or a list nobody can read
+        return [h for h in history if isinstance(h, dict)] if isinstance(history, list) else []
+
+    def _record_app(self, version_before: int) -> None:
+        history = self._read_history(self._conn)
+        if history and history[-1].get("app") == __version__:
+            return
+        history.append({"app": __version__, "schema": version_before,
+                        "at": time.strftime("%Y-%m-%d")})
+        self._set_meta(self.APP_HISTORY, _json(history))
+
+    def app_history(self) -> list[dict]:
+        """The versions of the app that have opened this file, oldest first."""
+        with self._lock:
+            return self._read_history(self._conn)
 
     def _add_missing_columns(self, version_before: int) -> None:
         """The columns added after the first version of the schema.

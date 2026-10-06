@@ -2,7 +2,7 @@
 
 *In English: [../user-guide.md](../user-guide.md).*
 
-Questa guida descrive l'app com'è alla versione 1.2.0, scheda per scheda, con il perché di ogni
+Questa guida descrive l'app com'è alla versione 1.2.1, scheda per scheda, con il perché di ogni
 scelta. Per installarla e avviarla vedi il [README.it.md](../../README.it.md); la finestra
 dell'app installata è il primo capitolo qui sotto. Le schermate in
 [`manual/img/screenshots/`](../manual/img/screenshots/) sono dell'interfaccia italiana.
@@ -349,7 +349,9 @@ giocatori possono lavorare su esagoni diversi nello stesso momento.
 
 La partita vive in un database SQLite, `saves/kingmaker.db`, scritto al massimo una volta ogni
 due secondi (e alla chiusura). Non viene riscritto tutto ogni volta: cambiano solo le righe che
-hai davvero toccato.
+hai davvero toccato. Un salvataggio scritto da una versione **più nuova** dell'app non viene
+aperto: il server si ferma all'avvio, il registro del launcher dice quale versione l'ha scritto
+e il file resta com'era. Per giocarlo installa quella versione o una più recente.
 
 Continua a valere una regola: fai girare **una sola** copia dell'app sugli stessi dati. Il
 database regge bene più scritture, ma ogni processo tiene il regno in memoria e al salvataggio

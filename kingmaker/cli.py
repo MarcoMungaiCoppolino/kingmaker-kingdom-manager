@@ -16,6 +16,8 @@ import os
 import sys
 
 TOKEN_VARIABLE = "KINGMAKER_ON_AIR_TOKEN"
+# The server's exit code when the save comes from a newer version of the app.
+NEWER_SAVE_EXIT = 3
 
 
 def saved_token() -> str | None:
@@ -105,7 +107,17 @@ def resolve_online(online) -> str | bool | None:
 
 def serve(args: argparse.Namespace) -> None:
     from kingmaker import config
-    from kingmaker.main import start
+    from kingmaker.storage.archive import NewerSaveError
+    try:
+        from kingmaker.main import start      # opens the save
+    except NewerSaveError as refused:
+        # Said in words and with an exit code of its own: the launcher shows
+        # its log when the server ends badly, and a traceback there would say
+        # nothing to whoever installed an older version over a newer game.
+        from kingmaker.locale.i18n import t
+        print(t("main.newer_save_refused", path=refused.path, version=refused.version,
+                mine=refused.mine, app=refused.app or "?"), flush=True)
+        sys.exit(NEWER_SAVE_EXIT)
     start(host="0.0.0.0" if args.lan else config.HOST,
           port=args.port, show=not args.no_browser,
           online=resolve_online(args.online))

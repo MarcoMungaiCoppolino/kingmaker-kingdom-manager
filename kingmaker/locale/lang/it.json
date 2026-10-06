@@ -490,6 +490,7 @@
   "main.milestone_xp_awards": "Ricompense PE Miliari",
   "main.missing_tables": "mancano le tabelle della partita",
   "main.nation_type": "Tipo di Nazione",
+  "main.newer_save_refused": "Questo salvataggio viene da una versione più nuova di Kingmaker Kingdom Manager ({app}, formato {version}); questa versione legge fino al formato {mine}. Non è stato toccato nulla. Installa quella versione o una più recente per aprirlo: {path}",
   "main.newer_schema": "il suo schema ({version}) è più nuovo di quello dell'app ({mine})",
   "main.no_border_marked_land": "**Nessun confine segnato** — terra: si passa, e non costa niente.",
   "main.not_a_save": "Non è un salvataggio di Kingmaker: {reason}",

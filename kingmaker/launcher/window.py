@@ -599,19 +599,29 @@ class Launcher:
         try:
             while True:
                 kind, value = self.events.get_nowait()
-                if kind == "line":
-                    self.handle_line(value)
-                elif kind == "call":
-                    value()
-                elif kind == "cloud":
-                    self.handle_cloud(*value)
-                elif kind == "taken":
-                    self.handle_taken()
-                else:
-                    self.handle_exit(value)
+                try:
+                    self.dispatch(kind, value)
+                except tk.TclError:
+                    # An answer for a window closed before it came — the
+                    # Versions list, say, shut while GitHub was still
+                    # thinking: there is nobody to show it to. The loop
+                    # must go on either way, or the launcher goes deaf.
+                    pass
         except queue.Empty:
             pass
         self.root.after(100, self.poll)
+
+    def dispatch(self, kind: str, value) -> None:
+        if kind == "line":
+            self.handle_line(value)
+        elif kind == "call":
+            value()
+        elif kind == "cloud":
+            self.handle_cloud(*value)
+        elif kind == "taken":
+            self.handle_taken()
+        else:
+            self.handle_exit(value)
 
     def handle_line(self, text: str) -> None:
         parsed = core.parse_line(text)
@@ -764,6 +774,8 @@ class Launcher:
         releases: list[core.Release] = []
 
         def fill(found: list[core.Release]) -> None:
+            if not box.winfo_exists():      # closed before GitHub answered
+                return
             releases[:] = found
             box.delete(0, "end")
             for release in found:

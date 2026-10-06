@@ -7,6 +7,7 @@ import shutil
 import sqlite3
 import tempfile
 
+from kingmaker import __version__
 from kingmaker.storage import legacy_names, migrations
 from kingmaker.storage.archive import Archive, SCHEMA_VERSION
 from kingmaker.state import State
@@ -41,7 +42,12 @@ results.append(("the tables are in English and nothing else was created",
                 set(after) == set(migrations.RENAMED_TABLES.values()) - {"crossings_to_translate"}
                 | {"meta"}))
 renamed = {migrations.RENAMED_TABLES.get(t, t): n for t, n in counts_before.items()}
+# The one row added on the way: `meta.app_history`, the version that opened it.
+renamed["meta"] += 1
 results.append(("every row survived", all(counts_after.get(t) == n for t, n in renamed.items())))
+results.append(("the version that converted it is written down",
+                [h["app"] for h in A.app_history()] == [__version__]
+                and A.app_history()[0]["schema"] == 26))
 c = A._conn
 results.append(("the schema version is the new one",
                 c.execute("SELECT value FROM meta WHERE key='schema_version'").fetchone()[0]

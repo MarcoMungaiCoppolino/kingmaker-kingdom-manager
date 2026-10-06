@@ -2,7 +2,7 @@
 
 *In italiano: [it/guida-utente.md](it/guida-utente.md) (longer, with the history of every choice).*
 
-This guide describes the app as it is in version 1.2.0, tab by tab, with the reason behind
+This guide describes the app as it is in version 1.2.1, tab by tab, with the reason behind
 each choice where it matters at the table. To install and start it see the
 [README](../README.md); the window of the installed app is the first chapter below. The screenshots in [`manual/img/screenshots/`](manual/img/screenshots/)
 were taken with the Italian interface; the English one is the same, label for label.
@@ -125,8 +125,10 @@ The game lives in `saves/kingmaker.db`, written at most every two seconds and at
 `KINGMAKER_DATA_DIR` moves the data folder, `KINGMAKER_ASSETS_DIR` the images. A save from
 release 0.x is migrated at the first start, after an automatic copy named
 `kingmaker.db.pre-v27.bak`; an old `saves/regno.json` is imported into an empty database and
-left where it is. From the Save tab the administrator downloads the whole game as one zip, the
-kingdom as JSON inside it.
+left where it is. A save written by a **newer** version of the app is not opened: the server
+stops at start, the launcher's log says which version wrote it, and the file is left as it was.
+Install that version, or a newer one, to play it. From the Save tab the administrator downloads
+the whole game as one zip, the kingdom as JSON inside it.
 
 ### Characters
 

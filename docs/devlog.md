@@ -507,3 +507,33 @@ a milder form: the header's "looking as" line read the session of whoever had ju
 player's click could change another player's header. Each window now records its disguise when
 its page is built. A second model, given the evidence in a prompt, traced the mechanism; the
 test now forces the prune on every run, so the case that needed bad luck is checked every time.
+
+## 1.2.1 — 6 October 2026 · Where the save has been
+
+A small release that came out of reading the launcher's own words. The *Versions on GitHub*
+dialog warned, before installing an older release, that "a save written by a newer version can
+be refused by an older one". It could not be. Only *Load a save* and the cloud looked at the
+format number; a normal start opened the file, stamped it with the older number and kept
+writing, so the warning promised a protection the code did not have. Now `Archive._open` reads
+the number before it touches anything, the journal mode included, and refuses a newer file with
+an exception of its own; the server prints one sentence instead of a traceback and exits with
+code 3, which the launcher shows in its log.
+
+Refusing a file is easy; saying *who* wrote it is not, because the format number belongs to the
+file and not to a release: 1.1.0 through 1.2.0 all write schema 29. So the save now keeps a list
+of the app versions that opened it, oldest first, with the format each one found. It decides
+nothing — the schema still does that — but a bug report can say where a file has been, and the
+cloud will one day compare two hosts by it. The same reading found that a save from before 1.0.0
+could not be loaded through *Load a save*: the check looked for the schema in English column
+names, which a file of that age does not have.
+
+Two rules were written down with it, in the manual's chapter on data: a schema step is never
+edited after release, and `tests/fixtures/` keeps one real save per format the app has shipped,
+each opened by `tests/test_save_formats.py`. The sample of today's format went in before any of
+this changed, which is the order the rule asks for.
+
+The suite found one more thing on the way out. The screens test opens the *Versions* window and
+closes it at once; GitHub answered a moment later, into a listbox that was gone, and the error
+climbed out of the launcher's polling loop, which never re-armed itself. In the app that is the
+launcher going deaf after a quick close on a slow connection. The late answer is dropped now,
+and the loop treats an error in one event as that event's problem, not its own.

@@ -490,6 +490,7 @@
   "main.milestone_xp_awards": "Milestone XP Awards",
   "main.missing_tables": "the tables of the game are missing",
   "main.nation_type": "Nation Type",
+  "main.newer_save_refused": "This save comes from a newer version of Kingmaker Kingdom Manager ({app}, save format {version}); this version reads up to format {mine}. Nothing was changed. Install that version or a newer one to open it: {path}",
   "main.newer_schema": "its schema ({version}) is newer than this app's ({mine})",
   "main.no_border_marked_land": "**No border marked** — land: you pass, and it costs nothing.",
   "main.not_a_save": "Not a Kingmaker save: {reason}",
