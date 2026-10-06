@@ -180,14 +180,28 @@ def _construction_dialog(sett: dict, gi: int, bi: int, li: int, refresh) -> None
     dlg.open()
 
 
-def _can_pay(st: dict) -> bool:
+def _commodity_cost(st: dict) -> dict[str, int]:
+    """The commodities building `st` takes. A cost of «1 Lumber or 1 Stone»
+    (`cost_either`, the Bridge, the Watchtower) is paid in one of them: the
+    one the kingdom can pay with and has more of; neither, when it has
+    enough of none — then the cost asks for the first, and is refused."""
     c = st["cost"]
-    if STATE.k["rp"] < c["rp"]:
+    cost = {p: c[p] for p in ("food", "lumber", "luxuries", "ore", "stone")}
+    either = st.get("cost_either") or ()
+    if either:
+        stock = STATE.k["commodities"]
+        payable = [p for p in either if stock[p] >= c[p]]
+        chosen = max(payable, key=lambda p: stock[p]) if payable else either[0]
+        for p in either:
+            if p != chosen:
+                cost[p] = 0
+    return cost
+
+
+def _can_pay(st: dict) -> bool:
+    if STATE.k["rp"] < st["cost"]["rp"]:
         return False
-    for p in ("food", "lumber", "luxuries", "ore", "stone"):
-        if STATE.k["commodities"][p] < c[p]:
-            return False
-    return True
+    return all(STATE.k["commodities"][p] >= n for p, n in _commodity_cost(st).items())
 
 
 def _structure_row(st: dict, sett: dict, gi: int, bi: int, li: int,
@@ -220,9 +234,12 @@ def _structure_row(st: dict, sett: dict, gi: int, bi: int, li: int,
                 if st["effects"]:
                     ui.label(t("city.effects", effects=st['effects'])).style("font-size:.78rem;color:var(--km-muted)")
             with ui.column().classes("gap-1"):
+                # The Civic step's limits: the button waits, and says why.
+                blocked = STATE.activities_block(rules.BY_ID["activities"]["build_structure"])
                 ui.button(t("city.build"), on_click=lambda: _build(st, sett, gi, bi, li, dlg, refresh,
                                                                     with_check=True)) \
-                    .props(f'dense color=amber {"" if payable else "disable"}')
+                    .props(f'dense color=amber {"" if payable and not blocked else "disable"}') \
+                    .tooltip(blocked or "")
                 ui.button(t("city.place_without_check"), on_click=lambda: _build(st, sett, gi, bi, li, dlg,
                                                                              refresh, with_check=False)) \
                     .props("dense flat color=grey").tooltip(
@@ -237,7 +254,7 @@ def _build(st: dict, sett: dict, gi: int, bi: int, li: int, dlg, refresh, with_c
         theme.notify(t("city.there_are_not_enough"), "negative")
         return
 
-    def square() -> None:
+    def square(built: bool = True) -> None:
         gid = uuid.uuid4().hex[:6]
         for idx in lots:
             block_[idx] = {"structure": st["id"], "gid": gid}
@@ -245,14 +262,27 @@ def _build(st: dict, sett: dict, gi: int, bi: int, li: int, dlg, refresh, with_c
             sett["has_bridge"] = True
         STATE.record(t("city.built", name=sett['name'], name2=st['name']), "settlement",
                        st["effects"] or st["item_bonus"])
+        # A famous or infamous structure moves the kingdom's points when it
+        # is built — not when one already standing is placed on the grid.
+        fame = STATE.fame_from_structure(st["id"]) if built else 0
+        if fame:
+            STATE.record(t("city.fame_from_structure", name=st["name"], fame=STATE.fame_name,
+                           delta=fame), "settlement")
         theme.save_and_refresh()
         refresh()
         dlg.close()
         _effects_dialog(st, refresh)
 
     if not with_check:
-        square()
+        square(built=False)
         theme.notify(t("city.placed_without_check", name=st['name']))
+        return
+
+    # The Civic step's limits: one activity per settlement (two in one of
+    # them with Civic Planning), nothing but Quell Unrest in Anarchy.
+    why = STATE.activities_block(rules.BY_ID["activities"]["build_structure"])
+    if why:
+        theme.notify(why, "warning")
         return
 
     # Pays the cost
@@ -261,8 +291,9 @@ def _build(st: dict, sett: dict, gi: int, bi: int, li: int, dlg, refresh, with_c
         theme.notify(t("city.not_enough_resources"), "negative")
         return
     STATE.spend_rp(c["rp"])
-    for p in ("food", "lumber", "luxuries", "ore", "stone"):
-        STATE.k["commodities"][p] -= c[p]
+    paid = _commodity_cost(st)
+    for p, n in paid.items():
+        STATE.k["commodities"][p] -= n
 
     constr = st["construction"]
     if not constr:
@@ -271,49 +302,59 @@ def _build(st: dict, sett: dict, gi: int, bi: int, li: int, dlg, refresh, with_c
 
     # Picks automatically the skill option with the best modifier among the valid ones
     valid_ones = []
-    for opt in constr["options"]:
+    options = list(constr["options"])
+    # Practical Magic: Magic in place of Engineering, at the same rank.
+    if "practical_magic" in STATE.k["feats"]:
+        options += [dict(o, skill="magic") for o in constr["options"] if o["skill"] == "engineering"]
+    for opt in options:
         aid = opt["skill"]
         if aid not in rules.BY_ID["skills"]:
             continue
         owned = STATE.k["proficiencies"].get(aid, "untrained")
         ok = rules.meets_proficiency(owned, opt["proficiency"])
-        valid_ones.append((aid, ok, STATE.skill_mod(aid)))
+        valid_ones.append((aid, ok, sum(v for _n, v in STATE.check_detail(
+            aid, "build_structure", st["id"], settlement=sett["id"]))))
     usable = [v for v in valid_ones if v[1]] or valid_ones
     if not usable:
         square()
         return
     aid = max(usable, key=lambda v: v[2])[0]
 
-    res = rules.roll_check(STATE.skill_mod(aid), constr["dc"], STATE.skill_detail(aid))
+    # Built in this settlement: its structures help (a Construction Yard),
+    # with the capital's; `State.kingdom_check` counts them.
+    def roll() -> rules.Result:
+        # The structure is the variant: Fortified Fiefs helps with some.
+        return STATE.kingdom_check(aid, constr["dc"], "build_structure", st["id"],
+                                   settlement=sett["id"])
+
+    def apply(res: rules.Result) -> None:
+        if res.grade in ("success", "critical_success"):
+            if res.grade == "critical_success":
+                # Half of what was paid comes back — within the storage.
+                for p, n in paid.items():
+                    if n // 2:
+                        STATE.add_commodity(p, n // 2)
+            square()
+            return
+        if res.grade == "critical_failure":
+            gid = uuid.uuid4().hex[:6]
+            for idx in lots:
+                block_[idx] = {"structure": "rubble", "gid": gid}
+            STATE.record(t("city.failed_lots_are_reduced", name=sett['name'], name2=st['name']),
+                           "settlement")
+        else:
+            STATE.record(t("city.construction_failed_you_can", name=sett['name'], name2=st['name']), "settlement")
+        theme.save_and_refresh()
+        refresh()
+        dlg.close()
+
     STATE.mark_activity("build_structure")
-    act = rules.BY_ID["activities"]["build_structure"]
-    outcome = act["outcomes"][res.grade]
-
-    if res.grade in ("success", "critical_success"):
-        square()
-        if res.grade == "critical_success":
-            for p in ("food", "lumber", "luxuries", "ore", "stone"):
-                STATE.k["commodities"][p] += c[p] // 2
-            STATE.fame_on_critical(res)
-    elif res.grade == "critical_failure":
-        gid = uuid.uuid4().hex[:6]
-        for idx in lots:
-            block_[idx] = {"structure": "rubble", "gid": gid}
-        STATE.record(t("city.failed_lots_are_reduced", name=sett['name'], name2=st['name']),
-                       "settlement")
-        theme.save_and_refresh()
-        refresh()
-        dlg.close()
-    else:
-        STATE.record(t("city.construction_failed_you_can", name=sett['name'], name2=st['name']), "settlement")
-        theme.save_and_refresh()
-        refresh()
-        dlg.close()
-
     # Functions, not strings: the other windows read the roll in their own
-    # language, structure name and outcome included.
-    theme.show_result(res, lambda: t("city.build_structure", name=rules.BY_ID["structure"][st["id"]]["name"]),
-                      lambda: rules.BY_ID["activities"]["build_structure"]["outcomes"][res.grade])
+    # language, structure name and outcome included. The structure dialog
+    # stays open under the result until the result is kept.
+    theme.show_check(roll(), lambda: t("city.build_structure", name=rules.BY_ID["structure"][st["id"]]["name"]),
+                     lambda res: rules.BY_ID["activities"]["build_structure"]["outcomes"][res.grade],
+                     apply=apply, reroll=roll)
 
 
 @theme.requires(permissions.EDIT_KINGDOM)
@@ -331,7 +372,10 @@ def _refresh_stats() -> None:
 @theme.requires(permissions.EDIT_KINGDOM)
 def _apply_unrest(entry: dict, structure_name: str, dlg) -> None:
     value, detail = rules.quantity_value(entry["quantity"])
-    real = STATE.modify_unrest(entry["sign"] * value, structure_name)
+    delta = entry["sign"] * value
+    # Lowered by building — an activity: Endure Anarchy may take 1 more.
+    real = (STATE.activity_unrest(delta, structure_name) if delta < 0
+            else STATE.modify_unrest(delta, structure_name))
     _refresh_stats()
     theme.notify(t("city.unrest", real=real, detail=detail))
     dlg.close()
@@ -592,15 +636,21 @@ def city_panel() -> None:
                         theme.stat_box(kind["name"], t("city.type"))
                         theme.stat_box(STATE.settlement_level(sett), t("city.level"),
                                        t("city.equal_blocks_least_one"))
-                        theme.stat_box(kind["consumption"] + sett.get("consumption_extra", 0), t("city.consumption"))
+                        theme.stat_box(STATE.settlement_consumption(sett), t("city.consumption"),
+                                       t("city.consumption_tip"))
                         theme.stat_box(f'+{kind["item_bonus_max"]}', t("city.max_item_bonus"))
                         theme.stat_box(kind["influence"], t("city.influence"))
+                    # Consumption the structures do not explain (an event, a
+                    # ruling): added by hand to this settlement's.
+                    ui.number(t("city.consumption_adjust"), value=sett.get("consumption_extra", 0), format="%d",
+                              on_change=lambda e: (_set_field(sett, "consumption_extra", int(e.value or 0)),
+                                                   theme.save_and_refresh()))                         .props("outlined dense").classes("w-48")
                     _overcrowding_block(sett, counts)
                     ui.label(t("city.approximate_population", population=kind["population"])) \
                         .style("font-size:.78rem;color:var(--km-muted)")
 
                     ok, msg = _can_expand(sett)
-                    ui.button(("Espandi" if ok else t("city.expansion_blocked")),
+                    ui.button((t("city.expand") if ok else t("city.expansion_blocked")),
                               on_click=lambda: _expand(sett) or content_.refresh()) \
                         .props(f'dense color={"amber" if ok else "grey"} {"" if ok else "disable"}') \
                         .classes("w-full")
@@ -611,7 +661,7 @@ def city_panel() -> None:
                     for side in ("north", "south", "east", "west"):
                         ui.select({"land": t("city.land_border"), "water": t("city.water_border"),
                                    "walls": t("city.walled_border")},
-                                  label=side.capitalize(), value=sett["borders"][side],
+                                  label=t(f"city.side.{side}"), value=sett["borders"][side],
                                   on_change=lambda e, l=side: (_set_field(sett["borders"], l, e.value),
                                                                theme.save_and_refresh())) \
                             .props("outlined dense").classes("w-full")

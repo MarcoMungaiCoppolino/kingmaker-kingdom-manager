@@ -1068,7 +1068,7 @@ def _progress_bar(journey: dict) -> None:
             f'{share * 100:.0f}%;background:#7fc3e8"></div></div>'
             f'<div style="font-size:.58rem;color:var(--km-gold-dim)">'
             f'&#8594; {theme.esc(journey["arrival"])} · {missing_ones} '
-            f'{"day" if missing_ones == 1 else "days"}</div>')
+            f'{tn("common.day_word", missing_ones)}</div>')
 
 def _portrait_click(char: dict, mine: dict, mapping) -> None:
     """Click on the portrait: if it is on the map it takes it, if not it has it placed."""
@@ -1126,7 +1126,7 @@ def _departure_controls(mine: dict, mapping) -> None:
     # «at most» when the count rests on never-seen hexes: the same thing the
     # arrow on the map and the warning in the Travel box say.
     ceiling = t("map.travel.most") if plan.max_estimate else ""
-    ui.html(t("map.travel.span_class_km_chip_5", ceiling=ceiling, total_cost=plan.total_cost, days=days, v="day" if days == 1 else "days"))
+    ui.html(t("map.travel.span_class_km_chip_5", ceiling=ceiling, total_cost=plan.total_cost, days=days, v=tn("common.day_word", days)))
     ui.button(t("map.travel.depart"), icon="flag", on_click=lambda: _parts(mine, mapping)) \
         .props("dense color=amber") \
         .tooltip(t("map.travel.sets_party_its_way"))
@@ -1810,10 +1810,10 @@ def _singles_box(singles: list[dict]) -> None:
             ui.html(f'<span style="width:10px;height:10px;border-radius:50%;'
                     f'background:{entry["color"]};flex:0 0 auto"></span>')
             ui.label(entry["name"]).style("font-size:.78rem;flex:1")
-            ceiling = "max " if entry.get("unknowns") else ""
+            ceiling = t("drawing.max_prefix") if entry.get("unknowns") else ""
             days = entry["days"]
             ui.html(f'<span class="km-chip" style="font-size:.64rem">'
-                    f'{ceiling}{days} {"day" if days == 1 else "days"}</span>')
+                    f'{ceiling}{days} {tn("common.day_word", days)}</span>')
     ui.label(t("map.travel.they_all_leave_together")) \
         .style("font-size:.72rem;color:var(--km-muted);white-space:normal")
 
@@ -2098,7 +2098,7 @@ def _travel_section(journey: dict, is_on: bool, names: dict, mine: dict, mapping
                    f'{"background:#16202a" if is_on else ""}'):
         with ui.expansion(t("map.travel.text_3", people=people, arrival=journey["arrival"]), value=is_on) \
                 .classes("w-full").props("dense header-class=km-title"):
-            ui.html(t("map.travel.div_style_font_size_3", missing_ones=missing_ones, v="day" if missing_ones == 1 else "days", turn_created=journey["turn_created"]))
+            ui.html(t("map.travel.div_style_font_size_3", missing_ones=missing_ones, v=tn("common.day_word", missing_ones), turn_created=journey["turn_created"]))
             for leg in journey.get("legs") or []:
                 who = ", ".join(names.get(i, "?") for i in leg.get("characters") or [])
                 rest = daily.rest_of_leg(leg)

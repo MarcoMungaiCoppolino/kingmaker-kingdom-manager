@@ -13,17 +13,23 @@ and after each one every panel in front of somebody is compared with what
 drawing it from scratch would give. A difference is a stale screen.
 """
 import asyncio
+import faulthandler
 import os
 import random
 import re
 import sys
+import traceback
 
 os.environ["NICEGUI_USER_SIMULATION"] = "true"
 
 import httpx  # noqa: E402
-from nicegui import core, ui  # noqa: E402
+from nicegui import Client, core, ui  # noqa: E402
 from nicegui.testing.general import prepare_simulation  # noqa: E402
 from nicegui.testing.user import User  # noqa: E402
+
+# A stuck run dumps every stack and ends before run_all's 300 s, so the report
+# says where it stuck instead of «no end».
+faulthandler.dump_traceback_later(240, exit=True)
 
 prepare_simulation()
 from kingmaker import main, rules  # noqa: E402,F401
@@ -140,7 +146,7 @@ def random_effect_rows() -> list[dict]:
         target = None
         kind = rules.entry_target(v)
         if kind:
-            target = (rules.RUINS if kind == "ruin" else rules.COMMODITIES)[0]["id"]
+            target = {"ruin": rules.RUINS, "skill": rules.SKILLS}.get(kind, rules.COMMODITIES)[0]["id"]
         rows.append({"entry": v, "active": True, "valore": value, "target": target})
     return rows
 
@@ -207,18 +213,6 @@ def changes() -> list:
     ]
 
 
-def close_all(users) -> None:
-    """Closes the simulated windows before the test ends.
-
-    A window's outbox loop stops on its own once the window is deleted. Left
-    to asyncio's cancellation at exit, one loop could swallow it — it waits
-    with `asyncio.wait_for`, which on Python 3.10 can lose a cancellation
-    that lands at the wrong moment — and the process never ended. It hung
-    about one run in three once rolls began reaching every window."""
-    for user in users:
-        user.client.delete()
-
-
 async def drain() -> None:
     for _ in range(500):
         await asyncio.sleep(0)
@@ -231,78 +225,125 @@ async def drain() -> None:
         await asyncio.sleep(0)
 
 
-# -------------------------------------------------------------- the run
-async def run() -> None:
-    async with core.app.router.lifespan_context(core.app):
-        users = []
-        who = ["admin", "gm", "player"]
-        for i in range(WINDOWS):
-            name = who[i % len(who)]
-            _session["id"] = accounts[name]["id"]
-            u = User(httpx.AsyncClient(transport=httpx.ASGITransport(core.app), base_url="http://test"))
-            await u.open("/")
-            with u.client:
+async def close_everything() -> None:
+    """Every window still open, closed, whatever happened in the run, and a
+    moment for its outbox loop to see the stop and end.
+
+    A window's outbox loop waits with `asyncio.wait_for`, which on Python 3.10
+    and 3.11 can lose a cancellation landing at the wrong moment: left to
+    asyncio's cancellation at exit, one loop could keep the process alive
+    forever. Closing the windows first ends the loops on their own. A run that
+    raised half-way used to skip that, and hung instead of saying what went
+    wrong — under load, as on the CI's runner, that was the first run."""
+    for client in list(Client.instances.values()):
+        try:
+            client.delete()
+        except Exception:                      # noqa: BLE001 — the others still close
+            print(f"    closing window {client.id} raised:", file=sys.stderr)
+            traceback.print_exc()
+    alive: list[str] = []
+    for _ in range(40):
+        await asyncio.sleep(0.05)
+        alive = [t.get_name() for t in asyncio.all_tasks() if t.get_name().startswith("outbox loop")]
+        if not alive:
+            return
+    print("    outbox loops still running: " + ", ".join(alive), file=sys.stderr)
+
+
+async def play() -> None:
+    users = []
+    who = ["admin", "gm", "player"]
+    for i in range(WINDOWS):
+        name = who[i % len(who)]
+        _session["id"] = accounts[name]["id"]
+        u = User(httpx.AsyncClient(transport=httpx.ASGITransport(core.app), base_url="http://test"))
+        await u.open("/")
+        with u.client:
+            theme.active_tab(random.choice(TABS))
+        users.append((name, u))
+    await drain()
+
+    mismatches = []
+    owed = []
+    errors = []
+    counts = {}
+    rebuilds = {"n": 0}
+    real_rebuild = theme._rebuild
+
+    def counting(ref, target):
+        rebuilds["n"] += 1
+        return real_rebuild(ref, target)
+    theme._rebuild = counting
+    menu = changes()
+    for round_ in range(ROUNDS):
+        kind, action = random.choice(menu)
+        name, actor = random.choice([w for w in users if w[0] != "player" or True])
+        counts[kind] = counts.get(kind, 0) + 1
+        try:
+            with actor.client:
+                action()
+        except Exception as error:      # noqa: BLE001 — the report says which
+            errors.append(f"{kind} from {name}: {error!r}")
+        if random.random() < 0.3:        # somebody changes tab
+            _n, other = random.choice(users)
+            with other.client:
                 theme.active_tab(random.choice(TABS))
-            users.append((name, u))
         await drain()
+        for _n, u in users:
+            for problem in check_window(u.client.id):
+                (owed if "owed" in problem else mismatches).append(
+                    f"after {kind} (round {round_}): {problem}")
+        if len(mismatches) > 12:
+            break
 
-        mismatches = []
-        owed = []
-        errors = []
-        counts = {}
-        rebuilds = {"n": 0}
-        real_rebuild = theme._rebuild
+    results.append((f"{ROUNDS} random changes from {WINDOWS} windows: every panel in front "
+                    "equals a fresh render", not mismatches))
+    results.append(("no panel in front is left owed", not owed))
+    results.append(("no change raised", not errors))
+    results.append(("the menu was really exercised",
+                    len(counts) >= len(menu) * 2 // 3))
+    print(f"    {rebuilds['n']} rebuilds for {ROUNDS} changes in {WINDOWS} windows", flush=True)
+    for line in (mismatches + owed + errors)[:12]:
+        print("   ", line)
 
-        def counting(ref, target):
-            rebuilds["n"] += 1
-            return real_rebuild(ref, target)
-        theme._rebuild = counting
-        menu = changes()
-        for round_ in range(ROUNDS):
-            kind, action = random.choice(menu)
-            name, actor = random.choice([w for w in users if w[0] != "player" or True])
-            counts[kind] = counts.get(kind, 0) + 1
-            try:
-                with actor.client:
-                    action()
-            except Exception as error:      # noqa: BLE001 — the report says which
-                errors.append(f"{kind} from {name}: {error!r}")
-            if random.random() < 0.3:        # somebody changes tab
-                _n, other = random.choice(users)
-                with other.client:
-                    theme.active_tab(random.choice(TABS))
-            await drain()
-            for _n, u in users:
-                for problem in check_window(u.client.id):
-                    (owed if "owed" in problem else mismatches).append(
-                        f"after {kind} (round {round_}): {problem}")
-            if len(mismatches) > 12:
-                break
+    # a window that leaves mid-way
+    _n, gone = users.pop()
+    gone.client.delete()
+    # Its session's storage goes too, as NiceGUI's prune would take it ten
+    # seconds later: every panel drawn from here on must not ask that session.
+    # The header's user bar did — the last window opened lends its request to
+    # every redraw — and under load the prune landed in the final redraw.
+    # (NiceGUI's own prune, not part of its public API: a later release may move it.)
+    from nicegui.app.app import prune_user_storage
+    await prune_user_storage(force=True)
+    with users[0][1].client:
+        theme.save_and_refresh()
+    await drain()
+    problems = [p for _n, u in users for p in check_window(u.client.id)]
+    results.append(("a window that closed is forgotten, the others stay right",
+                    not problems and gone.client.id not in theme._REFRESH))
 
-        results.append((f"{ROUNDS} random changes from {WINDOWS} windows: every panel in front "
-                        "equals a fresh render", not mismatches))
-        results.append(("no panel in front is left owed", not owed))
-        results.append(("no change raised", not errors))
-        results.append(("the menu was really exercised",
-                        len(counts) >= len(menu) * 2 // 3))
-        print(f"    {rebuilds['n']} rebuilds for {ROUNDS} changes in {WINDOWS} windows")
-        for line in (mismatches + owed + errors)[:12]:
-            print("   ", line)
 
-        # a window that leaves mid-way
-        _n, gone = users.pop()
-        gone.client.delete()
-        with users[0][1].client:
-            theme.save_and_refresh()
-        await drain()
-        problems = [p for _n, u in users for p in check_window(u.client.id)]
-        results.append(("a window that closed is forgotten, the others stay right",
-                        not problems and gone.client.id not in theme._REFRESH))
 
-        close_all(u for _n, u in users)
+async def run() -> None:
+    # The windows close inside the lifespan, so its shutdown finds the outbox
+    # loops already finished. A failure is held until the lifespan has ended:
+    # thrown into it, it would skip NiceGUI's shutdown (nothing wraps its
+    # yield), leaving the last save and the archive's close undone.
+    failure: Exception | None = None
+    async with core.app.router.lifespan_context(core.app):
+        try:
+            await play()
+        except Exception as error:          # noqa: BLE001 — raised again below
+            failure = error
+        finally:
+            await close_everything()
+    if failure is not None:
+        raise failure
 
 
 asyncio.run(run())
+faulthandler.cancel_dump_traceback_later()
 
 width = max(len(n) for n, _ in results)
 print()

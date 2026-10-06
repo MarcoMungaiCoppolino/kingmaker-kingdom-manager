@@ -35,7 +35,7 @@ def _color_brush(mine: dict, e, point, draw) -> None:
     points = STATE.k["map"].setdefault("water_samples", [])
     points.append([round(point[0], 1), round(point[1], 1)])
     theme.mark_dirty()
-    theme.notify(t("map.water.colour_picked", len=len(points), v="point" if len(points) == 1 else "points"), "positive")
+    theme.notify(t("map.water.colour_picked", len=len(points), v=tn("common.point_word", len(points))), "positive")
     _refresh_waters(mine)
 
 def _lake_brush(mine: dict, e, point, draw) -> None:
@@ -596,13 +596,13 @@ def _current_direction(mine: dict, point) -> None:
                  if before.get(waterways.text_key(a, b)) == (b, a))
     how_many = STATE.archive.set_currents(STATE.campaign, steps)
     theme.mark_dirty()
-    STATE.record(t("map.water.direction_current", how_many=how_many, v="stretch" if how_many == 1 else "stretches"), "map")
+    STATE.record(t("map.water.direction_current", how_many=how_many, v=tn("common.stretch_word", how_many)), "map")
     queue = "."
     if turned:
         queue = (t("map.water.turned_other_way_from", turned=turned) if turned == 1
                 else t("map.water.turned_other_way_from_2", turned=turned))
     theme.notify(
-        t("map.water.current_marked", how_many=how_many, v="stretch" if how_many == 1 else "stretches", queue=queue), "positive")
+        t("map.water.current_marked", how_many=how_many, v=tn("common.stretch_word", how_many), queue=queue), "positive")
 
 @theme.requires(permissions.SEE_SECRETS)
 def _crossing_under(point, kind: str) -> bool:
@@ -1156,7 +1156,7 @@ def _forget_currents(mine: dict, mapping) -> None:
     # that cannot be put down.
     mine["remove_direction"] = False
     theme.mark_dirty()
-    STATE.record(t("map.water.removed_direction_from", how_many=how_many, v="stretch" if how_many == 1 else "stretches"), "map")
+    STATE.record(t("map.water.removed_direction_from", how_many=how_many, v=tn("common.stretch_word", how_many)), "map")
     theme.notify(t("map.water.directions_removed_rivers_stay", how_many=how_many),
                    "positive")
     _send_network(mine)

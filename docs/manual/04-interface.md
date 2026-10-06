@@ -210,6 +210,16 @@ activity cards slipped through the first check.
   about, skips the windows whose account cannot see it (`MapView.can_see`). The kingdom-turn
   activities call `share_roll` themselves: their own screen carries the effects to apply,
   which stay with whoever rolled.
+- `theme.show_check(res, title, outcome, apply=, reroll=, where=)`: a Kingdom skill check with
+  the reroll for 1 Fame/Infamy point. `outcome(res)` takes the result; `apply(res)` does what the
+  result does, once, with the result kept. While `can_reroll` allows it (a point in hand, not
+  rerolled yet, not a critical success) the result waits on a persistent screen: *Keep this
+  result*, or the reroll, whose result stands and goes to `show_result`. Otherwise it applies at
+  once. The map's checks (`hex_panel._check`), Build a Structure and the sheet's rolls use it.
+- After `save_and_refresh` and `save_and_refresh_panels`, `_offer_fame` asks the window that made
+  the change whether to spend all the points against the Anarchy or Ruin penalty just reached
+  (`State.take_fame_offers`). From a background timer there is no window: the offer waits for
+  the next change made from one.
 - `theme.show_dice(title, rolls, faces, outcome, dc=None, verdict=None, where=None)`: the same
   for plain dice (Resource Dice, the event d20, the 1d4 of Unrest, a flat check). `dc` adds
   "vs DC" and Success/Failure on the total, and `verdict` replaces that line with its own text.

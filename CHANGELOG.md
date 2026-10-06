@@ -8,6 +8,161 @@ what broke, what was learned — is in [docs/devlog.md](docs/devlog.md).
 The versions before 1.0.0 were never tagged: the app was played from a working copy and the
 numbers below were assigned afterwards, one per day of development, from the session history.
 
+## [1.2.0] — 2026-10-06
+
+The kingdom rules, checked against the book: Fame and Infamy spent, the kingdom feats and the
+vacant roles applied, the structures' bonuses in the rolls, the level-up choices, the activity
+limits, and the data and texts audited against Archives of Nethys.
+
+### Added
+- **Spending Fame or Infamy.** The points were earned and then lost at the end of each turn,
+  with nothing to spend them on. Now they can be spent the two ways the rules give:
+  - **1 point rerolls a Kingdom check.** The activities, the hex activities, Build a Structure and
+    the sheet's rolls wait on their result screen while you have points: keep the result, or
+    reroll it once and keep the second. The other windows see both rolls.
+  - **All the points stave off Anarchy or a Ruin penalty.** When Unrest reaches Anarchy, or a
+    Ruin crosses its threshold, the app asks whether to spend them. Unrest then stops 1 below
+    Anarchy, or the Ruin stops at its threshold with the penalty it had.
+- **Famous and infamous structures move the points.** Building a structure of the kingdom's kind
+  gives 1 point, and one of the opposite kind takes 1 away. *Place without a check* moves nothing.
+- **Kingdom feats now do what they say.** Before, only Endure Anarchy's threshold and Fortified
+  Fiefs' bonus to Fortify Hex were applied; every other feat was just a tick on the sheet. Now
+  each one works:
+  - **Bonuses:** Insider Trading (also +1 Resource Die each turn), Practical Magic (also Magic in
+    place of Engineering, and Hire Adventurers for 1 RP), Civil Service, Inspiring Entertainment,
+    Free and Fair (with its reroll for 2 RP), Fortified Fiefs on the walls and military buildings;
+  - **On the result:** Pull Together, Fame and Fortune, Focused Attention's bonus (+3 with
+    Cooperative Leadership, and its 11th-level degrees);
+  - **Other:**
+    - Kingdom Assurance, with a button that takes 10 + proficiency;
+    - Muddle Through on the Ruin thresholds;
+    - Endure Anarchy's extra −1 Unrest;
+    - Quality of Life's extra Luxury;
+    - Crush Dissent and Liquidate Resources, offered when they can be used;
+    - Quick Recovery, Fortified Fiefs and Crush Dissent on event checks, through a new choice
+      in the sheet's roll dialog.
+
+  The feats that ask for a choice (Civil Service's role, Kingdom Assurance's skills, Muddle
+  Through's Ruins) get it under the feats list.
+- **Vacant leadership roles have their penalties.** Only the Ruler's +2 to the Control DC was
+  applied. Now:
+  - the Ruler also gives −1 to every check, and a button in Upkeep rolls its 1d4 Unrest;
+  - the Counselor, Emissary, Treasurer and Viceroy give −1 to their ability's checks;
+  - the General and Magister give −4 to Army activities, the Warden −4 to Region activities.
+- **Bonuses stack by the rules.** Of each type (status, circumstance, item) only the best bonus
+  and the worst penalty count. For example, Expansion Expert's +2 no longer adds to another
+  circumstance bonus.
+- **Every milestone is awarded however it happens:**
+  - a Landmark or Refuge marked on a hex already claimed;
+  - a hex claimed from the hex editor;
+  - a settlement's type set by hand.
+
+  The first Diplomatic Relation and Trade Agreement were never awarded. They now come from Send
+  Diplomatic Envoy's and Establish Trade Agreement's successes.
+- **Level-up choices.** Raising the kingdom's level used to add only the level. A dialog now
+  asks for what the new level grants, and the Event phase keeps a button while a choice is left:
+  - ability boosts at 5th, 10th, 15th and 20th level;
+  - a skill increase at every odd level from 3rd (master from 7th, legendary from 15th);
+  - Ruin Resistance at 5th, 8th, 11th, 14th, 17th and 20th level;
+  - Civic Planning (12th) and Envy of the World (20th) are applied by themselves.
+- **Structures that raise storage or lower Consumption.**
+  - Each Granary, Lumberyard, Foundry, Stonemason and Secure Warehouse raises its commodity's
+    storage by 1.
+  - A Stockyard, a Sewer System and a Mill (with a water border) each lower their settlement's
+    Consumption by 1.
+  - Each settlement has an input for any other Consumption adjustment.
+- **Consumption paid in part.** Food pays what it can; the rest costs 5 RP per point or 1d4
+  Unrest. The step shows what is still due.
+- **Effects counted per unit.** "1 per trade agreement", "2 per point spent" and "1 RP per hex"
+  get a count on the outcome screen. RP owed "at the start of the next turn" (Request Foreign
+  Aid, Manage Trade Agreements) arrive with the next Resource Dice.
+
+### Fixed
+- **The header showed another window's disguise.** When an administrator wore another account,
+  the header's "looking as" line was read from the session of whoever had just acted, not from
+  the window being drawn. So after one player's click, another player's header could show that
+  player's disguise, or none. Each window now records its own when its page is built.
+- **The windows test could hang at exit.** A redraw asked for the session of a window that had
+  just closed (the header, above); the exception skipped the test's teardown, and the windows left
+  open kept the process alive. The test now closes every window whatever happens, says where it
+  got stuck if it ever does, and checks the closed-window case on every run. Fame and feat offers
+  are no longer shown on a window that is closing.
+- **The structures' item bonuses never reached the rolls.** The Inn's +1 to Hire Adventurers,
+  and every other structure's bonus, was only text. They now count in the check they help and
+  show in its breakdown before the roll:
+  - the capital's structures help everywhere, another settlement's only in its influence;
+  - identical structures in one settlement add up to its maximum item bonus, and different
+    ones do not.
+
+  For activities not on the map, an *Attempted in* choice appears when a settlement other than
+  the capital would help.
+- **Create a Masterpiece.**
+  - The extra point of a critical success now arrives at the start of the next turn; it used to
+    be added at once, and lost with the turn.
+  - On a critical failure, the 1d4 Unrest is ticked only when there is no point to lose.
+- **The DC typed in an activity's dialog was ignored**: the roll used the default DC.
+- **The activity limits applied only in the Kingdom Turn tab.** On the map and in the city you
+  could claim, build roads or build structures past the limits, and during Anarchy. Now the
+  buttons wait and say why:
+  - 3 Region activities a turn, and Claim Hex once a turn (twice from 4th level, three times
+    from 9th);
+  - one Civic activity per settlement;
+  - nothing but Quell Unrest in Anarchy.
+- **Claim Hex's critical outcomes.** A critical success allows one more Region activity; a
+  critical failure gives −1 to Stability checks until the end of the next turn.
+- **Smaller rules:**
+  - a Ruin already at 0 that would go lower gets its DC 16 flat check to lower the penalty;
+  - Quell Unrest can't use the skill it used last turn;
+  - a hex lost and claimed again gives no XP;
+  - the creation's two final boosts must go to different abilities.
+- **Hard-coded Italian in the Ruin penalty's name.** It said "(Oggetto)" in English windows too.
+- **The Monument showed an item bonus it does not have**: "+1 a Fare il Raccolto" in Italian. In
+  English, its effect was shown as an item bonus.
+- **The Turn tab broke once the Leadership activities were used up.** It looked up a step called
+  "government" that does not exist, so the card meant to say why crashed instead. The hints of
+  the Leadership, Region and Civic steps were never shown, for the same reason.
+- **The clock's end of the month did not start the new turn.** The permission check found no
+  account in the timer and refused in silence; the turn, the Fame and the activities stayed
+  where they were.
+- **Resource Dice.** Rolled from the sheet, the bonus dice were not used up, so they counted again
+  every turn. The penalty dice were never used up from either button.
+- **Fame above its maximum.** The quick adjustment and the sheet now stop at it.
+- **Unrest typed on the sheet** now offers the Fame stave-off too, like the quick adjustments.
+- **A Ruin threshold of 0** typed on the sheet could freeze the app at the next Ruin change. The
+  threshold is now at least 1.
+- **Structure data, checked against Archives of Nethys:**
+  - the Sacred Grove took 11 lots, so it could never be built: it takes 1;
+  - the Occult Shop cost 68 RP instead of 38, and the Printing House 14 Lumber instead of 12;
+  - the Arcanist's Tower cost Stone instead of Ore;
+  - the Bridge and the Watchtower charged Lumber **and** Stone: they cost one or the other;
+  - the walls' upgrade went from stone to wood instead of from wood to stone;
+  - the Barracks and the Magical Streetlamps proposed no Unrest or Crime reduction once built;
+  - the Dive Tavern and the University had the wrong traits. The University counted as
+    infamous, so an Infamy kingdom gained a point building it instead of losing one;
+  - the "Building" and "Edifice" trait names were swapped.
+  - A critical success on Build a Structure gives back half the commodities only within the
+    storage limit.
+- **Activity data:**
+  - Capital Investment's critical failure asked for a Ruin of your choice instead of Crime;
+  - Abandon Hex's Bandit Activity came in the Activity phase instead of the next Event phase;
+  - Send Diplomatic Envoy's milestone sentence sat in the critical failure;
+  - the Recover Army table showed raw markup;
+  - three Italian activities had the wrong traits.
+- **Texts:**
+  - effect labels said "PR" and "PE" in English;
+  - Italian left in the English interface: the map's compass directions, "Terra", "Segreto",
+    "Scoperti/Coperti" in the journal, the clock speeds, "Ritratto", "Immagine";
+  - Italian accents written as apostrophes ("e'", "piu'", "attivita'") in about 140 places;
+  - Italian Luxury Store and Magic Shop effects were empty;
+  - several Italian typos and missing apostrophes;
+  - four Italian vehicle prices and rarities were swapped between pairs;
+  - the Flying Cauldron moved on land;
+  - the English activities lacked 28 costs and requirements the Italian ones had;
+  - English plurals ("day", "days", "hexes") inside Italian sentences;
+  - the city's "Espandi" button and border labels, and the launcher's log, were in one language
+    only;
+  - several English and Italian typos, and differences between the two languages in the vehicles.
+
 ## [1.1.7] — 2026-10-06
 
 The app on smaller screens.

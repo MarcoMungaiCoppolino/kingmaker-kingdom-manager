@@ -2,7 +2,7 @@
 
 *In italiano: [it/guida-utente.md](it/guida-utente.md) (longer, with the history of every choice).*
 
-This guide describes the app as it is in version 1.1.7, tab by tab, with the reason behind
+This guide describes the app as it is in version 1.2.0, tab by tab, with the reason behind
 each choice where it matters at the table. To install and start it see the
 [README](../README.md); the window of the installed app is the first chapter below. The screenshots in [`manual/img/screenshots/`](manual/img/screenshots/)
 were taken with the Italian interface; the English one is the same, label for label.
@@ -595,6 +595,35 @@ points, the 1d4 of Unrest when Consumption is not paid, and the d6 of founding a
 window's own language. The GM sees the players' rolls without asking, and the players see each
 other's. The effects to apply stay with whoever rolled. A roll on a hex a player cannot see (the
 GM working under the fog) is not shown to that player.
+
+**Fame and Infamy.** The kingdom gets 1 point at the start of every turn and 1 for every
+critical success, up to 3; points not spent are lost when the turn ends. A point can be spent
+the two ways the rules give:
+- **Reroll a check.** While you have points, the result screen of a Kingdom check (activities,
+  hex activities, Build a Structure, the sheet's rolls) waits before anything is applied: *Keep
+  this result*, or *Reroll for 1 Fame point*. Once per check, and the second result stands.
+- **Stave off a disaster.** When Unrest reaches Anarchy, or a Ruin crosses its threshold and its
+  penalty would rise, the app asks whether to spend all your points: Unrest stops 1 below
+  Anarchy, or the Ruin stops 1 point below its threshold with the penalty as it was.
+
+A famous structure gives a Fame kingdom 1 point when built, and an infamous one takes it away
+(the other way round for Infamy). A Masterpiece's critical success adds its extra point at the
+start of the next turn.
+
+**Kingdom feats and vacant roles.** A ticked feat works in every check it touches; the
+breakdown before the roll names it. The feats that need a choice (Civil Service's role, Kingdom
+Assurance's skills, Muddle Through's Ruins) ask for it under the feats list. Kingdom Assurance
+adds a *take 10 + proficiency* button next to *Roll*; Crush Dissent and Liquidate Resources are
+offered when they can be used. A check for an event can say which kind in the sheet's roll
+dialog (⚙), for Quick Recovery and the like. A vacant role costs its penalty, also in the
+breakdown; the Ruler's 1d4 Unrest has a button in the Upkeep phase.
+
+**Structures' bonuses.** A structure's item bonus (the Inn's +1 to Hire Adventurers) appears in
+the breakdown of the check it helps, before you roll. The capital's structures help everywhere.
+Another settlement's help only in its influence: on the map that is automatic, and for the other
+activities an *Attempted in* choice appears when such a settlement exists. Identical structures in
+one settlement add up to that settlement's maximum (+1 for a village or town, +2 for a city, +3
+for a metropolis); different structures do not add up, and the best one counts.
 
 *New turn* only goes forward. To correct the number use the ✏ pencil next to it or the
 *Kingdom Turn* row of the quick adjustments: it is bookkeeping only, it undoes nothing and does

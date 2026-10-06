@@ -36,13 +36,26 @@ SUITE = ["test_atoms.py", "test_ring.py", "test_faces.py", "test_redraw.py",
          "test_water_atoms.py", "test_pointed_shore.py", "test_cleanup.py", "test_security.py",
          "test_structures.py", "test_migration_v27.py", "test_i18n.py",
          "test_backup.py", "test_launcher.py", "test_sync.py", "test_refresh.py",
-         "test_windows.py", "test_layers.py", "test_screens.py", "test_farmland.py", "test_shared_rolls.py"]
+         "test_windows.py", "test_layers.py", "test_screens.py", "test_farmland.py", "test_shared_rolls.py",
+         "test_fame.py", "test_feats.py", "test_rules.py"]
+
+
+# A file that takes longer than this is stuck, not slow: the slowest, the
+# windows test, takes about ninety seconds. Once in a while it used to wait
+# forever and hold the whole batch; now it fails, and the batch goes on.
+TIMEOUT = 300
 
 
 def run_file(script: str) -> subprocess.CompletedProcess:
-    return subprocess.run([sys.executable, os.path.join(HERE, script)], cwd=BASE,
-                          env=ENVIRONMENT, capture_output=True, text=True,
-                          encoding="utf-8", errors="replace")
+    command = [sys.executable, os.path.join(HERE, script)]
+    try:
+        return subprocess.run(command, cwd=BASE, env=ENVIRONMENT, capture_output=True, text=True,
+                              encoding="utf-8", errors="replace", timeout=TIMEOUT)
+    except subprocess.TimeoutExpired as stuck:
+        out = stuck.stdout or ""
+        if isinstance(out, bytes):           # what the timeout hands back may be bytes
+            out = out.decode("utf-8", "replace")
+        return subprocess.CompletedProcess(command, 1, out, f"stuck: no end after {TIMEOUT} s")
 
 
 def main(names) -> int:

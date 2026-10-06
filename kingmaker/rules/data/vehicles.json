@@ -69,7 +69,7 @@
       "id": "calderone_del_volare",
       "level": 6,
       "speed": {
-        "land_": 9.0
+        "fly": 9.0
       },
       "speed_depends_on": null,
       "url": "https://pf2.altervista.org/wiki/Calderone_del_Volare"

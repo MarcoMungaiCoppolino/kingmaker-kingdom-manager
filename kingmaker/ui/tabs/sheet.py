@@ -17,26 +17,43 @@ from kingmaker.locale.i18n import t
 # --------------------------------------------------------------------------
 @theme.requires(permissions.EDIT_KINGDOM)
 def roll_skill(skill_id: str, cd: int, extra_title: str = "", outcome_text: str = "",
-                 worsens_by: int = 0, show: bool = True) -> rules.Result:
-    detail = STATE.skill_detail(skill_id)
-    mod = sum(v for _n, v in detail)
-    if STATE.in_anarchy:
-        worsens_by += 1
-    res = rules.roll_check(mod, cd, detail, worsens_by)
+                 worsens_by: int = 0, show: bool = True, activity: str | None = None,
+                 settlement: str | None = None, event: str | None = None,
+                 fair: bool = True) -> rules.Result:
+    """A Kingdom skill check (`State.kingdom_check`). With `activity`, what
+    helps or hinders that activity counts too — the structures' item bonus,
+    from the capital and from `settlement`, the vacant roles, the feats;
+    `event` is the kind of event the check is about, for the feats that
+    help with those."""
+    res = STATE.kingdom_check(skill_id, cd, activity, settlement=settlement, event=event,
+                              fair=fair, worsens_by=worsens_by)
     name = rules.BY_ID["skills"][skill_id]["name"]
-
-    STATE.fame_on_critical(res)
 
     label = f"{extra_title} · {name}" if extra_title else name
     STATE.record(t("sheet.vs_dc", label=label, label2=res.label, total=res.total, cd=cd), "check")
-    # A roll writes a line in the journal and, on a critical, moves the fame:
-    # those two panels, not the whole interface of every window.
-    theme.save_and_refresh_panels(("turn.journal", "sheet.identita"))
+    # A roll writes a line in the journal and, on a critical, moves the fame;
+    # it may use up a one-check bonus (Focused Attention), which the skills
+    # show: those panels, not the whole interface of every window.
+    theme.save_and_refresh_panels(("turn.journal", "sheet.identita", "sheet.abilita", "main.header"))
     if show:
-        # The skill's name again in each window's language, for the others.
-        theme.show_result(res, lambda: " · ".join(
-            x for x in (extra_title, rules.BY_ID["skills"][skill_id]["name"]) if x), outcome_text)
+        # The skill's name again in each window's language, for the others;
+        # a reroll for Fame is the same check again, never shown twice.
+        theme.show_check(res, lambda: " · ".join(
+            x for x in (extra_title, rules.BY_ID["skills"][skill_id]["name"]) if x),
+            lambda _res: outcome_text,
+            reroll=lambda: roll_skill(skill_id, cd, extra_title, outcome_text, worsens_by,
+                                      show=False, activity=activity, settlement=settlement,
+                                      event=event, fair=fair))
     return res
+
+
+def _assurance_roll(skill_id: str, cd: int) -> None:
+    """Kingdom Assurance from the sheet: 10 + proficiency, no die."""
+    res = STATE.assurance_result(skill_id, cd)
+    STATE.record(t("sheet.vs_dc", label=rules.BY_ID["skills"][skill_id]["name"], label2=res.label,
+                   total=res.total, cd=cd), "check")
+    theme.save_and_refresh_panels(("turn.journal", "sheet.identita"))
+    theme.show_result(res, lambda: rules.BY_ID["skills"][skill_id]["name"])
 
 
 # --------------------------------------------------------------------------
@@ -47,9 +64,20 @@ def _dc_dialog(skill_id: str) -> None:
         theme.title(t("sheet.check", name=name), 2)
         cd = ui.number(t("sheet.dc"), value=STATE.control_dc, format="%d").props("outlined dense").classes("w-40")
         ui.label(t("sheet.kingdom_control_dc", control_dc=STATE.control_dc)).style("color:var(--km-muted)")
+        # An event check: some feats help with some events (Quick Recovery,
+        # Fortified Fiefs, Crush Dissent).
+        event = ui.select({"": t("sheet.event.none"), "ongoing": t("sheet.event.ongoing"),
+                           "defenses": t("sheet.event.defenses"), "bickering": t("sheet.event.bickering")},
+                          value="", label=t("sheet.event.label")).props("outlined dense").classes("w-72")
         with ui.row():
-            ui.button(t("sheet.roll"), on_click=lambda: (dlg.close(), roll_skill(skill_id, int(cd.value)))) \
-                .props("color=amber")
+            ui.button(t("sheet.roll"), on_click=lambda: (dlg.close(), roll_skill(
+                skill_id, int(cd.value or 0), event=event.value or None))).props("color=amber")
+            if STATE.assurance_available(skill_id):
+                ui.button(t("turn.assurance", name=rules.BY_ID["feat"]["kingdom_assurance"]["name"],
+                            value=10 + rules.proficiency_bonus(
+                                STATE.level, STATE.k["proficiencies"].get(skill_id, "untrained"))),
+                          on_click=lambda: (dlg.close(), _assurance_roll(skill_id, int(cd.value or 0)))) \
+                    .props("outline color=amber")
             ui.button(t("common.cancel"), on_click=dlg.close).props("flat")
     dlg.open()
 
@@ -100,7 +128,9 @@ def _set_ability(cid: str, val) -> None:
 def _set_ruin(rid: str, field: str, val) -> None:
     if val is None:
         return
-    STATE.k["ruins"][rid][field] = int(val)
+    # The value comes from the browser: never negative, and a threshold of
+    # at least 1 — at 0, `modify_ruin` would subtract it forever.
+    STATE.k["ruins"][rid][field] = max(1 if field == "threshold" else 0, int(val))
     theme.save_and_refresh()
     skills_block.refresh()
 
@@ -521,10 +551,8 @@ def _set_commodity(char_id: str, val) -> None:
 
 @theme.requires(permissions.EDIT_KINGDOM)
 def _roll_resources() -> None:
-    n, faces = STATE.resource_dice_count, STATE.resource_die
-    tot, rolls = rules.roll(n, faces)
-    STATE.k["rp"] = tot
-    STATE.k["rp_spent_turn"] = 0
+    # The same roll as the Turn's button: bonus and penalty dice used up.
+    n, faces, tot, rolls = STATE.roll_resource_dice()
     STATE.record(t("sheet.resource_dice_d", n=n, faces=faces, tot=tot), "resources", str(rolls))
     theme.save_and_refresh()
     resources_block.refresh()
@@ -569,6 +597,72 @@ def feats_block() -> None:
         block = "".join(rows)
         ui.html(block, sanitize=False).classes("w-full") \
             .on("click", lambda e: _feat_click(e.args), js_handler=theme.PICK)
+        _feat_choices()
+
+
+def _feat_choices() -> None:
+    """What the feats taken ask the table to choose, under the list: the
+    role Civil Service covers, the skills of Kingdom Assurance, the Ruins of
+    Muddle Through. Skill Training is the proficiency set in the skills."""
+    k = STATE.k
+    owned = set(k["feats"])
+    if not owned & {"civil_service", "kingdom_assurance", "muddle_through", "skill_training"}:
+        return
+    theme.sep()
+    name = lambda fid: rules.BY_ID["feat"][fid]["name"]  # noqa: E731
+    with ui.column().classes("gap-2 w-full"):
+        if "civil_service" in owned:
+            ui.select({"": t("sheet.feat.no_role"), **{r["id"]: r["name"] for r in rules.ROLES}},
+                      value=STATE.feat_choice("civil_service") or "", label=name("civil_service"),
+                      on_change=lambda e: _set_feat_choice("civil_service", e.value or None)) \
+                .props("outlined dense").classes("w-72")
+        if "kingdom_assurance" in owned:
+            trained = {a["id"]: a["name"] for a in rules.SKILLS
+                       if k["proficiencies"].get(a["id"], "untrained") != "untrained"}
+            chosen = [x for x in STATE.feat_choice("kingdom_assurance") or [] if x in trained]
+            ui.select(trained, value=chosen, multiple=True, label=name("kingdom_assurance"),
+                      on_change=lambda e: _set_feat_choice("kingdom_assurance", list(e.value or []))) \
+                .props("outlined dense use-chips").classes("w-full")
+        if "muddle_through" in owned:
+            choice = STATE.feat_choice("muddle_through") or {}
+            ruins = {r["id"]: r["name"] for r in rules.RUINS}
+            with ui.row().classes("gap-2 items-center flex-wrap"):
+                ui.label(name("muddle_through")).classes("km-title")
+                ui.select(ruins, value=choice.get("plus2"), label=t("sheet.feat.muddle_plus2"),
+                          on_change=lambda e: _set_muddle("plus2", e.value)) \
+                    .props("outlined dense").classes("w-44")
+                ui.select(ruins, value=choice.get("none"), label=t("sheet.feat.muddle_none"),
+                          on_change=lambda e: _set_muddle("none", e.value)) \
+                    .props("outlined dense").classes("w-44")
+        if "skill_training" in owned:
+            ui.label(t("sheet.feat.skill_training_hint", name=name("skill_training"))) \
+                .style("font-size:.78rem;color:var(--km-muted)")
+
+
+@theme.requires(permissions.EDIT_KINGDOM)
+def _set_feat_choice(fid: str, value) -> None:
+    # From the browser: only what the lists offered.
+    if fid == "civil_service" and value not in (None, *(r["id"] for r in rules.ROLES)):
+        return
+    if fid == "kingdom_assurance":
+        value = [x for x in value if x in rules.BY_ID["skills"]]
+    STATE.k["feat_choices"][fid] = value
+    theme.save_and_refresh()
+
+
+@theme.requires(permissions.EDIT_KINGDOM)
+def _set_muddle(which: str, rid) -> None:
+    if rid not in STATE.k["ruins"] or which not in ("plus2", "none"):
+        return
+    STATE.muddle_through(False)               # taken back as given…
+    choice = STATE.k["feat_choices"]["muddle_through"]
+    other = "none" if which == "plus2" else "plus2"
+    if choice.get(other) == rid:               # the two must differ: swap them
+        choice[other] = choice.get(which)
+    choice[which] = rid
+    STATE.muddle_through("muddle_through" in STATE.k["feats"])   # …and given again
+    theme.save_and_refresh()
+    feats_block.refresh()
 
 
 _FEAT_IDS = {f["id"] for f in rules.FEATS}
@@ -581,7 +675,7 @@ def _feat_click(key) -> None:
 
 
 def _feats_inputs() -> list:
-    return [STATE.k["feats"], STATE.level]
+    return [STATE.k["feats"], STATE.level, STATE.k["feat_choices"], STATE.k["proficiencies"]]
 
 
 @theme.requires(permissions.EDIT_KINGDOM)
@@ -590,6 +684,10 @@ def _toggle_feat(fid: str, val: bool) -> None:
         STATE.k["feats"].append(fid)
     elif not val and fid in STATE.k["feats"]:
         STATE.k["feats"].remove(fid)
+    else:
+        return
+    if fid == "muddle_through":
+        STATE.muddle_through(val)           # the Ruin thresholds move with it
     theme.save_and_refresh()
     feats_block.refresh()
 
@@ -656,7 +754,10 @@ def _set_txt(key: str, val) -> None:
 def _set(key: str, val) -> None:
     if val is None:
         return
-    STATE.k[key] = int(val)
+    val = max(0, int(val))
+    if key == "fame_points":
+        val = min(STATE.max_fame, val)
+    STATE.k[key] = val
     theme.save_and_refresh()
     identity_block.refresh()
     skills_block.refresh()
@@ -677,7 +778,9 @@ def _set_level(val) -> None:
 def _set_unrest(val) -> None:
     if val is None:
         return
-    STATE.k["unrest"] = max(0, int(val))
+    # Through `modify_unrest`, as the quick adjustments: typing Unrest up to
+    # Anarchy offers the Fame stave-off too.
+    STATE.modify_unrest(max(0, int(val)) - STATE.k["unrest"])
     theme.save_and_refresh()
     identity_block.refresh()
     skills_block.refresh()

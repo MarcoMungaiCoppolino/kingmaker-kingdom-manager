@@ -873,11 +873,11 @@
   "structure_traits": [
     {
       "id": "edifice",
-      "name": "Edifice"
+      "name": "Building"
     },
     {
       "id": "building",
-      "name": "Building"
+      "name": "Edifice"
     },
     {
       "id": "famous",

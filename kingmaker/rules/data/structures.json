@@ -39,7 +39,8 @@
         "sign": 1,
         "quantity": "1"
       }
-    ]
+    ],
+    "item_bonuses": []
   },
   {
     "id": "rubble",
@@ -59,13 +60,14 @@
     "construction": null,
     "upgrade_of": [],
     "upgrade_to": [],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": []
   },
   {
     "id": "tavern_dive",
     "level": 1,
     "traits": [
-      "yard"
+      "edifice"
     ],
     "lots": 1,
     "cost": {
@@ -101,7 +103,8 @@
         "sign": 1,
         "quantity": "1"
       }
-    ]
+    ],
+    "item_bonuses": []
   },
   {
     "id": "houses",
@@ -141,7 +144,8 @@
         "sign": -1,
         "quantity": "1"
       }
-    ]
+    ],
+    "item_bonuses": []
   },
   {
     "id": "cemetery",
@@ -169,7 +173,8 @@
     },
     "upgrade_of": [],
     "upgrade_to": [],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": []
   },
   {
     "id": "brewery",
@@ -203,6 +208,12 @@
         "sign": -1,
         "quantity": "1"
       }
+    ],
+    "item_bonuses": [
+      {
+        "activity": "establish_trade_agreement",
+        "value": 1
+      }
     ]
   },
   {
@@ -234,7 +245,8 @@
       "luxury_store",
       "marketplace"
     ],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": []
   },
   {
     "id": "herbalist",
@@ -264,7 +276,13 @@
     "upgrade_to": [
       "hospital"
     ],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": [
+      {
+        "activity": "provide_care",
+        "value": 1
+      }
+    ]
   },
   {
     "id": "granary",
@@ -292,7 +310,11 @@
     },
     "upgrade_of": [],
     "upgrade_to": [],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": [],
+    "storage": {
+      "food": 1
+    }
   },
   {
     "id": "inn",
@@ -321,7 +343,13 @@
     },
     "upgrade_of": [],
     "upgrade_to": [],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": [
+      {
+        "activity": "hire_adventurers",
+        "value": 1
+      }
+    ]
   },
   {
     "id": "wooden_wall",
@@ -347,17 +375,18 @@
         }
       ]
     },
-    "upgrade_of": [
+    "upgrade_of": [],
+    "upgrade_to": [
       "stone_wall"
     ],
-    "upgrade_to": [],
     "kingdom_effects": [
       {
         "kind": "unrest",
         "sign": -1,
         "quantity": "1"
       }
-    ]
+    ],
+    "item_bonuses": []
   },
   {
     "id": "shrine",
@@ -387,7 +416,13 @@
     "upgrade_to": [
       "temple"
     ],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": [
+      {
+        "activity": "celebrate_holiday",
+        "value": 1
+      }
+    ]
   },
   {
     "id": "library",
@@ -417,7 +452,16 @@
     "upgrade_to": [
       "academy"
     ],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": [
+      {
+        "activity": "rest_and_relax",
+        "value": 1,
+        "skills": [
+          "scholarship"
+        ]
+      }
+    ]
   },
   {
     "id": "dump",
@@ -445,7 +489,13 @@
     },
     "upgrade_of": [],
     "upgrade_to": [],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": [
+      {
+        "activity": "demolish",
+        "value": 1
+      }
+    ]
   },
   {
     "id": "mill",
@@ -473,7 +523,15 @@
     },
     "upgrade_of": [],
     "upgrade_to": [],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": [
+      {
+        "activity": "harvest_crops",
+        "value": 1
+      }
+    ],
+    "consumption_needs_water": true,
+    "consumption_change": -1
   },
   {
     "id": "town_hall",
@@ -522,7 +580,8 @@
         "sign": -1,
         "quantity": "1"
       }
-    ]
+    ],
+    "item_bonuses": []
   },
   {
     "id": "orphanage",
@@ -559,7 +618,8 @@
         "sign": -1,
         "quantity": "1"
       }
-    ]
+    ],
+    "item_bonuses": []
   },
   {
     "id": "bridge",
@@ -587,7 +647,12 @@
     },
     "upgrade_of": [],
     "upgrade_to": [],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": [],
+    "cost_either": [
+      "lumber",
+      "stone"
+    ]
   },
   {
     "id": "jail",
@@ -622,6 +687,15 @@
         "sign": -1,
         "quantity": "1"
       }
+    ],
+    "item_bonuses": [
+      {
+        "activity": "quell_unrest",
+        "value": 1,
+        "skills": [
+          "intrigue"
+        ]
+      }
     ]
   },
   {
@@ -652,7 +726,13 @@
     "upgrade_to": [
       "guildhall"
     ],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": [
+      {
+        "activity": "purchase_commodities",
+        "value": 1
+      }
+    ]
   },
   {
     "id": "barracks",
@@ -683,7 +763,27 @@
     "upgrade_to": [
       "garrison"
     ],
-    "kingdom_effects": []
+    "kingdom_effects": [
+      {
+        "kind": "unrest",
+        "sign": -1,
+        "quantity": "1"
+      }
+    ],
+    "item_bonuses": [
+      {
+        "activity": "garrison_army",
+        "value": 1
+      },
+      {
+        "activity": "recover_army",
+        "value": 1
+      },
+      {
+        "activity": "recruit_army",
+        "value": 1
+      }
+    ]
   },
   {
     "id": "tannery",
@@ -711,7 +811,13 @@
     },
     "upgrade_of": [],
     "upgrade_to": [],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": [
+      {
+        "activity": "trade_commodities",
+        "value": 1
+      }
+    ]
   },
   {
     "id": "lumberyard",
@@ -739,7 +845,17 @@
     },
     "upgrade_of": [],
     "upgrade_to": [],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": [
+      {
+        "activity": "establish_work_site",
+        "value": 1,
+        "variant": "lumber"
+      }
+    ],
+    "storage": {
+      "lumber": 1
+    }
   },
   {
     "id": "foundry",
@@ -767,7 +883,17 @@
     },
     "upgrade_of": [],
     "upgrade_to": [],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": [
+      {
+        "activity": "establish_work_site",
+        "value": 1,
+        "variant": "ore"
+      }
+    ],
+    "storage": {
+      "ore": 1
+    }
   },
   {
     "id": "keep",
@@ -802,6 +928,20 @@
         "sign": -1,
         "quantity": "1"
       }
+    ],
+    "item_bonuses": [
+      {
+        "activity": "deploy_army",
+        "value": 1
+      },
+      {
+        "activity": "garrison_army",
+        "value": 1
+      },
+      {
+        "activity": "train_army",
+        "value": 1
+      }
     ]
   },
   {
@@ -830,7 +970,17 @@
     },
     "upgrade_of": [],
     "upgrade_to": [],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": [
+      {
+        "activity": "trade_commodities",
+        "value": 1
+      },
+      {
+        "activity": "outfit_army",
+        "value": 1
+      }
+    ]
   },
   {
     "id": "alchemy_laboratory",
@@ -858,7 +1008,13 @@
     },
     "upgrade_of": [],
     "upgrade_to": [],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": [
+      {
+        "activity": "demolish",
+        "value": 1
+      }
+    ]
   },
   {
     "id": "pier",
@@ -888,7 +1044,13 @@
     "upgrade_to": [
       "waterfront"
     ],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": [
+      {
+        "activity": "go_fishing",
+        "value": 1
+      }
+    ]
   },
   {
     "id": "monument",
@@ -928,7 +1090,8 @@
         "sign": -1,
         "quantity": "1"
       }
-    ]
+    ],
+    "item_bonuses": []
   },
   {
     "id": "park",
@@ -964,6 +1127,15 @@
         "sign": -1,
         "quantity": "1"
       }
+    ],
+    "item_bonuses": [
+      {
+        "activity": "rest_and_relax",
+        "value": 1,
+        "skills": [
+          "wilderness"
+        ]
+      }
     ]
   },
   {
@@ -992,7 +1164,14 @@
     },
     "upgrade_of": [],
     "upgrade_to": [],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": [
+      {
+        "activity": "gather_livestock",
+        "value": 1
+      }
+    ],
+    "consumption_change": -1
   },
   {
     "id": "festival_hall",
@@ -1022,7 +1201,13 @@
     "upgrade_to": [
       "theater"
     ],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": [
+      {
+        "activity": "celebrate_holiday",
+        "value": 1
+      }
+    ]
   },
   {
     "id": "stable",
@@ -1050,7 +1235,13 @@
     },
     "upgrade_of": [],
     "upgrade_to": [],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": [
+      {
+        "activity": "establish_trade_agreement",
+        "value": 1
+      }
+    ]
   },
   {
     "id": "stonemason",
@@ -1078,7 +1269,17 @@
     },
     "upgrade_of": [],
     "upgrade_to": [],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": [
+      {
+        "activity": "establish_work_site",
+        "value": 1,
+        "variant": "stone"
+      }
+    ],
+    "storage": {
+      "stone": 1
+    }
   },
   {
     "id": "tavern_popular",
@@ -1116,6 +1317,19 @@
         "sign": -1,
         "quantity": "2"
       }
+    ],
+    "item_bonuses": [
+      {
+        "activity": "hire_adventurers",
+        "value": 1
+      },
+      {
+        "activity": "rest_and_relax",
+        "value": 1,
+        "skills": [
+          "trade"
+        ]
+      }
     ]
   },
   {
@@ -1150,6 +1364,11 @@
         "sign": -1,
         "quantity": "1"
       }
+    ],
+    "item_bonuses": [],
+    "cost_either": [
+      "lumber",
+      "stone"
     ]
   },
   {
@@ -1178,7 +1397,13 @@
     },
     "upgrade_of": [],
     "upgrade_to": [],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": [
+      {
+        "activity": "craft_luxuries",
+        "value": 1
+      }
+    ]
   },
   {
     "id": "marketplace",
@@ -1209,7 +1434,13 @@
       "general_store"
     ],
     "upgrade_to": [],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": [
+      {
+        "activity": "establish_trade_agreement",
+        "value": 1
+      }
+    ]
   },
   {
     "id": "paved_streets",
@@ -1237,7 +1468,8 @@
     },
     "upgrade_of": [],
     "upgrade_to": [],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": []
   },
   {
     "id": "bank",
@@ -1265,7 +1497,13 @@
     },
     "upgrade_of": [],
     "upgrade_to": [],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": [
+      {
+        "activity": "tap_treasury",
+        "value": 1
+      }
+    ]
   },
   {
     "id": "sacred_grove",
@@ -1273,7 +1511,7 @@
     "traits": [
       "yard"
     ],
-    "lots": 11,
+    "lots": 1,
     "cost": {
       "rp": 36,
       "lumber": 0,
@@ -1293,7 +1531,16 @@
     },
     "upgrade_of": [],
     "upgrade_to": [],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": [
+      {
+        "activity": "quell_unrest",
+        "value": 1,
+        "skills": [
+          "folklore"
+        ]
+      }
+    ]
   },
   {
     "id": "thieves_guild",
@@ -1328,6 +1575,12 @@
         "ruin": "crime",
         "sign": 1,
         "quantity": "1"
+      }
+    ],
+    "item_bonuses": [
+      {
+        "activity": "infiltration",
+        "value": 1
       }
     ]
   },
@@ -1366,6 +1619,16 @@
         "sign": -1,
         "quantity": "1"
       }
+    ],
+    "item_bonuses": [
+      {
+        "activity": "outfit_army",
+        "value": 1
+      },
+      {
+        "activity": "train_army",
+        "value": 1
+      }
     ]
   },
   {
@@ -1394,7 +1657,15 @@
     },
     "upgrade_of": [],
     "upgrade_to": [],
-    "kingdom_effects": []
+    "kingdom_effects": [
+      {
+        "kind": "ruin",
+        "ruin": "crime",
+        "sign": -1,
+        "quantity": "1"
+      }
+    ],
+    "item_bonuses": []
   },
   {
     "id": "mansion",
@@ -1427,7 +1698,13 @@
     "upgrade_to": [
       "noble_villa"
     ],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": [
+      {
+        "activity": "improve_lifestyle",
+        "value": 1
+      }
+    ]
   },
   {
     "id": "stone_wall",
@@ -1453,17 +1730,18 @@
         }
       ]
     },
-    "upgrade_of": [],
-    "upgrade_to": [
+    "upgrade_of": [
       "wooden_wall"
     ],
+    "upgrade_to": [],
     "kingdom_effects": [
       {
         "kind": "unrest",
         "sign": -1,
         "quantity": "1"
       }
-    ]
+    ],
+    "item_bonuses": []
   },
   {
     "id": "museum",
@@ -1504,6 +1782,15 @@
         "sign": 1,
         "quantity": "1"
       }
+    ],
+    "item_bonuses": [
+      {
+        "activity": "rest_and_relax",
+        "value": 1,
+        "skills": [
+          "arts"
+        ]
+      }
     ]
   },
   {
@@ -1534,7 +1821,8 @@
       "trade_shop"
     ],
     "upgrade_to": [],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": []
   },
   {
     "id": "arcanists_tower",
@@ -1547,8 +1835,8 @@
       "rp": 30,
       "lumber": 0,
       "luxuries": 0,
-      "ore": 0,
-      "stone": 6,
+      "ore": 6,
+      "stone": 0,
       "food": 0
     },
     "construction": {
@@ -1562,7 +1850,16 @@
     },
     "upgrade_of": [],
     "upgrade_to": [],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": [
+      {
+        "activity": "quell_unrest",
+        "value": 1,
+        "skills": [
+          "magic"
+        ]
+      }
+    ]
   },
   {
     "id": "luxury_store",
@@ -1594,7 +1891,13 @@
     "upgrade_to": [
       "magic_shop"
     ],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": [
+      {
+        "activity": "establish_trade_agreement",
+        "value": 1
+      }
+    ]
   },
   {
     "id": "secure_warehouse",
@@ -1622,7 +1925,16 @@
     },
     "upgrade_of": [],
     "upgrade_to": [],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": [
+      {
+        "activity": "craft_luxuries",
+        "value": 1
+      }
+    ],
+    "storage": {
+      "luxuries": 1
+    }
   },
   {
     "id": "illicit_market",
@@ -1658,6 +1970,12 @@
         "sign": 1,
         "quantity": "1"
       }
+    ],
+    "item_bonuses": [
+      {
+        "activity": "clandestine_business",
+        "value": 1
+      }
     ]
   },
   {
@@ -1686,7 +2004,14 @@
     },
     "upgrade_of": [],
     "upgrade_to": [],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": [
+      {
+        "activity": "clandestine_business",
+        "value": 1
+      }
+    ],
+    "consumption_change": -1
   },
   {
     "id": "temple",
@@ -1726,6 +2051,16 @@
         "sign": -1,
         "quantity": "2"
       }
+    ],
+    "item_bonuses": [
+      {
+        "activity": "celebrate_holiday",
+        "value": 1
+      },
+      {
+        "activity": "provide_care",
+        "value": 1
+      }
     ]
   },
   {
@@ -1754,7 +2089,17 @@
     },
     "upgrade_of": [],
     "upgrade_to": [],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": [
+      {
+        "activity": "send_diplomatic_envoy",
+        "value": 1
+      },
+      {
+        "activity": "request_foreign_aid",
+        "value": 1
+      }
+    ]
   },
   {
     "id": "magic_shop",
@@ -1786,7 +2131,13 @@
     "upgrade_to": [
       "occult_shop"
     ],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": [
+      {
+        "activity": "supernatural_solution",
+        "value": 1
+      }
+    ]
   },
   {
     "id": "waterfront",
@@ -1816,7 +2167,27 @@
       "pier"
     ],
     "upgrade_to": [],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": [
+      {
+        "activity": "go_fishing",
+        "value": 1
+      },
+      {
+        "activity": "establish_trade_agreement",
+        "value": 1,
+        "skills": [
+          "boating"
+        ]
+      },
+      {
+        "activity": "rest_and_relax",
+        "value": 1,
+        "skills": [
+          "boating"
+        ]
+      }
+    ]
   },
   {
     "id": "arena",
@@ -1847,7 +2218,20 @@
     "upgrade_to": [
       "gladiatorial_arena"
     ],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": [
+      {
+        "activity": "celebrate_holiday",
+        "value": 2
+      },
+      {
+        "activity": "quell_unrest",
+        "value": 2,
+        "skills": [
+          "warfare"
+        ]
+      }
+    ]
   },
   {
     "id": "castle",
@@ -1900,6 +2284,32 @@
         "sign": -1,
         "quantity": "1d4"
       }
+    ],
+    "item_bonuses": [
+      {
+        "activity": "new_leadership",
+        "value": 2
+      },
+      {
+        "activity": "pledge_of_fealty",
+        "value": 2
+      },
+      {
+        "activity": "send_diplomatic_envoy",
+        "value": 2
+      },
+      {
+        "activity": "garrison_army",
+        "value": 2
+      },
+      {
+        "activity": "recover_army",
+        "value": 2
+      },
+      {
+        "activity": "recruit_army",
+        "value": 2
+      }
     ]
   },
   {
@@ -1930,7 +2340,17 @@
       "herbalist"
     ],
     "upgrade_to": [],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": [
+      {
+        "activity": "provide_care",
+        "value": 1
+      },
+      {
+        "activity": "quell_unrest",
+        "value": 1
+      }
+    ]
   },
   {
     "id": "tavern_luxury",
@@ -1968,6 +2388,19 @@
         "kind": "unrest",
         "sign": -1,
         "quantity": "1d4+1"
+      }
+    ],
+    "item_bonuses": [
+      {
+        "activity": "hire_adventurers",
+        "value": 2
+      },
+      {
+        "activity": "rest_and_relax",
+        "value": 2,
+        "skills": [
+          "trade"
+        ]
       }
     ]
   },
@@ -2007,6 +2440,12 @@
         "sign": -1,
         "quantity": "1"
       }
+    ],
+    "item_bonuses": [
+      {
+        "activity": "celebrate_holiday",
+        "value": 2
+      }
     ]
   },
   {
@@ -2044,6 +2483,19 @@
         "sign": -1,
         "quantity": "2"
       }
+    ],
+    "item_bonuses": [
+      {
+        "activity": "improve_lifestyle",
+        "value": 1
+      },
+      {
+        "activity": "quell_unrest",
+        "value": 1,
+        "skills": [
+          "politics"
+        ]
+      }
     ]
   },
   {
@@ -2078,7 +2530,13 @@
       "military_academy",
       "university"
     ],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": [
+      {
+        "activity": "creative_solution",
+        "value": 2
+      }
+    ]
   },
   {
     "id": "construction_yard",
@@ -2106,7 +2564,20 @@
     },
     "upgrade_of": [],
     "upgrade_to": [],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": [
+      {
+        "activity": "build_structure",
+        "value": 1
+      },
+      {
+        "activity": "repair_reputation",
+        "value": 1,
+        "skills": [
+          "engineering"
+        ]
+      }
+    ]
   },
   {
     "id": "printing_house",
@@ -2118,7 +2589,7 @@
     "lots": 2,
     "cost": {
       "rp": 48,
-      "lumber": 14,
+      "lumber": 12,
       "luxuries": 12,
       "ore": 0,
       "stone": 0,
@@ -2135,7 +2606,17 @@
     },
     "upgrade_of": [],
     "upgrade_to": [],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": [
+      {
+        "activity": "improve_lifestyle",
+        "value": 2
+      },
+      {
+        "activity": "quell_unrest",
+        "value": 2
+      }
+    ]
   },
   {
     "id": "military_academy",
@@ -2166,7 +2647,20 @@
       "academy"
     ],
     "upgrade_to": [],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": [
+      {
+        "activity": "pledge_of_fealty",
+        "value": 2,
+        "skills": [
+          "warfare"
+        ]
+      },
+      {
+        "activity": "train_army",
+        "value": 2
+      }
+    ]
   },
   {
     "id": "menagerie",
@@ -2197,7 +2691,16 @@
       "park"
     ],
     "upgrade_to": [],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": [
+      {
+        "activity": "rest_and_relax",
+        "value": 2,
+        "skills": [
+          "wilderness"
+        ]
+      }
+    ]
   },
   {
     "id": "occult_shop",
@@ -2207,7 +2710,7 @@
     ],
     "lots": 1,
     "cost": {
-      "rp": 68,
+      "rp": 38,
       "lumber": 12,
       "luxuries": 12,
       "ore": 0,
@@ -2227,7 +2730,13 @@
       "magic_shop"
     ],
     "upgrade_to": [],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": [
+      {
+        "activity": "prognostication",
+        "value": 2
+      }
+    ]
   },
   {
     "id": "gladiatorial_arena",
@@ -2260,7 +2769,24 @@
       "arena"
     ],
     "upgrade_to": [],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": [
+      {
+        "activity": "celebrate_holiday",
+        "value": 3
+      },
+      {
+        "activity": "hire_adventurers",
+        "value": 3
+      },
+      {
+        "activity": "quell_unrest",
+        "value": 3,
+        "skills": [
+          "warfare"
+        ]
+      }
+    ]
   },
   {
     "id": "cathedral",
@@ -2298,6 +2824,23 @@
         "kind": "unrest",
         "sign": -1,
         "quantity": "4"
+      }
+    ],
+    "item_bonuses": [
+      {
+        "activity": "celebrate_holiday",
+        "value": 3
+      },
+      {
+        "activity": "provide_care",
+        "value": 3
+      },
+      {
+        "activity": "repair_reputation",
+        "value": 3,
+        "skills": [
+          "arts"
+        ]
       }
     ]
   },
@@ -2350,6 +2893,32 @@
         "sign": -1,
         "quantity": "10"
       }
+    ],
+    "item_bonuses": [
+      {
+        "activity": "new_leadership",
+        "value": 3
+      },
+      {
+        "activity": "pledge_of_fealty",
+        "value": 3
+      },
+      {
+        "activity": "send_diplomatic_envoy",
+        "value": 3
+      },
+      {
+        "activity": "garrison_army",
+        "value": 3
+      },
+      {
+        "activity": "recover_army",
+        "value": 3
+      },
+      {
+        "activity": "recruit_army",
+        "value": 3
+      }
     ]
   },
   {
@@ -2387,6 +2956,26 @@
         "kind": "unrest",
         "sign": -1,
         "quantity": "2d4"
+      }
+    ],
+    "item_bonuses": [
+      {
+        "activity": "hire_adventurers",
+        "value": 3
+      },
+      {
+        "activity": "rest_and_relax",
+        "value": 3,
+        "skills": [
+          "trade"
+        ]
+      },
+      {
+        "activity": "repair_reputation",
+        "value": 3,
+        "skills": [
+          "intrigue"
+        ]
       }
     ]
   },
@@ -2427,6 +3016,16 @@
         "sign": -1,
         "quantity": "4"
       }
+    ],
+    "item_bonuses": [
+      {
+        "activity": "celebrate_holiday",
+        "value": 3
+      },
+      {
+        "activity": "create_a_masterpiece",
+        "value": 3
+      }
     ]
   },
   {
@@ -2434,8 +3033,8 @@
     "level": 15,
     "traits": [
       "edifice",
-      "famous",
-      "infamous"
+      "building",
+      "famous"
     ],
     "lots": 4,
     "cost": {
@@ -2459,7 +3058,13 @@
       "academy"
     ],
     "upgrade_to": [],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": [
+      {
+        "activity": "creative_solution",
+        "value": 3
+      }
+    ]
   },
   {
     "id": "mint",
@@ -2488,6 +3093,23 @@
     },
     "upgrade_of": [],
     "upgrade_to": [],
-    "kingdom_effects": []
+    "kingdom_effects": [],
+    "item_bonuses": [
+      {
+        "activity": "capital_investment",
+        "value": 3
+      },
+      {
+        "activity": "collect_taxes",
+        "value": 3
+      },
+      {
+        "activity": "repair_reputation",
+        "value": 3,
+        "skills": [
+          "trade"
+        ]
+      }
+    ]
   }
 ]

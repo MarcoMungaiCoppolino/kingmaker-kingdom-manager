@@ -596,25 +596,25 @@
   ],
   "_hex_features_note": "Gli Elementi del Terreno con \"fonte\": \"tavolo\" non stanno sulla wiki e non hanno nessuna meccanica di Pathfinder 2: sono segnaposti che il Game Master usa per tenere in ordine la mappa. Sono tenuti distinti apposta, così nessuno li scambia per regole del gioco.",
   "travel": {
-    "_note": "Trascritto dalla pagina, nulla di aggiunto. I terreni che la wiki non assegna a una categoria restano a null: l'app si ferma e lo chiede al GM invece di indovinare. Il GM puo' comunque forzare la categoria sul singolo esagono.",
+    "_note": "Trascritto dalla pagina, nulla di aggiunto. I terreni che la wiki non assegna a una categoria restano a null: l'app si ferma e lo chiede al GM invece di indovinare. Il GM può comunque forzare la categoria sul singolo esagono.",
     "hex_size": {
       "note": "21,6 km da un angolo all'altro: circa un giorno per attraversarlo."
     },
     "activities_per_day_table": [
       {
-        "note": "Un gruppo cosi' lento impiega 2 giorni per ogni attivita'."
+        "note": "Un gruppo così lento impiega 2 giorni per ogni attività."
       },
       null,
       null,
       null,
       null
     ],
-    "party_speed": "Quella del membro piu' lento.",
+    "party_speed": "Quella del membro più lento.",
     "travel_speed": {
-      "_page": "Modalita' Esplorazione e Pausa — Tabella: Velocita' di Viaggio",
-      "_note": "Quanta strada si fa davvero, per chi vuole il numero in chilometri invece che in attivita'. Non serve al conto dei viaggi fra esagoni — quello va ad attivita' al giorno, che e' un'altra tabella — ma e' la risposta alla domanda «quanto andiamo veloci», e la wiki la da'. Le distanze valgono su terreno piano e sgombro: il terreno difficile le dimezza, il difficile superiore le riduce a un terzo. Se il viaggio chiede una prova — nuotare, scalare — il GM puo' chiederne una all'ora e leggere i progressi su questa stessa tabella.",
+      "_page": "Modalità Esplorazione e Pausa — Tabella: Velocità di Viaggio",
+      "_note": "Quanta strada si fa davvero, per chi vuole il numero in chilometri invece che in attività. Non serve al conto dei viaggi fra esagoni — quello va ad attività al giorno, che è un'altra tabella — ma è la risposta alla domanda «quanto andiamo veloci», e la wiki la dà. Le distanze valgono su terreno piano e sgombro: il terreno difficile le dimezza, il difficile superiore le riduce a un terzo. Se il viaggio chiede una prova — nuotare, scalare — il GM può chiederne una all'ora e leggere i progressi su questa stessa tabella.",
       "between_the_lines": {
-        "_note": "La tabella si ferma a 18 metri e salta 13,5 e 16,5. Per quelle Velocita' — e per un veicolo piu' svelto — si continua con la stessa proporzione: 0,6 km all'ora per ogni metro di Velocita'. Non e' una regola in piu', e' la regola della tabella: quel fattore riproduce esatte tutte e nove le righe scritte, dalla prima all'ultima. Nella tabella in piedi inglesi si legge come «ogni tre metri in piu' e' un miglio all'ora in piu'»."
+        "_note": "La tabella si ferma a 18 metri e salta 13,5 e 16,5. Per quelle Velocità — e per un veicolo più svelto — si continua con la stessa proporzione: 0,6 km all'ora per ogni metro di Velocità. Non è una regola in più, è la regola della tabella: quel fattore riproduce esatte tutte e nove le righe scritte, dalla prima all'ultima. Nella tabella in piedi inglesi si legge come «ogni tre metri in più è un miglio all'ora in più»."
       }
     },
     "categories": {
@@ -630,20 +630,20 @@
     },
     "terrains": {
       "forest": {
-        "note": "La wiki la da' come difficile o difficile superiore: sceglie il GM."
+        "note": "La wiki la dà come difficile o difficile superiore: sceglie il GM."
       },
       "lake": {
-        "note": "Acqua: serve un veicolo o una Velocita' di Nuotare. La wiki non assegna una categoria fissa. Chi naviga lo attraversa come terreno aperto (vedi acqua_e_volo); chi va a piedi non ci passa."
+        "note": "Acqua: serve un veicolo o una Velocità di Nuotare. La wiki non assegna una categoria fissa. Chi naviga lo attraversa come terreno aperto (vedi acqua_e_volo); chi va a piedi non ci passa."
       },
       "river": {
-        "note": "A valle e' terreno aperto, a monte difficile o difficile superiore secondo correnti e meteo. Come terreno vale per un esagono tutto occupato dal fiume: un fiume che scorre fra due esagoni si segna invece come confine (vedi confini)."
+        "note": "A valle è terreno aperto, a monte difficile o difficile superiore secondo correnti e meteo. Come terreno vale per un esagono tutto occupato dal fiume: un fiume che scorre fra due esagoni si segna invece come confine (vedi confini)."
       },
       "ruins": {
-        "note": "La wiki non assegna una categoria a questo terreno: il tavolo ha scelto la piu' dura, terreno difficile superiore. Non e' una regola del manuale."
+        "note": "La wiki non assegna una categoria a questo terreno: il tavolo ha scelto la più dura, terreno difficile superiore. Non è una regola del manuale."
       }
     },
     "borders": {
-      "_note": "Le regole conoscono i Confini d'Acqua e i Ponti sulla Griglia Urbana di un insediamento (vedi structures.json, la struttura «Ponte»: «I ponti possono essere costruiti solo sui Confini d'Acqua»), non fra gli esagoni della mappa. Portare la stessa idea sulla mappa e' una scelta del tavolo: il vocabolario e' quello del gioco, la regola di viaggio no. Un confine che non e' segnato e' terra, e non costa niente.",
+      "_note": "Le regole conoscono i Confini d'Acqua e i Ponti sulla Griglia Urbana di un insediamento (vedi structures.json, la struttura «Ponte»: «I ponti possono essere costruiti solo sui Confini d'Acqua»), non fra gli esagoni della mappa. Portare la stessa idea sulla mappa è una scelta del tavolo: il vocabolario è quello del gioco, la regola di viaggio no. Un confine che non è segnato è terra, e non costa niente.",
       "kinds": {
         "water": {
           "name": "Confine d'Acqua",
@@ -651,16 +651,16 @@
         },
         "ford": {
           "name": "Guado",
-          "note": "Si attraversa, ma costa un'attivita' di Viaggiare in piu'."
+          "note": "Si attraversa, ma costa un'attività di Viaggiare in più."
         },
         "bridge": {
           "name": "Ponte",
-          "note": "Si attraversa senza costo aggiuntivo. E' cosa diversa dall'Elemento del Terreno «Ponte», che sta su un esagono e riguarda il costo in PR di Costruire Strade."
+          "note": "Si attraversa senza costo aggiuntivo. È cosa diversa dall'Elemento del Terreno «Ponte», che sta su un esagono e riguarda il costo in PR di Costruire Strade."
         }
       }
     },
     "current": {
-      "_note": "Seguire un corso d'acqua. La pagina lo dice del terreno Fiume: a valle e' terreno aperto, a monte difficile o difficile superiore secondo correnti e meteo. Fra le due la wiki non sceglie, e nemmeno l'app: conta la piu' facile e lo segnala, come fa per la foresta. Da che parte scorra l'acqua sulla mappa la wiki non puo' saperlo: quello lo segna il GM sul disegno, tratto per tratto.",
+      "_note": "Seguire un corso d'acqua. La pagina lo dice del terreno Fiume: a valle è terreno aperto, a monte difficile o difficile superiore secondo correnti e meteo. Fra le due la wiki non sceglie, e nemmeno l'app: conta la più facile e lo segnala, come fa per la foresta. Da che parte scorra l'acqua sulla mappa la wiki non può saperlo: quello lo segna il GM sul disegno, tratto per tratto.",
       "downstream": {
         "name": "A valle",
         "note": "Si scende seguendo la corrente: terreno aperto."
@@ -671,11 +671,11 @@
       },
       "still": {
         "name": "Acqua ferma",
-        "note": "Dentro un lago non c'e' corrente da assecondare o da risalire: non c'e' un verso, e vale la riga generale — chi naviga trova quasi ovunque terreno aperto (vedi acqua_e_volo)."
+        "note": "Dentro un lago non c'è corrente da assecondare o da risalire: non c'è un verso, e vale la riga generale — chi naviga trova quasi ovunque terreno aperto (vedi acqua_e_volo)."
       },
       "unknown_": {
         "name": "Senza corrente",
-        "note": "Un tratto senza verso e' acqua senza corrente da assecondare o da risalire: si percorre nei due sensi allo stesso modo, e vale terreno aperto. E' il caso di tutte le righe di un lago, e la scelta del tavolo per un fiume di cui il verso non e' stato ancora segnato. La wiki non dice niente di un corso d'acqua fermo: dice che chi viaggia sull'acqua trova quasi ovunque terreno aperto, ed e' da li' che viene il numero."
+        "note": "Un tratto senza verso è acqua senza corrente da assecondare o da risalire: si percorre nei due sensi allo stesso modo, e vale terreno aperto. È il caso di tutte le righe di un lago, e la scelta del tavolo per un fiume di cui il verso non è stato ancora segnato. La wiki non dice niente di un corso d'acqua fermo: dice che chi viaggia sull'acqua trova quasi ovunque terreno aperto, ed è da lì che viene il numero."
       }
     },
     "roads": {
@@ -683,11 +683,11 @@
     },
     "reconnaissance": {
       "cost": "come Viaggiare per quell'esagono",
-      "note": "Non comprende lo spostamento: e' il costo per perlustrare l'esagono in cui ti trovi."
+      "note": "Non comprende lo spostamento: è il costo per perlustrare l'esagono in cui ti trovi."
     },
     "forced_march": {
       "sustainable_days": "modificatore di Costituzione, minimo 1",
-      "beyond": "Affaticato finche' non passi un giorno intero a riposare."
+      "beyond": "Affaticato finché non passi un giorno intero a riposare."
     },
     "water_and_flight": "Se voli o viaggi sull'acqua, quasi tutti gli esagoni sono terreno aperto.",
     "other_activities": [
@@ -873,11 +873,11 @@
   "structure_traits": [
     {
       "id": "edifice",
-      "name": "Costruzione"
+      "name": "Edificio"
     },
     {
       "id": "building",
-      "name": "Edificio"
+      "name": "Costruzione"
     },
     {
       "id": "famous",

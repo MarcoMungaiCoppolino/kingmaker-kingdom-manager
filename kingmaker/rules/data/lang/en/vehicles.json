@@ -24,7 +24,7 @@
       "price": "15 gp",
       "crew": "1 pilot",
       "passengers": "",
-      "space": "5 long, 10 feet wide, 2 feet high",
+      "space": "5 feet long, 10 feet wide, 2 feet high",
       "piloting": "Piloting Lore (DC 14) or Nature (DC 16)",
       "speed_text": "fly 25 feet (wind)",
       "collision": "2d4 (DC 14)",
@@ -124,7 +124,7 @@
       "passengers": "6",
       "space": "60 feet long, 30 feet wide, 60 feet high",
       "piloting": "Driving Lore (DC 34) or Crafting (DC 36)",
-      "speed_text": "40 feet, (electrical, magical)",
+      "speed_text": "40 feet (electrical, magical)",
       "collision": "9d12 (DC 32)",
       "source": "Guns & Gears (Remastered)"
     },

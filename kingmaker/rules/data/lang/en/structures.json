@@ -16,7 +16,7 @@
         "text": "The first time you build tenements each Kingdom turn, reduce Unrest by 1."
       },
       {
-        "text": "The first time you build tenements each Kingdom turn, reduce Unrest by 1."
+        "text": "+1 to a Ruin of your choice"
       }
     ]
   },
@@ -281,11 +281,11 @@
     },
     "item_bonus": "+1 item bonus to Quell Unrest using Intrigue",
     "ruin": "",
-    "effects": "The first time you build a jail each a Kingdom turn, reduce Crime by 1.",
+    "effects": "The first time you build a jail each Kingdom turn, reduce Crime by 1.",
     "consumption": "",
     "kingdom_effects": [
       {
-        "text": "The first time you build a jail each a Kingdom turn, reduce Crime by 1."
+        "text": "The first time you build a jail each Kingdom turn, reduce Crime by 1."
       }
     ]
   },
@@ -313,7 +313,12 @@
     "item_bonus": "+1 item bonus to Garrison Army, Recover Army, or Recruit Army (see Appendix 3)",
     "ruin": "",
     "effects": "Barracks aid in the recruitment of armies and in helping soldiers recover from battle. The first time you build a barracks in any settlement, reduce Unrest by 1.",
-    "consumption": ""
+    "consumption": "",
+    "kingdom_effects": [
+      {
+        "text": "The first time you build a barracks in any settlement, reduce Unrest by 1"
+      }
+    ]
   },
   {
     "id": "tannery",
@@ -419,16 +424,16 @@
     "construction": {
       "raw": "Arts (trained) DC 18"
     },
-    "item_bonus": "The first time you build a monument each Kingdom turn, reduce Unrest by 1 and reduce one Ruin of your choice by 1.",
+    "item_bonus": "",
     "ruin": "",
-    "effects": "",
+    "effects": "The first time you build a monument each Kingdom turn, reduce Unrest by 1 and reduce one Ruin of your choice by 1.",
     "consumption": "",
     "kingdom_effects": [
       {
-        "text": ""
+        "text": "The first time you build a monument each Kingdom turn, reduce Unrest by 1"
       },
       {
-        "text": ""
+        "text": "reduce one Ruin of your choice by 1"
       }
     ]
   },
@@ -617,7 +622,7 @@
     "consumption": "",
     "kingdom_effects": [
       {
-        "text": "While in a settlement with a thieves' guild, you gain a +1 item bonus to Create Forgeries."
+        "text": "+1 Crime"
       }
     ]
   },
@@ -650,7 +655,12 @@
     "item_bonus": "",
     "ruin": "",
     "effects": "Magical streetlamps provide nighttime illumination for an entire Urban Grid. When you build magical streetlamps, check the magical streetlamps checkbox on your Urban Grid. The first time you build magical streetlamps in a Kingdom turn, reduce Crime by 1.",
-    "consumption": ""
+    "consumption": "",
+    "kingdom_effects": [
+      {
+        "text": "Reduce Crime by 1"
+      }
+    ]
   },
   {
     "id": "mansion",
@@ -770,7 +780,7 @@
     "consumption": "",
     "kingdom_effects": [
       {
-        "text": "Treat the settlement's level as one level higher than its actual level for the purposes of determining what items are readily available for sale in that settlement. This effect stacks up to three times."
+        "text": "+1 Crime"
       }
     ]
   },
@@ -898,11 +908,11 @@
     },
     "item_bonus": "+2 item bonus to Hire Adventurers and to Rest and Relax using Trade",
     "ruin": "",
-    "effects": "The first time you build a luxury tavern in a Kingdom turn, reduce Unrest by 1d4+1. If attempt a Performance check to Earn Income in a settlement with a luxury tavern, you gain a +2 item bonus to the check. All checks made to Gather Information in a settlement with at least one luxury tavern gain a +2 item bonus.",
+    "effects": "The first time you build a luxury tavern in a Kingdom turn, reduce Unrest by 1d4+1. If you attempt a Performance check to Earn Income in a settlement with a luxury tavern, you gain a +2 item bonus to the check. All checks made to Gather Information in a settlement with at least one luxury tavern gain a +2 item bonus.",
     "consumption": "",
     "kingdom_effects": [
       {
-        "text": "The first time you build a luxury tavern in a Kingdom turn, reduce Unrest by 1d4+1. If attempt a Performance check to Earn Income in a settlement with a luxury tavern, you gain a +2 item bonus to the check. All checks made to Gather Information in a settlement with at least one luxury tavern gain a +2 item bonus."
+        "text": "The first time you build a luxury tavern in a Kingdom turn, reduce Unrest by 1d4+1. If you attempt a Performance check to Earn Income in a settlement with a luxury tavern, you gain a +2 item bonus to the check. All checks made to Gather Information in a settlement with at least one luxury tavern gain a +2 item bonus."
       }
     ]
   },
@@ -952,7 +962,7 @@
     },
     "item_bonus": "+2 item bonus to Creative Solution",
     "ruin": "",
-    "effects": "While in a settlement with an Academy, you gain a +2 item bonus to Lore checks made to Recall Knowledge while Investigate, to all checks made while Researching, and to Decipher Writing.",
+    "effects": "While in a settlement with an Academy, you gain a +2 item bonus to Lore checks made to Recall Knowledge while Investigating, to all checks made while Researching, and to Decipher Writing.",
     "consumption": ""
   },
   {

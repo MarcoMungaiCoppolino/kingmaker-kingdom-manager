@@ -298,9 +298,13 @@ def is_impersonating() -> bool:
     return bool(real_id())
 
 
-def impersonator(archive) -> User | None:
-    """The administrator behind the clothes, or None if there is no disguise."""
-    real = real_id()
+def impersonator(archive, real: str | None) -> User | None:
+    """The administrator behind the clothes, or None if there is no disguise.
+
+    `real` is said by the caller: in an event handler `real_id()`, in a panel
+    what the window recorded when its page was built (`theme.window_state()`).
+    A panel must not ask the session: during a redraw the session is whoever
+    acted last, not the window being drawn."""
     if not real:
         return None
     row = archive.user_by_id(real)

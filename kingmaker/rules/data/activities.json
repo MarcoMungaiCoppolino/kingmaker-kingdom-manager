@@ -278,14 +278,16 @@
           {
             "t": "bonus_dice",
             "q": "2",
-            "auto": true
+            "auto": true,
+            "per": "points"
           }
         ],
         "success": [
           {
             "t": "bonus_dice",
             "q": "1",
-            "auto": true
+            "auto": true,
+            "per": "points"
           }
         ],
         "failure": [
@@ -307,7 +309,8 @@
         {
           "t": "commodity_choice",
           "q": "-1",
-          "auto": true
+          "auto": true,
+          "per": "points"
         }
       ]
     },
@@ -327,31 +330,36 @@
           {
             "t": "bonus_dice",
             "q": "1",
-            "auto": true
+            "auto": true,
+            "per": "agreements"
           },
           {
             "t": "commodity_choice",
             "q": "1",
-            "auto": true
+            "auto": true,
+            "per": "agreements"
           }
         ],
         "success": [
           {
             "t": "bonus_dice",
             "q": "1",
-            "auto": false
+            "auto": false,
+            "per": "agreements"
           },
           {
             "t": "commodity_choice",
             "q": "1",
-            "auto": false
+            "auto": false,
+            "per": "agreements"
           }
         ],
         "failure": [
           {
-            "t": "rp",
+            "t": "rp_next",
             "q": "1",
-            "auto": true
+            "auto": true,
+            "per": "agreements"
           }
         ],
         "critical_failure": [
@@ -365,7 +373,8 @@
         {
           "t": "rp",
           "q": "-2",
-          "auto": true
+          "auto": true,
+          "per": "agreements"
         }
       ]
     },
@@ -559,14 +568,16 @@
       "effects": {
         "critical_success": [
           {
-            "t": "note",
-            "auto": false
+            "t": "focus",
+            "q": "1",
+            "auto": true
           }
         ],
         "success": [
           {
-            "t": "note",
-            "auto": false
+            "t": "focus",
+            "q": "1",
+            "auto": true
           }
         ],
         "failure": [],
@@ -653,9 +664,9 @@
             "auto": true
           },
           {
-            "t": "fame",
+            "t": "fame_next",
             "q": "1",
-            "auto": false
+            "auto": true
           },
           {
             "t": "resource_die",
@@ -675,12 +686,14 @@
           {
             "t": "fame",
             "q": "-1",
-            "auto": true
+            "auto": true,
+            "only_if": "fame"
           },
           {
             "t": "unrest",
             "q": "1d4",
-            "auto": false
+            "auto": false,
+            "only_if": "no_fame"
           }
         ]
       },
@@ -881,7 +894,8 @@
             "auto": false
           },
           {
-            "t": "ruin_choice",
+            "t": "ruin",
+            "r": "crime",
             "q": "1",
             "auto": false
           },
@@ -916,12 +930,24 @@
           {
             "t": "note",
             "auto": false
+          },
+          {
+            "t": "milestone",
+            "m": "first_diplomatic_relation",
+            "q": "1",
+            "auto": true
           }
         ],
         "success": [
           {
             "t": "note",
             "auto": false
+          },
+          {
+            "t": "milestone",
+            "m": "first_diplomatic_relation",
+            "q": "1",
+            "auto": true
           }
         ],
         "failure": [
@@ -1115,7 +1141,7 @@
         ],
         "failure": [
           {
-            "t": "rp",
+            "t": "rp_next",
             "q": "1d4",
             "auto": true
           }
@@ -1413,12 +1439,24 @@
           {
             "t": "note",
             "auto": false
+          },
+          {
+            "t": "milestone",
+            "m": "first_trade_agreement",
+            "q": "1",
+            "auto": true
           }
         ],
         "success": [
           {
             "t": "note",
             "auto": false
+          },
+          {
+            "t": "milestone",
+            "m": "first_trade_agreement",
+            "q": "1",
+            "auto": true
           }
         ],
         "failure": [
@@ -1548,7 +1586,8 @@
           {
             "t": "rp",
             "q": "1",
-            "auto": true
+            "auto": true,
+            "per": "hexes"
           },
           {
             "t": "note",

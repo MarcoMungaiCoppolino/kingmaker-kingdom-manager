@@ -468,7 +468,7 @@ class Launcher:
         self.record = record
         self.other = None
         if loaded:
-            self.append_log(f"cloud: loaded {loaded}")
+            self.append_log(t("launcher.log.cloud_loaded", what=loaded))
         self.refresh_cloud()
         self.start_server()
 
@@ -509,7 +509,7 @@ class Launcher:
 
     def handle_cloud(self, kind: str, text: str) -> None:
         if kind == "uploaded":
-            self.append_log(f"cloud: uploaded {text}")
+            self.append_log(t("launcher.log.cloud_uploaded", what=text))
             self.set_status(t("launcher.cloud.uploaded", name=text), "ok")
         elif kind == "error":
             self.append_log(f"cloud: {text}")
@@ -565,7 +565,7 @@ class Launcher:
             try:
                 self.cloud_client().revoke()
             except Exception as error:
-                self.append_log(f"cloud: revoke failed: {error}")
+                self.append_log(t("launcher.log.cloud_revoke_failed", error=error))
         self.settings.cloud = {}
         self.other = None
         self.settings.save()
@@ -837,7 +837,7 @@ class Launcher:
         except Exception as error:
             messagebox.showerror(t("launcher.error.title"), t("launcher.load_save.failed", error=error))
             return
-        self.append_log(f"save loaded from {path}; previous one kept as {kept.name}")
+        self.append_log(t("launcher.log.save_loaded", path=path, kept=kept.name))
         messagebox.showinfo(core.APP_NAME, t("launcher.load_save.done", kingdom=info["kingdom"] or "?"))
 
     # ------------------------------------------------------------ settings

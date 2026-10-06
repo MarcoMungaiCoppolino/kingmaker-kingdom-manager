@@ -233,7 +233,7 @@ def _stable_row(entry: dict, can_manage: bool) -> None:
                 ui.label(t("transport.token_appears_map_hex")) \
                     .style("font-size:.74rem;color:var(--km-muted)")
                 with ui.row().classes("gap-3 items-start flex-wrap"):
-                    _image_box(entry, "portrait", "Immagine", 132)
+                    _image_box(entry, "portrait", t("transport.picture"), 132)
                     _image_box(entry, "token", t("transport.token"), 92)
             ui.input(value=entry.get("note") or "", placeholder=t("transport.notes"),
                      on_change=lambda e, i=sid: _edit_stable_entry(i, note=e.value or "")) \

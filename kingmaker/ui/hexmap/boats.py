@@ -280,11 +280,11 @@ def _route_box(mine: dict, mapping) -> None:
         days = route["plan"].days if route["plan"].possible else None
         ui.html(f'<span class="km-chip" style="font-size:.68rem">'
                 f'{days if days is not None else "—"} '
-                f'{"day" if days == 1 else "days"}</span>')
+                f'{tn("common.day_word", days)}</span>')
         if ashore is not None and ashore.possible and days is not None:
             offset_ = days - ashore.days
             text = (t("map.boats.same_days_land") if offset_ == 0 else
-                     f'{abs(offset_)} {"day" if abs(offset_) == 1 else "days"}'
+                     f'{abs(offset_)} {tn("common.day_word", abs(offset_))}'
                      + (t("map.boats.more") if offset_ > 0 else t("map.boats.less")) + t("map.boats.than_land"))
             ui.html(f'<span class="km-chip" style="font-size:.68rem;'
                     f'border-color:var(--km-gold-dim)">{theme.esc(text)}</span>')

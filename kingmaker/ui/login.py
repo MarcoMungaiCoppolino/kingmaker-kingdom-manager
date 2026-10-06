@@ -205,7 +205,9 @@ def logout_page() -> None:
 # ---------------------------------------------------------------------------
 def user_bar(user: auth.User) -> None:
     """Who you are and how to leave, at the end of the header."""
-    behind = auth.impersonator(STATE.archive)
+    # What this window recorded when its page was built: a redraw caused by
+    # another player's click would otherwise read that player's session.
+    behind = auth.impersonator(STATE.archive, theme.window_state().get("real_id"))
     with ui.row().classes("items-center gap-2 no-wrap"):
         if behind is not None:
             # An invisible disguise is another matter: here it shows, and the
@@ -370,7 +372,7 @@ def _enter_as(row: dict) -> None:
     if worn is None:
         theme.notify(t("login.this_account_cannot_entered"), "negative")
         return
-    real = auth.impersonator(STATE.archive)
+    real = auth.impersonator(STATE.archive, auth.real_id())     # an event: the session is right
     who = real.username if real else "?"
     STATE.record(t("login.looking_app", who=who, username=worn.username), "info")
     theme.mark_dirty()

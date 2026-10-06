@@ -207,7 +207,7 @@ def character_dialog(char: dict) -> None:
                 ui.label(t("party.character_no_longer_exists")).style("color:var(--km-red)")
                 return
             with ui.row().classes("gap-4 items-start w-full no-wrap flex-wrap"):
-                _image_box(current_one, "portrait", "Ritratto", 210, body.refresh)
+                _image_box(current_one, "portrait", t("party.portrait"), 210, body.refresh)
                 _image_box(current_one, "token", t("party.token_map"), 110, body.refresh)
                 with ui.column().classes("gap-2").style("flex:1;min-width:280px"):
                     _fields(current_one, gm, body.refresh)

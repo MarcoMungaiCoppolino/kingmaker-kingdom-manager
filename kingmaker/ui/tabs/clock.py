@@ -28,7 +28,8 @@ log = logging.getLogger(__name__)
 
 # How many real seconds a game day lasts. Short names: they sit on a button,
 # and the exact figure is in the tooltip.
-SPEED = (("Lenta", 12.0), ("Normale", 6.0), ("Veloce", 3.0), ("Rapidissima", 1.0))
+SPEED = (("clock.speed.slow", 12.0), ("clock.speed.normal", 6.0), ("clock.speed.fast", 3.0),
+         ("clock.speed.fastest", 1.0))
 
 _accumulation = 0.0
 _last = time.monotonic()
@@ -189,7 +190,8 @@ def bar() -> None:
                 .tooltip(t("clock.stop_passing_time") if is_on
                          else t("clock.let_time_pass_journeys"))
             current_one = seconds_per_day()
-            for name, seconds in SPEED:
+            for key, seconds in SPEED:
+                name = t(key)
                 choice = abs(current_one - seconds) < 0.01
                 ui.button(name[0], on_click=lambda _=None, s=seconds: set_speed(s)) \
                     .props(f'dense round size=sm {"color=amber" if choice else "flat"}') \

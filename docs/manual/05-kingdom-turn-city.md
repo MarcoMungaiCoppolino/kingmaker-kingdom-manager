@@ -44,6 +44,16 @@ parse from the Italian prose).
 | `step_limit(phase, step)` | Leadership: `max_leadership_activities × pc_leaders`; Region: 3; Civic: number of settlements |
 | `activity_block(act)` | why an activity cannot be attempted: proficiency, per-turn limit, anarchy, step used up |
 | `apply_effect(entry, value)` | the single point that modifies the kingdom by effect of an activity |
+| `skill_detail(sid, activity, variant, hex_, settlement, event, fair)` / `check_detail` | the breakdown of a Kingdom check: `_modifiers` collects every source as (name, value, type) — ability, proficiency, invested leaders, Unrest, Ruin, the structures' item bonus, the vacancy penalties (`role_vacant`), the feats, Expansion Expert, the temporary modifiers — and the PF2e stacking keeps, per type (status, circumstance, item), the best bonus and the worst penalty; vacancy penalties stack. `event` ("ongoing", "defenses", "bickering") is for the feats that help on event checks; `fair=False` is Free and Fair's own reroll |
+| `kingdom_check(sid, dc, activity, …)` | **every** check of the app rolls here: the breakdown, Anarchy's worsening, then what acts on the result — a one-check bonus used up (Focused Attention, `once` modifiers; Cooperative Leadership at 11th), Pull Together, a Fame point and Fame and Fortune's die on a critical. What a feat did goes into `Result.notes` |
+| `assurance_available` / `assurance_result` | Kingdom Assurance: a chosen trained skill, once a turn, 10 + proficiency |
+| `feat_choices`, `feat_turns`, `use_feat`/`feat_used` | the feats' choices and once-per-turn bookkeeping; `muddle_through(on)` moves the Ruin thresholds and takes them back exactly; `new_turn_feats` lowers Pull Together's DC |
+| `feat_offers` / `take_feat_offers` | Crush Dissent (Unrest rising) and Liquidate Resources (an outcome not paid), offered by `theme._offer_feats` like the Fame ones |
+| `check_milestones()` | run on every save: the milestones that follow from the kingdom as it is (Landmark/Refuge on a claimed hex, size, settlement types, eight leaders, 100 RP); the diplomatic and trade ones come from the `milestone` effects of their activities |
+| `item_bonus(activity, skill, variant, hex_, settlement)` | from the `item_bonuses` of `structures.json`: the capital's structures help everywhere, another settlement's only in the claimed hexes of its influence (`influence_of`) or when the table attempts the activity there; identical structures stack up to the settlement's `item_bonus_max`, different ones do not (the best counts). `skills` limits an entry to some skills (Rest and Relax using Scholarship), `variant` to what the activity makes (a lumber camp) |
+| `fame_from_structure(sid)` | a famous/infamous structure built: +1 point if the trait is the kingdom's, −1 if it is the opposite one |
+| `spend_fame()` | 1 point, for a reroll |
+| `fame_offers` / `take_fame_offers()` / `stave_off(offer)` | `modify_unrest` reaching Anarchy and `modify_ruin` raising a penalty, with points in hand, leave an offer; `stave_off` spends all the points and holds Unrest 1 below Anarchy, or the Ruin at its threshold with the penalty as it was |
 
 `pc_leaders()` counts **distinct characters** (`character_id`), not names: two roles of the
 same PC count as one.
@@ -74,8 +84,19 @@ flowchart LR
     C --> D[_outcome_dialog<br/>the effect rows per degree]
     D -->|Apply| A[STATE.apply_effect per row · journal]
     P --> G[_upkeep_step / _event_step:<br/>the guided steps of the rules]
-    P --> N[advance_turn: turn+1, fame to 1,<br/>activities reset, expired modifiers]
+    D -->|Reroll for 1 Fame| C
+    P --> N[advance_turn: turn+1, fame to 1 + fame_next_turn,<br/>activities reset, expired modifiers]
 ```
+
+- `run_activity` shows the breakdown with `check_detail`, the structures' item bonus included.
+  When a settlement other than the capital has a structure that helps the activity
+  (`bonus_settlements`), an *Attempted in* choice says where it is attempted.
+- `_outcome_dialog(act, res, reroll, rerolled)` offers the reroll for 1 Fame/Infamy point while
+  `theme.can_reroll` allows it: the effects wait on that screen anyway, so the reroll replaces
+  the outcome, once.
+- `only_if: "fame"` / `"no_fame"` on an effect entry ticks it by the points in hand (a
+  Masterpiece's critical failure: lose 1 point, or 1d4 Unrest if there is none). `fame_next`
+  owes points for the next turn (`k["fame_next_turn"]`), which `advance_turn` adds.
 
 - `_activity_dc`: the Control DC, or the one written on the activity.
 - `_effect_rows(entries)` draws every entry as a tickable row with an editable value; dice are
@@ -100,8 +121,11 @@ Bridge), `capital`, `hex`. The Urban Grid is drawn by `_draw_grid`; clicking a f
 (`_free_contiguous_lots`).
 
 `_build` is the complete sequence of the rule: pay the cost, roll Build a Structure with the
-best of the allowed skills, place (or Rubble on a critical failure), then `_effects_dialog`
-proposes Unrest and Ruins from the structured effects. `_can_expand` / `_expand` follow the table
+best of the allowed skills (with the item bonus of the settlement's and the capital's
+structures), place (or Rubble on a critical failure), move the Fame/Infamy points of a famous
+or infamous structure, then `_effects_dialog` proposes Unrest and Ruins from the structured
+effects. The roll goes through `theme.show_check`, so the reroll for Fame comes before any of
+it; *Place without a check* moves no points. `_can_expand` / `_expand` follow the table
 of the settlement types (village → town → city → metropolis).
 
 The city↔hex link is two-way: `STATE.link_settlement(sid, col, row)` writes `ins["hex"]` **and**

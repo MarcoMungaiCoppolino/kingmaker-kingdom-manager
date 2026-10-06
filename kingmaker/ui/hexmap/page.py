@@ -578,7 +578,7 @@ def _fog_dialog(coords: list, mode: str, mine: dict, mapping) -> None:
                     else:
                         STATE.archive.hide(STATE.campaign, coords, uid)
                 to_whom = t("map.page.players", len=len(recipients))
-            verb = "Scoperti" if to_reveal else "Coperti"
+            verb = t("map.page.revealed") if to_reveal else t("map.page.covered")
             STATE.record(t("map.page.hexes", verb=verb, len=len(coords), to_whom=to_whom), "map")
             dlg.close()
             _after_fog(mine, mapping)

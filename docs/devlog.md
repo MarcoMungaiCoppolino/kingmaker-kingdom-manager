@@ -462,3 +462,48 @@ row now takes the width of its step. Nothing inside a panel can be wider than th
 tabs were measured again in Italian, with every section opened, from 1775 px down. A section
 left collapsed is not measured at all.
 
+
+## 1.2.0 — 6 October 2026 · By the book
+
+It started with a question: how do you spend Fame? You couldn't. The app earned the points and
+lost them at the end of every turn, and nothing in between used them. Reading the rules to
+answer it turned into reading all of them, and comparing each against the code. Three audits
+ran side by side: one for the rules the app was missing, one for the data and the texts, one
+for plain bugs. What they found is most of this version.
+
+The biggest gap was the kingdom feats. Seventeen of them could be ticked on the sheet, and two
+did anything. Fixing them one by one would have meant seventeen patches in four places, because
+a check was rolled in four places: the sheet, the turn, the map and the city, each with its own
+copy of the arithmetic. So the rolls were brought to one place first. `State.kingdom_check`
+builds the modifier from every source, as (name, value, type), and applies the PF2e stacking
+rule: of each type, the best bonus and the worst penalty. It then lets the feats act on the
+result. With that in place, most feats were a line each, and the vacant roles' penalties, which
+had been missing all along, came with them. So did a bug nobody had seen: two circumstance
+bonuses used to add up.
+
+The structures' item bonuses were the same story. The Inn's +1 to Hire Adventurers was printed
+in the city and never reached a roll; the bonuses were sentences, not data. They are data now,
+next to the sentences, and the audit that wrote them found the sentences wrong in places. The
+Italian Monument had copied the Mill's line, and the Sacred Grove asked for eleven lots, so no
+table could ever have built it.
+
+The data audit was the humbling part. Prices off by thirty RP, a wall upgrade running
+backwards, an Italian vehicle list with prices swapped between pairs, a hundred and forty
+Italian accents typed as apostrophes, and a clock that offered its speeds in Italian to English
+players. None of it would have shown in a test, because the tests checked that the app did what
+its data said. They never checked that the data said what the book says. Archives of Nethys was
+the reference for every number changed.
+
+One more lesson came from the test runs, and the release had to wait for it. A batch ran for
+forty minutes and had to be stopped by hand; then the first push of 1.2.0 failed in CI, the
+windows test stuck at the end. Alone it passed nearly every time, under load it hung, and a hang
+says nothing. The way in was to make it talk. Each test file now has a timeout, and the windows
+test closes every window whatever happens, so the failure became an exception with a stack:
+the header asked for the session of a window that had just closed. A simulated window lends its
+request to every redraw after it; once it closed, NiceGUI pruned its storage ten seconds later,
+and under load the last redraw was still running when that happened. The exception skipped the
+test's teardown, and the windows left open kept the process alive. The app had the same flaw in
+a milder form: the header's "looking as" line read the session of whoever had just acted, so one
+player's click could change another player's header. Each window now records its disguise when
+its page is built. A second model, given the evidence in a prompt, traced the mechanism; the
+test now forces the prune on every run, so the case that needed bad luck is checked every time.

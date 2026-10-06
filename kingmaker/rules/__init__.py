@@ -10,7 +10,7 @@ import json
 import random
 import re
 from copy import deepcopy
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable
 
@@ -322,6 +322,9 @@ class Result:
     cd: int
     grade: str
     detail: list[tuple[str, int]]
+    # What happened to the result after the die: a feat that turned it
+    # (Pull Together), a bonus used up (Focused Attention). Shown with it.
+    notes: list[str] = field(default_factory=list)
 
     @property
     def label(self) -> str:
@@ -395,7 +398,7 @@ def signed_value(q: str) -> tuple[int, str]:
 
 def entry_target(entry: dict) -> str | None:
     """«ruin_choice» and «commodity_choice» ask what to apply the effect to."""
-    return {"ruin_choice": "ruin", "commodity_choice": "commodity"}.get(entry["t"])
+    return {"ruin_choice": "ruin", "commodity_choice": "commodity", "focus": "skill"}.get(entry["t"])
 
 
 def entry_label(entry: dict, value: int) -> str:
@@ -411,11 +414,20 @@ def entry_label(entry: dict, value: int) -> str:
         pen = t("rules.penalty", pen=entry['pen']) if entry.get("pen") else ""
         return t("rules.ruin_your_choice", value=value, pen=pen)
     if kind == "rp":
-        return f"PR {value:+d}"
+        return f'{t("main.rp")} {value:+d}'
     if kind == "xp":
-        return f"PE {value:+d}"
+        return f'{t("main.xp")} {value:+d}'
     if kind == "fame":
         return t("rules.fame_infamy", value=value)
+    if kind == "fame_next":
+        return t("rules.fame_next_turn", value=value)
+    if kind == "rp_next":
+        return t("rules.rp_next_turn", value=value)
+    if kind == "focus":
+        return t("rules.focus")
+    if kind == "milestone":
+        found = next((m for m in MILESTONE_XP if m["id"] == entry["m"]), {"desc": entry["m"], "xp": 0})
+        return t("rules.milestone", desc=found["desc"], xp=found["xp"])
     if kind == "commodity":
         return f"{BY_ID['commodity'][entry['p']]['name']} {value:+d}"
     if kind == "commodity_choice":
@@ -430,7 +442,7 @@ def entry_label(entry: dict, value: int) -> str:
                 else t("rules.all_kingdom_checks"))
         when = t("rules.rest_turn") if entry["dur"] <= 1 else t("rules.turns", dur=entry['dur'])
         return t("rules.circumstance", v=entry['v'], where=where, when=when)
-    return t
+    return kind
 
 
 def structure_effects(st: dict) -> list[dict]:

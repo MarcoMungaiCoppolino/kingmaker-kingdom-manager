@@ -1,7 +1,7 @@
 {
-  "_note": "Calendario di Absalom (CA). Trascritto dalla pagina, nessun valore aggiunto. Attenzione a una contraddizione che sta nella fonte: la pagina dice «ogni anno e' di 52 settimane» (364 giorni) ma la somma dei mesi elencati fa 365. L'app usa i mesi, perche' e' il mese che chiude il Turno di Regno; le settimane non servono al conteggio.",
-  "_kingdom_turn": "«La gestione di un regno si svolge in turni di Regno che si verificano alla fine di ogni mese di gioco» — https://pf2.altervista.org/wiki/Dirigere_un_Regno. Quindi la durata del turno non e' un numero fisso di giorni: e' la lunghezza del mese in corso.",
-  "_leaders_rest": "«Se un personaggio assegnato a un Ruolo di Governo non ha trascorso la settimana di pausa richiesta per quel ruolo dalla fine dell'ultimo turno di Regno, deve rinunciare a una delle tre attivita' di Regno oppure applicare la Penalita' di Assenza» — stessa pagina. Sono 7 giorni, non necessariamente consecutivi.",
+  "_note": "Calendario di Absalom (CA). Trascritto dalla pagina, nessun valore aggiunto. Attenzione a una contraddizione che sta nella fonte: la pagina dice «ogni anno è di 52 settimane» (364 giorni) ma la somma dei mesi elencati fa 365. L'app usa i mesi, perché è il mese che chiude il Turno di Regno; le settimane non servono al conteggio.",
+  "_kingdom_turn": "«La gestione di un regno si svolge in turni di Regno che si verificano alla fine di ogni mese di gioco» — https://pf2.altervista.org/wiki/Dirigere_un_Regno. Quindi la durata del turno non è un numero fisso di giorni: è la lunghezza del mese in corso.",
+  "_leaders_rest": "«Se un personaggio assegnato a un Ruolo di Governo non ha trascorso la settimana di pausa richiesta per quel ruolo dalla fine dell'ultimo turno di Regno, deve rinunciare a una delle tre attività di Regno oppure applicare la Penalità di Assenza» — stessa pagina. Sono 7 giorni, non necessariamente consecutivi.",
   "weekdays": [
     "Lunadì",
     "Lavordì",
@@ -12,7 +12,7 @@
     "Soledì"
   ],
   "leap_year": {
-    "note": "Una volta ogni otto anni un giorno in piu' alla fine di Calistril. L'ultimo bisestile noto e' il 4712 CA, il prossimo il 4720 CA."
+    "note": "Una volta ogni otto anni un giorno in più alla fine di Calistril. L'ultimo bisestile noto è il 4712 CA, il prossimo il 4720 CA."
   },
   "months": [
     {

@@ -2,7 +2,7 @@
 
 *In English: [../user-guide.md](../user-guide.md).*
 
-Questa guida descrive l'app com'è alla versione 1.1.7, scheda per scheda, con il perché di ogni
+Questa guida descrive l'app com'è alla versione 1.2.0, scheda per scheda, con il perché di ogni
 scelta. Per installarla e avviarla vedi il [README.it.md](../../README.it.md); la finestra
 dell'app installata è il primo capitolo qui sotto. Le schermate in
 [`manual/img/screenshots/`](../manual/img/screenshots/) sono dell'interfaccia italiana.
@@ -1567,6 +1567,38 @@ il nome di chi ha tirato, nella lingua di ciascuna finestra. Il GM vede i tiri d
 doverli chiedere, e i giocatori quelli degli altri. Gli effetti da applicare restano a chi ha
 tirato. Un tiro su un esagono che un giocatore non può vedere (il GM che lavora sotto la nebbia)
 a quel giocatore non viene mostrato.
+
+**Fama e Infamia.** Il regno guadagna 1 punto all'inizio di ogni turno e 1 per ogni successo
+critico, fino a 3; i punti non spesi si perdono alla fine del turno. Un punto si spende nei due
+modi previsti dalle regole:
+- **Ritirare una prova.** Finché hai punti, la schermata del risultato di una prova di Regno
+  (attività, attività sugli esagoni, Costruire una Struttura, i tiri della scheda) aspetta prima
+  di applicare qualsiasi cosa: *Tieni il risultato*, oppure *Ritira per 1 punto Fama*. Una volta
+  sola per prova, e vale il secondo risultato.
+- **Evitare il peggio.** Quando il Malcontento arriva all'Anarchia, o una Rovina supera la soglia
+  e la sua penalità salirebbe, l'app chiede se spendere tutti i punti: il Malcontento si ferma
+  1 sotto l'Anarchia, oppure la Rovina si ferma 1 punto sotto la soglia con la penalità di prima.
+
+Una struttura famosa dà 1 punto a un regno di Fama quando viene costruita, e una infame lo toglie
+(il contrario per l'Infamia). Il punto in più del successo critico di Creare un Capolavoro arriva
+all'inizio del turno successivo.
+
+**Talenti del regno e ruoli vacanti.** Un talento spuntato vale in ogni prova che riguarda; la
+scomposizione prima del tiro lo nomina. I talenti che richiedono una scelta (il ruolo del
+Servizio Civile, le abilità dell'Assicurazione Regno, le Rovine di Cavarsela) la chiedono sotto
+l'elenco dei talenti. L'Assicurazione Regno aggiunge accanto a *Tira* un pulsante *prendi 10 +
+competenza*; Schiacciare il Dissenso e Liquidare le Risorse vengono proposti quando si possono
+usare. Una prova per un evento può dire di che tipo è nella finestra di tiro della scheda (⚙),
+per Recupero Rapido e simili. Un ruolo vacante costa la sua penalità, anche questa nella
+scomposizione; l'1d4 di Malcontento del Governante vacante ha un pulsante nella fase di Gestione.
+
+**I bonus delle strutture.** Il bonus oggetto di una struttura (il +1 della Locanda ad Assoldare
+Avventurieri) compare nella scomposizione della prova che aiuta, prima di tirare. Le strutture
+della capitale valgono ovunque. Quelle di un altro insediamento solo nella sua influenza: sulla
+mappa è automatico, e per le altre attività compare la scelta *Tentata in* quando un insediamento
+così esiste. Strutture uguali nello stesso insediamento si sommano fino al massimo
+dell'insediamento (+1 per villaggio e paese, +2 per città, +3 per metropoli); strutture diverse
+non si sommano, e conta la migliore.
 
 Il pulsante *Nuovo turno* sa solo andare avanti. Se lo hai premuto una volta di troppo, o stai
 provando qualcosa e vuoi tornare indietro, il numero si corregge dalla matita ✏ lì accanto,

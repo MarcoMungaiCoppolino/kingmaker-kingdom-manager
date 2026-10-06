@@ -5,6 +5,7 @@
       "id": "new_leadership",
       "name": "Nuova Direzione",
       "traits": [
+        "Gestione",
         "Pausa"
       ],
       "requirements": "",
@@ -214,7 +215,7 @@
       "id": "manage_trade_agreements",
       "name": "Gestire gli Accordi Commerciali",
       "traits": [
-        "Governo",
+        "Commercio",
         "Pausa"
       ],
       "dc": {
@@ -1161,7 +1162,7 @@
         "critical_failure": [
           null,
           {
-            "text": "Abbandona l'esagono dalla Mappa. Si verifica automaticamente un evento Banditi nella Fase Attività."
+            "text": "Abbandona l'esagono dalla Mappa. Si verifica automaticamente un evento Banditi nella prossima Fase Evento."
           }
         ]
       }
@@ -1384,7 +1385,7 @@
       "id": "establish_work_site",
       "name": "Stabilire un Sito di Lavoro",
       "traits": [
-        "Governo",
+        "Regione",
         "Pausa"
       ],
       "requirements": "I campi di Legname richiedono un esagono con una quantità significativa di terreno forestale. Le miniere e le cave richiedono un esagono con una quantità significativa di terreno collinare o montuoso.",

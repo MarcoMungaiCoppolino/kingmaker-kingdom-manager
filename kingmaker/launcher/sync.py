@@ -29,6 +29,7 @@ from typing import Callable
 
 from kingmaker import __version__
 from kingmaker.launcher.dropbox import DropboxError
+from kingmaker.locale.i18n import t
 from kingmaker.storage import bundle
 
 HOST_FILE = "host.json"
@@ -187,7 +188,7 @@ def newest_usable(client, into: Path, log: Callable[[str], None] = lambda _t: No
                 if not bundle.integrity_ok(target):
                     raise ValueError("integrity")
             except (DropboxError, ValueError, OSError) as error:
-                log(f"skipping {entry['name']}: {error}")
+                log(t("launcher.log.skipping", name=entry['name'], error=error))
                 target.unlink(missing_ok=True)
                 continue
             return target
@@ -210,7 +211,7 @@ def pull_assets(client, assets_dir: Path, wanted: dict[str, str],
             continue
         entry = remote.get(digest)
         if entry is None:
-            log(f"image {relative} is not in the cloud")
+            log(t("launcher.log.image_missing", path=relative))
             continue
         data, _meta = client.download(f"{ASSETS}/{entry['name']}")
         target = Path(assets_dir) / relative

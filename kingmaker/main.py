@@ -72,6 +72,9 @@ def page_() -> None:
     # From here on the panels ask `theme.user()`, not the session: during a
     # redraw the session would answer with whoever acted last.
     theme.set_user(user)
+    # The disguise too, for the same reason: the header's user bar reads it
+    # from here, never from the session of whoever happens to act.
+    theme.window_state()["real_id"] = auth.real_id()
     # And under which path they are looking at us: with On Air it is not the
     # root of the domain, and the addresses we write by hand must know it.
     request_ = getattr(ui.context.client, "request", None)

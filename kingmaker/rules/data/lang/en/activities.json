@@ -135,7 +135,7 @@
         "Commerce",
         "Downtime"
       ],
-      "requirements": "",
+      "requirements": "Can be attempted only during the Commerce phase.",
       "cost": "",
       "description": "Attempt a basic check to draw upon your kingdom's treasury to enhance the quality of life for your citizens. This activity can be taken only during the Commerce phase of a Kingdom turn (page 538).",
       "outcomes": {
@@ -179,8 +179,8 @@
         "Commerce",
         "Downtime"
       ],
-      "requirements": "",
-      "cost": "",
+      "requirements": "The kingdom must have a stockpile of the chosen Commodity.",
+      "cost": "Reduce one Commodity's stockpile by up to 4.",
       "description": "There are five different categories of Commodities: Food, Lumber, Luxuries, Ore, and Stone. When you Trade Commodities, select one Commodity that your kingdom currently stockpiles and reduce that Commodity's stockpile by up to 4. Then attempt a basic check. If you trade with a group that you've established diplomatic relations with, you gain a +1 circumstance bonus to the check.",
       "outcomes": {
         "critical_success": "At the beginning of the next Kingdom turn, you gain 2 bonus Resource Dice per point of stockpile expended from your Commodity now.",
@@ -218,8 +218,8 @@
         "Commerce",
         "Downtime"
       ],
-      "requirements": "",
-      "cost": "",
+      "requirements": "You have at least one established trade agreement.",
+      "cost": "2 RP for each trade agreement you want to manage.",
       "description": "You send agents out to attend to established trade agreements. Spend 2 RP per Trade Agreement you wish to manage. Then attempt a basic check. If you Managed Trade Agreements on the previous turn, increase this DC by 5.",
       "outcomes": {
         "critical_success": "At the start of your next Kingdom turn, you gain 1 bonus Resource Die per trade agreement, and 1 Commodity of your choice per trade agreement (no more than half of these Commodities may be Luxuries).",
@@ -272,7 +272,7 @@
         "Leadership"
       ],
       "requirements": "",
-      "cost": "",
+      "cost": "8 RP for Luxuries, 4 RP for any other Commodity.",
       "description": "You can spend RP to Purchase Commodities, but doing so is more expensive than gathering them or relying upon trade agreements. When you Purchase Commodities, select the Commodity you wish to purchase (Food, Lumber, Luxuries, Ore, or Stone). Expend 8 RP if you're purchasing Luxuries or 4 RP if you're purchasing any other Commodity. Then attempt a basic check.",
       "outcomes": {
         "critical_success": "You immediately gain 4 Commodities of the chosen type and 2 Commodities of any other type (except Luxuries).",
@@ -342,8 +342,8 @@
         "Downtime",
         "Leadership"
       ],
-      "requirements": "",
-      "cost": "",
+      "requirements": "An ongoing event.",
+      "cost": "Roll 1 Resource Die and spend RP equal to the result (2 Resource Dice if you try again after a Failure). With the Practical Magic feat the cost drops to 1 RP.",
       "description": "While the PCs can strike out themselves to deal with ongoing events, it's often more efficient to Hire Adventurers. When you Hire Adventurers to help end an ongoing event, the DC is equal to your Control DC adjusted by the event's level modifier. Roll 1 Resource Die and spend RP equal to the result each time you attempt this activity.",
       "outcomes": {
         "critical_success": "You end the continuous event.",
@@ -419,7 +419,7 @@
         "Leadership"
       ],
       "requirements": "",
-      "cost": "",
+      "cost": "On a Success or a Failure: roll 1 Resource Die and spend RP equal to the result.",
       "description": "You declare a day of celebration. Holidays may be religious, historical, martial, or simply festive, but all relieve your citizens from their labors and give them a chance to make merry at the kingdom's expense. Attempt a basic check, but if your kingdom Celebrated a Holiday the previous turn, the DC increases by 4, as your kingdom hasn't had a chance to recover from the previous gala.",
       "outcomes": {
         "critical_success": "Your holidays are a delight to your people. The event is expensive, but incidental income from the celebrants covers the cost. You gain a +2 circumstance bonus to Loyalty-based checks until the end of your next Kingdom turn.",
@@ -466,7 +466,7 @@
         "Downtime",
         "Leadership"
       ],
-      "requirements": "",
+      "requirements": "Once per Kingdom turn, regardless of the number of leaders.",
       "cost": "",
       "description": "You encourage your kingdom's artists to create and display a masterful work of art to bolster your kingdom's reputation. Attempt a basic check; the result affects either Fame or Infamy (depending on the type of kingdom you're running). Create a Masterpiece may be attempted only once per Kingdom turn regardless of the number of leaders pursuing activities.",
       "outcomes": {
@@ -499,7 +499,7 @@
         "Leadership"
       ],
       "requirements": "",
-      "cost": "",
+      "cost": "Roll 1 Resource Die and spend RP equal to the result.",
       "description": "You encourage your artisans to craft luxury goods and may even aid them in this pursuit. Roll 1 Resource Die and spend RP equal to the result. Then attempt a basic check.",
       "outcomes": {
         "critical_success": "Your artisans exceed expectations and craft extravagant goods. Gain 1d4 Luxury Commodities.",
@@ -525,7 +525,7 @@
       "description": "When your representatives encounter freeholders, refugees, independent groups, or other bands of individuals gathered in the wilderness who aren't already part of a nation, you can offer them a place in your kingdom, granting them the benefits of protection, security, and prosperity in exchange for their fealty. The benefits granted to your kingdom can vary wildly, but often manifest as one-time boons to your commodities or unique bonuses against certain types of events. The adventure text in this campaign offers numerous examples of groups who could accept a Pledge of Fealty. You can attempt this skill check with Intrigue, Statecraft, or Warfare; however, certain groups will respond better (or worse) to specific skills. The DC is the group's Negotiation DC (see the sidebar on page 519).",
       "outcomes": {
         "critical_success": "The group becomes part of your kingdom, granting the specific boon or advantage listed in that group's entry. If you haven't already claimed the hex in which the group dwells, you immediately do so, gaining 10 kingdom XP and increasing your kingdom's Size by 1 (this affects all statistics determined by Size; see page 532). If the hex doesn't share a border with your kingdom, it becomes a secondary territory and checks involving this location take a Control penalty.",
-        "success": "As success, but you don't claim the hex the group is in. Immediately roll 1 Resource Die. You must spend RP equal to the result to integrate the group into your kingdom.",
+        "success": "As critical success, but you don't claim the hex the group is in. Immediately roll 1 Resource Die. You must spend RP equal to the result to integrate the group into your kingdom.",
         "failure": "The group refuses to pledge to you at this time. You can attempt to get them to Pledge Fealty next turn. Increase Unrest by 1.",
         "critical_failure": "The group refuses to pledge to you— furthermore, it will never Pledge Fealty to your kingdom, barring significant in-play changes or actions by the PCs (subject to the GM's approval). The group's potentially violent rebuff of your offer increases Unrest by 2 and increases a Ruin of your choice by 1."
       },
@@ -602,7 +602,7 @@
         "Leadership"
       ],
       "requirements": "You must be within the influence of a settlement that contains at least one Bank.",
-      "cost": "",
+      "cost": "Coins and personal goods equal to the Currency per Additional PC entry of the Party Treasure by Level table, at your kingdom's level. Investing less automatically results in a Critical Failure; anything more is lost.",
       "description": "You contribute funds from your personal wealth for the good of the kingdom, including coinage, gems, jewelry, weapons and armor salvaged from enemies, magical or alchemical items, and so on. Your contribution generates economic activity in the form of RP that can be used during your current Kingdom turn or on the next Kingdom turn (your choice).\n\nYou can use Capital Investment to repay funds from Tap Treasury (page 528). In this case, no roll is needed and you simply deduct the appropriate amount of funds from your personal wealth to pay back that which was borrowed. When you use Capital Investment to generate RP, the amount of gp required to make an investment is set by your kingdom's level. Investments below this amount cause your attempt at Capital Investment to suffer an automatic critical failure, while investments above this amount are lost. The investment required is equal to the value listed on Table 10–9: Party Treasure by Level in the Pathfinder Core Rulebook (page 509); use the value for your kingdom's level under the “Currency per Additional PC” as the required investment value. This is a basic check.",
       "outcomes": {
         "critical_success": "Your kingdom reaps the benefits of your investment. Immediately roll 4 Resource Dice. Gain RP equal to the result.",
@@ -638,12 +638,12 @@
       ],
       "requirements": "",
       "cost": "",
-      "description": "You send emissaries to another group to foster positive relations and communication. The DC of this check is the group's Negotiation DC (see the sidebar on page 519). Attempts to Send a Diplomatic Envoy to a nation with which your kingdom is at war take a –4 circumstance penalty to the check and have the result worsened one degree. At the GM's option, some wars might be so heated that this activity has no chance of success.",
+      "description": "You send emissaries to another group to foster positive relations and communication. The DC of this check is the group's Negotiation DC (see the sidebar on page 519). Attempts to Send a Diplomatic Envoy to a nation with which your kingdom is at war take a –4 circumstance penalty to the check and have the result worsened one degree. At the GM's option, some wars might be so heated that this activity has no chance of success. The first time your kingdom succeeds at establishing diplomatic relations in the campaign, gain 60 kingdom XP as a milestone award (page 538).",
       "outcomes": {
         "critical_success": "Your envoys are received quite warmly and make a good first impression. You establish diplomatic relations with the group (see page 534 for more information) and gain a +2 circumstance bonus to all checks made with that group until the next Kingdom turn.",
         "success": "You establish diplomatic relations.",
         "failure": "Your envoys are received, but the target organization isn't ready to engage in diplomatic relations. If you attempt to Send a Diplomatic Envoy to the group next Kingdom turn, you gain a +2 circumstance bonus to that check.",
-        "critical_failure": "Disaster! Your envoy fails to reach their destination, is turned back at the border, or is taken prisoner or executed, at the GM's discretion. The repercussions on your kingdom's morale and reputation are significant. Choose one of the following results: gain 1d4 Unrest, add 1 to a Ruin of your choice, or immediately roll 2 Resource Dice and spend RP equal to the result. In any event, you cannot attempt to Send a Diplomatic Envoy to this same target for the next 3 Kingdom turns.The first time your kingdom succeeds at establishing diplomatic relations in the campaign, gain 60 kingdom XP as a milestone award (page 538)."
+        "critical_failure": "Disaster! Your envoy fails to reach their destination, is turned back at the border, or is taken prisoner or executed, at the GM's discretion. The repercussions on your kingdom's morale and reputation are significant. Choose one of the following results: gain 1d4 Unrest, add 1 to a Ruin of your choice, or immediately roll 2 Resource Dice and spend RP equal to the result. In any event, you cannot attempt to Send a Diplomatic Envoy to this same target for the next 3 Kingdom turns."
       },
       "effects": {
         "critical_success": [
@@ -791,7 +791,7 @@
       "description": "When disaster strikes, you send out a call for help to another nation with whom you have diplomatic relations. The DC of this check is equal to the other group's Negotiation DC +2 (see the sidebar on page 519).",
       "outcomes": {
         "critical_success": "Your ally's aid grants a +4 circumstance bonus to any one Kingdom skill check attempted during the remainder of this Kingdom turn. You can choose to apply this bonus to any Kingdom skill check after the die is rolled, but must do so before the result is known. In addition, immediately roll 2 Resource Dice and gain RP equal to the result; this RP does not accrue into XP at the end of the turn if you don't spend it.",
-        "success": "As success, but choose the benefit given by the aid: either roll 1 Resource Die and gain RP equal to the result or gain a +2 circumstance bonus to a check.",
+        "success": "As critical success, but choose the benefit given by the aid: either roll 1 Resource Die and gain RP equal to the result or gain a +2 circumstance bonus to a check.",
         "failure": "Your ally marshals its resources but cannot get aid to you in time to deal with your current situation. At the start of your next Kingdom turn, gain 1d4 RP.",
         "critical_failure": "Your ally is tangled up in its own problems and is unable to assist you, is insulted by your request for aid, or might even have an interest in seeing your kingdom struggle against one of your ongoing events. Whatever the case, your pleas for aid make your kingdom look desperate. You gain no aid, but you do increase Unrest by 1d4."
       },
@@ -892,7 +892,7 @@
         "Downtime",
         "Leadership"
       ],
-      "requirements": "",
+      "requirements": "No more than once per Kingdom turn.",
       "cost": "",
       "description": "You send your agents among the citizenry with the charge of suppressing dissent and calming unrest. You can attempt a basic Arts, Folklore, Intrigue, Magic, Politics, or Warfare check to Quell Unrest, but you can never use the same skill for this activity in consecutive Kingdom turns. This activity cannot be attempted more than once per Kingdom turn.",
       "outcomes": {
@@ -924,14 +924,14 @@
         "Fortune",
         "Leadership"
       ],
-      "requirements": "",
+      "requirements": "You can't affect the same check with both Creative Solution and Supernatural Solution.",
       "cost": "",
-      "description": "You work with your kingdom's scholars, thinkers, and practitioners of magical and mundane experimentation to come up with new ways to resolve issues when business as usual is just not working. Attempt a basic check.",
+      "description": "You work with your kingdom's scholars, thinkers, and practitioners of magical and mundane experimentation to come up with new ways to resolve issues when business as usual is just not working. Attempt a basic check.\n\n**Special** You cannot influence a check with Supernatural Solution and Creative Solution simultaneously.",
       "outcomes": {
         "critical_success": "You can call upon the solution to aid in resolving any Kingdom skill check made during the remainder of this Kingdom turn. Do so when a Kingdom skill check is rolled, but before you learn the result. Immediately reroll that check with a +2 circumstance bonus; you must take the new result. If you don't use your Creative Solution by the end of this turn, you lose this benefit and gain 10 kingdom XP instead.",
         "success": "As critical success, but the Creative Solution costs the kingdom 1d4 RP to research. This cost is paid now, whether or not you use your Creative Solution.",
         "failure": "Your attempt at researching a Creative Solution costs the kingdom 2d6 RP but is ultimately a failure. It provides no advantage.",
-        "critical_failure": "As failure, but your scholars and thinkers are so frustrated that you take a –1 circumstance penalty to Culture-based checks until the end of the next Kingdom turn. **Special** You cannot influence a check with Supernatural Solution and Creative Solution simultaneously."
+        "critical_failure": "As failure, but your scholars and thinkers are so frustrated that you take a –1 circumstance penalty to Culture-based checks until the end of the next Kingdom turn."
       },
       "effects": {
         "critical_success": [
@@ -973,14 +973,14 @@
         "Fortune",
         "Leadership"
       ],
-      "requirements": "",
+      "requirements": "You can't affect the same check with both Supernatural Solution and Creative Solution.",
       "cost": "",
       "description": "Your spellcasters try to resolve issues when mundane solutions just aren't enough. Attempt a basic check.",
       "outcomes": {
         "critical_success": "You can call upon your spellcasters' supernatural solution to aid in resolving any Kingdom skill check made during the remainder of this Kingdom turn. Do so just before a Kingdom skill check is rolled (by yourself or any other PC). Attempt a Magic check against the same DC in addition to the Kingdom skill check, and take whichever of the two results you prefer. If you don't use your Supernatural Solution by the end of this Kingdom turn, this benefit ends and you gain 10 kingdom XP instead.",
         "success": "As critical success, but the solution costs the kingdom 1d4 RP to research. This cost is paid now, whether or not you use your supernatural solution.",
         "failure": "Your attempt at researching a supernatural solution costs the kingdom 2d6 RP, but is ultimately a failure, providing no advantage.",
-        "critical_failure": "As failure, but your spellcasters' resources and morale are impacted such that you cannot attempt a Supernatural Solution again for 2 Kingdom turns. Special You cannot influence a check with Supernatural Solution and Creative Solution simultaneously"
+        "critical_failure": "As failure, but your spellcasters' resources and morale are impacted such that you cannot attempt a Supernatural Solution again for 2 Kingdom turns."
       },
       "effects": {
         "critical_success": [
@@ -1128,12 +1128,12 @@
       ],
       "requirements": "The hex to be abandoned must be controlled.",
       "cost": "",
-      "description": "After careful consideration, you decide that you would rather not hold onto a particular hex as part of your claimed territory. You renounce your claim to it and pull back any settlers or explorers. Attempt a basic Exploration or Wilderness check. You can abandon more than one hex at a time, but each additional hex you abandon increases the DC of this check by 1.",
+      "description": "After careful consideration, you decide that you would rather not hold onto a particular hex as part of your claimed territory. You renounce your claim to it and pull back any settlers or explorers. Attempt a basic Exploration or Wilderness check. You can abandon more than one hex at a time, but each additional hex you abandon increases the DC of this check by 1.\n\n**Special** The Unrest gained from abandoning a hex doubles if it includes a settlement. A settlement in an abandoned hex becomes a Freehold (page 536).",
       "outcomes": {
         "critical_success": "You abandon the hex or hexes, decreasing your kingdom's Size by 1 per hex abandoned (this affects all statistics determined by Size; see page 532). Settlers and explorers return and resettle elsewhere in your kingdom, bringing with them bits of salvage from the abandoned hexes. Gain 1 RP per abandoned hex.",
         "success": "As critical success, but you gain no RP and increase Unrest by 1.",
         "failure": "You abandon the hex or hexes, decreasing your kingdom's Size by 1 per hex abandoned (this affects all statistics determined by Size; see page 532). Some citizens become disgruntled refugees who refuse to leave the hex. Increase Unrest by 2 and then attempt a DC 6 flat check. If you fail, the refugees become bandits, and during your next Event phase, your kingdom experiences a Squatters kingdom event automatically in addition to any other event that might occur.",
-        "critical_failure": "As failure, but increase Unrest by 3 and automatically experience a Bandit Activity kingdom event instead of a Squatters event.**Special** The Unrest gained from abandoning a hex doubles if it includes a settlement. A settlement in an abandoned hex becomes a Freehold (page 536)."
+        "critical_failure": "As failure, but increase Unrest by 3 and automatically experience a Bandit Activity kingdom event instead of a Squatters event."
       },
       "effects": {
         "critical_success": [
@@ -1159,7 +1159,7 @@
         "critical_failure": [
           null,
           {
-            "text": "Abandon the hex from the Map. A Bandit Activity event automatically occurs in the Activity phase."
+            "text": "Abandon the hex from the Map. A Bandit Activity event automatically occurs during your next Event phase."
           }
         ]
       },
@@ -1192,7 +1192,7 @@
         "Region"
       ],
       "requirements": "The hex in which you seek to build roads must be claimed by your kingdom.",
-      "cost": "",
+      "cost": "RP set by the hex's most inhospitable terrain (Mountains 12, Swamps 8, Forests 4, Hills 2, Plains 1). Double if a river crosses the hex from one side to another: in that case also add the Bridge structure to the hex.",
       "description": "You order your kingdom's engineers to construct a network of robust roads through the hex. Travel along roads uses a terrain type one step better than the surrounding terrain; for example, roads through forest hexes—normally difficult terrain—allow travel as if it were open terrain.\n\nSpend RP as determined by the hex's most inhospitable terrain (see Building on Rough Terrain on page 519; if the hex includes any rivers that cross the hex from one hex side to any other, you must spend double the normal RP cost to also build bridges; this adds the Bridge structure to that hex). Then attempt a basic check. Work with the GM to determine where your roads appear on the map.",
       "outcomes": {
         "critical_success": "You build roads into the target hex and one adjacent claimed hex that doesn't yet have roads and whose terrain features are at least as hospitable as those of the target hex. If no adjacent hex is appropriate, treat this result as a Success instead.",
@@ -1234,8 +1234,8 @@
         "Region"
       ],
       "requirements": "The target hex must be claimed by your kingdom and must not have a settlement in it.",
-      "cost": "",
-      "description": "Your command your engineers to construct a protected encampment, such as a fort or barbican, to serve as a defensive post in the hex. Spend RP as determined by the hex's most inhospitable terrain (see the Building on Rough Terrain sidebar on page 519). Then attempt a basic check. A fortified hex grants an additional bonus in warfare (see Appendix 3), but also gives traveling PCs a place to rest that prevents wandering monsters from interrupting their rest.",
+      "cost": "RP set by the hex's most inhospitable terrain (Mountains 12, Swamps 8, Forests 4, Hills 2, Plains 1).",
+      "description": "You command your engineers to construct a protected encampment, such as a fort or barbican, to serve as a defensive post in the hex. Spend RP as determined by the hex's most inhospitable terrain (see the Building on Rough Terrain sidebar on page 519). Then attempt a basic check. A fortified hex grants an additional bonus in warfare (see Appendix 3), but also gives traveling PCs a place to rest that prevents wandering monsters from interrupting their rest.",
       "outcomes": {
         "critical_success": "You find a defensible position for your fortification and finish construction efficiently. Gain a refund of half the RP you spent to build in the hex, then reduce Unrest by 1.",
         "success": "You establish your fortification in the hex. Reduce Unrest by 1.",
@@ -1251,11 +1251,11 @@
         "Region"
       ],
       "requirements": "You control a hex adjacent to a river or lake that itself does not contain a river or lake.",
-      "cost": "",
+      "cost": "RP set by the hex's most inhospitable terrain (Mountains 12, Swamps 8, Forests 4, Hills 2, Plains 1).",
       "description": "You send excavators to build waterways, canals, or drainage systems to convey water from areas that have natural access to a river or lake. Spend RP as determined by the hex's most inhospitable terrain feature (see the Building on Rough Terrain sidebar on page 519). Then attempt a basic check.",
       "outcomes": {
         "critical_success": "The hex gains a river or lake terrain feature (or you change the effects of a previous critical failure at Irrigation in this hex into a failure); work with your GM to determine where these features appear in the hex. In addition, your workers were efficient and quick, and you regain half the RP you spent building the waterways.",
-        "success": "As success, but without regaining any RP.",
+        "success": "As critical success, but without regaining any RP.",
         "failure": "You fail to build workable systems or to restore a previous critical failure, and the hex does not gain the river or lake terrain feature.",
         "critical_failure": "As failure, but your attempts at Irrigation are so completely useless that they become breeding grounds for disease. Gain 1 Unrest. From this point onward, at the start of your Kingdom turn's Event phase, attempt a DC 4 flat check. This flat check's DC increases by 1 for each hex in your kingdom that contains a critically failed attempt at Irrigation. If you fail this flat check, your kingdom suffers a Plague event in addition to any other event it might have. You can attempt this activity again in a later Kingdom turn to undo a critically failed Irrigation attempt."
       },
@@ -1289,7 +1289,7 @@
         "Region"
       ],
       "requirements": "",
-      "cost": "",
+      "cost": "With Engineering: rP set by the hex's most inhospitable terrain (Mountains 12, Swamps 8, Forests 4, Hills 2, Plains 1).",
       "description": "Engineers and mercenaries attempt to prepare a hex to serve as the site for a settlement, or they work to remove an existing improvement, a dangerous hazard, or an encounter.\n\nIf you're trying to prepare a hex for a settlement or demolish an improvement you previously built (or that was already present in the hex), spend RP as determined by the hex's most inhospitable terrain feature (see the Building on Rough Terrain sidebar nearby). Then attempt a basic Engineering check.\n\nIf you're trying to remove a hazard or encounter, instead attempt an Exploration check. The DC of this check is set by the highest level creature or hazard in the hex (as set by Table 10–5: DCs by Level).\n\nIf the hex you're attempting to Clear has existing Ruins or an existing Structure, your action doesn't physically remove the buildings from the area and you can later incorporate these buildings (or repair ruined ones) into a Settlement you build here later (see page 542). Regardless of the skill used, increase the basic DC by 2 if the hex to be cleared is not yet part of your kingdom.",
       "outcomes": {
         "critical_success": "You successfully clear the hex. If you spent RP to attempt this activity, you're refunded half of the RP cost. If you were removing dangerous creatures (but not hazards) from the hex, your explorers and mercenaries recover 2 Luxury Commodities as treasure.",
@@ -1335,7 +1335,7 @@
         "Region"
       ],
       "requirements": "You have Reconnoitered the hex to be claimed during hexploration. This hex must be adjacent to at least one hex that's already part of your kingdom. If the hex to be claimed contains dangerous hazards or monsters, they must first be cleared out—either via standard adventuring or the Clear Hex activity.",
-      "cost": "",
+      "cost": "1 RP",
       "description": "Your surveyors fully explore the hex and attempt to add it into your kingdom's domain. Spend 1 RP and then attempt a basic Exploration, Intrigue, Magic, or Wilderness check.",
       "outcomes": {
         "critical_success": "You claim the hex and immediately add it to your territory, increasing your kingdom's Size by 1 (this affects all statistics determined by Size; see page 532). Your occupation of the hex goes so smoothly that you can immediately attempt another Region activity.",
@@ -1352,7 +1352,7 @@
         "Region"
       ],
       "requirements": "Plains or hills are the predominant terrain feature in the hex; the hex is in the influence of one of your settlements.",
-      "cost": "",
+      "cost": "1 RP in a Plains hex, 2 RP in a Hills hex.",
       "description": "You plant crops and establish livestock in permanent farms, ranches, and other growing operations to create Farmland (page 535). If you're attempting to Establish Farmland in a hex that is predominantly plains, you must spend 1 RP and the check is against your Control DC. If you're targeting a hex that is predominantly hills, you must spend 2 RP and the check is against your Control DC + 5.",
       "outcomes": {
         "critical_success": "You establish two adjacent Farmland hexes instead of one. If your target hex was a hills hex, the additional hex may be a hills hex or a plains hex; otherwise, the additional hex must be a plains hex. If no appropriate hex is available, treat this result as a regular success instead.",
@@ -1372,7 +1372,7 @@
         "Region"
       ],
       "requirements": "The hex in which you're establishing the settlement has been Cleared and doesn't currently have a settlement (including a Freehold) in it.",
-      "cost": "",
+      "cost": "Set by the result: 1d6 RP (Critical Success), 3d6 RP (Success), 6d6 RP (Failure). If you can't pay, the result counts as a Critical Failure.",
       "description": "You draw up plans, gather resources, entice citizens, and establish boundaries to found a brand new settlement in the hex. Attempt a basic Engineering, Industry, Politics, or Scholarship check. If you cannot pay the RP required by the result of this check, treat your result as a critical failure. A settlement always starts as a village. See page 540 for further details about building settlements.",
       "outcomes": {
         "critical_success": "You establish the settlement largely with the aid of enthusiastic volunteers. Spend 1d6 RP.",
@@ -1388,9 +1388,9 @@
         "Downtime",
         "Region"
       ],
-      "requirements": "",
-      "cost": "",
-      "description": "Your hire a crew of workers to travel to a hex that contains Lumber, Ore, or Stone to be harvested. Spend RP as determined by the hex's most inhospitable terrain (see the Building on Rough Terrain sidebar on page 519). Then attempt a basic check. Lumber camps can be established in any hex that contains a significant amount of forest terrain. Mines and quarries can be established in any hex that contains a significant amount of hill or mountain terrain.",
+      "requirements": "Lumber camps need a hex with a significant amount of forest terrain. Mines and quarries need a hex with a significant amount of hills or mountain terrain.",
+      "cost": "RP set by the hex's most inhospitable terrain (Mountains 12, Swamps 8, Forests 4, Hills 2, Plains 1).",
+      "description": "You hire a crew of workers to travel to a hex that contains Lumber, Ore, or Stone to be harvested. Spend RP as determined by the hex's most inhospitable terrain (see the Building on Rough Terrain sidebar on page 519). Then attempt a basic check. Lumber camps can be established in any hex that contains a significant amount of forest terrain. Mines and quarries can be established in any hex that contains a significant amount of hill or mountain terrain.",
       "outcomes": {
         "critical_success": "You establish a Work Site in the hex and proceed to discover an unexpectedly rich supply of high quality Commodities. All Commodity yields granted by this site are doubled until the end of the next Kingdom turn.",
         "success": "You establish a Work Site in the hex.",
@@ -1405,8 +1405,8 @@
         "Civic",
         "Downtime"
       ],
-      "requirements": "",
-      "cost": "",
+      "requirements": "You must meet the structure's requirements and select the right number of contiguous lots in a single block.",
+      "cost": "The RP and Commodity cost the structure lists. To repair a damaged structure (not reduced to Rubble), spend half the cost: the existing structure grants a +2 item bonus to the check.",
       "description": "You attempt to build a structure in the settlement that's granting the Civic activity. You may choose any structure for which you meet the requirements. Select the appropriate number of contiguous buildable lots in a single block as specified by the structure's entry and spend the specified RP and Commodity cost. Then attempt the structure's skill check.\n\nYou can also use this activity to attempt to repair a structure that was damaged as the result of an event but hasn't been replaced by Rubble. To do this, first spend half the structure's listed RP and Commodity cost, and then attempt the specified check. The existing structure gives you a +2 item bonus to the check.\n\nOn a success, record the new construction on the Urban Grid. Unless the structure's entry states otherwise, its effects are immediate; if the structure adjusts a Ruin's point total, adjust it upon construction.",
       "outcomes": {
         "critical_success": "You construct or repair the structure with great efficiency and get back half of the Commodities spent in construction or repair.",
@@ -1500,7 +1500,7 @@
       ],
       "requirements": "",
       "cost": "",
-      "description": "The army moves through your kingdom or beyond. Since this travel occurs over the course of the entire month that preceded the Kingdom turn, the ground an army covers when it deploys can be quite extensive. You can Deploy an Army with an Exploration, Boating, or Magic check.\n\nWhen you use an Exploration check, choose a location within 20 hexes of the army's current hex. If the army's starting point and ending point are connected by a road, increase the result one degree of success. Count roadless hexes that contain swamps or mountains, or each hex where you must cross a river or lake without the aid of a bridge, as two hexes.. You can issue orders to force march. Doing so grants a +4 circumstance bonus on the check, but causes the army to increase its weary condition by 1 (or by 2, if you fail the check).\n\nWhen you use a Boating check, the army's starting point and ending point must be connected by a body of water; choose any location within 20 hexes along this route.\n\nYou must be at least master in Magic to attempt a Magic check. When you do so, choose any location within 30 hexes of the army's current hex, then roll your check. If the army's deployment causes it to cross your kingdom's border, the DC increases by 5. If the army's deployment causes it to cross an enemy kingdom's border, the DC instead increases by 10.",
+      "description": "The army moves through your kingdom or beyond. Since this travel occurs over the course of the entire month that preceded the Kingdom turn, the ground an army covers when it deploys can be quite extensive. You can Deploy an Army with an Exploration, Boating, or Magic check.\n\nWhen you use an Exploration check, choose a location within 20 hexes of the army's current hex. If the army's starting point and ending point are connected by a road, increase the result one degree of success. Count roadless hexes that contain swamps or mountains, or each hex where you must cross a river or lake without the aid of a bridge, as two hexes. You can issue orders to force march. Doing so grants a +4 circumstance bonus on the check, but causes the army to increase its weary condition by 1 (or by 2, if you fail the check).\n\nWhen you use a Boating check, the army's starting point and ending point must be connected by a body of water; choose any location within 20 hexes along this route.\n\nYou must be at least master in Magic to attempt a Magic check. When you do so, choose any location within 30 hexes of the army's current hex, then roll your check. If the army's deployment causes it to cross your kingdom's border, the DC increases by 5. If the army's deployment causes it to cross an enemy kingdom's border, the DC instead increases by 10.",
       "outcomes": {
         "critical_success": "The army arrives much more quickly than you anticipated; it arrives at its destination and then becomes efficient.",
         "success": "The army arrives at its destination.",
@@ -1519,8 +1519,8 @@
         "Army",
         "Downtime"
       ],
-      "requirements": "",
-      "cost": "",
+      "requirements": "The chosen gear's level must be at most the army's level; if you craft or buy it, also at most the kingdom's level; if you hand out loot, at most the level of the highest-level enemy army defeated in that battle.",
+      "cost": "If you buy the gear, the standard RP amount.",
       "description": "You provide your army with better gear. Choose what sort of gear you wish to provide your army with from the list beginning on page 574. The level of the gear chosen must be equal to or less than the army's level. If you're crafting or purchasing gear, the level of the gear chosen must be equal to or less than your kingdom level. If you're distributing resources gained from battle, the level of the gear chosen must be equal to or less than the highest level of an enemy army defeated in that battle.\n\nIf you're purchasing the gear, this activity requires a basic Trade check and costs the standard amount of RP for the gear; you cannot purchase magic gear unless your kingdom is at least expert rank in Magic.\n\nIf you're distributing gear gained from battle, this activity requires a basic Warfare check and does not cost RP.",
       "outcomes": {
         "critical_success": "The gear proved particularly easy to outfit, and the army becomes efficient.",
@@ -1539,7 +1539,7 @@
       ],
       "requirements": "",
       "cost": "",
-      "description": "When an army endures ill fortune, it can become afflicted by negative conditions. You can use the Recover Army activity to work at removing an affliction with a basic skill check (this DC increases by 5 if you are attempting to Recover from the defeated condition); the skill required for the check depends on the affliction.\n\n## Recovering Army Conditions\n<table class=\"inner\"> <tr><td>**Condition**</td><td>**Skill Check to Recover**</td></tr> <tr><td>Damaged</td><td>{{skills 21 \"Defense\"}} or {{skills 24 \"Folklore\"}} (expert)</td></tr> <tr><td>{{conditions 45 \"Defeated\"}}</td><td>{{skills 28 \"Politics\"}} (master) or {{skills 32 \"Warfare\"}} (expert)</td></tr> <tr><td>{{conditions 50 \"Lost\"}}</td><td>{{skills 23 \"Exploration\"}} or {{skills 33 \"Wilderness\"}} (expert)</td></tr> <tr><td>{{conditions 51 \"Mired\"}} or {{conditions 54 \"Pinned\"}}</td><td>{{skills 22 \"Engineering\"}} or {{skills 27 \"Magic\"}} (expert)</td></tr> <tr><td>{{conditions 56 \"Shaken\"}}</td><td>{{skills 19 \"Arts\"}} or {{skills 32 \"Warfare\"}} (expert)</td></tr> <tr><td>{{conditions 57 \"Weary\"}}</td><td>{{skills 19 \"Arts\"}} (expert) or {{skills 21 \"Defense\"}}</td></tr> </table>",
+      "description": "When an army endures ill fortune, it can become afflicted by negative conditions. You can use the Recover Army activity to work at removing an affliction with a basic skill check (this DC increases by 5 if you are attempting to Recover from the defeated condition); the skill required for the check depends on the affliction.\n\n## Recovering Army Conditions\n| Condition | Skill Check to Recover |\n|---|---|\n| Damaged | Defense or Folklore (expert) |\n| Defeated | Politics (master) or Warfare (expert) |\n| Lost | Exploration or Wilderness (expert) |\n| Mired or Pinned | Engineering or Magic (expert) |\n| Shaken | Arts or Warfare (expert) |\n| Weary | Arts (expert) or Defense |",
       "outcomes": {
         "critical_success": "You reduce the affliction's value by 2 (or in the case of a damaged army, increase its HP by 2 up to its maximum). If the affliction does not have a value, it is removed.",
         "success": "As critical success but you reduce the affliction's value by 1 (or in the case of a damaged army, increase its HP by 1 up to its maximum).",

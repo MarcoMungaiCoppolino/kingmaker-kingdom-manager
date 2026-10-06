@@ -174,7 +174,7 @@
     "id": "shrine",
     "name": "Santuario",
     "description": "Un Santuario è una piccola costruzione dedicata al culto di una Divinità o di una fede. Può essere frequentato da sacerdoti residenti o da clero in visita.",
-    "cost_raw": "8 PR, 2 Legname,1 Pietra",
+    "cost_raw": "8 PR, 2 Legname, 1 Pietra",
     "construction": {
       "raw": "Folklore (Addestrato) CD 15"
     },
@@ -299,7 +299,7 @@
     },
     "item_bonus": "+1 ad Acquistare Prodotti",
     "ruin": "",
-    "effects": "Quando costruisci unAttività Commerciale, indica il tipo di attività, ad esempio panetteria, falegnameria, sartoria e così via. Quando ti trovi in un Insediamento con unAttività Commerciale, ottieni un Bonus di Oggetto +1 a tutte le prove di Artigianato associate.",
+    "effects": "Quando costruisci un'Attività Commerciale, indica il tipo di attività, ad esempio panetteria, falegnameria, sartoria e così via. Quando ti trovi in un Insediamento con un'Attività Commerciale, ottieni un Bonus di Oggetto +1 a tutte le prove di Artigianato associate.",
     "consumption": ""
   },
   {
@@ -313,7 +313,12 @@
     "item_bonus": "+1 a Guarire Esercito, Presidiare Esercito, o Reclutare Esercito",
     "ruin": "",
     "effects": "Le caserme aiutano a reclutare gli eserciti e i soldati a riprendersi dalla battaglia. La prima volta che si costruisce una caserma in un qualsiasi Insediamento, si riduce di 1 il Malcontento.",
-    "consumption": ""
+    "consumption": "",
+    "kingdom_effects": [
+      {
+        "text": "La prima volta che costruisci una caserma in un qualsiasi insediamento, riduci Malcontento di 1"
+      }
+    ]
   },
   {
     "id": "tannery",
@@ -419,7 +424,7 @@
     "construction": {
       "raw": "Arti (Addestrato) CD 18"
     },
-    "item_bonus": "+1 a Fare il Raccolto",
+    "item_bonus": "",
     "ruin": "",
     "effects": "La prima volta che costruisci un monumento in un Turno di Regno, riduci Malcontento di 1 e riduci di 1 una Rovina a tua scelta.",
     "consumption": "",
@@ -650,7 +655,12 @@
     "item_bonus": "",
     "ruin": "",
     "effects": "I lampioni magici forniscono l'illuminazione notturna a un'intera Griglia Urbana. Quando costruisci lampioni magici, spunta la casella lampioni magici sulla tua Griglia Urbana. La prima volta che costruisci lampioni magici in un Turno di Regno, riduci di 1 il Crimine.",
-    "consumption": ""
+    "consumption": "",
+    "kingdom_effects": [
+      {
+        "text": "Riduci Crimine di 1"
+      }
+    ]
   },
   {
     "id": "mansion",
@@ -721,7 +731,7 @@
     "id": "arcanists_tower",
     "name": "Torre dell'Arcanista",
     "description": "La Torre dell'Arcanista è la casa e il laboratorio di un incantatore Arcano (di solito un Mago) e dei suoi apprendisti, servitori e studenti.",
-    "cost_raw": "30 PR, 6 Pietra",
+    "cost_raw": "30 PR, 6 Minerali",
     "construction": {
       "raw": "Magia (Addestrato) CD 20"
     },
@@ -734,13 +744,13 @@
     "id": "luxury_store",
     "name": "Bottega di Lusso",
     "description": "Questa collezione di negozi è specializzata in prodotti costosi, rari ed esotici che si rivolgono ai ricchi.",
-    "cost_raw": "28 PR, 10 Legname,6 Lusso",
+    "cost_raw": "28 PR, 10 Legname, 6 Lusso",
     "construction": {
       "raw": "Commercio (Esperto) CD 22"
     },
     "item_bonus": "+1 a Stabilire un Accordo Commerciale",
     "ruin": "",
-    "effects": "",
+    "effects": "Un Negozio di Lusso deve essere costruito in un isolato che contenga una Magione o una Villa Nobiliare. Considera il livello dell'insediamento come più alto di uno per determinare quali oggetti magici a tema lussuoso (a discrezione del GM) sono facilmente disponibili per la vendita nell'insediamento. Questo effetto si cumula fino a tre volte e si sovrappone a quello di altri negozi che funzionano allo stesso modo per categorie più specifiche di oggetti magici.",
     "consumption": ""
   },
   {
@@ -822,13 +832,13 @@
     "id": "magic_shop",
     "name": "Bottega di Magia",
     "description": "Questi negozi sono specializzati in Oggetti Magici e nel mettere in contatto gli acquirenti con i venditori di beni e servizi magici.",
-    "cost_raw": "44 PR, 8 Legname,6 di Lusso, 6 Pietra",
+    "cost_raw": "44 PR, 8 Legname, 6 di Lusso, 6 Pietra",
     "construction": {
       "raw": "Magia (Esperto) CD 24"
     },
     "item_bonus": "+1 a Soluzione Sovrannaturale",
     "ruin": "",
-    "effects": "",
+    "effects": "Considera il livello dell'insediamento come più alto di uno per determinare quali oggetti magici sono facilmente disponibili per la vendita nell'insediamento. Questo effetto si cumula fino a tre volte e si sovrappone a quello di altri negozi che funzionano allo stesso modo per categorie più specifiche di oggetti magici.",
     "consumption": ""
   },
   {
@@ -952,7 +962,7 @@
     },
     "item_bonus": "+2 a Soluzione Creativa",
     "ruin": "",
-    "effects": "Quando ti trovi in un Insediamento con unAccademia, ottieni un Bonus di Oggetto +2 alle prove di Sapienza per Ricordare Conoscenze nell'Investigare, a tutte le prove per Ricercare e per Decifrare Scritti.",
+    "effects": "Quando ti trovi in un Insediamento con un'Accademia, ottieni un Bonus di Oggetto +2 alle prove di Sapienza per Ricordare Conoscenze nell'Investigare, a tutte le prove per Ricercare e per Decifrare Scritti.",
     "consumption": ""
   },
   {
@@ -972,7 +982,7 @@
     "id": "printing_house",
     "name": "Tipografia",
     "description": "Una Tipografia offre ai tuoi cittadini, nonché agli stessi PG, un luogo dove creare giornali e libri.",
-    "cost_raw": "48 PR, 14 Legname, 12 di Lusso",
+    "cost_raw": "48 PR, 12 Legname, 12 di Lusso",
     "construction": {
       "raw": "Industria (Maestro) CD 27"
     },
@@ -1011,7 +1021,7 @@
     "id": "occult_shop",
     "name": "Bottega dell'Occulto",
     "description": "Una Bottega dell'Occulto è di solito un negozio tentacolare e misterioso, specializzato nella compravendita di magia oscura e strane curiosità. Spesso offre accesso a servizi soprannaturali come la cartomanzia.",
-    "cost_raw": "68 PR, 12 Legname, 12 Lusso, 6 Pietra",
+    "cost_raw": "38 PR, 12 Legname, 12 Lusso, 6 Pietra",
     "construction": {
       "raw": "Magia (Maestro) CD 32"
     },
@@ -1023,14 +1033,14 @@
   {
     "id": "gladiatorial_arena",
     "name": "Arena Gladiatoria",
-    "description": "UnArena Gladiatoria è un campo all'aperto circondato da posti a sedere e aree di osservazione. Comprende anche ampie caserme sotterranee e strutture per l'allenamento dei gladiatori.",
+    "description": "Un'Arena Gladiatoria è un campo all'aperto circondato da posti a sedere e aree di osservazione. Comprende anche ampie caserme sotterranee e strutture per l'allenamento dei gladiatori.",
     "cost_raw": "58 PR, 10 Legname, 30 Pietra",
     "construction": {
-      "raw": "Sapienza Bellica (Maestro) CD 34"
+      "raw": "Guerra (Maestro) CD 34"
     },
     "item_bonus": "+3 alle prove per Assoldare Avventurieri, Celebrare Festività e alle prove di Guerra effettuate per Sedare Malcontento",
     "ruin": "",
-    "effects": "UnArena Gladiatoria permette a un PG dell'insediamento di Riaddestrare i talenti legati al combattimento (a discrezione del GM) in modo più efficiente; per farlo occorrono solo 4 giorni anziché una settimana di pausa.",
+    "effects": "Un'Arena Gladiatoria permette a un PG dell'insediamento di Riaddestrare i talenti legati al combattimento (a discrezione del GM) in modo più efficiente; per farlo occorrono solo 4 giorni anziché una settimana di pausa.",
     "consumption": ""
   },
   {
@@ -1059,7 +1069,7 @@
     "construction": {
       "raw": "Difesa (Maestro), Governare (Maestro), Industria (Maestro), Magia (Maestro) CD 34"
     },
-    "item_bonus": "+3 a Giuramento di Fedeltà, Inviare un Delegato Diplomatico, o Nuova Direzione, e +3 a Guarire Esercito Presidiare Esercito, o Reclutare Esercito",
+    "item_bonus": "+3 a Giuramento di Fedeltà, Inviare un Delegato Diplomatico e Nuova Direzione, e +3 a Guarire Esercito, Presidiare Esercito, o Reclutare Esercito",
     "ruin": "",
     "effects": "Un palazzo può essere costruito solo nella tua capitale. La prima volta che costruisci un palazzo, riduci Malcontento di 10.\nSe decidi di Trasferire la Capitale, un palazzo che rimane nella vecchia capitale funziona invece come una Villa Nobiliare che occupa 4 lotti (se si rappresenta questo fatto collocando due Ville Nobiliari in questi lotti, assicurarsi che costituiscano un'unica costruzione e non due strutture separate).\nUn palazzo in una capitale permette ai PG leader di intraprendere 3 attività di Governo durante la Fase Attività di un Turno di Regno, anziché solo 2. Inoltre, una volta che il tuo regno ha un Palazzo, un PG nel ruolo di governo Governante ottiene un Bonus di Oggetto +3 alle prove effettuate per risolvere le attività di Governo.",
     "consumption": "",
@@ -1115,7 +1125,7 @@
     },
     "item_bonus": "+3 a Soluzione Creativa",
     "ruin": "",
-    "effects": "Quando ti trovi in un Insediamento con un'università, ottieni un Bonus di Oggetto +3 alle prove di Ricordare Conoscenze per Investigare, alle prove per Ricercare e per Decifrare Scritti.",
+    "effects": "Quando ti trovi in un Insediamento con un'università, ottieni un Bonus di Oggetto +3 alle prove di Sapienza per Ricordare Conoscenze nell'Investigare, alle prove per Ricercare e per Decifrare Scritti.",
     "consumption": ""
   },
   {

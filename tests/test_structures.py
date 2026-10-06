@@ -28,7 +28,8 @@ def effects(sid):
     return rules.structure_effects(S[sid])
 
 with_effects = {s["id"] for s in rules.STRUCTURES if s["kingdom_effects"]}
-results.append(("27 structures touch Unrest or Ruins", len(with_effects) == 27))
+# 29: the Barracks and the Magical Streetlamps had lost theirs (Archives of Nethys).
+results.append(("29 structures touch Unrest or Ruins", len(with_effects) == 29))
 results.append(("Houses reduce Unrest by 1",
               any(v["kind"] == "unrest" and v["sign"] == -1 and v["quantity"] == "1"
                   for v in effects("houses"))))

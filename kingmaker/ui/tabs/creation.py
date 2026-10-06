@@ -330,6 +330,11 @@ def _found(draft: dict, at_end) -> None:
     if len(draft["invested_count"]) != 4:
         theme.notify(t("creation.you_must_invest_exactly"), "negative")
         return
+    first, second = (draft.get("final_boosts") or [None, None])[:2]
+    if first and first == second:
+        # Step 5: two boosts to two different abilities.
+        theme.notify(t("creation.final_boosts_different"), "negative")
+        return
 
     k = STATE.k
     scores, _ = compute_scores(draft)

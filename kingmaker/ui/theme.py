@@ -331,6 +331,10 @@ def result_block(res: rules.Result) -> None:
         with ui.row().classes("gap-2 flex-wrap"):
             for name, val in res.detail:
                 ui.html(f'<span class="km-chip" style="font-size:.72rem">{esc(name)} {val:+d}</span>')
+    # What a feat did to the result after the die (Pull Together, Focused
+    # Attention): said, so the degree shown is not a mystery.
+    for note in getattr(res, "notes", ()):
+        ui.label(note).style("font-size:.8rem;color:var(--km-gold-dim);white-space:normal")
 
 
 def _text(value) -> str:
@@ -362,6 +366,237 @@ def _result_dialog(res: rules.Result, check_title: str, outcome_text: str,
             sep()
             ui.markdown(outcome_text).style("font-size:.9rem")
         ui.button(t("common.close"), on_click=dlg.close).props("flat color=amber")
+    dlg.open()
+
+
+def can_reroll(res: rules.Result, rerolled: bool = False) -> bool:
+    """Whether the roller may spend 1 Fame/Infamy point to reroll this check:
+    a point in hand, a check not rerolled already (the reroll is a fortune
+    effect: one per check), and a result worth rerolling."""
+    return (not rerolled and STATE.k["fame_points"] > 0
+            and res.grade != "critical_success")
+
+
+def reroll_label() -> str:
+    return t("theme.fame_reroll", fame=STATE.fame_name, n=STATE.k["fame_points"])
+
+
+def record_reroll(check_title, res: rules.Result) -> None:
+    """The point spent, in the journal: which check, and what was given up."""
+    STATE.record(t("theme.fame_reroll_journal", fame=STATE.fame_name,
+                   title=_text(check_title), grade=res.label, total=res.total), "check")
+
+
+def show_check(res: rules.Result, check_title, outcome=None, *, apply=None,
+               reroll=None, where: tuple[int, int] | None = None) -> None:
+    """A Kingdom skill check on screen, with the reroll the rules allow for
+    1 Fame/Infamy point.
+
+    `outcome(res)` gives the outcome text of a result; it runs again in each
+    window, for that window's language. `apply(res)` does to the kingdom what
+    the result does, once, with the result that is kept. `reroll()` rolls
+    the check again and returns the new result.
+
+    While the reroll is possible (`can_reroll`) the result waits, on screen,
+    until whoever rolled keeps it or spends the point; the second result is
+    the one that stands, rerolled or not. Otherwise it applies at once."""
+    outcome = outcome or (lambda _res: "")
+    if reroll is None or not can_reroll(res):
+        if apply:
+            apply(res)
+        show_result(res, check_title, lambda: outcome(res), where)
+        return
+    # The others see the first roll now, and the second when it comes.
+    share_roll(res, check_title, lambda: outcome(res), where)
+    save_and_refresh_panels(stat_panels("rp", "fame_points", extra=("turn.journal", "turn.uses", "sheet.abilita")))
+    with dialog("persistent") as dlg, ui.card().classes("km-panel").style("min-width:420px;max-width:560px"):
+        title(_text(check_title), 2)
+        result_block(res)
+        text = outcome(res)
+        if text:
+            sep()
+            ui.markdown(text).style("font-size:.9rem")
+        sep()
+        ui.label(t("theme.fame_reroll_note", fame=STATE.fame_name, n=STATE.k["fame_points"])) \
+            .style("font-size:.8rem;color:var(--km-muted);white-space:normal")
+
+        # Answered once: by a button, or by the window going away (below).
+        answered = {"done": False}
+
+        def first() -> bool:
+            if answered["done"]:
+                return False
+            answered["done"] = True
+            return True
+
+        @requires(permissions.EDIT_KINGDOM)
+        def keep() -> None:
+            dlg.close()
+            if first() and apply:
+                grade = res.grade
+                apply(res)
+                # What applying it rolled or changed (the d6 of founding a
+                # settlement, a founding not paid for) was not on the
+                # screen just closed: the result again, with it.
+                if res.grade != grade or outcome(res) != text:
+                    show_result(res, check_title, lambda: outcome(res), where)
+
+        @requires(permissions.EDIT_KINGDOM)
+        def again() -> None:
+            dlg.close()
+            if not first():
+                return
+            if not STATE.spend_fame():
+                # Spent meanwhile, from another window: the first result stands.
+                notify(t("theme.fame_none_left", fame=STATE.fame_name), "warning")
+                if apply:
+                    apply(res)
+                return
+            record_reroll(check_title, res)
+            new = reroll()
+            if apply:
+                apply(new)
+            save_and_refresh_panels(stat_panels("fame_points", extra=("turn.journal",)))
+            show_result(new, lambda: t("theme.rerolled", title=_text(check_title)),
+                        lambda: outcome(new), where)
+
+        with ui.row().classes("gap-2 flex-wrap"):
+            ui.button(t("theme.keep_result"), on_click=keep).props("color=amber")
+            ui.button(reroll_label(), on_click=again).props("outline color=amber")
+
+    def gone() -> None:
+        """The window closed with the result still waiting: its cost is
+        paid and the activity counted, so the first result stands rather
+        than none. The window's own panels may fail to redraw: the kingdom
+        has changed by then, and is saved. While this runs the window is
+        marked closing, so no offer is shown where nobody would see it."""
+        cid = context.client.id
+        _CLOSING.add(cid)
+        try:
+            if first() and apply:
+                try:
+                    apply(res)
+                except Exception:
+                    log.warning("a kept result could not redraw its closed window", exc_info=True)
+                    mark_dirty()
+        finally:
+            _CLOSING.discard(cid)
+
+    context.client.on_delete(gone)
+    dlg.open()
+
+
+# Windows whose delete handlers are running (`show_check`'s `gone`): no
+# dialog there, and the offers stay queued for the next change from a live one.
+_CLOSING: set[str] = set()
+
+
+def _offer_feats() -> None:
+    """The choices a kingdom feat gives right after something happened:
+    Crush Dissent when Unrest rises, Liquidate Resources when an outcome
+    leaves the kingdom without the RP to pay. Asked, like the Fame ones, in
+    the window of whoever caused it (`State.take_feat_offers`)."""
+    if not STATE.feat_offers:
+        return
+    try:
+        if context.client.id in _CLOSING:
+            return
+    except RuntimeError:
+        return
+    offers = STATE.take_feat_offers()
+    if not offers:
+        return
+    with dialog() as dlg, ui.card().classes("km-panel").style("min-width:380px;max-width:560px"):
+        for offer in offers:
+            name = rules.BY_ID["feat"][offer["kind"]]["name"]
+            title(name, 2)
+            if offer["kind"] == "crush_dissent":
+                ui.label(t("theme.crush_dissent_offer", n=offer["unrest"], dc=STATE.control_dc)) \
+                    .style("font-size:.88rem;white-space:normal")
+                ui.button(t("theme.crush_dissent_roll"),
+                          on_click=lambda o=offer: _crush(o, dlg)).props("color=amber")
+            else:
+                ui.label(t("theme.liquidate_offer")).style("font-size:.88rem;white-space:normal")
+                ui.button(t("theme.liquidate_button"), on_click=lambda: _liquidate(dlg)).props("color=amber")
+            sep()
+        ui.button(t("theme.feat_offer_decline"), on_click=dlg.close).props("flat")
+    dlg.open()
+
+
+def _crush(offer: dict, dlg) -> None:
+    """Crush Dissent: a basic Warfare check. Success cancels the Unrest just
+    gained, a critical failure doubles it. (The permission is checked here:
+    `requires` is defined further down the module.)"""
+    dlg.close()
+    if not permissions.can(user(), permissions.EDIT_KINGDOM) or STATE.feat_used("crush_dissent"):
+        return
+    STATE.use_feat("crush_dissent")
+    n = offer["unrest"]
+    res = STATE.kingdom_check("warfare", STATE.control_dc)
+    name = rules.BY_ID["feat"]["crush_dissent"]["name"]
+    if res.grade in ("success", "critical_success"):
+        STATE.modify_unrest(-n, name)
+    elif res.grade == "critical_failure":
+        STATE.modify_unrest(n, name)
+    STATE.record(t("sheet.vs_dc", label=name, label2=res.label, total=res.total, cd=res.cd), "check")
+    save_and_refresh()
+    key = {"success": "theme.crush_dissent_won", "critical_success": "theme.crush_dissent_won",
+           "critical_failure": "theme.crush_dissent_doubled"}.get(res.grade, "theme.crush_dissent_lost")
+    show_result(res, lambda: rules.BY_ID["feat"]["crush_dissent"]["name"], lambda: t(key, n=n))
+
+
+def _liquidate(dlg) -> None:
+    dlg.close()
+    if permissions.can(user(), permissions.EDIT_KINGDOM) and STATE.liquidate():
+        save_and_refresh()
+        notify(t("state.liquidated"))
+
+
+def _offer_fame() -> None:
+    """Anarchy, or a Ruin penalty, that Fame/Infamy can still stave off
+    (`State.take_fame_offers`): asked in the window of whoever caused it.
+    From a background timer there is no window to ask in: the offer waits
+    for the next change made from one, if it still stands then."""
+    if not STATE.fame_offers:
+        return
+    try:
+        if context.client.id in _CLOSING:
+            return
+    except RuntimeError:
+        return
+    offers = STATE.take_fame_offers()
+    if not offers:
+        return
+    k = STATE.k
+    fame, n = STATE.fame_name, k["fame_points"]
+    with dialog() as dlg, ui.card().classes("km-panel").style("min-width:380px;max-width:560px"):
+        title(t("theme.fame_stave_title", fame=fame), 2)
+        ui.label(t("theme.fame_stave_rule", fame=fame, n=n)) \
+            .style("font-size:.82rem;color:var(--km-muted);white-space:normal")
+
+        @requires(permissions.EDIT_KINGDOM)
+        def stave(offer: dict) -> None:
+            dlg.close()
+            if STATE.stave_off(offer):
+                save_and_refresh()
+                notify(t("theme.fame_staved", fame=fame))
+            else:
+                notify(t("theme.fame_stave_gone"), "warning")
+
+        for offer in offers:
+            sep()
+            if offer["kind"] == "unrest":
+                text = t("theme.fame_stave_anarchy", unrest=k["unrest"],
+                         limit=STATE.anarchy_threshold - 1)
+            else:
+                r = k["ruins"][offer["ruin"]]
+                text = t("theme.fame_stave_ruin", name=rules.BY_ID["ruin"][offer["ruin"]]["name"],
+                         penalty=r["penalty"], before=offer["penalty"], points=r["threshold"])
+            ui.label(text).style("font-size:.88rem;white-space:normal")
+            ui.button(t("theme.fame_stave_button", fame=fame, n=n),
+                      on_click=lambda o=offer: stave(o)).props("color=amber")
+        sep()
+        ui.button(t("theme.fame_stave_decline"), on_click=dlg.close).props("flat")
     dlg.open()
 
 
@@ -1216,8 +1451,11 @@ def save_light(propagate: tuple[str, ...] = ()) -> None:
     within half a second, so everyone sees the same map.
     """
     global _author
+    awarded = STATE.check_milestones()
     STATE.notify(save=False)
     mark_dirty()
+    if awarded:          # a milestone's XP: the figures that show it, everywhere
+        refresh_panels(stat_panels("xp", extra=("turn.journal",)))
     if propagate:
         _to_propagate.update(propagate)
         _author = _window()
@@ -1232,9 +1470,12 @@ def save_and_refresh() -> None:
     hundreds of elements per window — so when one knows what changed,
     `save_and_refresh_panels` is better.
     """
+    STATE.check_milestones()
     STATE.notify(save=False)
     mark_dirty()
     refresh_ui()
+    _offer_fame()
+    _offer_feats()
 
 
 # The panels that show a kingdom figure, by figure: for the changes that
@@ -1270,6 +1511,10 @@ def save_and_refresh_panels(names) -> None:
     the panels is a commitment: what changes and is not in the list stays
     behind until something else redraws it.
     """
+    if STATE.check_milestones():
+        names = (*names, *stat_panels("xp", extra=("turn.journal",)))
     STATE.notify(save=False)
     mark_dirty()
     refresh_panels(names)
+    _offer_fame()
+    _offer_feats()

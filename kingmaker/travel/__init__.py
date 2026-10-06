@@ -19,7 +19,7 @@ from dataclasses import dataclass, field
 from kingmaker.geometry import waterways, atoms as atoms_mod, hexgrid, sections
 from kingmaker import rules
 from kingmaker.locale import units
-from kingmaker.locale.i18n import t
+from kingmaker.locale.i18n import t, tn
 
 # Glossary, because the same thing has several names in the code:
 #   section = shore = bank = face: a piece of hex cut out by the water
@@ -1521,7 +1521,7 @@ def plan_(raw_waypoints, speed_m: float, speed_source: str = "",
     if plan.unknowns:
         unknown_cost = CATEGORIES[WORST]["cost"]
         how_many = plan.unknowns
-        hexes = "hexagon" if how_many == 1 else "hexes"
+        hexes = tn("common.hex_word", how_many)
         explored = (t("travel.has_never_been_explored") if how_many == 1
                      else t("travel.have_never_been_explored"))
         plan.warnings.append(
