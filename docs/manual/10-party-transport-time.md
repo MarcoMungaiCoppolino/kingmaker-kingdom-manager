@@ -62,7 +62,7 @@ vehicles are in `ui/badges.py`.
 
 ```mermaid
 flowchart LR
-    C[calendar.json<br/>months of 28–31 days, leap year] --> T[almanac.Data<br/>date_plus_days, days_between, last_of_month]
+    C[calendar.json: Golarion preset<br/>or the table's own, clock.calendar] --> T[almanac.Calendar<br/>date_plus_days, days_between, last_of_month]
     K[STATE.k.clock<br/>start, days, in_progress,<br/>seconds_per_day] --> O[clock._flows<br/>timer 0.5 s on the server]
     O -->|one day| G[daily.advance_one_day<br/>journeys advance → Report]
     G -->|end of the month| A[turn.advance_turn<br/>clock stopped]
@@ -70,8 +70,20 @@ flowchart LR
 ```
 
 - Time is counted in **absolute days** from the start date; the real date comes from the
-  Absalom Reckoning calendar. The Kingdom Turn falls at the **end of the month**, so it lasts as
+  campaign's calendar. The Kingdom Turn falls at the **end of the month**, so it lasts as
   long as the month.
+- Since 2.1.0 the calendar is a value, `almanac.Calendar` (months, a leap rule, an era), and a
+  date (`almanac.Data`) carries the calendar it belongs to. `GOLARION` is built from
+  `calendar.json`; a table's own calendar lives in `k["clock"]["calendar"]` and
+  `almanac.calendar_of(k)` reads it, falling back to Golarion when the stored one cannot be read
+  or could not run a kingdom. The module's old functions stay, working in the calendar of the
+  date they are given. `Calendar.validate` keeps a calendar turn compatible: at least one month,
+  every month named and at least `LEADER_REST_DAYS` long (the leaders' week of downtime), a
+  leap rule on a month that exists. Its reasons are catalog keys (`calendar.problem.*`).
+- `clock.save_calendar` switches calendars without moving time: `days` stays (journeys count
+  from it), and `start` is re-expressed as today's date in the new calendar minus `days`.
+  `clock._calendar_dialog` is the GM's editor; `tests/test_calendar.py` compares Golarion with a
+  verbatim copy of the old code over thirty years.
 - The timer runs on the server, one for everybody; the speeds are in `SPEED` (seconds per day);
   an absurd interval (a suspend) does not make months pass in one go. At restart the clock is
   always stopped (`_stopped_at_start`).

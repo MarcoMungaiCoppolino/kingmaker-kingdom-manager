@@ -8,6 +8,45 @@ what broke, what was learned — is in [docs/devlog.md](docs/devlog.md).
 The versions before 1.0.0 were never tagged: the app was played from a working copy and the
 numbers below were assigned afterwards, one per day of development, from the session history.
 
+## [2.1.0] — 2026-10-11
+
+The first of the releases that close the kingdom rules still missing before the armies: a table
+can now keep time in its own calendar, as long as it still runs the Kingdom turn. With it, a fix to
+the cloud for edits it did not see, and the list of what the project promises not to break.
+
+### Added
+- **A calendar of your own.** In the date dialog (📅), *Calendar…* lets the GM keep Golarion's
+  Absalom Reckoning or write the table's own: a name, an era written after the year, the months
+  with their days, and a leap rule if wanted (every so many years, counted from a leap year you
+  name, one month grows by the days you say).
+  - It stays a calendar for the Kingdom turn: every month still ends a turn, and no month may be
+    shorter than the week of downtime each leader owes, 7 days. The editor says why when it
+    refuses one, and Save waits until it can.
+  - Changing the calendar does not move time: the days already played stay the same days and
+    journeys keep their count; the GM only says which date today is in the new calendar.
+  - Golarion gives exactly the dates it gave before: a test compares every day from 4700 to 4730
+    with the code it replaced.
+- **The public API** (`docs/public-api.md`): what the project promises not to break within a major
+  version. It covers the save and its bundles, the table's files in the cloud, the launcher and
+  server lines and routes, the command line, the environment variables and the release files.
+
+### Fixed
+- **An edit that touched only a table did not count as playing on.** A portrait, a vehicle or a
+  journey changed after the last upload, with nothing else, left the game looking as if it matched
+  the cloud. At the next cloud start a newer cloud copy then replaced it without a question. The
+  database now counts every change to the game's tables, the cloud records that count with its
+  marks, and the launcher compares it too. Marks written before 2.1.0 compare the kingdom alone,
+  as before.
+- **The date read "CA" in English.** The Absalom Reckoning's era is "AR" in English and "CA" in
+  Italian.
+- **The date dialog allowed day 31 in every month.** The day now follows the month chosen, leap
+  days included.
+
+### Removed
+- **The one-off tools of the move to English** (release 1.0.0) are no longer in `tools/`: the
+  identifier renamer and its map, the comment and label translation pipeline, the extraction of
+  the interface texts and the structure ids. They did their job once; the manual says what it was.
+
 ## [2.0.0] — 2026-10-10
 
 The launcher learns who you are before anything else, and the folder in Dropbox stops being a

@@ -2,7 +2,7 @@
 
 *In English: [../user-guide.md](../user-guide.md).*
 
-Questa guida descrive l'app com'è alla versione 2.0.0, scheda per scheda, con il perché di ogni
+Questa guida descrive l'app com'è alla versione 2.1.0, scheda per scheda, con il perché di ogni
 scelta. Per installarla e avviarla vedi il [README.it.md](../../README.it.md); la finestra
 dell'app installata è il primo capitolo qui sotto. Le schermate in
 [`manual/img/screenshots/it/`](../manual/img/screenshots/it/) sono dell'interfaccia italiana, prese
@@ -549,8 +549,9 @@ che su questo PC. Senza variabili resta tutto dov'è sempre stato.
 
 ## Il tempo che passa
 
-In alto, accanto ai numeri del regno, c'è la data della campagna nel **Calendario di Absalom**
-e quanto manca al prossimo Turno di Regno. Il Game Master ha i comandi: ▶ per far scorrere il
+In alto, accanto ai numeri del regno, c'è la data della campagna, nel **Calendario di Absalom**
+di Golarion a meno che il vostro tavolo non ne abbia scritto uno suo, e quanto manca al
+prossimo Turno di Regno. Il Game Master ha i comandi: ▶ per far scorrere il
 tempo, ⏸ per fermarlo, quattro velocità (un giorno di gioco ogni 12, 6, 3 o 1 secondo veri) e
 📅 per sistemare la data a mano.
 
@@ -568,6 +569,16 @@ tempo. La wiki dice che i turni di Regno «si verificano alla fine di ogni mese 
 ([Dirigere un Regno](https://pf2.altervista.org/wiki/Dirigere_un_Regno)), e i mesi di Golarion
 vanno da 28 a 31 giorni: la durata di un turno è quella del mese in corso, non un numero tondo
 deciso da noi. Calistril prende un giorno in più negli anni bisestili, uno ogni otto.
+
+**Un calendario vostro.** Nella finestra della data (📅), *Calendario…* lascia al GM la scelta
+fra quello di Golarion e uno scritto dal tavolo: un nome, un'era scritta dopo l'anno, i mesi con
+i loro giorni e, se volete, una regola per gli anni bisestili (ogni tanti anni, contati da un
+anno bisestile che indicate, un mese si allunga dei giorni che dite). Resta un calendario per il
+Turno di Regno: ogni mese chiude ancora un turno, quindi nessun mese può essere più corto della
+settimana di riposo che ogni leader deve, 7 giorni, e quando ne rifiuta uno la finestra dice
+perché. Cambiare calendario non sposta il tempo: i giorni già giocati restano gli stessi giorni e
+i viaggi tengono il loro conto; il GM dice solo che data è oggi nel nuovo calendario. Prima
+fermate l'orologio.
 
 Se il server si riavvia con l'orologio acceso lo ritrovi fermo: far passare giorni mentre non
 c'era nessuno a guardare non è quello che voleva chi l'aveva avviato.

@@ -170,6 +170,19 @@ def move_marker() -> None:
     theme.save_and_refresh_panels(travel_ui._MARKER_PANELS)
 
 
+def change_calendar() -> None:
+    """The campaign's calendar switched, as the GM's editor does: the bar's
+    date and the turn's days must follow everywhere."""
+    from kingmaker.rules import almanac
+    from kingmaker.ui.tabs import clock
+    custom = almanac.Calendar(name="Test", era="TE",
+                              months=(almanac.Month("Primo", 30), almanac.Month("Secondo", 28)))
+    calendar = random.choice([almanac.GOLARION, custom])
+    today = clock.data()
+    clock.save_calendar(calendar, calendar.date(today.year, today.month, today.day))
+    theme.save_and_refresh()
+
+
 def changes() -> list:
     ruins = list(STATE.k["ruins"])
     goods = list(STATE.k["commodities"])
@@ -208,6 +221,7 @@ def changes() -> list:
         ("commodity typed", lambda: sheet._set_commodity(random.choice(goods), random.randint(0, 4))),
         ("turn", lambda: turn._move_turn(random.choice([-1, 1]))),
         ("a marker moved", lambda: move_marker()),
+        ("calendar", lambda: change_calendar()),
         ("a foreign feat", lambda: sheet._feat_click("feat.nope")),
         ("a foreign role", lambda: sheet._role_change(["char.nope", "x"])),
     ]

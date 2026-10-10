@@ -462,6 +462,7 @@ class Archive:
             self._stash_tables()
             self._conn.executescript(SCHEMA)
             self._add_missing_columns(version_before)
+            self._track_tables()
             self._set_meta("schema_version", str(SCHEMA_VERSION))
             self._record_app(version_before)
             self._commit()
@@ -768,6 +769,35 @@ class Archive:
         self._conn.commit()
         self.rev += 1
 
+    def _track_tables(self) -> None:
+        """A counter in `meta` that every change to a campaign's tables raises,
+        through triggers: SQLite counts, so no writer can forget. The kingdom
+        document has its own revision (`document_rev`), and the journal only
+        follows changes made elsewhere, so neither is tracked here.
+
+        The cloud records the counter with the document's revision when it
+        uploads (`sync_marks`), and the launcher compares both before a cloud
+        start: an edit that touched only a table (a portrait, a vehicle in the
+        stable) is then a change made here, not a copy that fell behind.
+        Triggers are part of the file and harmless to an older app, which
+        never reads the counter; no schema version is needed for them."""
+        self._conn.execute("INSERT OR IGNORE INTO meta (key, value) VALUES ('tables_rev', '0')")
+        for table in self.TRACKED_TABLES:
+            for event in ("INSERT", "UPDATE", "DELETE"):
+                self._conn.execute(
+                    f"CREATE TRIGGER IF NOT EXISTS km_tables_rev_{table}_{event.lower()} "
+                    f"AFTER {event} ON {table} BEGIN "
+                    "UPDATE meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'tables_rev'; "
+                    "END")
+
+    def tables_rev(self) -> int:
+        """How many changes the campaign's tables have seen (`_track_tables`)."""
+        raw = self.read_meta("tables_rev")
+        try:
+            return int(raw or 0)
+        except ValueError:
+            return 0
+
     # ------------------------------------------------------------------ meta
     def _set_meta(self, key: str, value: str) -> None:
         self._conn.execute(
@@ -915,6 +945,8 @@ class Archive:
     CAMPAIGN_TABLES = ("hexes", "kingdoms", "hexes_gm", "visibility", "characters",
                         "stable", "journeys", "lakes", "currents", "borders", "banks",
                         "crossings", "log")
+    # The campaign tables whose changes count as playing on (`_track_tables`).
+    TRACKED_TABLES = tuple(t for t in CAMPAIGN_TABLES if t not in ("kingdoms", "log"))
 
     def reset(self, campaign_id: str) -> None:
         """Deletes the game — kingdom, map, water, characters, vehicles, journeys,

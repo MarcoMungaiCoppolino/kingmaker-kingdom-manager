@@ -9,7 +9,9 @@
 - no function that calls `t(...)` also binds a local named `t` (it would
   shadow the import and blow up at runtime);
 - no `t(...)` call sits at module level, where it would be evaluated once at
-  import time in a single language.
+  import time in a single language;
+- no text of either catalog holds an em dash (U+2014): the app's texts use a
+  middle dot or a colon instead, by the owner's choice.
 """
 from __future__ import annotations
 
@@ -22,6 +24,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 APP = ROOT / "kingmaker"
 LANG = APP / "locale" / "lang"
+EM_DASH = "—"
 PLACEHOLDER = re.compile(r"\{([A-Za-z_]\w*)(?:![rsa])?(?::[^}]*)?\}")
 
 
@@ -41,6 +44,10 @@ def main() -> int:
         if placeholders(en[key]) != placeholders(it[key]):
             problems.append(f"{key!r}: placeholders differ: en {sorted(placeholders(en[key]))}"
                             f" vs it {sorted(placeholders(it[key]))}")
+    for name, catalog in (("en.json", en), ("it.json", it)):
+        for key in sorted(catalog):
+            if EM_DASH in str(catalog[key]):
+                problems.append(f"{name}: {key!r} holds an em dash; use a middle dot or a colon")
     used: set[str] = set()
     prefixes: set[str] = set()      # t(f"prefix.{x}"): every key under it is used
     for path in sorted(APP.rglob("*.py")):

@@ -559,11 +559,13 @@ def launcher_route(secret: str, credential_json: str = "", sign_seed: str = "",
             epoch, seq = int(payload["epoch"]), int(payload["seq"])
         except (ValueError, KeyError, TypeError):
             return Response(status_code=400)
-        # The document's revision travels with the marks: at the next start
-        # the launcher compares it with the one the file has, and knows a
-        # copy that fell behind the cloud from one that was played on since.
+        # The document's revision travels with the marks, and the counter of
+        # the campaign's tables beside it: at the next start the launcher
+        # compares both with the file's, and knows a copy that fell behind
+        # the cloud from one that was played on since.
         STATE.archive.write_meta("sync_marks", json.dumps(
-            {"epoch": epoch, "seq": seq, "krev": int(STATE.k.get("_rev", 0))}))
+            {"epoch": epoch, "seq": seq, "krev": int(STATE.k.get("_rev", 0)),
+             "trev": STATE.archive.tables_rev()}))
         return Response(status_code=204)
 
     @app.get("/_launcher/whoami")
@@ -655,8 +657,11 @@ def synced_marks() -> dict:
         return {}
     try:
         data = json.loads(raw)
-        return {"epoch": int(data["epoch"]), "seq": int(data["seq"]),
-                "krev": int(data.get("krev") or 0)}
+        marks = {"epoch": int(data["epoch"]), "seq": int(data["seq"]),
+                 "krev": int(data.get("krev") or 0)}
+        if data.get("trev") is not None:
+            marks["trev"] = int(data["trev"])
+        return marks
     except (ValueError, KeyError, TypeError):
         return {}
 

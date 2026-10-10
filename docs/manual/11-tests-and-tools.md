@@ -98,13 +98,12 @@ verification of the JavaScript: there is no Node on the author's machine.
 
 ## The release tools
 
-`tools/` also keeps the one-off tools of release 1.0.0, for the record: `rename.py` and
-`rename_map.csv` (the token-level renamer that turned the Italian identifiers, keys and schema
-into English), `comments.py`, `comments_js.py`, `test_labels.py` (the comment and label
-translation pipeline), `extract_strings.py` (the interface texts into the catalogs),
-`split_texts.py` (mechanics apart from texts), `split_data.py` (structure ids and effects),
-`fetch_aon.py` and `aon_to_texts.py` (the English rules texts from Archives of Nethys), and
-`rename_local.py`.
+`tools/` keeps the data tools still in use: `split_texts.py` (mechanics apart from texts),
+`fetch_aon.py` and `aon_to_texts.py` (the English rules texts from Archives of Nethys). The
+one-off tools of the move to English in release 1.0.0 (the identifier renamer and its map, the
+comment and label translation pipeline, the extraction of the interface texts into the
+catalogs, the structure ids) did their job once and are no longer in the repository; the
+CHANGELOG and the devlog tell what they did.
 
 ## The build
 
@@ -112,6 +111,7 @@ translation pipeline), `extract_strings.py` (the interface texts into the catalo
 the Windows installer or the Linux tarball; `.github/workflows/release.yml` runs it on every
 version tag. Chapter 12 has the details. `tests/test_launcher.py` covers the launcher's logic;
 `tests/test_sync.py` the cloud, against the one-process Dropbox of `tests/fake_dropbox.py`;
+`tests/test_calendar.py` the calendars, Golarion's against a copy of the code it replaced;
 `tests/test_refresh.py` the refresh bus of chapter 4, with fake panels and windows;
 `tests/test_windows.py` eight real windows (NiceGUI's user simulation, no browser), random
 changes, every panel in front compared with a fresh render of itself; `tests/test_layers.py`

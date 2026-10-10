@@ -61,6 +61,14 @@ tells a copy that merely fell behind the cloud from one that was **played on sin
 `core.LocalState.diverged`. A file synced before 1.3.0 recorded it cannot say, and the cloud
 wins as it always did.
 
+The document's revision does not see an edit that touches only a table: a portrait, a
+vehicle in the stable, a journey. Since 2.1.0 the marks also carry `trev`, the counter of the
+campaign's tables (`meta.tables_rev`). SQLite raises it through triggers on every table of
+`Archive.TRACKED_TABLES` (the campaign's tables except the kingdom document, which has its
+own revision, and the journal, which only follows changes made elsewhere), so no writer can
+forget it. `LocalState.diverged` compares both; marks written before 2.1.0 hold no `trev`,
+and only the document is compared, as before.
+
 Images travel with three checks on the way down (`sync.pull_assets`), because the manifest
 was written by another host: the path must stay inside the assets folder (`bundle.safe_asset`,
 the same test `bundle.restore` makes on a zip) and end in an image's extension
@@ -208,7 +216,7 @@ Registered only when the launcher started the server (the secret in
 | `POST /_launcher/shutdown` | stop, the last save written |
 | `GET /_launcher/status` | `{"rev", "kingdom", "synced"}` |
 | `POST /_launcher/snapshot?epoch=&seq=` | the database-only bundle, after `theme.write_to_disk()` |
-| `POST /_launcher/synced` | records `{"epoch","seq","krev"}` in `meta.sync_marks` |
+| `POST /_launcher/synced` | records `{"epoch","seq","krev","trev"}` in `meta.sync_marks` |
 | `GET /_launcher/whoami?nonce=` | **over the network**, open: `{"proof": HMAC(secret, nonce), "app"}` |
 | `POST /_launcher/pairing` | a fresh pairing code for the launcher that started us |
 | `POST /_launcher/pair` | **over the network**: `{"code","host_name"}` → the credential, once |

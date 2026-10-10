@@ -71,8 +71,8 @@ language one.
 `t()` must never be called at module level (it would be evaluated once, in one language) and a
 function that calls `t()` must not bind a local named `t`: `tools/check_i18n.py` checks both,
 together with the catalogs (every key used exists, no orphans, same placeholders in both
-languages). `tools/extract_strings.py` is the tool that moved the ≈1,100 literals of release
-0.9 into the catalogs; it is kept for the record.
+languages). The ≈1,100 literals of release 0.9 were moved into the catalogs once, by a one-off
+tool that is no longer in the repository.
 
 ## The refresh bus
 

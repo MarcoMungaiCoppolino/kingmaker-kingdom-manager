@@ -696,3 +696,46 @@ vectors, because a dependency for that much arithmetic was not worth its weight 
 installers. The two-machine bench, the fake Dropbox served on every interface and a launcher
 driven from a file, stays in `prove/`, outside git, for the next time something has to be
 seen rather than believed.
+
+## 2.1.0 — 10 and 11 October 2026 · Our own calendar
+
+With 2.0.0 out, the owner asked what of the kingdom rules was still missing besides the armies,
+and the answer came from reading the wiki whole, about a hundred and fifty pages set against the
+code. It was longer than expected: no kingdom events at all, since the wiki keeps the list with
+the GM and only the bookkeeping can be the app's; diplomatic relations and trade agreements that
+existed in the save and nowhere else; none of the rules that reach across turns, the DC that rises
+when an activity is repeated, the lock-outs, the flat checks owed to a later Event phase; leaders
+counted as a kingdom rather than as people; and a dozen map and city rules that were only words on
+a card. The mistakes found in the wiki on the way were checked against Archives of Nethys: most of
+the ones that matter for the armies are the Italian translation's, a few are the book's own. All of
+it became a roadmap of small releases, one theme each and none breaking anything, before a single
+large 3.0.0 with the armies and the full character sheet; a second, stronger model reviewed the
+plan against the code and the wiki, and moved diplomacy ahead of the new systems.
+
+The calendar came first because it stands alone. The table asked for nothing exotic, no moons
+and no holidays, only that a calendar of its own still run the Kingdom turn: a month is a turn,
+and a month too short to hold a leader's week of downtime is refused. The almanac had been a set of
+module constants read everywhere; it became a value a date carries, with the old functions kept as
+wrappers so nothing else had to change, and a test that walks thirty years of Golarion day by day
+against a verbatim copy of the code it replaced. The preview still found a bug the tests had not:
+the dialog promised turns of 28 to 32 days, the leap day added to the longest month instead of to
+Calistril.
+
+The review of the plan found the other thing in this release. The cloud tells a copy that fell
+behind from one that was played on by the kingdom document's revision, and a portrait, a vehicle
+or a journey changes a table and not the document: such an edit, made after the last upload,
+could be replaced by a newer cloud copy without a word. The fix counts every change to the game's
+tables in SQLite itself, through triggers, so that no future table can forget to. And since the
+project had never written down what it promises not to break, it now does, in
+`docs/public-api.md`, which the releases to come are measured against.
+
+Around the code, the work changed shape. Testing against a fake Dropbox proves our own logic and
+nothing about the real service, so there is now a test table on a second, separate Dropbox app,
+started on its own port and forced to an anonymous address so that it can never take the real
+table's fixed one; the first version of its script still came up on the real port, because
+PowerShell had written its settings with a byte-order mark the launcher could not read. Saves go
+between the two tables in both directions, the real one only after a backup and a typed YES. And
+everything that does not belong in a public repository, the test scripts, the plans, the release
+procedure and the notes the sessions work from, moved into a private repository of its own,
+with a way to carry unfinished work from one laptop to the other without any of it reaching
+`main` before it is a release.

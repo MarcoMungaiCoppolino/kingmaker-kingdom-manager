@@ -355,6 +355,39 @@ probe_archive.write_meta("sync_marks", json.dumps({"epoch": 2, "seq": 9}))
 probe_archive.close()
 results.append(("marks from before the revision was recorded cannot tell, and the cloud wins",
                 not core.local_state(state_db).diverged))
+# 2.1.0: an edit that touches only a campaign's table counts as playing on.
+probe_archive = Archive(state_db)
+probe_archive.create_character({"id": "c1", "campaign_id": config.DEFAULT_CAMPAIGN, "user_id": None,
+                                "name": "Valeros", "speed_m": 7.5, "con_mod": 0, "color": "#888",
+                                "active": 1, "created_at": "2026-10-10"})
+probe_archive.write_meta("sync_marks", json.dumps({"epoch": 2, "seq": 9, "krev": 6,
+                                                   "trev": probe_archive.tables_rev()}))
+probe_archive.close()
+state = core.local_state(state_db)
+results.append(("the table counter travels with the marks, and matches right after them",
+                state.synced_trev == state.current_trev and not state.diverged))
+probe_archive = Archive(state_db)
+probe_archive.write_meta("sync_marks", json.dumps({"epoch": 2, "seq": 9, "krev": 6,
+                                                   "trev": probe_archive.tables_rev()}))
+probe_archive.update_character("c1", color="#123456")
+probe_archive.close()
+results.append(("a portrait or colour edit alone, after the upload, is a divergence",
+                core.local_state(state_db).diverged))
+probe_archive = Archive(state_db)
+probe_archive.write_meta("sync_marks", json.dumps({"epoch": 2, "seq": 9, "krev": 6,
+                                                   "trev": probe_archive.tables_rev()}))
+probe_archive.record(config.DEFAULT_CAMPAIGN, {"turn": 1, "category": "turn", "text": "a line"})
+probe_archive.write_meta("sync_marks", json.dumps({"epoch": 2, "seq": 10, "krev": 6,
+                                                   "trev": probe_archive.tables_rev()}))
+probe_archive.close()
+results.append(("writing the marks or the journal does not move the counter",
+                not core.local_state(state_db).diverged))
+probe_archive = Archive(state_db)
+probe_archive.write_meta("sync_marks", json.dumps({"epoch": 2, "seq": 9, "krev": 6}))
+probe_archive.update_character("c1", color="#654321")
+probe_archive.close()
+results.append(("marks written before 2.1.0 compare the document only, as before",
+                not core.local_state(state_db).diverged))
 core.mark_fork("2026-10-06", state_db)
 results.append(("the day of a fork is read back", core.local_state(state_db).forked_at == "2026-10-06"))
 core.mark_fork("", state_db)

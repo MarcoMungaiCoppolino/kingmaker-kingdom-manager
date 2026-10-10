@@ -61,7 +61,7 @@ def days_missing(costs: list, progress: float, day_activities: float) -> int:
 # ------------------------------------------------------------------- advancing
 def current_date(k: dict) -> almanac.Data:
     block = k.get("clock") or {}
-    start_ = almanac.from_dict(block.get("start"))
+    start_ = almanac.from_dict(block.get("start"), almanac.calendar_of(k))
     return almanac.date_plus_days(start_, int(block.get("days", 0)))
 
 

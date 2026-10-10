@@ -116,10 +116,13 @@ def new_kingdom() -> dict:
         },
         "current_phase": "upkeep",
         # The campaign clock. `days` are those elapsed since the start date;
-        # the real date follows from there with the Absalom Reckoning
-        # calendar. The Kingdom Turn closes at the end of the month, not after
-        # a fixed number of days: the months of Golarion run from 28 to 31.
+        # the real date follows from there with the campaign's calendar,
+        # Golarion's Absalom Reckoning unless the table wrote its own
+        # (`almanac.calendar_of`). The Kingdom Turn closes at the end of the
+        # month, not after a fixed number of days: the months of Golarion run
+        # from 28 to 31.
         "clock": {
+            "calendar": {"preset": almanac.PRESET},
             "start": {"year": almanac.DEFAULT_YEAR,
                        "month": almanac.DEFAULT_MONTH,
                        "day": almanac.DEFAULT_DAY},

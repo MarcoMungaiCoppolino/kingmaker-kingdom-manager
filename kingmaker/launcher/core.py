@@ -781,13 +781,16 @@ class LocalState:
     """What the local database says of the cloud: the copy it last matched
     (`epoch`, `seq`), the document revision it had at that moment
     (`synced_krev`, None for a file synced before 1.3.0 recorded it), the
-    revision it has now, and the day it was hosted without the cloud, if
-    it was ("" otherwise)."""
+    revision it has now, the same two for the campaign's tables
+    (`synced_trev`, None before 2.1.0 recorded it), and the day it was
+    hosted without the cloud, if it was ("" otherwise)."""
     epoch: int = 0
     seq: int = 0
     synced_krev: int | None = None
     current_krev: int = 0
     forked_at: str = ""
+    synced_trev: int | None = None
+    current_trev: int = 0
 
     @property
     def marks(self) -> tuple[int, int]:
@@ -795,10 +798,16 @@ class LocalState:
 
     @property
     def diverged(self) -> bool:
-        """Whether the game changed here since it last matched the cloud.
-        Not knowable for a file synced before the revision was recorded:
-        then the cloud wins, as it always did."""
-        return self.synced_krev is not None and self.current_krev != self.synced_krev
+        """Whether the game changed here since it last matched the cloud:
+        the document, or one of the campaign's tables (a portrait, a vehicle,
+        a journey). Not knowable for a file synced before the revision was
+        recorded: then the cloud wins, as it always did. Marks from before
+        2.1.0 hold no table counter, and only the document is compared."""
+        if self.synced_krev is None:
+            return False
+        if self.current_krev != self.synced_krev:
+            return True
+        return self.synced_trev is not None and self.current_trev != self.synced_trev
 
 
 FORK_MARK = "forked_at"
@@ -811,6 +820,7 @@ def local_state(db_file: Path | None = None, campaign: str | None = None) -> Loc
     try:
         raw = archive.read_meta("sync_marks")
         current = archive.document_rev(campaign or config.DEFAULT_CAMPAIGN)
+        tables = archive.tables_rev()
         forked = archive.read_meta(FORK_MARK) or ""
     finally:
         archive.close()
@@ -819,9 +829,12 @@ def local_state(db_file: Path | None = None, campaign: str | None = None) -> Loc
     except ValueError:
         data = {}
     synced = data.get("krev")
+    synced_tables = data.get("trev")
     return LocalState(epoch=int(data.get("epoch") or 0), seq=int(data.get("seq") or 0),
                       synced_krev=int(synced) if synced is not None else None,
-                      current_krev=current, forked_at=str(forked))
+                      current_krev=current, forked_at=str(forked),
+                      synced_trev=int(synced_tables) if synced_tables is not None else None,
+                      current_trev=tables)
 
 
 def mark_fork(when: str = "", db_file: Path | None = None) -> None:

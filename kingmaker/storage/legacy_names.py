@@ -8,8 +8,9 @@ an earlier version is translated once, on first open, by
 `migrations.upgrade_storage_v27`; a legacy JSON save goes through
 `migrations.translate_document`. Both read the maps below.
 
-`DOCUMENT_KEYS` was generated from `tools/rename_map.csv` (the map that drove
-the rename) and only ever matches **dictionary keys**; the value maps are
+`DOCUMENT_KEYS` was generated from the map that drove the rename of release
+1.0.0 (a one-off tool, no longer in the repository) and only ever matches
+**dictionary keys**; the value maps are
 applied field by field, so a character called «Lago» keeps its name.
 """
 

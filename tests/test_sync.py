@@ -589,6 +589,8 @@ local.synced(3, 7)
 synced = local.status().get("synced") or {}
 results.append(("the synced marks are recorded, with the document's revision",
                 synced.get("epoch") == 3 and synced.get("seq") == 7 and "krev" in synced))
+results.append(("and with the counter of the campaign's tables (2.1.0)",
+                isinstance(synced.get("trev"), int)))
 with urllib.request.urlopen(f"http://127.0.0.1:{port}/_launcher/whoami?nonce=0a1b2c", timeout=10) as answer_:
     who = json.loads(answer_.read().decode("utf-8"))
 results.append(("whoami proves the server with its secret, to anyone who asks",

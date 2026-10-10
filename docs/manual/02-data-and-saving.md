@@ -151,7 +151,7 @@ releases share one number (1.1.0 to 1.2.0 all write 29). The rules:
   must tell apart two files of one schema. Releases before 1.2.1 kept no list, so a file they
   wrote starts its list at the first newer version that opens it.
 - **One sample per format.** `tests/fixtures/v<schema>.db` holds a save of every format the
-  app has shipped (`v26.db`, `v29.db`), and `tests/test_save_formats.py` opens each one. When
+  app has shipped (`v26.db`, `v29.db`, `v30.db`), and `tests/test_save_formats.py` opens each one. When
   the schema goes up, add the save of the outgoing format there before changing anything.
 
 ## Export, reset, copies

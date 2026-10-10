@@ -2,7 +2,7 @@
 
 *In italiano: [it/guida-utente.md](it/guida-utente.md) (longer, with the history of every choice).*
 
-This guide describes the app as it is in version 2.0.0, tab by tab, with the reason behind
+This guide describes the app as it is in version 2.1.0, tab by tab, with the reason behind
 each choice where it matters at the table. To install and start it see the
 [README](../README.md); the window of the installed app is the first chapter below. The screenshots in [`manual/img/screenshots/`](manual/img/screenshots/)
 were taken on a real table: the kingdom, the characters and the journeys in them are those of a game
@@ -253,8 +253,8 @@ the forced march.
 
 ## Time passing
 
-At the top, next to the kingdom's numbers, is the campaign date in the **Absalom Reckoning**
-calendar and how long until the next Kingdom Turn. The GM has the controls: ▶ to let time
+At the top, next to the kingdom's numbers, is the campaign date, in Golarion's **Absalom
+Reckoning** calendar unless your table wrote its own, and how long until the next Kingdom Turn. The GM has the controls: ▶ to let time
 flow, ⏸ to stop it, four speeds (one game day every 12, 6, 3 or 1 real seconds) and 📅 to set
 the date by hand.
 
@@ -269,6 +269,15 @@ table has time to play its Kingdom activities; the turn resumes when the GM star
 The rules say Kingdom Turns «occur at the end of each month», and Golarion's months run from
 28 to 31 days: a turn lasts as long as the current month, not a round number decided by us.
 Calistril gets a day more in leap years, one every eight.
+
+**Your own calendar.** In the date dialog (📅), *Calendar…* lets the GM keep Golarion's or
+write the table's own: a name, an era written after the year, the months with their days, and
+a leap rule if you want one (every so many years, counted from a leap year you name, one month
+grows by the days you say). It stays a calendar for the Kingdom turn: every month still ends a
+turn, so no month may be shorter than the week of downtime each leader owes, 7 days, and the
+editor says why when it refuses one. Changing the calendar does not move time: the days already
+played stay the same days and journeys keep their count; the GM only says which date today is
+in the new calendar. Stop the clock first.
 
 If the server restarts with the clock running, you find it stopped: making days pass while
 nobody watched is not what whoever started it wanted.

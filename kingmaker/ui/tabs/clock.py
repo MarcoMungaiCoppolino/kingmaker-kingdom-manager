@@ -208,33 +208,56 @@ def _subtitle(today: almanac.Data, missing: int) -> str:
     return tn("clock.days_to_turn", missing)
 
 
+def _calendar_line(calendar: almanac.Calendar) -> str:
+    """What the calendar means for the turn, under the dialog's title."""
+    if calendar.preset == almanac.PRESET:
+        return t("clock.absalom_reckoning_calendar_kingdom")
+    low, high = calendar.shortest_month(), calendar.longest_month()
+    if low == high:
+        return t("clock.calendar_turn_fixed", name=calendar.name, days=low)
+    return t("clock.calendar_turn_length", name=calendar.name, low=low, high=high)
+
+
+def _year_label(calendar: almanac.Calendar) -> str:
+    era = calendar.era_label()
+    return t("clock.year_era", era=era) if era else t("clock.year")
+
+
 def _date_dialog() -> None:
     """Moves the date by hand: to line the app up with the real campaign."""
     if not permissions.can(theme.user(), permissions.CONTROL_CLOCK):
         theme.notify(t("clock.only_game_master_governs"), "negative")
         return
     block = _block()
+    calendar = almanac.calendar_of(STATE.k)
     today = data()
     with theme.dialog() as dlg, ui.card().classes("km-panel").style("min-width:380px"):
         theme.title(t("clock.campaign_date"), 2)
-        ui.label(t("clock.absalom_reckoning_calendar_kingdom")).style("color:var(--km-muted);font-size:.8rem")
+        ui.label(_calendar_line(calendar)).style("color:var(--km-muted);font-size:.8rem")
         with ui.row().classes("gap-2 items-center flex-wrap"):
-            day = ui.number(t("clock.day"), value=today.day, min=1, max=31, step=1) \
+            day = ui.number(t("clock.day"), value=today.day, min=1,
+                            max=calendar.days_in_month(today.year, today.month), step=1) \
                 .props("outlined dense").classes("w-24")
-            month = ui.select({i: m["name"] for i, m in enumerate(almanac.MONTHS)},
+            month = ui.select({i: m.name for i, m in enumerate(calendar.months)},
                              label=t("clock.month"), value=today.month) \
                 .props("outlined dense options-dense").classes("w-40")
-            year = ui.number(t("clock.year_ar"), value=today.year, step=1) \
+            year = ui.number(_year_label(calendar), value=today.year, step=1) \
                 .props("outlined dense").classes("w-32")
 
+        def follow_month() -> None:
+            # The day's maximum is the chosen month's, leap days included.
+            day.max = calendar.days_in_month(int(year.value or today.year), int(month.value or 0))
+            day.update()
+
+        month.on_value_change(lambda _e: follow_month())
+        year.on_value_change(lambda _e: follow_month())
+
         def save() -> None:
-            new_one = almanac.Data(int(year.value or today.year), int(month.value or 0),
-                               max(1, int(day.value or 1)))
-            max_ = almanac.days_in_month(new_one.year, new_one.month)
-            new_one = almanac.Data(new_one.year, new_one.month, min(new_one.day, max_))
+            new_one = calendar.date(int(year.value or today.year), int(month.value or 0),
+                                    max(1, int(day.value or 1)))
             # We keep the start fixed and move the counter: this way the start
             # date stays the campaign's real one.
-            start_ = almanac.from_dict(block.get("start"))
+            start_ = almanac.from_dict(block.get("start"), calendar)
             block["days"] = max(0, almanac.days_between(start_, new_one))
             if almanac.days_between(start_, new_one) < 0:
                 # A date before the start: move the start, not the counter.
@@ -244,10 +267,210 @@ def _date_dialog() -> None:
             dlg.close()
             _propagate()
 
-        with ui.row().classes("justify-end w-full"):
-            ui.button(t("common.cancel"), on_click=dlg.close).props("flat")
-            ui.button(t("common.save"), on_click=save).props("color=amber")
+        def other_calendar() -> None:
+            dlg.close()
+            _calendar_dialog()
+
+        with ui.row().classes("justify-between items-center w-full"):
+            ui.button(t("calendar.open"), icon="calendar_month", on_click=other_calendar).props("flat")
+            with ui.row().classes("gap-2"):
+                ui.button(t("common.cancel"), on_click=dlg.close).props("flat")
+                ui.button(t("common.save"), on_click=save).props("color=amber")
     dlg.open()
+
+
+# ------------------------------------------------------------ the calendar
+def _draft_of(calendar: almanac.Calendar) -> dict:
+    """The editable form of a calendar. Golarion's months are the starting
+    point of a table's own calendar: renaming is quicker than typing twelve."""
+    source = calendar if calendar.preset is None else almanac.GOLARION
+    leap = source.leap
+    return {
+        "kind": "golarion" if calendar.preset == almanac.PRESET else "custom",
+        "name": calendar.name if calendar.preset is None else "",
+        "era": calendar.era if calendar.preset is None else "",
+        "months": [{"name": m.name, "days": m.days} for m in source.months],
+        "leap_on": leap is not None,
+        "leap_every": leap.every if leap else 4,
+        "leap_anchor": leap.anchor_year if leap else almanac.DEFAULT_YEAR,
+        "leap_month": leap.month if leap else 0,
+        "leap_days": leap.days if leap else 1,
+    }
+
+
+def _number(value, default: int = 0) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _calendar_from(draft: dict) -> almanac.Calendar:
+    if draft["kind"] == "golarion":
+        return almanac.GOLARION
+    leap = None
+    if draft["leap_on"]:
+        leap = almanac.Leap(_number(draft["leap_every"]), _number(draft["leap_anchor"]),
+                            _number(draft["leap_month"], -1), _number(draft["leap_days"]))
+    months = tuple(almanac.Month(str(m["name"] or "").strip()[:almanac.MAX_NAME], _number(m["days"]))
+                   for m in draft["months"])
+    return almanac.Calendar(name=str(draft["name"] or "").strip()[:almanac.MAX_NAME],
+                            era=str(draft["era"] or "").strip()[:almanac.MAX_ERA],
+                            months=months, leap=leap)
+
+
+def _calendar_dialog() -> None:
+    """The campaign's calendar: Golarion's, or one the table writes. The days
+    already played stay the same days: only their names change."""
+    if not permissions.can(theme.user(), permissions.CONTROL_CLOCK):
+        theme.notify(t("clock.only_game_master_governs"), "negative")
+        return
+    if in_progress():
+        theme.notify(t("calendar.stop_clock_first"), "warning")
+        return
+    current = almanac.calendar_of(STATE.k)
+    today = data()
+    draft = _draft_of(current)
+    when = {"year": today.year, "month": today.month, "day": today.day}
+    buttons: dict = {}
+
+    def change(target: dict, key: str, value, redraw: bool = False) -> None:
+        target[key] = value
+        if redraw:
+            body.refresh()
+        else:
+            checks.refresh()
+
+    with theme.dialog() as dlg, ui.card().classes("km-panel").style("min-width:460px;max-width:640px"):
+        theme.title(t("calendar.title"), 2)
+        ui.label(t("calendar.intro", days=almanac.LEADER_REST_DAYS)) \
+            .style("color:var(--km-muted);font-size:.8rem")
+
+        @ui.refreshable
+        def checks() -> None:
+            candidate = _calendar_from(draft)
+            problems = candidate.validate()
+            for key, params in problems:
+                ui.label(t(key, **params)).style("color:#d9534f;font-size:.8rem")
+            if not problems:
+                target = candidate.date(when["year"], when["month"], when["day"])
+                ui.label(t("calendar.preview", date=str(target))).style("font-size:.85rem")
+            if "save" in buttons:
+                buttons["save"].set_enabled(not problems)
+
+        @ui.refreshable
+        def body() -> None:
+            ui.radio({"golarion": t("calendar.golarion"), "custom": t("calendar.custom")},
+                     value=draft["kind"], on_change=lambda e: change(draft, "kind", e.value, True)) \
+                .props("dense")
+            if draft["kind"] == "custom":
+                _custom_fields(draft, change, body)
+            theme.sep()
+            theme.title(t("calendar.today"), 3)
+            ui.label(t("calendar.today_note")).style("color:var(--km-muted);font-size:.8rem")
+            candidate = _calendar_from(draft)
+            with ui.row().classes("gap-2 items-center flex-wrap"):
+                ui.number(t("clock.day"), value=when["day"], min=1, step=1, format="%d",
+                          on_change=lambda e: change(when, "day", _number(e.value, 1))) \
+                    .props("outlined dense").classes("w-24")
+                ui.select({i: (m.name or str(i + 1)) for i, m in enumerate(candidate.months)},
+                          label=t("clock.month"),
+                          value=when["month"] if when["month"] < len(candidate.months) else None,
+                          on_change=lambda e: change(when, "month", e.value if e.value is not None else 0)) \
+                    .props("outlined dense options-dense").classes("w-40")
+                # A plain "Year": the era is still being typed above, and the
+                # preview line under the date shows it.
+                ui.number(t("clock.year"), value=when["year"], step=1, format="%d",
+                          on_change=lambda e: change(when, "year", _number(e.value))) \
+                    .props("outlined dense").classes("w-32")
+            checks()
+
+        body()
+        with ui.row().classes("justify-end w-full gap-2"):
+            ui.button(t("common.cancel"), on_click=dlg.close).props("flat")
+            buttons["save"] = ui.button(t("common.save"),
+                                        on_click=lambda: _save_calendar(draft, when, dlg)).props("color=amber")
+        checks.refresh()
+    dlg.open()
+
+
+def _custom_fields(draft: dict, change, body) -> None:
+    """Name, era, months and leap rule of a table's own calendar."""
+    with ui.row().classes("gap-2 w-full no-wrap"):
+        ui.input(t("calendar.name"), value=draft["name"],
+                 on_change=lambda e: change(draft, "name", e.value)) \
+            .props(f"outlined dense maxlength={almanac.MAX_NAME}").classes("grow")
+        ui.input(t("calendar.era"), value=draft["era"],
+                 on_change=lambda e: change(draft, "era", e.value)) \
+            .props(f"outlined dense maxlength={almanac.MAX_ERA}").classes("w-48")
+    theme.title(t("calendar.months"), 3)
+    for i, month in enumerate(draft["months"]):
+        with ui.row().classes("gap-2 items-center w-full no-wrap"):
+            ui.label(str(i + 1)).classes("w-6 text-right").style("color:var(--km-muted)")
+            ui.input(t("calendar.month_name"), value=month["name"],
+                     on_change=lambda e, m=month: change(m, "name", e.value)) \
+                .props(f"outlined dense maxlength={almanac.MAX_NAME}").classes("grow")
+            ui.number(t("calendar.month_days"), value=month["days"], min=1,
+                      max=almanac.MAX_MONTH_DAYS, step=1, format="%d",
+                      on_change=lambda e, m=month: change(m, "days", _number(e.value))) \
+                .props("outlined dense").classes("w-24")
+
+            def remove(i: int = i) -> None:
+                draft["months"].pop(i)
+                body.refresh()
+
+            ui.button(icon="close", on_click=remove) \
+                .props("flat dense round size=sm").tooltip(t("calendar.remove_month"))
+
+    def add() -> None:
+        draft["months"].append({"name": "", "days": 30})
+        body.refresh()
+
+    if len(draft["months"]) < almanac.MAX_MONTHS:
+        ui.button(t("calendar.add_month"), icon="add", on_click=add).props("flat dense")
+    ui.checkbox(t("calendar.leap"), value=draft["leap_on"],
+                on_change=lambda e: change(draft, "leap_on", e.value, True))
+    if draft["leap_on"]:
+        with ui.row().classes("gap-2 items-center flex-wrap"):
+            ui.number(t("calendar.leap_every"), value=draft["leap_every"], min=1, step=1, format="%d",
+                      on_change=lambda e: change(draft, "leap_every", e.value)) \
+                .props("outlined dense").classes("w-28")
+            ui.number(t("calendar.leap_anchor"), value=draft["leap_anchor"], step=1, format="%d",
+                      on_change=lambda e: change(draft, "leap_anchor", e.value)) \
+                .props("outlined dense").classes("w-32")
+            ui.select({i: (m["name"] or str(i + 1)) for i, m in enumerate(draft["months"])},
+                      label=t("calendar.leap_month"),
+                      value=draft["leap_month"] if 0 <= draft["leap_month"] < len(draft["months"]) else None,
+                      on_change=lambda e: change(draft, "leap_month", e.value if e.value is not None else -1)) \
+                .props("outlined dense options-dense").classes("w-40")
+            ui.number(t("calendar.leap_days"), value=draft["leap_days"], min=1, step=1, format="%d",
+                      on_change=lambda e: change(draft, "leap_days", e.value)) \
+                .props("outlined dense").classes("w-28")
+
+
+@theme.requires(permissions.CONTROL_CLOCK)
+def _save_calendar(draft: dict, when: dict, dlg) -> None:
+    calendar = _calendar_from(draft)
+    if calendar.validate():
+        return
+    if in_progress():
+        theme.notify(t("calendar.stop_clock_first"), "warning")
+        return
+    save_calendar(calendar, calendar.date(when["year"], when["month"], when["day"]))
+    dlg.close()
+    _propagate()
+
+
+def save_calendar(calendar: almanac.Calendar, today: almanac.Data) -> None:
+    """Makes `calendar` the campaign's, with `today` as the current date. The
+    days already played stay the days they were: `days` does not move
+    (journeys count from it), the start is re-expressed in the new calendar."""
+    block = _block()
+    days = int(block.get("days", 0))
+    block["calendar"] = calendar.to_dict()
+    block["start"] = almanac.to_dict(calendar.date_plus_days(today, -days))
+    name = calendar.name if calendar.preset is None else t("calendar.golarion_short")
+    STATE.record(t("calendar.changed", name=name, date=str(today)), "turn")
 
 
 theme.register_refresh("clock.bar", bar)
