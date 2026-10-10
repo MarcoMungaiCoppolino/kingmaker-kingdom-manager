@@ -13,7 +13,7 @@ Malcontento, Rovine, quarantanove attività con quattro esiti ciascuna, settanta
 costi di viaggio fra terreni e fiumi. L'app fa i conti, mostra cosa cambierebbe un tiro, e
 **aspetta un clic**: niente si applica in silenzio.
 
-![La mappa](docs/manual/img/screenshots/mappa.jpg)
+![La mappa](docs/manual/img/screenshots/it/mappa.jpg)
 
 L'interfaccia è in **italiano e in inglese**, e ogni giocatore sceglie la sua lingua dall'intestazione.
 I testi delle regole vengono dalla wiki italiana [pf2.altervista.org](https://pf2.altervista.org/wiki/Regni)
@@ -59,7 +59,9 @@ release](https://github.com/MarcoMungaiCoppolino/kingmaker-kingdom-manager/relea
   utente (niente permessi di amministratore), sotto `%LOCALAPPDATA%\Programs` se non scegli
   un'altra cartella, e mette *Kingmaker Kingdom Manager* nel menu Start. Il file non è firmato
   con un certificato a pagamento, quindi la prima volta Windows mostra *PC protetto da
-  Windows*: premi **Ulteriori informazioni**, poi **Esegui comunque**.
+  Windows*: premi **Ulteriori informazioni**, poi **Esegui comunque**. Ogni release porta un
+  elenco degli hash dei suoi installer firmato con la chiave dell'autore, e il launcher
+  controlla un installer su quell'elenco prima di eseguire un aggiornamento.
 - **Linux** — `Kingmaker-Kingdom-Manager-<versione>-linux-x86_64.tar.gz`: scompattalo in una
   cartella dove puoi scrivere e avvia `kingmaker-kingdom-manager`. Serve Ubuntu 22.04 o più
   recente, Debian 12 o più recente, o una distribuzione con glibc 2.35+. Su un desktop non
@@ -68,10 +70,13 @@ release](https://github.com/MarcoMungaiCoppolino/kingmaker-kingdom-manager/relea
   `sudo apt install libxss1` (Debian, Ubuntu) o `sudo dnf install libXScrnSaver` (Fedora,
   RHEL).
 
-Quello che si apre è il **launcher**: scegli dove si gioca (questo computer, la stessa rete,
-online con amici lontani), premi *Avvia*, e il gioco si apre nel browser. La prima volta mostra
-la password dell'amministratore in una finestra; i link da dare ai giocatori hanno un pulsante
-*Copia*; *Online* ha il campo per il token On Air e i passi per ottenerlo. Giocavi già, su un
+Quello che si apre è il **launcher**. La prima volta chiede, una pagina per cosa e nella lingua
+che scegli nella prima pagina: chi sei al tavolo (l'amministratore, che lo crea, o un host che
+qualcuno ha fatto entrare), dove si gioca (questo computer, la stessa rete, online con amici
+lontani) e, online, se il tavolo ha un indirizzo fisso, con una guida a immagini al token On
+Air gratuito. Poi premi *Avvia* e il gioco si apre nel browser. Il primo avvio mostra la
+password dell'amministratore in una finestra; i link da dare ai giocatori hanno un pulsante
+*Copia*. Giocavi già, su un
 altro PC o dal sorgente? *Carica un salvataggio…* nel launcher, o lo stesso riquadro nella
 pagina di creazione del regno, prende lo zip della sua scheda Salvataggio (o il suo
 `kingmaker.db`) e riporta tutto, immagini comprese. La partita vive in
@@ -80,13 +85,18 @@ e le lascia, e la disinstallazione chiede se cancellare anche loro. Il launcher 
 esce una versione nuova e, su Windows, la scarica per te: è una richiesta a GitHub a ogni
 avvio, e le *Impostazioni* la spengono.
 
-**Più PC.** Il launcher può anche spostare l'ospitare tra l'amministratore e i GM segnati
-*Può ospitare*, tramite una cartella nel Dropbox gratuito dell'amministratore: chi avvia per
-primo ospita, gli altri entrano, la partita segue. L'amministratore lo configura una volta,
-guidato da immagini; gli altri host scrivono il loro account una volta. Vedi la
-[guida utente](docs/it/guida-utente.md).
+**Più PC.** Il launcher può anche spostare l'ospitare tra l'amministratore e i GM che lui fa
+entrare, tramite una cartella nel Dropbox gratuito dell'amministratore: chi avvia per primo
+ospita, gli altri entrano, la partita segue. L'amministratore lo configura una volta, guidato
+da immagini; ogni altro host si accoppia una volta, con un codice che l'amministratore crea
+nel gioco e nessuna password. La cartella ha due chiavi, quella dell'amministratore e quella
+degli host; ogni launcher firma quello che ci scrive, e il file del tavolo dice di quali
+launcher risponde, quindi una chiave rubata legge la cartella ma non può infilarci una copia né
+passare per un host. Vedi la [guida utente](docs/it/guida-utente.md).
 
-![Il launcher](docs/manual/img/screenshots/launcher.jpg)
+![Il benvenuto](docs/manual/img/screenshots/it/welcome.jpg)
+
+![Il launcher](docs/manual/img/screenshots/it/launcher.jpg)
 
 Per macOS non c'è ancora un installatore: si installa dal sorgente, qui sotto.
 
@@ -240,7 +250,9 @@ dovrebbe servire l'app sulla porta 8080 con la partita in `./saves` e le immagin
 Le password non sono salvate: solo un'impronta PBKDF2-HMAC-SHA256 con sale, nel tuo database.
 Non esiste nessun account presso servizi esterni. I file caricati vengono controllati come
 immagini vere e rinominati; la cartella `/assets` si serve solo a chi è entrato. I giocatori
-ricevono solo gli esagoni che conoscono: il filtro è nel server, non nella pagina.
+ricevono solo gli esagoni che conoscono: il filtro è nel server, non nella pagina. Un account
+può chiedere un codice usa e getta dal telefono dopo la password. Gli installer sono firmati
+con la chiave offline dell'autore, e il launcher rifiuta quello che non verifica.
 
 ## Privacy e dati
 
@@ -251,8 +263,10 @@ con il nome utente di chi ha agito, le immagini caricate, e l'unico cookie, la s
 che ti tiene collegato. Su questo PC o sulla LAN niente esce dalla macchina: pagine, script e
 caratteri li serve tutti l'host. Online, il relè On Air vede gli indirizzi dei giocatori e il
 traffico; con il cloud, copie dell'intera partita (impronte delle password comprese) e un record
-con il nome utente e il nome del computer dell'host vanno nel Dropbox dell'amministratore; il
-launcher chiede a GitHub una versione nuova all'avvio, se non gli si dice di no. Chi ospita
+con il nome utente e il nome del computer dell'host vanno nel Dropbox dell'amministratore,
+ognuno firmato dal launcher che lo ha scritto, e la cartella elenca i launcher fatti entrare
+con una chiave pubblica che ognuno crea da sé; il launcher chiede a GitHub una versione nuova
+all'avvio, se non gli si dice di no. Chi ospita
 detiene i dati dei giocatori e ne risponde. L'informativa completa è
 [PRIVACY.it.md](PRIVACY.it.md), e ogni giocatore la legge nell'app sotto *Manuale → Privacy e
 licenze*. Cosa l'app protegge e cosa no è in [SECURITY.md](SECURITY.md).

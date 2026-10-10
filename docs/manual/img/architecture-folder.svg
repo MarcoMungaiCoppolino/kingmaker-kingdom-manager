@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="330" style="color:#1f2a24" viewBox="0 0 900 330" role="img" aria-label="The Dropbox folder holds table.json, host.json, the recent and daily copies, the assets by hash, and the clock file, each with what it carries.">
+<style>
+text{font-family:'IBM Plex Sans','Segoe UI',system-ui,sans-serif;font-size:12px;fill:#1f2a24}
+.mono{font-family:'IBM Plex Mono',Consolas,monospace;font-size:11px}
+.small{font-size:10.5px;fill:#5d6a63}
+.title{font-size:13px;font-weight:600}
+.box{fill:#ffffff;stroke:#1f2a24;stroke-width:1.2}
+.soft{fill:#d9ece2;stroke:#1f6f4a;stroke-width:1.2}
+.warnbox{fill:none;stroke:#9a5b00;stroke-width:1.2;stroke-dasharray:4 3}
+.edge{fill:none;stroke:#1f2a24;stroke-width:1.1}
+.edge.hot{stroke:#1f6f4a;stroke-width:1.6}
+.edge.dashed{stroke-dasharray:5 4}
+.lane{stroke:#c9cfc9;stroke-width:1}
+</style>
+<rect width="100%" height="100%" fill="#f6f5f1"/>
+
+<defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1f2a24"/></marker></defs>
+<rect x="20" y="20" width="200" height="290" rx="6" class="soft"/>
+<text x="120" y="46" text-anchor="middle" class="title">Apps / Kingmaker</text>
+<g class="mono">
+<text x="40" y="78">table.json</text>
+<text x="40" y="118">host.json</text>
+<text x="40" y="158">recent/</text>
+<text x="40" y="198">daily/</text>
+<text x="40" y="238">assets/</text>
+<text x="40" y="278">.clock</text>
+</g>
+<!-- notes -->
+<g>
+<path d="M220 74 L250 74" class="edge" marker-end="url(#a2)"/>
+<rect x="250" y="56" width="630" height="34" rx="4" class="box"/>
+<text x="262" y="71" class="small">table_id, name, the version every host must run (exact match), the On Air token and address,</text>
+<text x="262" y="84" class="small">a counter for each key change and each token change. Any key holder can write it: a convention, not a wall.</text>
+<path d="M220 114 L250 114" class="edge" marker-end="url(#a2)"/>
+<rect x="250" y="96" width="630" height="34" rx="4" class="box"/>
+<text x="262" y="111" class="small">who hosts: launcher id and name, epoch and seq, since when, the address, a heartbeat, released or not,</text>
+<text x="262" y="124" class="small">and a hand-over request when one is pending. Written with compare-and-swap on its revision.</text>
+<path d="M220 154 L250 154" class="edge" marker-end="url(#a2)"/>
+<rect x="250" y="136" width="630" height="34" rx="4" class="box"/>
+<text x="262" y="151" class="small">save-e&lt;epoch&gt;-s&lt;seq&gt;.zip: the database with a manifest. Uploaded when the game changed,</text>
+<text x="262" y="164" class="small">at most every 3 minutes, once more at Stop and at a hand-over. The last five are kept.</text>
+<path d="M220 194 L250 194" class="edge" marker-end="url(#a2)"/>
+<rect x="250" y="176" width="630" height="34" rx="4" class="box"/>
+<text x="262" y="191" class="small">save-&lt;date&gt;.zip: the first copy of each day, thirty days kept.</text>
+<text x="262" y="204" class="small">The daily copies survive a bad evening: the pull takes the newest usable, recent first.</text>
+<path d="M220 234 L250 234" class="edge" marker-end="url(#a2)"/>
+<rect x="250" y="216" width="630" height="34" rx="4" class="box"/>
+<text x="262" y="231" class="small">one file per image, named by its sha256: the map, portraits, tokens. Uploaded once each,</text>
+<text x="262" y="244" class="small">pulled only when a copy's manifest names one this PC lacks.</text>
+<path d="M220 274 L250 274" class="edge" marker-end="url(#a2)"/>
+<rect x="250" y="256" width="630" height="34" rx="4" class="box"/>
+<text x="262" y="271" class="small">a few random bytes, rewritten to read the server's time off it when an answer carries no Date header.</text>
+<text x="262" y="284" class="small">Dropbox keeps identical uploads as one revision, so the bytes must change every time.</text>
+</g>
+</svg>

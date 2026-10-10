@@ -58,10 +58,15 @@ record che nomina l'host — l'id casuale del suo launcher, il **nome utente di 
 il nome del computer** di chi ospita, l'indirizzo della partita e la versione dell'app. A quella
 cartella si applica l'[informativa sulla privacy](https://www.dropbox.com/privacy) di Dropbox, e
 l'app Dropbox che l'amministratore crea per essa è sua, secondo le condizioni per sviluppatori
-di Dropbox. Ogni GM segnato *Può ospitare* riceve la credenziale Dropbox dell'amministratore per
-quella cartella: è lo stesso accesso che ha l'amministratore, e non si può revocare a un host
-senza revocarla a tutti (da *App collegate* di Dropbox, dopo di che tutti si ricollegano). Sul
-PC di ogni host la credenziale, e il token On Air di chi gioca online senza il cloud, sono
+di Dropbox. Il launcher di un host riceve una credenziale Dropbox per quella cartella quando si
+accoppia con un codice che l'amministratore crea nel gioco (nessuna password viaggia): la
+chiave degli host, creata dall'amministratore con una seconda autorizzazione e condivisa da
+ogni host, quindi non si può revocare a un host senza sostituirla per tutti (*Cambia le
+chiavi…* dell'amministratore, dopo di che ogni host si accoppia di nuovo); la chiave
+dell'amministratore resta sul suo PC. La cartella elenca anche ogni launcher fatto entrare,
+con una chiave pubblica che ogni launcher crea da sé, e ogni copia della partita caricata porta
+la firma di quel launcher. Sul PC di ogni host le chiavi, il seme di firma del launcher, e il
+token On Air di chi gioca online senza il cloud, sono
 conservati protetti: su Windows dal sistema per quell'utente di Windows (DPAPI), su Linux in un
 file che solo quell'utente può leggere, fuori dalla cartella della partita
 (`~/.local/share/kingmaker-kingdom-manager/`). Il file delle impostazioni del launcher non

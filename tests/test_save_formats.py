@@ -82,7 +82,7 @@ fresh.close()
 older = folder / "older.db"
 shutil.copy(os.path.join(HERE, "fixtures", f"v{SCHEMA_VERSION}.db"), older)
 c = sqlite3.connect(older)
-c.execute("INSERT INTO meta (key, value) VALUES ('app_history', "
+c.execute("INSERT OR REPLACE INTO meta (key, value) VALUES ('app_history', "
           "'[{\"app\":\"1.2.1-old\",\"schema\":29,\"at\":\"2026-10-01\"}]')")
 c.commit()
 c.close()
@@ -97,7 +97,7 @@ newer = folder / "newer.db"
 shutil.copy(os.path.join(HERE, "fixtures", f"v{SCHEMA_VERSION}.db"), newer)
 c = sqlite3.connect(newer)
 c.execute("UPDATE meta SET value=? WHERE key='schema_version'", (str(SCHEMA_VERSION + 1),))
-c.execute("INSERT INTO meta (key, value) VALUES ('app_history', "
+c.execute("INSERT OR REPLACE INTO meta (key, value) VALUES ('app_history', "
           "'[{\"app\":\"9.9.9\",\"schema\":0,\"at\":\"2030-01-01\"}]')")
 c.commit()
 c.close()

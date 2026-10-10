@@ -5,7 +5,7 @@ from nicegui import app, run, ui
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import RedirectResponse
 
-from kingmaker.access import auth, permissions
+from kingmaker.access import auth, pairing, permissions
 from kingmaker import config
 from kingmaker.locale import i18n, units
 from kingmaker.locale.i18n import t
@@ -19,7 +19,7 @@ from kingmaker.ui import theme
 # with its secret (`main.launcher_route`): nobody else gets past a 404.
 OPEN_PAGES = {"/login", "/favicon.ico", "/_launcher/shutdown", "/_launcher/status",
               "/_launcher/snapshot", "/_launcher/synced", "/_launcher/whoami",
-              "/_launcher/credential"}
+              "/_launcher/pairing", "/_launcher/pair", "/_launcher/credential"}
 # `/_km/fonts/` holds the typefaces the app serves itself (`theme.FONTS_ROUTE`):
 # the login page wears them too, before anyone has signed in.
 OPEN_PREFIXES = ("/_nicegui/", "/_nicegui_ws", "/_km/fonts/")
@@ -160,9 +160,37 @@ async def login_page() -> None:
                 .classes("w-full")
             pw_field = ui.input(t("login.password"), password=True, password_toggle_button=True) \
                 .props("outlined dense").classes("w-full")
+            # The second step, for an account with a second factor: shown
+            # once the password passed, in place of the two fields above.
+            code_prompt = ui.label(t("login.code_prompt")).style("color:var(--km-muted);font-size:.8rem")
+            code_field = ui.input(t("login.code")).props("outlined dense inputmode=numeric").classes("w-full")
+            code_prompt.set_visibility(False)
+            code_field.set_visibility(False)
             warning = ui.label("").style("color:var(--km-red);font-size:.8rem;min-height:1.2em")
+            pending: dict = {"user": None}
+
+            def finish(user: auth.User) -> None:
+                auth.log_in(user)
+                # The first login adopts the language chosen on this page.
+                if user.language is None:
+                    STATE.archive.update_user(user.id, language=theme.language())
+                ui.navigate.to("/")
 
             async def enters() -> None:
+                if pending["user"] is not None:
+                    # The password passed already: the one-time code now.
+                    user = pending["user"]
+                    code = (code_field.value or "").strip()
+                    wait = auth.remaining_wait(user.username)
+                    if wait > 0:
+                        warning.set_text(t("login.too_many_attempts_try", wait=wait))
+                        return
+                    if not code or not auth.second_factor_ok(STATE.archive, user.id, code):
+                        warning.set_text(t("login.invalid_code"))
+                        code_field.set_value("")
+                        return
+                    finish(user)
+                    return
                 name = (name_field.value or "").strip()
                 pw = pw_field.value or ""
                 if not name or not pw:
@@ -188,14 +216,21 @@ async def login_page() -> None:
                     warning.set_text(t("login.invalid_username_password"))
                     pw_field.set_value("")
                     return
-                auth.log_in(user)
-                # The first login adopts the language chosen on this page.
-                if user.language is None:
-                    STATE.archive.update_user(user.id, language=theme.language())
-                ui.navigate.to("/")
+                if user.second_factor:
+                    pending["user"] = user
+                    warning.set_text("")
+                    name_field.set_visibility(False)
+                    pw_field.set_visibility(False)
+                    code_prompt.set_visibility(True)
+                    code_field.set_visibility(True)
+                    code_field.run_method("focus")
+                    button.set_text(t("login.confirm"))
+                    return
+                finish(user)
 
             name_field.on("keydown.enter", enters)
             pw_field.on("keydown.enter", enters)
+            code_field.on("keydown.enter", enters)
             button = ui.button(t("login.sign"), on_click=enters).props("color=amber").classes("w-full")
 
 
@@ -228,8 +263,97 @@ def user_bar(user: auth.User) -> None:
                 .props("flat dense round size=sm").tooltip(t("login.player_accounts"))
         ui.button(icon="key", on_click=lambda: change_password_dialog(user)) \
             .props("flat dense round size=sm").tooltip(t("login.change_password"))
+        ui.button(icon="verified_user", on_click=lambda: second_factor_dialog(user)) \
+            .props("flat dense round size=sm").tooltip(t("login.second_factor"))
         ui.button(icon="logout", on_click=lambda: ui.navigate.to("/logout")) \
             .props("flat dense round size=sm").tooltip(t("login.sign_out"))
+
+
+def second_factor_dialog(user: auth.User) -> None:
+    """The one-time code after the password: switched on with a secret the
+    authenticator app takes, confirmed with a code it shows, the eight
+    recovery codes shown once; switched off with a code."""
+    from kingmaker.access import totp
+    row = STATE.archive.user_by_id(user.id)
+    enabled = bool(row and row["totp_secret"])
+    with theme.dialog() as dlg, ui.card().classes("km-panel").style("min-width:360px;max-width:460px"):
+        theme.title(t("login.second_factor"), 2)
+        if enabled:
+            ui.label(t("login.sf.on_text", n=auth.recovery_codes_left(STATE.archive, user.id))) \
+                .style("color:var(--km-muted);font-size:.82rem;white-space:normal")
+            code_field = ui.input(t("login.sf.disable_code")).props("outlined dense inputmode=numeric") \
+                .classes("w-full")
+            warning = ui.label("").style("color:var(--km-red);font-size:.8rem;min-height:1.2em")
+
+            def disable() -> None:
+                if not auth.second_factor_ok(STATE.archive, user.id, (code_field.value or "").strip()):
+                    warning.set_text(t("login.sf.wrong"))
+                    return
+                auth.disable_second_factor(STATE.archive, user.id, by=user.username)
+                STATE.record(t("login.sf.disabled_journal", username=user.username), "account")
+                theme.mark_dirty()
+                dlg.close()
+                theme.notify(t("login.sf.disabled"), "positive")
+
+            with ui.row().classes("gap-2"):
+                ui.button(t("login.sf.disable"), on_click=disable).props("color=red")
+                ui.button(t("common.cancel"), on_click=dlg.close).props("flat")
+        else:
+            secret = totp.new_secret()
+            ui.label(t("login.sf.off_text")).style("color:var(--km-muted);font-size:.82rem;white-space:normal")
+            ui.label(t("login.sf.secret_label")).style("font-size:.78rem;margin-top:6px")
+            ui.html(f'<div class="km-pixel" style="font-size:1rem;color:var(--km-gold);user-select:all;'
+                    f'padding:4px 0">{theme.esc(totp.encode_secret(secret))}</div>')
+            ui.label(t("login.sf.link_label")).style("font-size:.78rem;margin-top:6px")
+            ui.html(f'<div style="font-size:.7rem;word-break:break-all;user-select:all;color:var(--km-muted)">'
+                    f'{theme.esc(totp.otpauth_url(secret, user.username))}</div>')
+            code_field = ui.input(t("login.sf.code_label")).props("outlined dense inputmode=numeric") \
+                .classes("w-full")
+            warning = ui.label("").style("color:var(--km-red);font-size:.8rem;min-height:1.2em")
+
+            def enable() -> None:
+                if not totp.matches(secret, (code_field.value or "").strip()):
+                    warning.set_text(t("login.sf.wrong"))
+                    return
+                codes = totp.new_recovery_codes()
+                auth.enable_second_factor(STATE.archive, user.id, secret, codes)
+                STATE.record(t("login.sf.enabled_journal", username=user.username), "account")
+                theme.mark_dirty()
+                dlg.close()
+                with theme.dialog() as shown, ui.card().classes("km-panel").style("min-width:340px"):
+                    theme.title(t("login.second_factor"), 2)
+                    ui.label(t("login.sf.enabled")).style("color:var(--km-muted);font-size:.82rem;white-space:normal")
+                    ui.html('<div class="km-pixel" style="font-size:.95rem;color:var(--km-gold);user-select:all;'
+                            'line-height:1.7;padding:6px 0">' + "<br>".join(theme.esc(c) for c in codes) + "</div>")
+                    ui.button(t("login.done"), on_click=shown.close).props("color=amber")
+                shown.open()
+
+            with ui.row().classes("gap-2"):
+                ui.button(t("login.sf.enable"), on_click=enable).props("color=amber")
+                ui.button(t("common.cancel"), on_click=dlg.close).props("flat")
+    dlg.open()
+
+
+def _clear_second_factor(row: dict) -> None:
+    """The administrator clears another account's second factor: for the
+    day the phone is lost with the recovery codes. Written in the journal."""
+    with theme.dialog() as dlg, ui.card().classes("km-panel"):
+        ui.label(t("login.sf.clear_confirm", username=row["username"])).style("white-space:normal")
+
+        def confirm() -> None:
+            me = auth.current_user(STATE.archive)
+            auth.disable_second_factor(STATE.archive, row["id"], by=me.username if me else None)
+            STATE.record(t("login.sf.cleared_journal", username=row["username"],
+                           by=me.username if me else "?"), "account")
+            theme.mark_dirty()
+            dlg.close()
+            theme.notify(t("login.sf.cleared", username=row["username"]), "positive")
+            users_panel.refresh()
+
+        with ui.row().classes("gap-2"):
+            ui.button(t("login.sf.clear"), on_click=confirm).props("color=red")
+            ui.button(t("common.cancel"), on_click=dlg.close).props("flat")
+    dlg.open()
 
 
 def change_password_dialog(user: auth.User, mandatory: bool = False) -> None:
@@ -321,10 +445,6 @@ def users_panel(user: auth.User) -> None:
                     .tooltip(permissions.role_description(row["role"]))
                 ui.checkbox(t("login.active"), value=bool(row["active"]),
                             on_change=lambda e, i=row["id"]: _change_active(i, e.value))
-                if row["role"] == permissions.GM:
-                    ui.checkbox(t("login.can_host"), value=bool(row.get("can_host")),
-                                on_change=lambda e, i=row["id"]: _change_can_host(i, e.value)) \
-                        .tooltip(t("login.can_host_tooltip"))
                 ui.label(t("login.last_login", v=row["last_login"] or t("login.never"))) \
                     .style("color:var(--km-muted);font-size:.72rem;flex:1")
                 if row["id"] != user.id and row["active"]:
@@ -335,6 +455,11 @@ def users_panel(user: auth.User) -> None:
                 ui.button(icon="password",
                           on_click=lambda _, r=row: _regenerate_password(r)) \
                     .props("flat dense round size=sm").tooltip(t("login.generate_new_password"))
+                if row["totp_secret"]:
+                    ui.button(icon="no_encryption",
+                              on_click=lambda _, r=row: _clear_second_factor(r)) \
+                        .props("flat dense round size=sm") \
+                        .tooltip(t("login.clear_second_factor", username=row["username"]))
                 if row["id"] != user.id:
                     ui.button(icon="delete",
                               on_click=lambda _, r=row: _confirm_deletion(r)) \
@@ -362,6 +487,30 @@ def users_panel(user: auth.User) -> None:
                 _show_password(name, password)
 
             ui.button(t("common.create"), on_click=create).props("dense color=amber")
+
+        theme.sep()
+        with ui.row().classes("items-center gap-2 w-full no-wrap"):
+            ui.label(t("login.pair_intro")).style("color:var(--km-muted);font-size:.8rem;flex:1")
+            ui.button(t("login.pair_launcher"), icon="link",
+                      on_click=lambda: _pair_launcher(user)).props("dense color=amber")
+
+
+@theme.requires(permissions.MANAGE_USERS)
+def _pair_launcher(user: auth.User) -> None:
+    """A pairing code for a launcher joining the table: made here, by the
+    administrator, and told to the person; their launcher sends it to this
+    server with no password. Ten minutes, one use."""
+    code = pairing.new_code(user.username)
+    STATE.record(t("login.pair_made", username=user.username), "account")
+    theme.mark_dirty()
+    with theme.dialog() as dlg, ui.card().classes("km-panel").style("min-width:340px"):
+        theme.title(t("login.pair_title"), 2)
+        ui.label(t("login.pair_text")).style("color:var(--km-muted);font-size:.82rem;white-space:normal")
+        ui.html(f'<div class="km-pixel" style="font-size:1.3rem;color:var(--km-gold);'
+                f'user-select:all;padding:8px 0">{theme.esc(code)}</div>')
+        ui.label(t("login.pair_expires")).style("color:var(--km-muted);font-size:.78rem")
+        ui.button(t("login.done"), on_click=dlg.close).props("color=amber")
+    dlg.open()
 
 
 def _enter_as(row: dict) -> None:
@@ -409,14 +558,6 @@ def _change_role(user_id: str, role: str) -> None:
     elif role in permissions.HIERARCHY:
         STATE.archive.update_user(user_id, role=role)
     users_panel.refresh()
-
-
-@theme.requires(permissions.MANAGE_USERS)
-def _change_can_host(user_id: str, allowed: bool) -> None:
-    STATE.archive.update_user(user_id, can_host=1 if allowed else 0)
-    STATE.record(t("login.can_host_log", username=(STATE.archive.user_by_id(user_id) or {}).get("username", "?"),
-                   state=t("login.can_host_yes") if allowed else t("login.can_host_no")), "account")
-    theme.mark_dirty()
 
 
 @theme.requires(permissions.MANAGE_USERS)

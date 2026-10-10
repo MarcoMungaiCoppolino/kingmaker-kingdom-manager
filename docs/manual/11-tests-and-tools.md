@@ -130,16 +130,19 @@ fog kept from the player.
 
 ## The screenshots
 
-The images in `img/screenshots/` were taken from the test app (`python tests/launch_scene.py`,
-on 8081, with the scene built from scratch: no data of the table), after a login made by hand
-with one of the test accounts, in release 0.9 — hence the Italian labels. The page photographed
-itself with `html2canvas` loaded in the browser and sent the PNG to a small local receiver;
-then Pillow reduced them to 1400 px in JPEG. To retake them, repeat the round: there is no
-script, because the login is not automated. `launcher.jpg` is the tkinter window of chapter 12,
-grabbed with Pillow's `ImageGrab` on a scratch game folder, and so is `wizard.jpg`. The
-pictures of the wizard itself, `kingmaker/launcher/guide/*.png`, are crops of the Dropbox App
-Console grabbed from the screen while the owner was signed in, the account avatar and the
-App key blurred.
+The images in `img/screenshots/` (English) and `img/screenshots/it/` (Italian) were taken by
+`docs/manual/screenshots.py` from the app running on a **copy** of a real table (`launch_test.py`
+with `KINGMAKER_DATA_DIR` set to the copy, never the live save): the kingdom, the characters and
+the journeys in them are those of a game under way, the players' names made up in the copy. The
+script drives a headless Chrome over its DevTools protocol: it logs in with accounts read from a
+file that is never committed, switches the language, walks the tabs, opens the capital's hex,
+proposes a journey with the right button, opens the Waters box and the accounts dialog, and
+saves each page at 2x, then reduced to 1400 px in JPEG (`--jpeg`). The hexes and the grid
+calibration are options, with the defaults of the table photographed. `launcher.jpg`,
+`welcome.jpg` and `wizard.jpg` are tkinter windows of chapter 12, grabbed with Pillow's
+`ImageGrab` on a scratch game folder, in both languages. The pictures of the wizard itself,
+`kingmaker/launcher/guide/*.png`, are crops of the Dropbox App Console grabbed from the screen
+while the owner was signed in, the account avatar and the App key blurred.
 
 ## Verifying in the browser
 

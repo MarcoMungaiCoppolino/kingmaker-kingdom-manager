@@ -73,7 +73,7 @@ def _to_reveal() -> None:
                 ui.label(e.get("name") or terrains or "—") \
                     .style("font-size:.8rem;flex:1")
                 ui.html(f'<span class="km-chip" style="font-size:.62rem">'
-                        f'{e["status"]}</span>')
+                        f'{t(hexmap.HEX_STATUSES[e["status"]][0])}</span>')
                 ui.button(t("gm_screen.reveal"), on_click=lambda _, x=e: _reveal([(x["col"], x["row"])])) \
                     .props("dense flat size=sm color=amber")
 

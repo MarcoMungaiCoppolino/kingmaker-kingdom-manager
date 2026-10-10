@@ -14,7 +14,7 @@ from fastapi import Request, Response
 from nicegui import app, run, ui
 from nicegui.storage import Storage
 
-from kingmaker.access import auth, permissions
+from kingmaker.access import auth, pairing, permissions
 from kingmaker import __version__, config, rules
 from kingmaker.locale import i18n
 from kingmaker.locale.i18n import t, tn
@@ -454,7 +454,9 @@ def start(host: str = "127.0.0.1", port: int = 8080, show: bool = True,
     _first_start()
     app.on_startup(lambda: _announce_ready(host, port))
     launcher_route(os.environ.get(LAUNCHER_SECRET_VARIABLE, "").strip(),
-                   os.environ.get(SYNC_CREDENTIAL_VARIABLE, "").strip())
+                   os.environ.get(SYNC_CREDENTIAL_VARIABLE, "").strip(),
+                   sign_seed=os.environ.get(LAUNCHER_SIGN_VARIABLE, "").strip(),
+                   launcher_id=os.environ.get(LAUNCHER_ID_VARIABLE, "").strip())
     # Behind HTTPS the session cookie must never travel in the clear.
     cookie = {"https_only": True, "same_site": "lax"} if config.HTTPS else None
     ui.run(host=host, port=port, title="Kingmaker Kingdom Manager",
@@ -465,13 +467,19 @@ def start(host: str = "127.0.0.1", port: int = 8080, show: bool = True,
 
 LAUNCHER_SECRET_VARIABLE = "KINGMAKER_LAUNCHER_SECRET"
 SYNC_CREDENTIAL_VARIABLE = "KINGMAKER_SYNC_CREDENTIAL"
+# The hosting launcher's signing seed and id: with them the game vouches
+# for a newcomer at pairing (`sync.make_admission`), in the launcher's name.
+LAUNCHER_SIGN_VARIABLE = "KINGMAKER_LAUNCHER_SIGN"
+LAUNCHER_ID_VARIABLE = "KINGMAKER_LAUNCHER_ID"
 # The paths the launcher uses; `login.OPEN_PAGES` lists them so the access
 # middleware lets them through to their own checks.
 LAUNCHER_PATHS = ("/_launcher/shutdown", "/_launcher/status", "/_launcher/snapshot",
-                  "/_launcher/synced", "/_launcher/whoami", "/_launcher/credential")
+                  "/_launcher/synced", "/_launcher/whoami", "/_launcher/pairing",
+                  "/_launcher/pair", "/_launcher/credential")
 
 
-def launcher_route(secret: str, credential_json: str = "") -> None:
+def launcher_route(secret: str, credential_json: str = "", sign_seed: str = "",
+                   launcher_id: str = "") -> None:
     """The routes for the launcher, registered only when it started us.
 
     A signal cannot reach a child without a console — and the installed app
@@ -492,12 +500,15 @@ def launcher_route(secret: str, credential_json: str = "") -> None:
       through the table's public address and knows whether the program that
       answers there is this server; it reveals nothing, the secret being
       this start's alone.
-    - `POST /_launcher/credential`: the other route open to the network — the
-      launcher of another host sends `{"username","password"}` and, if that
-      account may host (`permissions.HOST_GAME`), receives the cloud
-      credential this server was given at start. Never registered without
-      one. Wrong password, wrong role, and the same throttles as the login
-      page: 404.
+    - `POST /_launcher/pairing`: local, with the secret: a fresh pairing code
+      (`access.pairing`), the launcher's own door to the same thing the
+      accounts dialog does in the game.
+    - `POST /_launcher/pair`: the other route open to the network — the
+      launcher of a new host sends `{"code","host_name"}` and, for the right
+      code while it lives, receives the cloud credential this server was
+      given at start, once. Never registered without one. A wrong, used or
+      expired code, or the table's brake for everyone: 404.
+    - `POST /_launcher/credential`: the hand-out of 1.x, answered with 410.
     """
     if not secret:
         return
@@ -575,20 +586,56 @@ def launcher_route(secret: str, credential_json: str = "") -> None:
 
     @app.post("/_launcher/credential")
     async def _credential(request: Request) -> Response:
+        # The hand-out of 1.x — a game password for the credential — is gone:
+        # a launcher of that age gets a 410 and shows its "refused" sentence,
+        # and the guide says to update. Removed for good in 3.0.
+        return Response(json.dumps({"error": "update-launcher"}), status_code=410,
+                        media_type="application/json")
+
+    @app.post("/_launcher/pairing")
+    async def _pairing(request: Request) -> Response:
+        """A code for the launcher that started us (local, with the secret):
+        the administrator's launcher offers it too, the accounts dialog in
+        the game being the usual place."""
+        if not _local(request):
+            return Response(status_code=404)
+        code = pairing.new_code("launcher")
+        STATE.record(t("login.pair_made", username=t("main.the_launcher")), "account")
+        theme.mark_dirty()
+        return Response(json.dumps({"code": code, "expires_in": pairing.LIFETIME}),
+                        media_type="application/json")
+
+    @app.post("/_launcher/pair")
+    async def _pair(request: Request) -> Response:
+        """Open to the network: `{"code","host_name"}` → the credential, once,
+        for the right code while it lives. Everything wrong is a 404, and
+        the table's brake for everyone applies here too."""
         try:
             payload = json.loads((await request.body()).decode("utf-8") or "{}")
-            username, password = str(payload["username"]), str(payload["password"])
+            code, host_name = str(payload["code"]), str(payload.get("host_name", ""))[:80]
+            new_id, new_key = str(payload.get("host_id", ""))[:32], str(payload.get("key", ""))[:64]
         except (ValueError, KeyError, TypeError):
             return Response(status_code=404)
-        ip = auth.client_ip(_Caller(request))
-        who = await run.io_bound(auth.verify, STATE.archive, username, password, ip)
-        if who is None or not permissions.can(who, permissions.HOST_GAME):
+        if auth.global_wait() > 0 or not pairing.check(code):
             return Response(status_code=404)
-        STATE.record(t("main.credential_fetched", username=who.username), "account")
+        # The admission: the newcomer's id and key, signed with the hosting
+        # launcher's seed, so every launcher of the table can tell the
+        # newcomer's copies from a key thief's. Without a seed (a launcher
+        # from before the signatures) the credential goes out alone.
+        admission = None
+        if sign_seed and launcher_id and new_id and new_key:
+            from kingmaker.launcher import sync
+            try:
+                admission = sync.make_admission(bytes.fromhex(sign_seed), launcher_id, new_id,
+                                                host_name, new_key)
+            except ValueError:
+                admission = None
+        STATE.record(t("main.launcher_paired", host=host_name or "?"), "account")
         theme.mark_dirty()
-        return Response(json.dumps({"credential": credential, "role": who.role,
-                                    "username": who.username,
-                                    "kingdom": STATE.k.get("name") or ""}),
+        return Response(json.dumps({"credential": credential, "table_id": credential.get("table_id", ""),
+                                    "table": credential.get("table", ""),
+                                    "kingdom": STATE.k.get("name") or "",
+                                    "admission": admission}),
                         media_type="application/json")
 
 

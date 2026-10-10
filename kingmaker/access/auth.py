@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import json
 import re
 import logging
 import secrets
@@ -72,7 +73,8 @@ class User:
     must_change_pw: bool
     language: str | None = None
     units: str | None = None
-    can_host: bool = False
+    # Whether a one-time code is asked after the password (`access/totp.py`).
+    second_factor: bool = False
 
     @property
     def role_name(self) -> str:
@@ -82,6 +84,13 @@ class User:
         return permissions.can(self, action)
 
 
+def _get(row, name: str):
+    try:
+        return row[name]
+    except (KeyError, IndexError):
+        return None
+
+
 def _from_row(row: dict) -> User:
     return User(
         id=row["id"],
@@ -89,10 +98,67 @@ def _from_row(row: dict) -> User:
         role=row["role"],
         active=bool(row["active"]),
         must_change_pw=bool(row["must_change_pw"]),
-        language=row.get("language") if hasattr(row, "get") else None,
-        units=row.get("units") if hasattr(row, "get") else None,
-        can_host=bool(row.get("can_host")) if hasattr(row, "get") else False,
+        language=_get(row, "language"),
+        units=_get(row, "units"),
+        second_factor=bool(_get(row, "totp_secret")),
     )
+
+
+# ------------------------------------------------------------ second factor
+def enable_second_factor(archive, user_id: str, secret: bytes, codes: list[str]) -> None:
+    """Keeps the TOTP secret and the hashes of the recovery codes; the codes
+    themselves were shown once and are nobody's to read again."""
+    from kingmaker.access import totp
+    archive.update_user(user_id, totp_secret="".join(totp.encode_secret(secret).split()),
+                        recovery_codes=json.dumps([totp.hash_recovery(c) for c in codes]))
+    log.info("second factor enabled for user %s", user_id)
+
+
+def disable_second_factor(archive, user_id: str, by: str | None = None) -> None:
+    archive.update_user(user_id, totp_secret=None, recovery_codes=None)
+    log.info("second factor cleared for user %s (by %s)", user_id, by)
+
+
+def second_factor_ok(archive, user_id: str, code: str, now: float | None = None) -> bool:
+    """Whether `code` is the account's current one-time code, or one of its
+    unspent recovery codes, which is then spent. Wrong codes count against
+    the same brake as wrong passwords (`_mark_failure`)."""
+    from kingmaker.access import totp
+    row = archive.user_by_id(user_id)
+    secret = _get(row, "totp_secret") if row is not None else None
+    if row is None or not secret:
+        return True                         # no second factor on this account
+    key = str(row["username"]).strip().lower()
+    if remaining_wait(row["username"]) > 0:
+        return False
+    try:
+        if totp.matches(totp.decode_secret(str(secret)), code, now=now):
+            _attempts.pop(key, None)
+            return True
+    except (ValueError, TypeError):
+        pass
+    try:
+        hashes = json.loads(_get(row, "recovery_codes") or "[]")
+    except ValueError:
+        hashes = []
+    digest = totp.hash_recovery(code)
+    if isinstance(hashes, list) and digest in hashes:
+        hashes.remove(digest)
+        archive.update_user(user_id, recovery_codes=json.dumps(hashes))
+        _attempts.pop(key, None)
+        log.info("a recovery code was spent for user %s", user_id)
+        return True
+    _mark_failure(key)
+    return False
+
+
+def recovery_codes_left(archive, user_id: str) -> int:
+    row = archive.user_by_id(user_id)
+    try:
+        hashes = json.loads(_get(row, "recovery_codes") or "[]") if row is not None else []
+    except ValueError:
+        hashes = []
+    return len(hashes) if isinstance(hashes, list) else 0
 
 
 # ---------------------------------------------------------------- password

@@ -211,6 +211,66 @@ results.append(("an ordinary password passes", passes))
 results.append(("the list of common passwords is there and long enough to matter",
                 len(auth.common_passwords()) >= 200 and "password" in auth.common_passwords()))
 
+# --- the pairing code: once, three tries, ten minutes
+from kingmaker.access import pairing  # noqa: E402
+now = [1000.0]
+pairing.clock = lambda: now[0]
+code = pairing.new_code("admin")
+results.append(("a code is two groups of four, from the readable alphabet",
+                len(code) == 9 and code[4] == "-" and pairing.active() is not None
+                and pairing.active()["made_by"] == "admin"))
+results.append(("a wrong code does not pair", not pairing.check("zzzz-zzzz")))
+results.append(("the right code pairs once, however typed",
+                pairing.check(code.upper().replace("-", " ")) and not pairing.check(code)))
+code = pairing.new_code("admin")
+tries = [pairing.check("zzzz-zzzz") for _ in range(pairing.ATTEMPTS)]
+results.append(("the third wrong try kills the code", not any(tries) and pairing.active() is None
+                and not pairing.check(code)))
+code = pairing.new_code("admin")
+now[0] += pairing.LIFETIME + 1
+results.append(("a code dies after ten minutes", pairing.active() is None and not pairing.check(code)))
+results.append(("a new code retires the old one",
+                (lambda a, b: not pairing.check(a) and pairing.check(b))(pairing.new_code("admin"),
+                                                                           pairing.new_code("admin"))))
+pairing.clock = time.monotonic
+pairing.forget()
+results.append(("making a code is the administrator's",
+                permissions.MIN_ROLE[permissions.MANAGE_USERS] == permissions.ADMIN
+                and not hasattr(permissions, "HOST_GAME")))
+
+
+# ------------------------------------------------- the second factor (2.0.0)
+from kingmaker.access import totp  # noqa: E402
+
+gm_row = A.user_by_name("gm")
+secret = totp.new_secret()
+codes = totp.new_recovery_codes()
+auth.enable_second_factor(A, gm_row["id"], secret, codes)
+with_sf = auth.verify(A, "gm", "prova-gm-1234")
+results.append(("the password alone still verifies, and the user says a second step is asked",
+                with_sf is not None and with_sf.second_factor))
+results.append(("the secret is kept base32 and the recovery codes only as hashes",
+                A.user_by_id(gm_row["id"])["totp_secret"] == "".join(totp.encode_secret(secret).split())
+                and codes[0] not in (A.user_by_id(gm_row["id"])["recovery_codes"] or "")))
+results.append(("the current code passes", auth.second_factor_ok(A, gm_row["id"], totp.code_now(secret))))
+results.append(("a wrong code does not", not auth.second_factor_ok(A, gm_row["id"], "000000")
+                if totp.code_now(secret) != "000000" else True))
+results.append(("a recovery code passes once and is spent",
+                auth.second_factor_ok(A, gm_row["id"], codes[0].upper())
+                and not auth.second_factor_ok(A, gm_row["id"], codes[0])
+                and auth.recovery_codes_left(A, gm_row["id"]) == len(codes) - 1))
+for _ in range(auth.MAX_ATTEMPTS):
+    auth.second_factor_ok(A, gm_row["id"], "111111")
+results.append(("wrong codes trip the same brake as wrong passwords",
+                auth.remaining_wait("gm") > 0 and not auth.second_factor_ok(A, gm_row["id"], totp.code_now(secret))))
+auth._attempts.clear()
+auth.disable_second_factor(A, gm_row["id"], by="admin")
+results.append(("cleared, the account asks no code and any code passes",
+                not auth.verify(A, "gm", "prova-gm-1234").second_factor
+                and auth.second_factor_ok(A, gm_row["id"], "whatever")))
+results.append(("an account without a second factor passes without a code",
+                auth.second_factor_ok(A, A.user_by_name("admin")["id"], "")))
+
 for name, ok in results:
     print(f" {'ok' if ok else 'NO'}  {name}")
 print(f"\n{sum(1 for _n, e in results if e)}/{len(results)} passed")

@@ -597,3 +597,102 @@ a few hundred common passwords refused at creation and change, the username amon
 list is short on purpose and lives next to the code, where the owner can grow it; the point
 was to refuse what guessing tries first, not to make people invent passwords they will write
 on a sticky note.
+
+## 2.0.0 — 6 to 10 October 2026 · The table's keys
+
+The last pieces of the security review, and the ones that earn the major number, took five
+days instead of one, and the shape of the release changed on the way. Three releases went out
+first, 2.0.0, 2.0.1 and 2.1.0, each honest in its moment; then the launcher was redesigned
+from its first run, and the owner chose to fold all of it into one 2.0.0 on top of 1.4.0, so
+the big number would carry the whole model at once and the table's file would change format
+once rather than twice. This is the story of the five days, in the order the thinking went.
+
+**A code, not a password.** Since the cloud existed, a launcher joined the table by posting a
+game password to whatever answered at the table's address, and received the administrator's
+Dropbox credential in return. It worked, and it was the worst thing in the app: a password
+typed into a launcher travels to whoever holds the On Air token, and a stolen password bought
+not a game session but the whole cloud, snapshots and password hashes included. The owner's
+first instinct, and the plan's first recommendation, pulled in different directions. One
+Dropbox account per host would have made removing a host a click, but it asked three external
+steps of every friend who hosts, and the single shared credential had been chosen precisely to
+spare them that. So the credential stays one for the whole table, and what changed is how it
+travels: a pairing code, made by the administrator inside the game, told to the person
+joining, typed once in their launcher with no password at all; dead at its first use, its
+third wrong try, or ten minutes. The *Can host* checkbox went with the hand-out: a flag that
+no longer enforced anything would have been a lie in the accounts dialog.
+
+**What the real services said.** The plan had listed four things that could not be known from
+code. Dropbox does keep an upload of identical bytes as the same revision, so the file the
+launcher rewrote to learn the server's time, an empty file, had kept the time of the first
+cloud start for three weeks: every record looked freshly written, and the quiet host never
+looked dead, which is the only reason the heartbeat bug never bit. Two bugs that cancel each
+other out are still two bugs. The relay's answer to a refused token was the other surprise:
+the game does not come up at a random address, it does not come up at all, with the token
+printed in a warning every five seconds. And with two programs on one token, the relay simply
+gives the address to the newest and tells the first nothing: that is the hijack the review
+had written down as unknown, and the honest answer is the check that ran once at start running
+every five minutes while hosting, so the real host at least hears about it. The first fix of
+that detection matched the launcher's own advice line and would have painted every online
+start red; the probe caught it on its first run, which is what probes are for.
+
+**The first run.** Then the owner looked at the launcher as a newcomer would and could not
+tell what to do: two buttons that reach the same token, a box called Cloud, a button called
+Rotate that nobody had explained, and nowhere a sentence saying that pressing Start makes this
+computer the host. The fix was to stop explaining in the main window and ask instead, once,
+on the first run: who are you at this table, where do you play, online do you want a fixed
+address and how, on the network or online may anyone else host, with the plain answer that
+this is optional and what it costs. Each answer adds only the pages it calls for, so the
+administrator who plays alone sees three pages and the one who sets up everything sees sixteen.
+What was left in the main window got shorter and was renamed in the table's own words: the
+address, the table, the keys. "Rotate the cloud access" became "Change the keys", which is what
+it is. A second pass, with another model at the keyboard, gave each role its own window,
+removed the button that asked who hosts in favour of the launcher asking by itself, and found
+that a launcher idle all day was uploading a clock file every minute: the Date header every
+Dropbox answer carries says the server's time for free. The last look, on the day of the
+release, found the table's box on this computer only offering a pairing code that no other
+launcher could use, the game answering at 127.0.0.1, and the last run's Online link still
+listed under it; the box now says why there is no pairing there, and the links follow the place.
+
+**The hand-over.** *Force take-over* lost the holder's last minutes: their next write hit a
+conflict and they stopped without uploading. Now the administrator asks, by writing into the
+holder's record; the holder's launcher looks at the record every thirty seconds, uploads once
+more, releases, and stops with a sentence that says so; the taker waits, counting, and starts
+with exactly that copy. Measured on two real launchers, Windows and WSL, against the fake
+Dropbox: asked at zero, released at one second, running at twelve. The bench found one bug on
+its first run, an assignment that made a variable local to a thread's function from its first
+line, which the unit tests could not see because they drive the functions, not the window.
+
+**Who holds which key.** The last question was the owner's, and it was the right one: what
+stops someone from making a second launcher that calls itself the administrator? Nothing did.
+The administrator's buttons appeared wherever a local flag said so, every host held the very
+same Dropbox key as the administrator, and the folder, which Dropbox opens whole to any key,
+had no record of who the landlord was. Dropbox cannot be told to forget one copy of a key, and
+the console that makes the app has no API, so the answer had to come from the launchers
+themselves: a key pair each, made at the first start and never typed; the table's file signed
+by the administrator's, with the seat on it; every copy and every record signed by the launcher
+that made it; a list of launchers where each entry is vouched for by the launcher whose game
+made the code; two Dropbox keys, so changing the hosts' key never touches the administrator,
+and a replaced PC can cancel its own key the next time it opens. A thief with the folder's key
+can still read everything, which separate Dropbox accounts alone would prevent and the owner
+had rejected for good reasons; what the thief cannot do any more is the thing that mattered,
+feeding the table a doctored copy, which would have handed them the game as administrator with
+nothing to crack. Striking off a launcher raised a design question of its own: the hosts it
+had let in would fall with it, and a rogue host's accomplices should; so the administrator
+re-admits them under its own signature, and sees each in the list to strike alone.
+
+**What the thief gets, and what code cannot stop.** Working through the doctored copy made the
+owner ask what a copy could do to the players' computers, and the answer is nothing: the game
+turns the copy into pages, the players run browsers, the only code that ever moves between
+machines is the installer. So the installer is signed, with the owner's offline key, by a
+script run after the draft is built; a compromised GitHub account can publish a release but
+not sign one, and the launcher refuses what it cannot verify. A line-by-line pass over every
+place saved text meets the page found every one escaped. And since a leaked password was the
+last door into the administrator's account, the one that makes pairing codes, the account can
+now ask a one-time code from a phone after the password, with recovery codes for the day the
+phone is lost.
+
+The signatures are Ed25519 in a hundred lines of plain Python, checked against the RFC's
+vectors, because a dependency for that much arithmetic was not worth its weight in the
+installers. The two-machine bench, the fake Dropbox served on every interface and a launcher
+driven from a file, stays in `prove/`, outside git, for the next time something has to be
+seen rather than believed.

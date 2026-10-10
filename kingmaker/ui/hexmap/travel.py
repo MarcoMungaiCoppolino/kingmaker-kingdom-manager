@@ -554,7 +554,7 @@ def _plan_summary(plan, mine: dict, mapping, chosen: list[dict],
     if plan.speed_source:
         step = pace(plan.speed_m)
         ui.label(t("map.travel.party_speed", speed_source=plan.speed_source)
-                 + (f" — {step}" if step else "")) \
+                 + (f" · {step}" if step else "")) \
             .style("font-size:.75rem;color:var(--km-muted);white-space:normal") \
             .tooltip(t("map.travel.kilometres_come_from_travel"))
 
@@ -1836,7 +1836,7 @@ def _rendezvous_box(rendezvous, chosen: list[dict]) -> None:
         if alone is not None and rendezvous.total_days - alone > 0.05:
             pieces.append(t("map.travel.alone_they_would_reach", alone=alone, total_days=rendezvous.total_days))
         if len(pieces) > 1:
-            ui.label(" — ".join(pieces)) \
+            ui.label(" · ".join(pieces)) \
                 .style("font-size:.72rem;color:var(--km-gold-dim);white-space:normal")
 
 # --------------------------------------------------------------------------

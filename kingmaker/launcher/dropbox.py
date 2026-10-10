@@ -11,6 +11,7 @@ server through `KINGMAKER_DROPBOX_API` (tests only).
 from __future__ import annotations
 
 import base64
+import email.utils
 import hashlib
 import json
 import os
@@ -135,6 +136,17 @@ class Client:
             self._expires_at = time.time() + float(answer.get("expires_in") or 14400)
         return self._access
 
+    @staticmethod
+    def _http_date(value: str | None) -> float | None:
+        """An HTTP Date header as seconds since the epoch; None when absent
+        or not a date (a proxy's, say)."""
+        if not value:
+            return None
+        try:
+            return email.utils.parsedate_to_datetime(value).timestamp()
+        except (TypeError, ValueError, OverflowError):
+            return None
+
     def _call(self, base: str, route: str, arg: dict | None = None, body: bytes | None = None,
               raw: bool = False, arg_in_header: bool = False) -> tuple[bytes, dict]:
         """One request with retries. Returns (body, api-result json)."""
@@ -158,7 +170,14 @@ class Client:
                     content = answer.read()
                     result_header = answer.headers.get("Dropbox-API-Result")
                     if result_header:
-                        return content, json.loads(result_header)
+                        result = json.loads(result_header)
+                        # The server's clock, free with every answer: what a
+                        # record's age is judged by, without writing a file
+                        # to read the time off (`sync.server_now`).
+                        when = self._http_date(answer.headers.get("Date"))
+                        if when is not None and isinstance(result, dict):
+                            result["_server_time"] = when
+                        return content, result
                     if raw:
                         return content, {}
                     return content, (json.loads(content.decode("utf-8")) if content.strip() else {})

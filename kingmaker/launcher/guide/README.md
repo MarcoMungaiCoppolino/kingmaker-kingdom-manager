@@ -6,7 +6,9 @@ picture is simply not shown: the text of each step stands alone.
 **Dropbox**, here: `account.png`, `create.png`, `permissions.png`, `key.png`, `authorise.png`,
 `code.png`, `done.png`. Screenshots of the Dropbox App Console taken by the owner in September
 2026, the account avatar, the App key and the access code blurred, the red boxes and numbers
-marking what to click in which order.
+marking what to click in which order. `existing.png` (October 2026, 540 px, cropped from the
+owner's screenshot of the App Console's list of apps, the avatar left out) is the page of an
+app made before: the app to click, boxed and numbered like the others.
 
 **On Air**, in `air/`: `site.png`, `login.png`, `github.png`, `add.png`, `token.png` — the
 road a new account walks, which is add a device and take the token it hands out — and

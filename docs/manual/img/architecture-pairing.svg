@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="330" style="color:#1f2a24" viewBox="0 0 900 330" role="img" aria-label="Sequence: the administrator's game makes a code, the host types the address and the code, the game answers with the credential and the table id, the host's launcher opens the folder, checks the table id, then keeps the keys.">
+<style>
+text{font-family:'IBM Plex Sans','Segoe UI',system-ui,sans-serif;font-size:12px;fill:#1f2a24}
+.mono{font-family:'IBM Plex Mono',Consolas,monospace;font-size:11px}
+.small{font-size:10.5px;fill:#5d6a63}
+.title{font-size:13px;font-weight:600}
+.box{fill:#ffffff;stroke:#1f2a24;stroke-width:1.2}
+.soft{fill:#d9ece2;stroke:#1f6f4a;stroke-width:1.2}
+.warnbox{fill:none;stroke:#9a5b00;stroke-width:1.2;stroke-dasharray:4 3}
+.edge{fill:none;stroke:#1f2a24;stroke-width:1.1}
+.edge.hot{stroke:#1f6f4a;stroke-width:1.6}
+.edge.dashed{stroke-dasharray:5 4}
+.lane{stroke:#c9cfc9;stroke-width:1}
+</style>
+<rect width="100%" height="100%" fill="#f6f5f1"/>
+
+<defs><marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1f2a24"/></marker></defs>
+<g class="title"><text x="130" y="30" text-anchor="middle">Administrator's game</text><text x="450" y="30" text-anchor="middle">New host's launcher</text><text x="770" y="30" text-anchor="middle">Dropbox folder</text></g>
+<g class="lane"><line x1="130" y1="40" x2="130" y2="310"/><line x1="450" y1="40" x2="450" y2="310"/><line x1="770" y1="40" x2="770" y2="310"/></g>
+<rect x="40" y="56" width="180" height="40" rx="4" class="soft"/>
+<text x="130" y="73" text-anchor="middle" class="small">makes a code: 8 letters, 10 min,</text><text x="130" y="88" text-anchor="middle" class="small">one use, dies at the 3rd wrong try</text>
+<path d="M220 76 L440 76" class="edge dashed" marker-end="url(#a4)"/>
+<text x="330" y="68" text-anchor="middle" class="small">said aloud, not sent</text>
+<rect x="360" y="110" width="180" height="40" rx="4" class="box"/>
+<text x="450" y="127" text-anchor="middle" class="small">types the address, the code,</text><text x="450" y="142" text-anchor="middle" class="small">a name for this PC</text>
+<path d="M360 160 L140 160" class="edge hot" marker-end="url(#a4)"/>
+<text x="250" y="152" text-anchor="middle" class="mono">POST /_launcher/pair</text>
+<path d="M140 190 L440 190" class="edge hot" marker-end="url(#a4)"/>
+<text x="290" y="182" text-anchor="middle" class="small">the keys, the table's id and name, as host</text>
+<path d="M460 220 L760 220" class="edge" marker-end="url(#a4)"/>
+<text x="610" y="212" text-anchor="middle" class="small">opens the folder, reads table.json</text>
+<path d="M760 246 L460 246" class="edge" marker-end="url(#a4)"/>
+<text x="610" y="266" text-anchor="middle" class="small">same table_id as the host named?</text>
+<rect x="360" y="278" width="180" height="26" rx="4" class="soft"/>
+<text x="450" y="295" text-anchor="middle" class="small">yes: kept in the vault. No: thrown away.</text>
+<text x="20" y="320" class="small">The code and its use are written in the game's journal. A program at a hijacked address can collect only a code that is already dead.</text>
+</svg>

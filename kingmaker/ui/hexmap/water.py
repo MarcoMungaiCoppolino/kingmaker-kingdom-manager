@@ -1264,7 +1264,7 @@ def _chart_result(mine: dict, mapping) -> None:
              + tn("map.water.crossing_count", len(chart.crossings))
              + ", "
              + tn("map.water.direction_count", len(chart.currents))
-             + (" — " + ", ".join(provenance) if provenance else ".")) \
+             + (" · " + ", ".join(provenance) if provenance else ".")) \
         .style("font-size:.8rem;white-space:normal")
     for warning in chart.warnings:
         ui.label("⚠ " + warning) \

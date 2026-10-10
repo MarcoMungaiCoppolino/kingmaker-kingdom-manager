@@ -2,10 +2,11 @@
 
 *In English: [../user-guide.md](../user-guide.md).*
 
-Questa guida descrive l'app com'è alla versione 1.4.0, scheda per scheda, con il perché di ogni
+Questa guida descrive l'app com'è alla versione 2.0.0, scheda per scheda, con il perché di ogni
 scelta. Per installarla e avviarla vedi il [README.it.md](../../README.it.md); la finestra
 dell'app installata è il primo capitolo qui sotto. Le schermate in
-[`manual/img/screenshots/`](../manual/img/screenshots/) sono dell'interfaccia italiana.
+[`manual/img/screenshots/it/`](../manual/img/screenshots/it/) sono dell'interfaccia italiana, prese
+su un tavolo vero: il regno, i personaggi e i viaggi che si vedono sono quelli di una partita in corso.
 
 I nomi di pulsanti e riquadri qui sotto sono quelli dell'interfaccia in italiano; in inglese
 cambiano di conseguenza (*Viaggio* → *Travel*, *Acque* → *Waters*, *Regia* → *GM Screen*,
@@ -13,7 +14,7 @@ cambiano di conseguenza (*Viaggio* → *Travel*, *Acque* → *Waters*, *Regia* �
 
 ## Il launcher
 
-![Il launcher](../manual/img/screenshots/launcher.jpg)
+![Il launcher](../manual/img/screenshots/it/launcher.jpg)
 
 L'app installata (il setup per Windows o l'archivio per Linux dalla pagina delle release) apre
 questa finestra al posto di un terminale; dal sorgente è `python launch.py --launcher`. Avvia
@@ -21,28 +22,60 @@ e ferma il server, nient'altro: si gioca sempre nel browser. La schermata è del
 inglese; in italiano i pulsanti sono *Avvia*, *Ferma*, *Apri nel browser*, *Copia*,
 *Impostazioni*.
 
+**Il primo avvio.** La prima volta che il launcher si apre, un benvenuto chiede, nella lingua
+che scegli nella sua prima pagina, chi sei a questo tavolo: l'amministratore, che lo crea e ne
+tiene le chiavi, o un host, qualcuno a cui l'amministratore lascia avviare la partita. Poi,
+all'amministratore, dove giocate; online, se il tavolo ha un indirizzo fisso (la guida a On
+Air, un token che hai già, o più tardi); e, in rete o online, se qualcun altro può ospitare (la
+guida a Dropbox, o solo tu). Un host invece si accoppia col tavolo, e l'indirizzo del tavolo
+dice dove si gioca. Ogni pagina che apre un sito dice quale pulsante premere. Il benvenuto si
+apre da solo: la finestra principale arriva dopo, a configurazione finita o saltata, e da lì in
+poi ogni avvio va dritto alla finestra principale. Chiuso prima di *Avanti* nella prima pagina,
+non si è deciso nulla: il launcher si chiude, e il benvenuto lo richiede all'avvio successivo.
+Chiuso dopo, il launcher si chiude lo stesso, ma le risposte date fin lì restano, come con
+*Salta*: l'avvio successivo apre la finestra principale. L'ultima pagina del benvenuto dice
+dove cambiarle più avanti. Meno host, più sicuro — il PC
+di ogni host tiene le chiavi del tavolo — quindi il benvenuto dice di far entrare solo chi deve
+avviare la partita quando non ci sei, di solito solo il Game Master; i giocatori non hanno
+bisogno del launcher, solo di un link.
+
+**Due finestre.** La finestra principale è quella dell'amministratore o quella dell'host,
+secondo la risposta alla prima pagina del benvenuto. Quella dell'amministratore ha tutto ciò
+che è descritto qui sotto. Quella dell'host ha il riquadro Il tavolo, *Avvia*, i link e il log,
+e nient'altro: dove si gioca lo dice l'indirizzo del tavolo, mentre caricare un'altra partita e
+reimpostare la password dell'amministratore del gioco spettano all'amministratore. Un host non
+ancora accoppiato vede *Accoppia con un tavolo…*, e *Avvia* aspetta l'accoppiamento.
+
+**Ricominciare da capo.** *Impostazioni → Azzera la configurazione…* (a server fermo) è per chi
+ha scelto male al primo avvio, o deve ripartire. Prima dice cosa si perde: il ruolo, dove si
+gioca, il token dell'indirizzo del tavolo e le chiavi del tavolo su questo PC (per un host,
+l'accoppiamento). La partita, i suoi salvataggi e le immagini, gli account, la lingua e le altre
+impostazioni restano intatti. Poi il benvenuto si riapre, da solo, per rifare le scelte.
+
 **Dove si gioca?** *Solo su questo computer* è la scelta predefinita: il gioco si apre nel tuo
 browser e nessun altro lo raggiunge. *Sulla stessa rete* è per gli amici nella stessa casa:
 aprono il link di rete nel loro browser. *Online, con amici lontani* pubblica il gioco tramite
 il relay NiceGUI On Air; il tuo computer deve restare acceso, perché il regno vive lì. La scelta
-viene ricordata.
+viene ricordata. Solo su questo computer, senza un tavolo, il riquadro Il tavolo non c'è: nessun altro raggiunge
+la partita, quindi non c'è nessuno da far ospitare. In rete o online offre *Lascia ospitare
+qualcun altro…*, per un Game Master nella stessa casa come per uno lontano.
 
-**Il token On Air.** Scegliendo *Online* compare il campo e, accanto ai passi, due pulsanti.
-*Configuralo passo passo…* apre una procedura che ti accompagna con l'immagine di ogni
-schermata: il sito di On Air, l'accesso, GitHub — dove scrivi la password, che né On Air né
-questa app vedono mai — il dispositivo da aggiungere sulla tua pagina On Air, che
-consegna il suo token appena lo aggiungi, e il token stesso, che salva lei. Un ultimo passo è
-lì per il giorno in cui il token si perde: On Air lo mostra una volta sola e mai più, quindi
-ne prendi uno nuovo dall'ingranaggio sulla riga del dispositivo, e manda in pensione il
-precedente. Quel passo ha un pulsante tutto suo, *Perso il token?*, accanto agli altri due:
-non devi ripercorrere la guida dall'inizio per arrivarci, il che sarebbe una beffa, visto che
-il passo prima ti chiede proprio il token che non hai più. *Ottieni un token* apre lo stesso sito subito, per quando sai già
-la strada.
-Con il token il tuo indirizzo resta lo stesso a ogni avvio; senza, ogni volta un indirizzo
-casuale nuovo. Senza il cloud il token è conservato in chiaro nella cartella della partita; con
-il cloud vive nella cartella del tavolo e viene letto a ogni avvio, e al posto del campo c'è una
-riga che lo dice (vedi *Giocare da più PC*). Il relay, gestito
-da Zauberzeug GmbH (Germania), gli autori di NiceGUI, vede l'indirizzo di ogni giocatore e
+**L'indirizzo del tuo tavolo.** Online la partita passa dal relay NiceGUI On Air e riceve un
+indirizzo web. Un token dà al tuo tavolo un indirizzo fisso; senza, a ogni avvio un indirizzo
+casuale nuovo, e un link nuovo da mandare. Scegliendo *Online* compare il riquadro: una riga
+dice se l'indirizzo è fisso, *Imposta un indirizzo fisso…* apre la guida — l'immagine di ogni
+schermata: il sito di On Air, l'accesso, GitHub, dove scrivi la password, che né On Air né
+questa app vedono mai, il dispositivo da aggiungere sulla tua pagina On Air, che consegna il
+suo token appena lo aggiungi, e il token stesso, che incolli dentro la guida — e il campo
+*Token* è per chi ne ha già uno. Il token è conservato protetto su questo PC (vedi *Da sapere*
+in *Giocare da più PC*). Con un tavolo nel cloud vive nella cartella del tavolo e viene letto a
+ogni avvio, così il riquadro lascia il posto a una riga che lo dice, e l'amministratore ha
+*Nuovo token…* per il giorno in cui l'indirizzo deve cambiare: se n'è andato qualcuno che
+poteva ospitare, o il relay rifiuta il token. On Air mostra un token una volta sola e mai più,
+quindi la guida si apre direttamente al passo che ne prende uno nuovo dall'ingranaggio sulla
+riga del dispositivo; il nuovo manda in pensione il precedente, e gli altri host non devono
+fare niente. Il relay, gestito da
+Zauberzeug GmbH (Germania), gli autori di NiceGUI, vede l'indirizzo di ogni giocatore e
 trasporta il traffico del gioco in chiaro, quindi potrebbe leggerlo: va bene per una partita,
 non per dei segreti. Su questo computer o sulla stessa rete niente esce dal tuo PC — vedi
 [PRIVACY.it.md](../../PRIVACY.it.md).
@@ -75,8 +108,14 @@ apre quello che il server stampa: è lì che si guarda quando si ferma da solo.
 
 **Aggiornamenti.** Quando su GitHub c'è una release più nuova, una riga in alto lo dice (a
 meno che il controllo sia spento nelle *Impostazioni*). Su Windows *Scarica l'aggiornamento*
-scarica l'installatore da GitHub e lo avvia, conservando la partita; l'installatore non è
-firmato con un certificato a pagamento, quindi Windows avverte la prima volta. Su Linux apre
+scarica l'installatore da GitHub e lo avvia, conservando la partita. Prima di avviarlo il
+launcher controlla che il file sia quello costruito dall'autore: ogni release porta un elenco
+degli hash degli installer firmato con la chiave dell'autore, tenuta fuori da GitHub, e un
+installer il cui hash non è in quell'elenco, o il cui elenco non è firmato con quella chiave,
+viene cancellato e rifiutato. Le release di prima della 2.0.0 non hanno l'elenco: nella
+finestra delle versioni sono segnate *non firmata* e partono solo se lo confermi.
+L'installatore non è firmato con un certificato a pagamento, quindi Windows avverte comunque la
+prima volta. Su Linux apre
 la pagina della release. *Impostazioni → Versioni su GitHub…* elenca tutte le
 release, dalla più recente, con quella installata segnata, e installa quella che scegli; tornare
 a una versione più vecchia è permesso, con un avviso, perché un salvataggio scritto da una
@@ -88,24 +127,72 @@ installata: un aggiornamento sostituisce il programma e le lascia, e la disinsta
 
 Senza, la partita vive su un PC e il suo proprietario deve essere online perché qualcuno
 giochi. Con il cloud, l'ospitare può passare tra le persone fidate del tavolo — l'amministratore
-e i GM che l'amministratore segna *Può ospitare* nella finestra degli account — tramite una
+e i GM il cui launcher l'amministratore ha accoppiato con un codice — tramite una
 cartella nel Dropbox dell'amministratore. I giocatori non ospitano mai e non hanno mai il
 salvataggio: aprono l'indirizzo del tavolo, che resta lo stesso chiunque ospiti, perché l'unico
 token On Air del tavolo sta nella cartella e ogni host lo legge all'Avvia.
 
-![La procedura guidata](../manual/img/screenshots/wizard.jpg)
+![La procedura guidata](../manual/img/screenshots/it/wizard.jpg)
 
-**L'amministratore, una volta.** Nel riquadro *Cloud* del launcher premi *Configura
-Dropbox…*: sette passi con un'immagine ciascuno. Un account Dropbox gratuito; *Create app* nella
+**L'amministratore, una volta.** Nel benvenuto, o più tardi con *Lascia ospitare qualcun
+altro…* nel riquadro *Il tavolo* del launcher: sette passi con un'immagine ciascuno. Un account Dropbox gratuito; *Create app* nella
 App Console di Dropbox con *Scoped access* e *App folder* (l'app vede solo la sua cartella); i
 cinque permessi; l'*App key* incollata nel launcher, con il nome del tavolo; la pagina di
-autorizzazione (Continue, poi Allow); il codice mostrato, da incollare; fatto. Solo l'amministratore ha bisogno di
-un account Dropbox.
+autorizzazione (Continue, poi Allow) e il codice mostrato, da incollare; la stessa pagina e lo
+stesso codice ancora una volta, per la chiave degli host; fatto. Ne escono due chiavi: la tua,
+che non lascia mai il tuo PC, e quella degli host, che è quella consegnata dall'accoppiamento.
+Solo l'amministratore ha bisogno di un account Dropbox. Il tuo launcher tiene allora il posto
+dell'amministratore: il file del tavolo registra il suo nome e la sua chiave, e ogni altro
+launcher si fida del file per quella chiave. Chi aveva già creato l'app del tavolo, su un altro PC, preme invece
+*Collegati a un'app esistente* nel passo *Crea un'app*: si apre l'elenco delle sue app,
+un'immagine mostra quale cliccare, e Avanti passa dai permessi, per controllare che siano
+spuntati, prima della sua App key. Le pagine del benvenuto non mostrano il numero del passo, perché le
+risposte cambiano quante ne seguono; le guide aperte da sole dalla finestra principale dicono
+«Passo 3 di 7».
 
-**Gli altri host.** Mentre l'amministratore ospita, il DM apre *Collegati a un tavolo…* nel
-suo launcher: l'indirizzo del tavolo, il suo nome utente e la password. L'host controlla che
-l'account possa ospitare e consegna ciò che serve al launcher; la password è usata una volta
-e non conservata. Da lì in poi anche quel launcher può ospitare.
+**Gli altri host.** Mentre qualcuno ospita, l'amministratore crea un codice di accoppiamento:
+nel gioco, dalla finestra degli account (*Accoppia un launcher…*), oppure, quando a ospitare è
+l'amministratore stesso, dallo stesso pulsante nel riquadro Il tavolo del launcher. È un codice di
+otto lettere e cifre, buono per dieci minuti e una volta sola. Lo dice al DM, che apre
+*Accoppia con un tavolo…* nel
+suo launcher: l'indirizzo del tavolo, il codice, e un nome per il suo PC che gli altri host
+leggeranno. Nessuna password viene chiesta. Il suo launcher manda col codice una chiave sua,
+fatta da solo e mai scritta da nessuno, e il gioco che ospita la garantisce con un'ammissione
+firmata. Il launcher tiene quello che riceve solo dopo aver aperto la cartella del tavolo,
+trovato lì il tavolo giusto, firmato dall'amministratore, e verificato l'ammissione; scrive la
+sua ammissione nell'elenco dei launcher del tavolo, e da lì in poi può ospitare anche lui.
+Ogni copia che un launcher carica porta la sua firma, e ogni launcher carica solo copie firmate
+da un launcher di cui il tavolo risponde: un ladro con la chiave della cartella può leggere, ma
+non infilare una copia. Un codice scritto male tre volte muore; crearne uno nuovo manda in
+pensione il vecchio; sia la creazione che l'uso finiscono nel diario.
+
+**Quando qualcuno lascia il tavolo.** Due cose, entrambe nel riquadro Il tavolo. *Gli host del
+tavolo…* elenca ogni launcher fatto entrare, chi lo ha fatto entrare e da quando; *Cancella* ne
+toglie uno, e le sue copie vengono rifiutate da ogni launcher da quel momento, qualunque chiave
+abbia ancora. Gli host che lui aveva fatto entrare vengono garantiti di nuovo con la tua firma,
+quindi restano. Poi *Cambia le chiavi…*, perché gli host hanno tutti la stessa chiave degli
+host: Dropbox ne dà una nuova, la vecchia smette di funzionare su ogni altro PC, e ogni host
+rimasto si accoppia di nuovo con un codice nuovo, un minuto ciascuno. La tua chiave non si
+muove. Crea un nuovo token On Air con *Nuovo token…* se la persona aveva anche l'indirizzo del
+tavolo, e disattiva il suo account nel gioco. Un launcher la cui chiave è stata annullata lo
+dice e offre *Accoppia con un tavolo…*; su quel PC non si perde niente.
+
+**Quando un PC va perso.** Un portatile con le chiavi sopra, rubato o sparito, non si può
+tagliare fuori da qui: Dropbox annulla una chiave solo dal suo sito, scollegando l'app, il che
+annulla tutte le chiavi del tavolo insieme. *Taglia fuori un PC perso…* apre quella pagina e
+dice cosa fare; al ritorno, il launcher trova il proprio accesso rifiutato e propone *Autorizza
+di nuovo…*, entrambe le chiavi da capo, dopo di che ogni host si accoppia di nuovo. La
+cassaforte attenua il caso: su Windows le chiavi sono legate al tuo accesso di Windows, quindi
+un ladro senza la tua password ha un file che non può aprire.
+
+**Spostare l'amministratore su un altro PC.** Installa lì, rispondi «Creo io il tavolo», premi
+*Collegati a un'app esistente* nella guida a Dropbox e autorizza due volte. Il primo Avvia
+trova il posto occupato dal tuo vecchio PC e chiede se prenderlo qui; sì scrive il tuo nuovo
+launcher nel file del tavolo. Il vecchio PC si fa da parte da solo la prima volta che si apre:
+vede che il posto non è più suo, annulla la propria chiave Dropbox e dimentica il tavolo,
+dicendo chi ha preso il posto e quando. Gli host vedono che il launcher dell'amministratore è
+cambiato e si accoppiano di nuovo con un codice del nuovo PC. Se il vecchio PC non si apre mai
+più, la sua chiave resta valida finché non lo tagli fuori come sopra.
 
 **Quando il launcher chiede.** Tre domande compaiono solo quando qualcosa non torna, e niente
 succede finché non rispondi. *Due copie della partita*: il cloud ha una copia più recente, ma la
@@ -138,29 +225,61 @@ chiesto di installarla prima di ospitare — oppure installare la versione del t
 con un launcher troppo vecchio per conoscere la versione del tavolo compare come tale in
 «ospitata da»; chiedigli di aggiornare.
 
-**Il token, rinnovato.** L'amministratore rinnova il token del tavolo con *Perso il token?*
-come prima; quello nuovo va nella cartella del tavolo, e ogni altro host lo riceve al suo
-prossimo Avvia senza fare niente. Se il relay rifiuta il token (un indirizzo casuale al posto di
-quello del tavolo), il launcher lo dice in rosso. Una volta che la partita è in rete, il launcher
-controlla anche che all'indirizzo del tavolo risponda davvero questo PC, e avverte quando lo
-tiene un altro programma: allora l'amministratore rinnova il token. *Chi ospita?* fa lo stesso
-controllo quando nessuno ospita: qualcosa che risponde all'indirizzo del tavolo mentre nessun
-host ha la partita in funzione vuol dire che qualcun altro ha il token.
+**Il riquadro Il tavolo.** Una riga dice come stanno le cose (il tavolo, il nome di questo PC
+come lo vedono gli altri host, di chi è il Dropbox, o chi sta ospitando adesso: il launcher lo
+chiede al cloud da solo quando si apre e ogni minuto mentre non ospiti, ogni 15 secondi
+mentre ospita qualcun altro, così vedi presto quando smette; e Avvia lo richiede
+prima di prendere la partita), e sotto i pulsanti a gruppi, dal più frequente al giorno in cui
+qualcuno se ne va, ognuno con il suo uso scritto accanto: per l'amministratore, *Far ospitare un altro PC* ha *Accoppia un launcher…* e *Quando
+qualcuno se ne va* ha *Cambia le chiavi…* e *Taglia fuori un PC perso…*; *Far ospitare un
+altro PC* ha anche *Gli host del tavolo…*; *Questo PC* ha *Dimentica il tavolo*. Solo su
+questo computer un tavolo già creato tiene il suo riquadro, ma *Far ospitare un altro PC* ha una
+riga al posto dei pulsanti: il launcher di un altro PC deve raggiungere questo per usare un
+codice di accoppiamento, quindi l'accoppiamento chiede la rete o l'online; le chiavi e *Dimentica
+il tavolo* restano, perché le copie vanno comunque al cloud. Quando il
+registro del tavolo è tenuto da qualcosa di cui il tavolo non risponde, un launcher cancellato
+o un estraneo con una copia delle chiavi, il riquadro lo dice in rosso, non offre nessun link e
+dà all'amministratore *Riprendi il registro*. Mentre ospiti, il riquadro lo dice e offre solo l'accoppiamento;
+mentre ospita qualcun altro, *Entra* e il *Chiedi il passaggio…* dell'amministratore. Con un tavolo, il riquadro dell'indirizzo qui sopra mostra una riga, perché il token
+non sta su questo PC, e per l'amministratore *Nuovo token…*.
 
-**Il *Prendi il controllo* dell'amministratore.** Compare quando ospita qualcun altro: il suo
-server si ferma entro un minuto (può perdere gli ultimi minuti di gioco) e la partita passa a
-te.
+**Il token, rinnovato.** L'amministratore rinnova il token del tavolo con *Nuovo token…* nel
+riquadro dell'indirizzo, per il giorno in cui si perde o se ne va qualcuno che aveva l'indirizzo; quello
+nuovo va nella cartella del tavolo, e ogni altro host lo riceve al suo prossimo Avvia senza fare
+niente. Se il relay rifiuta il token, la partita non va in rete per
+niente (la raggiungono solo questo PC e la rete locale) e il launcher lo dice in rosso: rinnova
+il token, poi Ferma e Avvia di nuovo. Una volta che la partita è in rete, il launcher
+controlla anche che all'indirizzo del tavolo risponda davvero questo PC, e lo ricontrolla ogni
+cinque minuti mentre ospiti, perché il relay dà l'indirizzo all'ultimo programma che si è
+collegato con il token e a quello di prima non dice niente. Se un altro programma se lo
+prende, il launcher ti avverte: allora l'amministratore rinnova il token. Il controllo di
+ogni minuto su chi ospita fa lo stesso controllo quando nessuno ospita: qualcosa che risponde all'indirizzo del tavolo mentre
+nessun host ha la partita in funzione vuol dire che qualcun altro ha il token (con nessuno
+collegato, l'indirizzo risponde «non trovato»).
+
+**Il *Chiedi il passaggio…* dell'amministratore.** Compare quando ospita qualcun altro. Al suo
+launcher viene chiesta la partita: entro mezzo minuto carica l'ultima copia, ferma il suo
+server e glielo dice; il tuo aspetta, dicendo da quanto, poi riparte da quella copia. Non si
+perde niente. Se il suo launcher non risponde entro due minuti (chiuso, in sospensione, o una
+versione di prima del passaggio), ti viene chiesto se prendere comunque la partita, il che
+ferma il suo server entro un minuto e può perderne gli ultimi minuti di gioco, se continuare
+ad aspettare, o se annullare.
 
 **Da sapere.** Il PC di un host ha tutta la partita, segreti e hash delle password compresi:
-per questo ospitare è una decisione di fiducia, non una casella per tutti. La credenziale del
-cloud è l'accesso Dropbox dell'amministratore a quella cartella, e ogni host ha lo stesso,
-quindi non si può togliere a un host senza toglierla a tutti. Su ogni PC è conservata protetta
-— da Windows, per quell'utente di Windows, o su Linux in un file che solo tu puoi leggere, fuori
-dalla cartella della partita — così il file delle impostazioni del launcher non contiene niente
-in chiaro, e copiare la cartella della partita su un altro PC non porta con sé nessun accesso:
-lì, collegati di nuovo al tavolo. *Dimentica il cloud* la toglie da un
-launcher, e l'amministratore può revocarla su Dropbox (*App collegate*), dopo di che ogni host
-si ricollega. La cartella contiene anche un piccolo record di chi ospita — l'id del launcher,
+per questo ospitare è una decisione di fiducia, non una casella per tutti. Le chiavi della
+cartella sono due: quella dell'amministratore, solo sul suo PC, e quella degli host, di cui
+ogni host ha una copia, quindi la copia di un host non si può togliere da sola: cambiare le
+chiavi sostituisce la chiave degli host per tutti. Su ogni PC le chiavi sono conservate
+protette, da Windows per quell'utente di Windows, o su Linux in un file che solo tu puoi
+leggere fuori dalla cartella della partita, così il file delle impostazioni del launcher non
+contiene niente in chiaro, e copiare la cartella della partita su un altro PC non porta con sé
+nessun accesso: lì, accoppiati di nuovo col tavolo. Ogni launcher ha anche una chiave di firma
+sua, fatta una volta e mai scritta: firma il registro che tiene, le copie che carica e, per
+l'amministratore, il file del tavolo e l'elenco dei launcher. Quello che non è firmato da un
+launcher di cui il tavolo risponde viene rifiutato, quindi un ladro di chiavi può leggere la
+cartella ma non dare al tavolo una copia manomessa, fingere di ospitare, né riscrivere il file
+del tavolo. *Dimentica il tavolo* toglie le chiavi da un launcher, e l'amministratore può
+revocarle su Dropbox (*App collegate*), dopo di che ogni host si accoppia di nuovo. La cartella contiene anche un piccolo record di chi ospita — l'id del launcher,
 il tuo nome utente di Windows o Linux e il nome del tuo computer, l'indirizzo della partita —
 che gli altri host leggono; alla cartella si applica l'informativa sulla privacy di Dropbox. Se
 il cloud non risponde, il launcher propone di ospitare senza, a chiare lettere: la partita si
@@ -197,7 +316,9 @@ Al primo avvio l'app crea l'account `admin` e stampa in console una password cas
 una volta sola, appuntala. Al primo accesso ti chiede di cambiarla, e da lì crei gli account
 degli altri: in alto a destra, accanto al tuo nome, l'icona 👤⚙ *Account dei giocatori* (la
 vedi solo tu che sei amministratore). Ogni account nuovo nasce con una password generata da
-mostrare al diretto interessato: non è recuperabile, ma puoi sempre generarne un'altra.
+mostrare al diretto interessato: non è recuperabile, ma puoi sempre generarne un'altra. La
+stessa finestra ha *Accoppia un launcher…*, il codice che permette a un altro PC di ospitare la
+partita: vedi *Giocare da più PC (il cloud)*.
 
 | Ruolo | Cosa può fare |
 |---|---|
@@ -375,6 +496,19 @@ la variabile d'ambiente e non con la cartella.
 
 Una password persa non si recupera, perché l'impronta non si può girare al contrario: se ne
 genera un'altra dal pannello Account (🔑) e si consegna a chi la deve usare.
+
+
+**Un secondo fattore.** Il pulsante con lo scudo nell'intestazione attiva un codice usa e
+getta dopo la password: installa un'app di autenticazione sul telefono (una qualunque che
+faccia codici usa e getta), aggiungi l'account col segreto o col link che mostra la finestra,
+scrivi il codice che l'app mostra per confermare, e segnati gli otto codici di recupero che ti
+dà una volta sola, ognuno buono per un accesso senza telefono. Da lì in poi il tuo accesso
+chiede il codice, con un minuto di tolleranza per un orologio lento; un codice sbagliato conta
+sullo stesso freno di una password sbagliata. Si disattiva con un codice. L'amministratore può
+azzerare il secondo fattore di un altro account dal pannello degli account, per un telefono
+perso insieme ai codici; il diario lo dice. Conta soprattutto per l'amministratore: una
+password da sola, comunque sia uscita, non apre più l'account che fa i codici di accoppiamento.
+
 
 **Entrare in un altro account.** Dal pannello Account l'amministratore può guardare l'app con gli
 occhi di un altro — l'icona 🔓 accanto a ogni riga — senza saperne la password e senza

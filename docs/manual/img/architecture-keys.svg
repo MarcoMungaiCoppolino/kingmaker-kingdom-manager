@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="360" style="color:#1f2a24" viewBox="0 0 900 360" role="img" aria-label="Three columns: the administrator holds the Dropbox login, a copy of the folder key, the game's admin password; a host holds a copy of the same folder key and their own game password; the folder holds the copies with password hashes and the On Air token. A strip lists what a stolen key gives and does not give.">
+<style>
+text{font-family:'IBM Plex Sans','Segoe UI',system-ui,sans-serif;font-size:12px;fill:#1f2a24}
+.mono{font-family:'IBM Plex Mono',Consolas,monospace;font-size:11px}
+.small{font-size:10.5px;fill:#5d6a63}
+.title{font-size:13px;font-weight:600}
+.box{fill:#ffffff;stroke:#1f2a24;stroke-width:1.2}
+.soft{fill:#d9ece2;stroke:#1f6f4a;stroke-width:1.2}
+.warnbox{fill:none;stroke:#9a5b00;stroke-width:1.2;stroke-dasharray:4 3}
+.edge{fill:none;stroke:#1f2a24;stroke-width:1.1}
+.edge.hot{stroke:#1f6f4a;stroke-width:1.6}
+.edge.dashed{stroke-dasharray:5 4}
+.lane{stroke:#c9cfc9;stroke-width:1}
+</style>
+<rect width="100%" height="100%" fill="#f6f5f1"/>
+
+<rect x="20" y="20" width="270" height="200" rx="6" class="soft"/>
+<text x="155" y="46" text-anchor="middle" class="title">Administrator</text>
+<text x="40" y="76" class="small">• Dropbox login: makes and changes the keys</text>
+<text x="40" y="96" class="small">• a copy of the folder key, in the vault</text>
+<text x="40" y="116" class="small">• the game's administrator password:</text>
+<text x="52" y="132" class="small">pairing codes, accounts</text>
+<text x="40" y="156" class="small">• the launcher's "I set the table up" flag</text>
+<text x="52" y="172" class="small">(a local flag, not checked anywhere)</text>
+<text x="40" y="200" class="small">Admin buttons: New token, Pair a launcher,</text><text x="40" y="214" class="small">Change the keys, Ask to hand over</text>
+<rect x="315" y="20" width="270" height="200" rx="6" class="box"/>
+<text x="450" y="46" text-anchor="middle" class="title">Host</text>
+<text x="335" y="76" class="small">• a copy of the same folder key, in the vault</text>
+<text x="335" y="96" class="small">• their own game password</text>
+<text x="335" y="116" class="small">• no Dropbox account at all</text>
+<text x="335" y="156" class="small">Can technically do everything in the folder.</text>
+<text x="335" y="172" class="small">Cannot change the keys (needs the login).</text>
+<text x="335" y="200" class="small">Hosting is a trust decision: keep the</text><text x="335" y="214" class="small">hosts few, usually just the Game Master.</text>
+<rect x="610" y="20" width="270" height="200" rx="6" class="box"/>
+<text x="745" y="46" text-anchor="middle" class="title">Folder</text>
+<text x="630" y="76" class="small">• the game, every copy: kingdom, map,</text>
+<text x="642" y="92" class="small">journal, accounts with password hashes</text>
+<text x="642" y="108" class="small">(salted PBKDF2, never the passwords)</text>
+<text x="630" y="130" class="small">• the images</text>
+<text x="630" y="150" class="small">• the On Air token (the address's key)</text>
+<text x="630" y="170" class="small">• who hosts, from which PC</text>
+<text x="630" y="200" class="small">Not here: the session-cookie secret,</text><text x="630" y="214" class="small">the Dropbox password, any other file</text>
+<rect x="20" y="244" width="860" height="100" rx="6" class="warnbox"/>
+<text x="40" y="268" class="title">A stolen folder key</text>
+<text x="40" y="290" class="small">Gives: read everything, now and later; upload a doctored copy the next Start loads; delete copies; with the token, sit at the table's address with a fake page.</text>
+<text x="40" y="308" class="small">Does not give: the Dropbox account, any other file in it, the passwords in clear, the hosts' PCs, a logged-in session.</text>
+<text x="40" y="330" class="small">Remedy: disconnect the app on dropbox.com (kills every copy), authorise again, New token, a code per host. The launcher warns when another program sits at the address.</text>
+</svg>

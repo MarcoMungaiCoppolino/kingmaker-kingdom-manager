@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="300" style="color:#1f2a24" viewBox="0 0 900 300" role="img" aria-label="Decision tree of the welcome: who you are; an administrator answers where you play, then online a fixed address with three ways, then on network or online whether anyone else may host, with the Dropbox guide on yes; a host pairs with the table; both end at the summary.">
+<style>
+text{font-family:'IBM Plex Sans','Segoe UI',system-ui,sans-serif;font-size:12px;fill:#1f2a24}
+.mono{font-family:'IBM Plex Mono',Consolas,monospace;font-size:11px}
+.small{font-size:10.5px;fill:#5d6a63}
+.title{font-size:13px;font-weight:600}
+.box{fill:#ffffff;stroke:#1f2a24;stroke-width:1.2}
+.soft{fill:#d9ece2;stroke:#1f6f4a;stroke-width:1.2}
+.warnbox{fill:none;stroke:#9a5b00;stroke-width:1.2;stroke-dasharray:4 3}
+.edge{fill:none;stroke:#1f2a24;stroke-width:1.1}
+.edge.hot{stroke:#1f6f4a;stroke-width:1.6}
+.edge.dashed{stroke-dasharray:5 4}
+.lane{stroke:#c9cfc9;stroke-width:1}
+</style>
+<rect width="100%" height="100%" fill="#f6f5f1"/>
+
+<defs><marker id="a7" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1f2a24"/></marker></defs>
+<rect x="20" y="110" width="140" height="56" rx="5" class="soft"/>
+<text x="90" y="133" text-anchor="middle" class="title">Who are you?</text><text x="90" y="150" text-anchor="middle" class="small">language box on every page</text>
+<path d="M160 128 L230 70" class="edge" marker-end="url(#a7)"/>
+<text x="190" y="88" text-anchor="middle" class="small">administrator</text>
+<path d="M160 150 L230 230" class="edge" marker-end="url(#a7)"/>
+<text x="190" y="206" text-anchor="middle" class="small">host</text>
+<rect x="230" y="42" width="140" height="56" rx="5" class="box"/>
+<text x="300" y="65" text-anchor="middle" class="title">Where do you play?</text><text x="300" y="82" text-anchor="middle" class="small">this PC, network, online</text>
+<path d="M370 70 L440 70" class="edge" marker-end="url(#a7)"/>
+<text x="405" y="62" text-anchor="middle" class="small">online</text>
+<rect x="440" y="42" width="140" height="56" rx="5" class="box"/>
+<text x="510" y="65" text-anchor="middle" class="title">A fixed address</text><text x="510" y="82" text-anchor="middle" class="small">guide me, I have one, later</text>
+<path d="M580 70 L650 70" class="edge" marker-end="url(#a7)"/>
+<text x="615" y="62" text-anchor="middle" class="small">guide: 5 pages</text>
+<rect x="650" y="42" width="110" height="56" rx="5" class="box"/>
+<text x="705" y="65" text-anchor="middle" class="title">On Air pages</text><text x="705" y="82" text-anchor="middle" class="small">site, login, device, token</text>
+<path d="M300 98 L300 150 L440 150" class="edge" marker-end="url(#a7)"/>
+<text x="372" y="142" text-anchor="middle" class="small">network or online</text>
+<rect x="440" y="122" width="140" height="56" rx="5" class="box"/>
+<text x="510" y="145" text-anchor="middle" class="title">Anyone else to host?</text><text x="510" y="162" text-anchor="middle" class="small">just me, or set up Dropbox</text>
+<path d="M580 150 L650 150" class="edge" marker-end="url(#a7)"/>
+<text x="615" y="142" text-anchor="middle" class="small">yes: 6 pages</text>
+<rect x="650" y="122" width="110" height="56" rx="5" class="box"/>
+<text x="705" y="145" text-anchor="middle" class="title">Dropbox pages</text><text x="705" y="162" text-anchor="middle" class="small">account, app, key, code</text>
+<rect x="230" y="202" width="140" height="56" rx="5" class="box"/>
+<text x="300" y="225" text-anchor="middle" class="title">Pair with the table</text><text x="300" y="242" text-anchor="middle" class="small">address, code, PC name</text>
+<path d="M760 70 L800 70 L800 230 L370 230" class="edge" style="marker-end:none"/>
+<path d="M760 150 L800 150" class="edge"/>
+<path d="M370 230 L800 230" class="edge" marker-end="url(#a7)"/>
+<rect x="800" y="200" width="90" height="56" rx="5" class="soft"/>
+<text x="845" y="223" text-anchor="middle" class="title">Done</text><text x="845" y="240" text-anchor="middle" class="small">what was set,</text><text x="845" y="252" text-anchor="middle" class="small">press Start</text>
+<text x="20" y="286" class="small">"This computer only" ends after the second page. Skip is offered between the first page and the last. Reset the setup brings the welcome back.</text>
+</svg>

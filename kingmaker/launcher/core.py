@@ -8,6 +8,8 @@ prints goes to the log pane.
 """
 from __future__ import annotations
 
+import hashlib
+import hmac
 import json
 import os
 import re
@@ -28,17 +30,38 @@ from typing import Callable
 from kingmaker import __version__, config
 
 APP_NAME = "Kingmaker Kingdom Manager"
+# The name every launcher window gives Linux (WM_CLASS) instead of Tk's own
+# "Tk" and "Toplevel": GNOME groups windows by it, labels them with it and
+# finds their `.desktop` file through it (`StartupWMClass` in
+# packaging/linux/kingmaker.desktop says the same).
+WM_CLASS = "Kingmaker"
 REPOSITORY = "MarcoMungaiCoppolino/kingmaker-kingdom-manager"
 RELEASES_PAGE = f"https://github.com/{REPOSITORY}/releases/latest"
 RELEASES_API = f"https://api.github.com/repos/{REPOSITORY}/releases/latest"
 RELEASES_LIST_API = f"https://api.github.com/repos/{REPOSITORY}/releases?per_page=30"
 ON_AIR_PAGE = "https://on-air.nicegui.io/login"
+# Where a Dropbox account disconnects an app: the one way to cancel a key
+# copy that is out of reach (a lost PC), and it cancels every key.
+DROPBOX_APPS_PAGE = "https://www.dropbox.com/account/connected_apps"
 TOKEN_VARIABLE = "KINGMAKER_ON_AIR_TOKEN"
 ANONYMOUS_VARIABLE = "KINGMAKER_ON_AIR_ANONYMOUS"
 SECRET_VARIABLE = "KINGMAKER_LAUNCHER_SECRET"
 CREDENTIAL_VARIABLE = "KINGMAKER_SYNC_CREDENTIAL"
+# The hosting launcher's signing seed and id, for the game to vouch for a
+# newcomer at `POST /_launcher/pair` (`sync.make_admission`).
+SIGN_VARIABLE = "KINGMAKER_LAUNCHER_SIGN"
+LAUNCHER_ID_VARIABLE = "KINGMAKER_LAUNCHER_ID"
 
 MODES = ("local", "lan", "online")
+# Who this launcher is at the table, as the welcome's first page asked: the
+# administrator, who sets it up, or a host they let in. Each gets its own
+# main window.
+ROLES = ("admin", "host")
+# The welcome — who you are at the table, where you play, the address, the
+# others — shows on the first run only: `Settings.welcomed` remembers the
+# revision seen. Raise this when the launcher changes enough that whoever
+# set it up before should walk through the questions again.
+WELCOME_REVISION = 1
 SETTINGS_FILE = "launcher.json"
 LOCK_FILE = "launcher.lock"
 # How long a graceful stop may take before the child is killed.
@@ -48,6 +71,12 @@ PORT_ATTEMPTS = 20
 
 KM_LINE = re.compile(r"^KM (ready|lan|admin-password) (\S.*)$")
 AIR_LINE = re.compile(r"NiceGUI is on air at (https?://\S+)")
+# What the relay says, through NiceGUI's logger, when it refuses the token:
+# every five seconds, and the game never goes online (seen on the real relay,
+# 2026-10-06). The line quotes the token, which the log pane must not keep.
+# The whole phrase, logger included: `cli.py`'s own advice names the words.
+AIR_REFUSED = re.compile(r'nicegui\.air: Connection error: Invalid device token')
+TOKEN_QUOTED = re.compile(r'(Invalid device token ")([^"]*)(")')
 
 
 def is_frozen() -> bool:
@@ -102,8 +131,44 @@ class Settings:
     # (another user, another PC): the window then asks to connect again.
     vault: dict = field(default_factory=dict)
     vault_error: str = field(default="", compare=False)
+    # The revision of the welcome this launcher went through (WELCOME_REVISION
+    # once seen or skipped); 0 on a fresh install. A file from before the
+    # welcome existed is taken as set up already: `load` fills it in.
+    welcomed: int = 0
+    # Who this launcher is at the table (ROLES), as the welcome's first page
+    # answered; "" until then. A file from before it existed takes the
+    # table's role, or the administrator's: `load` fills it in.
+    role: str = ""
+    # This launcher's signing key pair (Ed25519), made once with its
+    # identity: the seed is a secret and lives in the vault like the token;
+    # the public key is what the table's file and the other launchers know
+    # this launcher by. Everything it writes to the folder carries its
+    # signature.
+    sign_seed: str = ""
+    sign_key: str = ""
 
-    SECRET_FIELDS = ("refresh_token",)
+    # The secrets among `cloud`'s keys: the administrator's own Dropbox
+    # access, and the second one made for the hosts, which pairing hands out.
+    SECRET_FIELDS = ("refresh_token", "hosts_refresh_token")
+
+    @property
+    def welcome_due(self) -> bool:
+        return self.welcomed < WELCOME_REVISION
+
+    @property
+    def host(self) -> bool:
+        """A host's launcher: the table box and Start, nothing to set up."""
+        return self.role == "host"
+
+    def reset_setup(self) -> None:
+        """Forgets what the welcome set, and the welcome is due again: who
+        you are, where you play, the address's token, the table and its keys.
+        The game, its saves and images, and every other setting stay."""
+        self.role = ""
+        self.mode = "local"
+        self.token = ""
+        self.cloud = {}
+        self.welcomed = 0
 
     @property
     def cloud_ready(self) -> bool:
@@ -114,13 +179,33 @@ class Settings:
         return Credential.from_dict(self.cloud)
 
     def identity(self) -> tuple[str, str]:
-        """(host_id, host_name), made up the first time."""
+        """(host_id, host_name), made up the first time, and the signing
+        key pair with them."""
         if not self.host_id:
             self.host_id = uuid.uuid4().hex[:12]
         if not self.host_name:
             who = self.cloud.get("username") or os.environ.get("USERNAME") or os.environ.get("USER") or ""
             self.host_name = f"{who}@{platform.node()}" if who else platform.node()
+        if not self.sign_seed or not self.sign_key:
+            from kingmaker.access import ed25519
+            seed = ed25519.new_seed()
+            self.sign_seed = seed.hex()
+            self.sign_key = ed25519.public_key(seed).hex()
         return self.host_id, self.host_name
+
+    def seed(self) -> bytes | None:
+        """The signing seed as bytes, None until `identity` made one."""
+        try:
+            return bytes.fromhex(self.sign_seed) if self.sign_seed else None
+        except ValueError:
+            return None
+
+    @property
+    def is_admin(self) -> bool:
+        """The administrator's launcher: set up the table and holds its own
+        Dropbox access. Whether it still has the seat is the table file's
+        word (`sync.TableRecord.admin_key`), checked at every look."""
+        return self.cloud.get("role") == "admin" and self.cloud_ready
 
     @classmethod
     def load(cls, path: Path | None = None) -> "Settings":
@@ -135,6 +220,15 @@ class Settings:
         if not isinstance(known.get("vault", {}), dict):
             known["vault"] = {}
         settings = cls(**known)
+        if "welcomed" not in raw or not isinstance(settings.welcomed, int):
+            # Set up before the welcome existed (2.0.0): not asked again.
+            settings.welcomed = WELCOME_REVISION
+        if settings.role not in ROLES:
+            # Set up before the role existed (2.0.0): the table says it, and
+            # without a table it was the administrator's launcher.
+            table_role = settings.cloud.get("role")
+            settings.role = (table_role if table_role in ROLES
+                             else "admin" if not settings.welcome_due else "")
         if settings.mode not in MODES:
             settings.mode = "local"
         if not isinstance(settings.port, int) or not 1 <= settings.port <= 65535:
@@ -153,6 +247,8 @@ class Settings:
                     settings.cloud[name] = str(kept[name])
             if kept.get("token") and not settings.token:
                 settings.token = str(kept["token"])
+            if kept.get("sign_seed") and not settings.sign_seed:
+                settings.sign_seed = str(kept["sign_seed"])
         return settings
 
     def save(self, path: Path | None = None) -> None:
@@ -165,6 +261,7 @@ class Settings:
         # again, and the new secrets replace it.
         held = {name: str(self.cloud.get(name, "")) for name in self.SECRET_FIELDS}
         held["token"] = self.token.strip()
+        held["sign_seed"] = self.sign_seed.strip()
         if any(held.values()):
             from kingmaker.launcher import vault
             try:
@@ -180,6 +277,7 @@ class Settings:
                 written["vault"] = blob
                 written["cloud"] = {k: v for k, v in written["cloud"].items() if k not in self.SECRET_FIELDS}
                 written["token"] = ""
+                written["sign_seed"] = ""
         elif self.vault:
             from kingmaker.launcher import vault
             vault.forget(self.vault)
@@ -239,6 +337,13 @@ class Release:
     assets: list[dict] = field(default_factory=list)
     published: str = ""            # "2026-09-16", from GitHub
     prerelease: bool = False
+
+    @property
+    def signed(self) -> bool:
+        """Whether the release carries the owner's signed list of hashes."""
+        from kingmaker.launcher import keys
+        names = {str(a.get("name", "")) for a in self.assets}
+        return keys.SUMS_NAME in names and keys.SIG_NAME in names
 
     def installer(self) -> dict | None:
         """The file for this platform: the Windows setup, or the Linux tarball."""
@@ -307,6 +412,49 @@ def find_release(version: str) -> Release | None:
     """The release of that version on GitHub, or None when offline or when
     there is none: the way to the installer the table's version asks for."""
     return release_for(list_releases(), version)
+
+
+def fetch_bytes(url: str, timeout: float = 20.0, limit: int = 1 << 20) -> bytes:
+    """A small file from a release, whole, with a ceiling: the sums and the
+    signature are a few hundred bytes."""
+    request = urllib.request.Request(url, headers={"User-Agent": f"{APP_NAME}/{__version__}"})
+    with urllib.request.urlopen(request, timeout=timeout) as answer:
+        return answer.read(limit + 1)[:limit]
+
+
+def verify_download(path: Path, release: "Release",
+                    fetch: Callable[[str], bytes] | None = None) -> str:
+    """Whether the installer at `path` is the one the owner built.
+
+    "signed": the release carries a `SHA256SUMS` signed by one of the
+    owner's keys (`launcher/keys.py`) and the file's hash is in it.
+    "unsigned": the release carries no sums or no signature, a release
+    from before 2.0.0; the window asks before running one. Anything else
+    raises ValueError and the file must not run: a signature that is not
+    the owner's, a hash that differs, a file the list does not name."""
+    from kingmaker.access import ed25519
+    from kingmaker.launcher import keys
+    named = {str(a.get("name", "")): a for a in release.assets}
+    sums, sig = named.get(keys.SUMS_NAME), named.get(keys.SIG_NAME)
+    if sums is None or sig is None:
+        return "unsigned"
+    fetch = fetch or fetch_bytes
+    sums_bytes = fetch(str(sums.get("url", "")))
+    try:
+        signature = bytes.fromhex(fetch(str(sig.get("url", ""))).decode("ascii").strip())
+    except (ValueError, UnicodeDecodeError):
+        raise ValueError("the signature cannot be read")
+    if not any(ed25519.verify(bytes.fromhex(public), sums_bytes, signature)
+               for public in keys.RELEASE_KEYS if len(public) == 64):
+        raise ValueError("the signature is not the owner's")
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    for line in sums_bytes.decode("utf-8", "replace").splitlines():
+        parts = line.split()
+        if len(parts) >= 2 and parts[-1] == path.name:
+            if hmac.compare_digest(parts[0].lower(), digest):
+                return "signed"
+            raise ValueError("the file's hash differs from the signed one")
+    raise ValueError("the signed list does not name this file")
 
 
 def download(url: str, target: Path, progress: Callable[[int, int], None] | None = None,
@@ -403,12 +551,21 @@ def server_environment(settings: Settings, secret: str = "", cloud: bool = True,
     if secret:
         env[SECRET_VARIABLE] = secret
     if cloud and settings.cloud_ready:
-        # What another host's launcher receives from the credential route:
-        # the cloud, the table's token and name. Never the database's business.
+        # What a launcher receives when it pairs with a code: the cloud, the
+        # table's name and id, the administrator's key to trust the table
+        # file by. The hosts' Dropbox access, never the administrator's own
+        # (a host hands out the one it holds, which is the hosts'). Not the
+        # token (it is in the table's folder), never the database's business.
         handout = {**{k: settings.cloud.get(k, "") for k in
-                      ("app_key", "refresh_token", "account_id", "account_name", "app_name")},
-                   "table": settings.cloud.get("table", ""), "token": settings.token.strip()}
+                      ("app_key", "account_id", "account_name", "app_name")},
+                   "refresh_token": settings.cloud.get("hosts_refresh_token") or settings.cloud.get("refresh_token", ""),
+                   "table": settings.cloud.get("table", ""),
+                   "table_id": settings.cloud.get("table_id", ""),
+                   "admin_key": settings.cloud.get("admin_key", "")}
         env[CREDENTIAL_VARIABLE] = json.dumps(handout)
+        if settings.sign_seed and settings.host_id:
+            env[SIGN_VARIABLE] = settings.sign_seed
+            env[LAUNCHER_ID_VARIABLE] = settings.host_id
     return env
 
 
@@ -416,15 +573,15 @@ PASSWORD_LINE = re.compile(r"(password:\s*)(\S+)", re.IGNORECASE)
 
 
 def mask_secrets(line: str) -> str:
-    """A line the server printed, with whatever follows `password:` hidden.
-    The first-start block says the password in words, and the log pane —
-    which people paste into bug reports — must not keep it."""
-    return PASSWORD_LINE.sub(r"\1********", line)
+    """A line the server printed, with whatever follows `password:` hidden,
+    and the token the relay quotes when it refuses it. The log pane — which
+    people paste into bug reports — must keep neither."""
+    return TOKEN_QUOTED.sub(r"\1********\3", PASSWORD_LINE.sub(r"\1********", line))
 
 
 def parse_line(line: str) -> tuple[str, str] | None:
-    """`("ready", url)`, `("lan", url)`, `("admin-password", pw)`, `("air", url)`
-    or None for a line that is just log."""
+    """`("ready", url)`, `("lan", url)`, `("admin-password", pw)`, `("air", url)`,
+    `("air-refused", "")` or None for a line that is just log."""
     line = line.strip()
     found = KM_LINE.match(line)
     if found:
@@ -432,7 +589,22 @@ def parse_line(line: str) -> tuple[str, str] | None:
     found = AIR_LINE.search(line)
     if found:
         return "air", found.group(1).rstrip("/") + "/"
+    if AIR_REFUSED.search(line):
+        return "air-refused", ""
     return None
+
+
+# The addresses each place gives (the kinds `parse_line` reads), in the order
+# the window lists them.
+LINK_KINDS = {"local": ("local",), "lan": ("local", "lan"), "online": ("local", "lan", "air")}
+
+
+def links_for_mode(links: dict[str, str], mode: str) -> dict[str, str]:
+    """The addresses a stopped game still lists, as the place now chosen
+    gives them: the last run's Online link under "On this computer only"
+    would point at nothing the next Start makes."""
+    kinds = LINK_KINDS.get(mode, ("local",))
+    return {kind: url for kind, url in links.items() if kind in kinds}
 
 
 class Server:
@@ -682,6 +854,12 @@ def whoami_proof(secret: str, nonce: str) -> str:
     return hmac.new(secret.encode("utf-8"), nonce.encode("ascii"), hashlib.sha256).hexdigest()
 
 
+def mode_for_address(address: str) -> str:
+    """Where a table is played, read off its address: through the relay
+    ("online") or on the network ("lan"). A host who pairs does not choose."""
+    return "online" if "on-air.nicegui.io" in (address or "").lower() else "lan"
+
+
 def is_random_air_address(url: str) -> bool:
     """Whether the relay handed out an anonymous device instead of the
     token's: the address then has `/devices/` in it, as `cli.py` says."""
@@ -700,26 +878,52 @@ def probe_address(address: str, nonce: str, timeout: float = 10.0) -> tuple[dict
                                               "User-Agent": f"{APP_NAME}/{__version__}"})
     try:
         with urllib.request.urlopen(request, timeout=timeout) as answer:
-            data = json.loads(read_body(answer).decode("utf-8"))
+            body = read_body(answer)
     except urllib.error.HTTPError as error:
         return None, str(error.code)
-    except (urllib.error.URLError, TimeoutError, ValueError, OSError) as error:
+    except (urllib.error.URLError, TimeoutError, OSError) as error:
         return None, str(error)
+    try:
+        data = json.loads(body.decode("utf-8"))
+    except (ValueError, UnicodeDecodeError):
+        data = None
     if not isinstance(data, dict) or not isinstance(data.get("proof"), str):
-        return None, "no proof in the answer"
+        # Something answered with a page, not with a proof: a program that
+        # is not this server (or an older one) holds the address.
+        return None, ANSWERS_NOT_OURS
     return data, ""
 
 
-def fetch_credential(address: str, username: str, password: str, timeout: float = 20.0) -> dict:
-    """Asks a running host for the cloud credential: `POST /_launcher/credential`
-    at the table's address. Returns `{"credential", "role", "username", "kingdom"}`;
-    raises LookupError when refused (wrong password, or not allowed to host),
-    OSError when the address does not answer."""
+ANSWERS_NOT_OURS = "answers, but not with a proof"
+
+
+def address_state(address: str, secret: str, timeout: float = 10.0) -> str:
+    """Who holds the public address: "ours" (the server started with
+    `secret` proved it), "other" (something answers there, with another
+    proof or with a page), or "none" (nothing answers, a 404 — what the
+    relay serves when no program is connected)."""
+    nonce = secrets.token_hex(8)
+    data, why = probe_address(address, nonce, timeout=timeout)
+    if data is not None:
+        return "ours" if data.get("proof") == whoami_proof(secret, nonce) else "other"
+    return "other" if why == ANSWERS_NOT_OURS else "none"
+
+
+def pair(address: str, code: str, host_name: str, timeout: float = 20.0,
+         host_id: str = "", key: str = "") -> dict:
+    """Asks the host for the cloud credential with a pairing code:
+    `POST /_launcher/pair` at the table's address, with this launcher's id
+    and public key for the admission. Returns `{"credential", "table_id",
+    "table", "kingdom", "admission"}`; raises LookupError when refused (a
+    wrong, used or expired code; a host too old to know codes), OSError
+    when the address does not answer. No password travels: a program at a
+    hijacked address collects a code that is dead by then."""
     address = address.strip().rstrip("/")
     if not address.startswith(("http://", "https://")):
         address = "https://" + address
-    body = json.dumps({"username": username.strip(), "password": password}).encode("utf-8")
-    request = urllib.request.Request(f"{address}/_launcher/credential", data=body, method="POST",
+    body = json.dumps({"code": code.strip(), "host_name": host_name.strip(),
+                       "host_id": host_id, "key": key}).encode("utf-8")
+    request = urllib.request.Request(f"{address}/_launcher/pair", data=body, method="POST",
                                      headers={"Content-Type": "application/json",
                                               "Accept-Encoding": "identity",
                                               "User-Agent": f"{APP_NAME}/{__version__}"})
@@ -735,18 +939,47 @@ def fetch_credential(address: str, username: str, password: str, timeout: float 
     return data
 
 
-def adopt_credential(settings: Settings, answer: dict) -> None:
-    """Keeps what a host handed out: the cloud, the table's token, our role."""
-    credential = answer["credential"]
+def adopt_pairing(settings: Settings, answer: dict, host_name: str = "") -> None:
+    """Keeps what the host handed out — but only after it opened the table's
+    folder and the table there is the one the host named: a program at a
+    hijacked address, or a host running a copy that is not the table's,
+    hands out something that fails here and nothing is kept. Raises
+    LookupError then. Nothing here is saved to disk: the caller does."""
+    from kingmaker.launcher import dropbox, sync
+    credential = answer.get("credential") or {}
+    found = dropbox.Credential.from_dict(credential)
+    if found is None:
+        raise LookupError("no credential")
+    client = dropbox.Client(found)
+    table = sync.read_table(client)
+    wanted = str(answer.get("table_id", ""))
+    if table is None or not wanted or table.table_id != wanted:
+        raise LookupError("table mismatch")
+    # The table file must be the administrator's: signed by the key the
+    # host handed out with the credential. A table rewritten by a key
+    # thief, or signed by another seat, is not the one we were let into.
+    admin_key = str(credential.get("admin_key", ""))
+    if not table.trusted_by(admin_key):
+        raise LookupError("table not signed by the administrator")
+    # The admission the game signed for us must be vouched for by a
+    # launcher the table knows, and name our own key.
+    host_id, _name = settings.identity()
+    admission = answer.get("admission") if isinstance(answer.get("admission"), dict) else {}
+    entries, _rev = sync.read_launchers(client)
+    known = sync.known_launchers(table, entries + [admission])
+    if (str(admission.get("host_id", "")) != host_id or str(admission.get("key", "")) != settings.sign_key
+            or known.get(host_id) != settings.sign_key):
+        raise LookupError("admission not vouched for")
+    sync.add_launcher(client, admission)
     settings.cloud = {k: str(credential.get(k, "")) for k in
                       ("app_key", "refresh_token", "account_id", "account_name", "app_name")}
-    settings.cloud["table"] = str(credential.get("table") or answer.get("kingdom") or "")
-    settings.cloud["role"] = str(answer.get("role", ""))
-    settings.cloud["username"] = str(answer.get("username", ""))
-    if credential.get("token"):
-        settings.token = str(credential["token"])
-    settings.host_name = ""          # renamed after the account we now know
-    settings.identity()
+    settings.cloud["table"] = table.name or str(answer.get("table") or answer.get("kingdom") or "")
+    settings.cloud["table_id"] = table.table_id
+    settings.cloud["admin_key"] = admin_key
+    settings.cloud["role"] = "host"
+    settings.token = ""                  # the token is the table's, read at Start
+    if host_name.strip():
+        settings.host_name = host_name.strip()
 
 
 def reset_admin_password() -> tuple[str, str]:

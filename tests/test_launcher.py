@@ -51,13 +51,77 @@ cloudy.save(path)
 back = core.Settings.load(path)
 results.append(("the cloud credential round-trips", back.cloud_ready and back.cloud["table"] == "T"))
 results.append(("a launcher without a credential is not cloud-ready", not core.Settings().cloud_ready))
+# The welcome: due on a fresh install, never for a file from before it
+# existed, and remembered once seen or skipped.
+results.append(("the welcome is due on a fresh install", core.Settings().welcome_due))
+path.write_text('{"mode": "online", "token": ""}', encoding="utf-8")
+results.append(("a settings file from before the welcome counts as set up",
+                not core.Settings.load(path).welcome_due))
+seen = core.Settings(welcomed=core.WELCOME_REVISION)
+seen.save(path)
+results.append(("the welcome seen is remembered", not core.Settings.load(path).welcome_due))
+stale = core.Settings(welcomed=core.WELCOME_REVISION - 1)
+stale.save(path)
+results.append(("an older revision brings the welcome back", core.Settings.load(path).welcome_due))
+results.append(("a host's mode follows the table's address",
+                core.mode_for_address("https://on-air.nicegui.io/devices/abc/") == "online"
+                and core.mode_for_address("http://192.168.1.10:8080") == "lan"
+                and core.mode_for_address("") == "lan"))
+# The role: what the welcome answered, and for a file from before it, the
+# table's, or the administrator's.
+for role in core.ROLES:
+    core.Settings(role=role, welcomed=core.WELCOME_REVISION).save(path)
+    results.append((f"the role is remembered ({role})", core.Settings.load(path).role == role))
+path.write_text('{"cloud": {"role": "host", "table": "T"}}', encoding="utf-8")
+results.append(("a paired launcher from before the role is a host's", core.Settings.load(path).host))
+path.write_text('{"mode": "lan"}', encoding="utf-8")
+results.append(("a launcher from before the role, without a table, is the administrator's",
+                core.Settings.load(path).role == "admin"))
+results.append(("a fresh install has no role yet", core.Settings.load(folder / "none.json").role == ""))
+# The reset: the welcome's answers go, the rest of the settings and the
+# game stay.
+game = folder / "game.db"
+game.write_bytes(b"the kingdom")
+reset = core.Settings(mode="online", port=8123, language="it", token="AIR", role="host", host_id="pc1",
+                      welcomed=core.WELCOME_REVISION, check_updates=False,
+                      cloud={"app_key": "k", "refresh_token": "r", "table": "T", "role": "host"})
+reset.reset_setup()
+reset.save(path)
+reset = core.Settings.load(path)
+results.append(("a reset forgets the welcome's answers",
+                reset.welcome_due and reset.role == "" and reset.mode == "local"
+                and not reset.token and not reset.cloud and not reset.vault))
+results.append(("a reset keeps the other settings",
+                reset.port == 8123 and reset.language == "it" and reset.host_id == "pc1"
+                and not reset.check_updates))
+results.append(("a reset does not touch the game", game.read_bytes() == b"the kingdom"))
 host_id, host_name = back.identity()
 results.append(("the identity is made once and named after the account",
                 len(host_id) == 12 and host_name.startswith("dm@") and back.identity() == (host_id, host_name)))
 env_cloud = core.server_environment(cloudy, "shh")
 handout = __import__("json").loads(env_cloud[core.CREDENTIAL_VARIABLE])
-results.append(("the hand-out carries the cloud and the table's token",
-                handout["refresh_token"] == "r" and handout["token"] == "AIR" and handout["table"] == "T"))
+results.append(("the hand-out carries the cloud and the table's name and id, never the token",
+                handout["refresh_token"] == "r" and "token" not in handout and handout["table"] == "T"
+                and "table_id" in handout))
+cloudy.identity()                       # the key pair comes with the identity, made at Start
+env_cloud = core.server_environment(cloudy, "shh")
+results.append(("the hand-out carries the signing seed and the launcher's id for the admissions",
+                env_cloud.get(core.SIGN_VARIABLE) == cloudy.sign_seed and len(cloudy.sign_seed) == 64
+                and env_cloud.get(core.LAUNCHER_ID_VARIABLE) == cloudy.host_id))
+cloudy.cloud["hosts_refresh_token"] = "hosts-r"
+cloudy.cloud["admin_key"] = cloudy.sign_key
+two_keys = __import__("json").loads(core.server_environment(cloudy, "shh")[core.CREDENTIAL_VARIABLE])
+results.append(("with two keys the hand-out carries the hosts' one and the administrator's public key",
+                two_keys["refresh_token"] == "hosts-r" and "hosts_refresh_token" not in two_keys
+                and two_keys["admin_key"] == cloudy.sign_key))
+cloudy.save(path)
+reloaded = core.Settings.load(path)
+written = __import__("json").loads(path.read_text(encoding="utf-8"))
+results.append(("the hosts' key and the signing seed go to the vault, not to the file",
+                reloaded.cloud.get("hosts_refresh_token") == "hosts-r" and reloaded.sign_seed == cloudy.sign_seed
+                and reloaded.sign_key == cloudy.sign_key and written["sign_seed"] == ""
+                and "hosts_refresh_token" not in written["cloud"] and "hosts-r" not in path.read_text(encoding="utf-8")))
+del cloudy.cloud["hosts_refresh_token"]
 results.append(("no hand-out without a credential",
                 core.CREDENTIAL_VARIABLE not in core.server_environment(core.Settings(), "shh")))
 cloudy.mode = "online"
@@ -89,11 +153,27 @@ results.append(("NiceGUI's on air line",
                 core.parse_line("NiceGUI is on air at https://europe.on-air.io/marco/device-0")
                 == ("air", "https://europe.on-air.io/marco/device-0/")))
 results.append(("a log line is not an event", core.parse_line("INFO: Uvicorn running on ...") is None))
+refused = '2026-10-06 18:34:06,657 WARNING nicegui.air: Connection error: Invalid device token "SECRET-TOKEN"'
+results.append(("the relay refusing the token is an event of its own",
+                core.parse_line(refused) == ("air-refused", "")))
+results.append(("the CLI's own advice, which names those words, is not",
+                core.parse_line("  'Invalid device token', the relay refused the token (revoked,") is None))
+results.append(("and the token it quotes is masked for the log",
+                "SECRET-TOKEN" not in core.mask_secrets(refused) and "********" in core.mask_secrets(refused)))
 results.append(("an unknown KM kind is log", core.parse_line("KM whatever x") is None))
 results.append(("a password printed in words is masked for the log",
                 core.mask_secrets("      password:  abcd-efgh-ijkl") == "      password:  ********"
                 and core.mask_secrets("Password: x") == "Password: ********"
                 and core.mask_secrets("INFO: Uvicorn running") == "INFO: Uvicorn running"))
+# The last run's addresses, once stopped, as the place now chosen gives them.
+last_run = {"local": "http://127.0.0.1:8080", "lan": "http://192.168.1.7:8080",
+            "air": "https://on-air.nicegui.io/marco/device-0/"}
+results.append(("on this computer only, a stopped game lists this computer alone",
+                core.links_for_mode(last_run, "local") == {"local": "http://127.0.0.1:8080"}))
+results.append(("on the network, no Online address",
+                list(core.links_for_mode(last_run, "lan")) == ["local", "lan"]))
+results.append(("online, every address of the last run",
+                core.links_for_mode(last_run, "online") == last_run))
 
 # 4. a release as GitHub describes it
 release = core.parse_release({"tag_name": "v1.2.0", "html_url": "https://example/rel",

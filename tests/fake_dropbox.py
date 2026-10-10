@@ -12,6 +12,7 @@ Files carry `rev` and `server_modified` like the real thing; `upload` in
 """
 from __future__ import annotations
 
+import email.utils
 import json
 import threading
 import time
@@ -19,7 +20,11 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 
 class FakeDropbox:
-    def __init__(self) -> None:
+    def __init__(self, host: str = "127.0.0.1", port: int = 0) -> None:
+        # The tests take a free port on the loopback; a bench that serves two
+        # launchers on two machines binds every interface on a known port.
+        self.host = host
+        self.port = port
         self.files: dict[str, dict] = {}          # path_lower → {name, path, data, rev, modified}
         self.folders: set[str] = set()
         self.clock = time.time()
@@ -43,10 +48,16 @@ class FakeDropbox:
             def log_message(self, *_a) -> None:
                 pass
 
+            def date_time_string(self, timestamp=None) -> str:
+                # The Date header every answer carries says the fake's own
+                # time, the one the tests advance: the client reads a
+                # record's age off it, as off the real service's.
+                return email.utils.formatdate(box.clock, usegmt=True)
+
             def do_POST(self) -> None:
                 box.handle(self)
 
-        self.server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        self.server = ThreadingHTTPServer((self.host, self.port), Handler)
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
         self.thread.start()
         return self

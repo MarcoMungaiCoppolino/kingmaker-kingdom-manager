@@ -24,7 +24,7 @@ def _activity_dc(act: dict) -> tuple[int, str]:
         return STATE.control_dc + cd.get("mod", 0), (
             t("turn.control_dc", control_dc=STATE.control_dc)
             + (f" {cd['mod']:+d}" if cd.get("mod") else "")
-            + (f" — {cd['note']}" if cd.get("note") else ""))
+            + (f" · {cd['note']}" if cd.get("note") else ""))
     if cd["kind"] == "fixed":
         return cd["valore"], t("turn.fixed_dc", dc=cd["valore"])
     if cd["kind"] == "none_":

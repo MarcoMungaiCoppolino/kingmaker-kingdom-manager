@@ -943,6 +943,8 @@ def plan_text(plan, of_group: bool = False, lang: str | None = None) -> str:
     road are not the cost of the journey, which starts from where everyone is.
     """
     days = plan.days
+    if lang is None:                 # this window's own language, not the default one
+        lang = i18n.current()
     ceiling = i18n.t_in(lang, "drawing.max_prefix") if getattr(plan, "max_estimate", False) else ""
     how_many = i18n.tn_in(lang, "drawing.days", days)
     if of_group:

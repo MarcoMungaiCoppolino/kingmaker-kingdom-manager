@@ -12,7 +12,18 @@ which such a system usually does not carry:
     sudo apt install libxss1         (Debian, Ubuntu)
     sudo dnf install libXScrnSaver   (Fedora, RHEL)
 
-To uninstall, delete the folder. To update, extract the new version over it:
+To have it in your applications menu, with its name and icon in the dock or
+taskbar (GNOME, KDE and the others), run this once from inside this folder:
+
+    mkdir -p ~/.local/share/applications
+    sed -e "s|^Exec=.*|Exec=\"$PWD/kingmaker-kingdom-manager\"|" \
+        -e "s|^Icon=.*|Icon=$PWD/_internal/icon/kingmaker.png|" \
+        kingmaker.desktop > ~/.local/share/applications/kingmaker.desktop
+
+Moved the folder? Run it again from the new place.
+
+To uninstall, delete the folder (and ~/.local/share/applications/kingmaker.desktop,
+if you made it). To update, extract the new version over it:
 saves/ and assets/ are untouched. The launcher keeps its secrets (the cloud
 access, the On Air token) in ~/.local/share/kingmaker-kingdom-manager/secrets/,
 readable by you alone: delete that folder too when this PC leaves the table.

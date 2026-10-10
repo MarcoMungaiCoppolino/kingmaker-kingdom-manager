@@ -58,7 +58,9 @@ The easiest way, no Python and no terminal: the installed app, from the
   only (no administrator rights), under `%LOCALAPPDATA%\Programs` unless you choose another
   folder, and puts a *Kingmaker Kingdom Manager* entry in the Start menu. The file is not
   signed with a paid certificate, so Windows shows *Windows protected your PC* the first time:
-  click **More info**, then **Run anyway**.
+  click **More info**, then **Run anyway**. Every release carries a list of its installers'
+  hashes signed with the author's own key, and the launcher checks an installer against it
+  before running an update.
 - **Linux** — `Kingmaker-Kingdom-Manager-<version>-linux-x86_64.tar.gz`: extract it anywhere
   you can write to and run `kingmaker-kingdom-manager`. Needs Ubuntu 22.04 or newer, Debian 12
   or newer, or any distribution with glibc 2.35+. On a desktop nothing else is needed; on a
@@ -66,10 +68,12 @@ The easiest way, no Python and no terminal: the installed app, from the
   library, which such a system usually does not carry: `sudo apt install libxss1` (Debian,
   Ubuntu) or `sudo dnf install libXScrnSaver` (Fedora, RHEL).
 
-What opens is the **launcher**: choose where you play (this computer, the same network, online
-with distant friends), press *Start*, and the game opens in your browser. The first time it
-shows the administrator's password in a dialog; the links to give the players have a *Copy*
-button; *Online* has a field for your On Air token and the steps to get one. Played before,
+What opens is the **launcher**. The first time it asks, one page each and in the language you
+pick on the first page: who you are at the table (the administrator, who sets it up, or a host
+someone let in), where you play (this computer, the same network, online with distant friends)
+and, online, whether the table gets a fixed address, with a picture guide to the free On Air
+token. Then press *Start* and the game opens in your browser. The first start shows the
+administrator's password in a dialog; the links to give the players have a *Copy* button. Played before,
 on another PC or from source? *Load a save file…* in the launcher, or the same box on the
 kingdom creation page, takes the zip from its Save tab (or its `kingmaker.db`) and brings
 everything back, images included. Your game lives in
@@ -79,9 +83,15 @@ new version is out and, on Windows, downloads it for you: that is one request to
 every start, and *Settings* can switch it off.
 
 **Several PCs.** The launcher can also move the hosting between the administrator and the
-GMs marked *Can host*, through a folder in the administrator's free Dropbox: whoever starts
-first hosts, the others join, the game follows. The administrator sets it up once, guided by
-pictures; the other hosts type their account once. See the [user guide](docs/user-guide.md).
+GMs they let in, through a folder in the administrator's free Dropbox: whoever starts first
+hosts, the others join, the game follows. The administrator sets it up once, guided by
+pictures; each other host pairs once, with a code the administrator makes in the game and no
+password. The folder has two keys, the administrator's and the hosts'; every launcher signs
+what it writes there, and the table's file says which launchers it vouches for, so a stolen
+key can read the folder but cannot feed it a copy or pass as a host. See the
+[user guide](docs/user-guide.md).
+
+![The welcome](docs/manual/img/screenshots/welcome.jpg)
 
 ![The launcher](docs/manual/img/screenshots/launcher.jpg)
 
@@ -236,7 +246,9 @@ on port 8080 with the game in `./saves` and the images in `./assets`.
 Passwords are never stored: only a salted PBKDF2-HMAC-SHA256 hash, in your own database. There
 is no account with any external service. Uploads are checked to be real images and renamed;
 the `/assets` folder is served only to signed-in users. Players receive only the hexes they
-know: the filter is on the server, not in the page.
+know: the filter is on the server, not in the page. An account can ask a one-time code from a
+phone after its password. Installers are signed with the author's offline key, and the launcher
+refuses one that does not verify.
 
 ## Privacy and data
 
@@ -247,8 +259,9 @@ the uploaded images, and the one cookie, the signed session that keeps you logge
 PC or on the LAN nothing leaves the machine — pages, scripts and typefaces are all served by
 the host. Online, the On Air relay sees the players' addresses and the traffic; with the cloud,
 copies of the whole game (password hashes included) and a record with the host's username and
-computer name go to the administrator's Dropbox; the launcher asks GitHub for a newer version
-at start unless told not to. Whoever hosts holds the players' data and answers for it. The
+computer name go to the administrator's Dropbox, each signed by the launcher that wrote it,
+and the folder lists the launchers let in by a public key each makes for itself; the launcher
+asks GitHub for a newer version at start unless told not to. Whoever hosts holds the players' data and answers for it. The
 whole notice is [PRIVACY.md](PRIVACY.md), and every player can read it in the app under
 *Manual → Privacy & licences*. What the app protects and what it does not is in
 [SECURITY.md](SECURITY.md).

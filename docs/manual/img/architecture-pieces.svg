@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="430" style="color:#1f2a24" viewBox="0 0 920 430" role="img" aria-label="Players' browsers reach the game server on the host's PC through the On Air relay; the launcher on that PC writes copies and its record to the Dropbox folder, which the other hosts' launchers read; the launcher asks GitHub for newer versions at start.">
+<style>
+text{font-family:'IBM Plex Sans','Segoe UI',system-ui,sans-serif;font-size:12px;fill:#1f2a24}
+.mono{font-family:'IBM Plex Mono',Consolas,monospace;font-size:11px}
+.small{font-size:10.5px;fill:#5d6a63}
+.title{font-size:13px;font-weight:600}
+.box{fill:#ffffff;stroke:#1f2a24;stroke-width:1.2}
+.soft{fill:#d9ece2;stroke:#1f6f4a;stroke-width:1.2}
+.warnbox{fill:none;stroke:#9a5b00;stroke-width:1.2;stroke-dasharray:4 3}
+.edge{fill:none;stroke:#1f2a24;stroke-width:1.1}
+.edge.hot{stroke:#1f6f4a;stroke-width:1.6}
+.edge.dashed{stroke-dasharray:5 4}
+.lane{stroke:#c9cfc9;stroke-width:1}
+</style>
+<rect width="100%" height="100%" fill="#f6f5f1"/>
+
+<defs><marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1f2a24"/></marker>
+<marker id="a1h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1f6f4a"/></marker></defs>
+<!-- players -->
+<g>
+  <rect x="30" y="60" width="54" height="38" rx="3" class="box"/><rect x="30" y="112" width="54" height="38" rx="3" class="box"/><rect x="30" y="164" width="54" height="38" rx="3" class="box"/>
+  <text x="57" y="84" text-anchor="middle" class="small">player</text><text x="57" y="136" text-anchor="middle" class="small">player</text><text x="57" y="188" text-anchor="middle" class="small">player</text>
+  <text x="57" y="40" text-anchor="middle" class="title">Browsers</text>
+  <text x="57" y="226" text-anchor="middle" class="small">just a link,</text><text x="57" y="240" text-anchor="middle" class="small">no install</text>
+</g>
+<!-- relay -->
+<rect x="170" y="90" width="150" height="86" rx="6" class="box"/>
+<text x="245" y="118" text-anchor="middle" class="title">On Air relay</text>
+<text x="245" y="136" text-anchor="middle" class="small">on-air.nicegui.io</text>
+<text x="245" y="152" text-anchor="middle" class="small">sees the traffic</text>
+<text x="245" y="166" text-anchor="middle" class="small">fixed address with a token</text>
+<!-- host pc -->
+<rect x="400" y="40" width="270" height="250" rx="8" class="soft"/>
+<text x="535" y="66" text-anchor="middle" class="title">The host's PC</text>
+<rect x="420" y="84" width="230" height="80" rx="5" class="box"/>
+<text x="535" y="108" text-anchor="middle" class="title">Game server</text>
+<text x="535" y="126" text-anchor="middle" class="small">NiceGUI, port 8080</text>
+<text x="535" y="142" text-anchor="middle" class="small">kingmaker.db, images, accounts</text>
+<rect x="420" y="184" width="230" height="90" rx="5" class="box"/>
+<text x="535" y="208" text-anchor="middle" class="title">Launcher</text>
+<text x="535" y="226" text-anchor="middle" class="small">Tk window: Start, the table box</text>
+<text x="535" y="242" text-anchor="middle" class="small">claims, uploads copies, heartbeat</text>
+<text x="535" y="258" text-anchor="middle" class="small">vault: the keys, protected</text>
+<path d="M535 164 L535 184" class="edge" marker-end="url(#a1)"/>
+<text x="548" y="178" class="small">starts, watches</text>
+<!-- dropbox -->
+<g>
+  <path d="M750 70 a60 14 0 0 1 120 0 v150 a60 14 0 0 1 -120 0 z" class="box"/>
+  <path d="M750 70 a60 14 0 0 0 120 0" class="edge"/>
+  <text x="810" y="120" text-anchor="middle" class="title">Dropbox</text>
+  <text x="810" y="138" text-anchor="middle" class="small">the app's folder</text>
+  <text x="810" y="156" text-anchor="middle" class="small">the administrator's account</text>
+  <text x="810" y="174" text-anchor="middle" class="small">copies, record, table file</text>
+</g>
+<!-- other launchers -->
+<rect x="710" y="330" width="200" height="70" rx="6" class="box"/>
+<text x="810" y="355" text-anchor="middle" class="title">Other hosts' launchers</text>
+<text x="810" y="373" text-anchor="middle" class="small">read who hosts, every minute</text>
+<text x="810" y="388" text-anchor="middle" class="small">take the game when it is free</text>
+<!-- github -->
+<rect x="400" y="330" width="200" height="70" rx="6" class="box"/>
+<text x="500" y="355" text-anchor="middle" class="title">GitHub releases</text>
+<text x="500" y="373" text-anchor="middle" class="small">installer per version</text>
+<text x="500" y="388" text-anchor="middle" class="small">asked once at start, optional</text>
+<!-- edges -->
+<path d="M84 79 C130 79 130 110 170 118" class="edge hot" marker-end="url(#a1h)"/>
+<path d="M84 131 L170 131" class="edge hot" marker-end="url(#a1h)"/>
+<path d="M84 183 C130 183 130 150 170 144" class="edge hot" marker-end="url(#a1h)"/>
+<text x="127" y="122" text-anchor="middle" class="small">https</text>
+<path d="M320 124 L420 124" class="edge hot" marker-end="url(#a1h)"/>
+<text x="370" y="117" text-anchor="middle" class="small">the token</text>
+<path d="M650 229 L750 160" class="edge" marker-end="url(#a1)"/>
+<text x="712" y="215" text-anchor="middle" class="small">writes, 1 call</text>
+<text x="712" y="229" text-anchor="middle" class="small">per minute hosting</text>
+<path d="M810 330 L810 236" class="edge dashed" marker-end="url(#a1)"/>
+<text x="852" y="290" text-anchor="middle" class="small">reads</text>
+<path d="M500 330 L520 274" class="edge dashed" marker-end="url(#a1)"/>
+<text x="470" y="306" text-anchor="middle" class="small">newer?</text>
+</svg>

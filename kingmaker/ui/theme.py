@@ -1200,8 +1200,7 @@ def _window_bits(cid: str | None) -> list:
     data = _WINDOWS.get(cid, {}) if cid else {}
     user_ = data.get("user")
     return [data.get("lang"), data.get("units"),
-            getattr(user_, "id", None), getattr(user_, "role", None),
-            getattr(user_, "can_host", None)]
+            getattr(user_, "id", None), getattr(user_, "role", None)]
 
 
 def _fingerprints(batch: list) -> dict:

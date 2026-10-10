@@ -2,10 +2,11 @@
 
 *In italiano: [it/guida-utente.md](it/guida-utente.md) (longer, with the history of every choice).*
 
-This guide describes the app as it is in version 1.4.0, tab by tab, with the reason behind
+This guide describes the app as it is in version 2.0.0, tab by tab, with the reason behind
 each choice where it matters at the table. To install and start it see the
 [README](../README.md); the window of the installed app is the first chapter below. The screenshots in [`manual/img/screenshots/`](manual/img/screenshots/)
-were taken with the Italian interface; the English one is the same, label for label.
+were taken on a real table: the kingdom, the characters and the journeys in them are those of a game
+under way. The Italian guide has the same pictures with the Italian interface.
 
 The rules quoted are those of the Kingmaker kingdom subsystem for Pathfinder 2e (Archives of
 Nethys in English, pf2.altervista.org in Italian). Where the app follows a choice of the table
@@ -19,30 +20,59 @@ The installed app (the Windows setup or the Linux tarball from the releases page
 window instead of a terminal; from source it is `python launch.py --launcher`. It starts and
 stops the server, nothing else: the game is still played in the browser.
 
+**The first run.** The first time the launcher opens, a welcome asks, in the language you pick
+on its first page, who you are at this table: the administrator, who sets it up and holds its
+keys, or a host, someone the administrator lets start the game too. Then, for the
+administrator, where you play; online, whether the table gets a fixed address (the On Air
+guide, a token you already have, or later); and, on the network or online, whether anyone else
+may host (the Dropbox guide, or just you). A host pairs with the table instead, and the table's
+address says where it is played. Every page that opens a site names the button to press. The
+welcome opens alone: the main window comes after it, finished or skipped, and every later start
+goes straight to the main window. Closed before *Next* on its first page, nothing is decided:
+the launcher closes, and the welcome asks again at the next start. Closed after it, the
+launcher closes all the same, but the answers so far are kept, as with *Skip*: the next start
+opens the main window. The welcome's last page says where to change them later. Fewer hosts is safer — every
+host's PC holds the table's keys — so the welcome says to let in only who must start the game
+when you are away, usually just the Game Master; players need no launcher at all, only a link.
+
+**Two windows.** The main window is the administrator's or the host's, as the welcome's first
+page was answered. The administrator's has everything described below. A host's has the Table
+box, *Start*, the links and the log, and nothing else: where the game is played comes with the
+table's address, while loading another game and resetting the game's administrator password
+are the administrator's. A host not yet paired sees *Pair with a table…*, and *Start* waits
+for the pairing.
+
+**Starting over.** *Settings → Reset the setup…* (server stopped) is for whoever chose wrong at
+the first run, or must start again. It says first what goes: the role, where you play, the
+table's address token and the table's keys on this PC (for a host, the pairing). The game, its
+saves and images, the accounts, the language and the other settings are not touched. Then the
+welcome opens again, alone, to make the choices anew.
+
 **Where do you play?** *On this computer only* is the default: the game opens in your browser
 and nobody else can reach it. *On the same network* is for friends in the same house: they
 open the network link in their browser. *Online, with distant friends* publishes the game
 through the NiceGUI On Air relay; your computer must stay on, because the kingdom lives there.
-The choice is remembered.
+The choice is remembered. On this computer only, without a table, there is no Table box: nobody
+else reaches the game, so there is nobody to let host. On the network or online it offers *Let someone else
+host…*, for a Game Master in the same house as much as for one far away.
 
-**The On Air token.** Choosing *Online* shows a field for it and, next to the steps, two
-buttons. *Set it up step by step…* opens a wizard that walks you through it with a picture of
-each screen: the On Air site, the login, GitHub — which is where you sign in, so that neither
-On Air nor this app ever sees your password — the device to add on your On Air page, which
-hands out its token as soon as you add it, and the token itself, which it saves for you. A
-last step is there for the day the token is lost: On Air shows a token once and never again,
-so you take a new one from the cog on the device's line, and it retires the one before. That
-step has its own button, *Lost the token?*, next to the other two — you do not have to walk
-the guide from the start to reach it, which would be cruel, since the step before it asks for
-the token you no longer have. *Get a token* opens the same site
-straight away, for when you know the road. With the
-token your address stays the same at every start; without it you get a new random address
-each time. Without the cloud the token is kept in clear in the game folder; with the cloud it
-lives in the table's folder and is read at every start, so the field gives way to a line that
-says so (see *Playing from several PCs*). The relay, run by Zauberzeug GmbH
-(Germany), the makers of NiceGUI, sees every player's address and carries the game traffic
-in the clear, so it could read it: fine for a game and not for secrets. On this computer or
-on the same network nothing leaves your PC at all — see [PRIVACY.md](../PRIVACY.md).
+**Your table's address.** Online, the game passes through the NiceGUI On Air relay and gets a
+web address. A token gives your table a fixed address; without one you get a new random
+address at every start, and a new link to send. Choosing *Online* shows the box: one line says
+whether the address is fixed, *Set up a fixed address…* opens the guide — a picture of each
+screen: the On Air site, the login, GitHub, which is where you sign in, so that neither On Air
+nor this app ever sees your password, the device to add on your On Air page, which hands out
+its token as soon as you add it, and the token itself, which you paste inside the guide — and
+the *Token* field is for who already has one. The token is kept protected on this PC (see
+*What to know* under *Playing from several PCs*). With a table in the cloud it lives in the
+table's folder and is read at every start, so the box gives way to a line that says so, and
+the administrator has *New token…* for the day the address must change: someone who could host
+left, or the relay refuses the token. On Air shows a token once and never again, so the guide
+opens straight at the step that takes a new one from the cog on the device's line; the new one
+retires the one before, and the other hosts have nothing to do. The relay, run by Zauberzeug GmbH (Germany), the
+makers of NiceGUI, sees every player's address and carries the game traffic in the clear, so it
+could read it: fine for a game and not for secrets. On this computer or on the same network
+nothing leaves your PC at all — see [PRIVACY.md](../PRIVACY.md).
 
 **Start, Stop, the links.** *Start* runs the server; when it is ready the status line turns
 green, the browser opens, and the links appear with a *Copy* button each: this computer, the
@@ -71,8 +101,13 @@ is where to look when it stops on its own.
 
 **Updates.** When a newer release is on GitHub, a line at the top says so (unless the check is
 off in *Settings*). On Windows *Download the update* fetches the installer from GitHub and
-starts it, keeping your game; the installer is not signed with a paid certificate, so Windows
-warns the first time. On Linux it opens the release page. *Settings → Versions on GitHub…* lists every release, newest first, with the
+starts it, keeping your game. Before running it the launcher checks that the file is the one
+the author built: every release carries a list of the installers' hashes signed with the
+author's own key, kept off GitHub, and an installer whose hash is not in that list, or whose
+list is not signed with that key, is deleted and refused. Releases from before 2.0.0 carry
+no such list: they are marked *unsigned* in the versions window and run only after you say so.
+The installer is not signed with a paid certificate, so Windows itself still warns the first
+time. On Linux it opens the release page. *Settings → Versions on GitHub…* lists every release, newest first, with the
 installed one marked, and installs the one you pick; going back to an older version is allowed,
 with a warning, since a save written by a newer version can be refused by an older one. The game is in `saves` and `assets` inside the installed folder: an update
 replaces the program and leaves them, and the uninstaller (in *Add or remove programs*) asks
@@ -84,7 +119,9 @@ At the first start the app creates the `admin` account and prints a random passw
 console, once: write it down. The first login asks you to change it, and from there you create
 the other accounts: top right, next to your name, the 👤⚙ *Player accounts* icon (only the
 administrator sees it). Every new account is born with a generated password to hand to its
-owner; it cannot be recovered, but you can always generate another one.
+owner; it cannot be recovered, but you can always generate another one. The same dialog has
+*Pair a launcher…*, the code that lets another PC host the game: see *Playing from several
+PCs (the cloud)*.
 
 | Role | What it can do |
 |---|---|
@@ -113,6 +150,16 @@ password. It is the honest way to see what a player sees: the header says **«as
 with a button to come back, the kingdom journal records who entered which account,
 permissions are checked on who *really* logged in, and no password can be changed while
 wearing someone else's clothes.
+
+**A second factor.** The shield button in the header switches on a one-time code after your
+password: install an authenticator app on your phone (any that does one-time codes), add the
+account with the secret or the link the dialog shows, type the code the app shows to confirm,
+and write down the eight recovery codes it gives you once, each good for one login without the
+phone. From then on your login asks the code, with a minute's tolerance for a slow clock; a
+wrong code counts against the same brake as a wrong password. Switch it off with a code. The
+administrator can clear another account's second factor from the Accounts panel, for a phone
+lost together with the codes; the journal says so. It matters for the administrator above all:
+a password alone, however it leaked, no longer opens the account that makes pairing codes.
 
 **Language.** The IT/EN button in the header switches the interface for your account and
 remembers it. Before you choose, the browser's language decides; the login page has the same
@@ -664,24 +711,68 @@ the rules and the bundled software come: the full text is [PRIVACY.md](../PRIVAC
 
 Without it, the game lives on one PC and its owner must be online for anyone to play. With
 it, the hosting can move between the trusted people of the table — the administrator and the
-GMs the administrator marks *Can host* in the accounts dialog — through a folder in the
+GMs whose launcher the administrator paired with a code — through a folder in the
 administrator's Dropbox. Players never host and never hold the save: they open the table's
 address, which stays the same whoever hosts, because the table's one On Air token sits in
 the folder and every host reads it at Start.
 
 ![The set-up wizard](manual/img/screenshots/wizard.jpg)
 
-**The administrator, once.** In the launcher's *Cloud* box press *Set up Dropbox…*: seven
-steps with a picture each. A free Dropbox account; *Create app* in Dropbox's App Console
+**The administrator, once.** In the welcome, or later with *Let someone else host…* in the
+launcher's *Table* box: seven steps with a picture each. A free Dropbox account; *Create app* in Dropbox's App Console
 with *Scoped access* and *App folder* (the app sees only its own folder); the five
 permissions; the *App key* pasted into the launcher, with the table's name; the
-authorisation page (Continue, then Allow); the code it shows, pasted back; done. Only the administrator needs a
-Dropbox account.
+authorisation page (Continue, then Allow) and the code it shows, pasted back; the same page
+and code once more, for the hosts' key; done. Two keys come out of it: yours, which never
+leaves your PC, and the hosts' key, the one pairing hands out. Only the administrator needs a
+Dropbox account. Your launcher then holds the administrator's seat: the table's file records
+its name and its key, and every other launcher trusts the file by that key. Whoever made the table's app before, on another PC, presses *Connect to an
+existing app* on the *Create an app* step instead: the list of their apps opens, a picture shows
+which one to click, and Next passes by the permissions, to check they are ticked, on the way
+to its App key. The welcome's pages carry no step count, because the answers change how many follow; the
+guides opened alone from the main window say "Step 3 of 7".
 
-**The other hosts.** While the administrator is hosting, the DM opens *Connect to a table…*
-in their launcher: the table's address, their username and password. The host checks that
-the account may host and hands over what the launcher needs; the password is used once and
-not kept. From then on that launcher can host too.
+**The other hosts.** While anyone is hosting, the administrator makes a pairing code: in the
+game, from the accounts dialog (*Pair a launcher…*), or, when the administrator is the one
+hosting, from the same button in the launcher's Table box. It is a code of eight letters and
+digits, good for ten minutes and one use. They tell it to the DM, who opens *Pair with a table…* in their
+launcher: the table's address, the code, and a name for their PC that the other hosts will
+read. No password is asked. Their launcher sends its own key with the code, made by itself
+and never typed by anyone, and the hosting game vouches for it in a signed admission. The
+launcher keeps what it receives only after it has opened the table's folder, found the right
+table there, signed by the administrator, and verified the admission; it writes its admission
+into the table's list of launchers, and from then on it can host too. Every copy a launcher
+uploads carries its signature, and every launcher loads only copies signed by a launcher the
+table vouches for: a thief with the folder's key can read, but cannot slip a copy in. A code
+typed wrong three times dies; making a new one retires the old; both the making and the use
+are written in the journal.
+
+**When someone leaves the table.** Two things, both in the Table box. *Hosts of the table…*
+lists every launcher let in, who let it in and since when; *Strike off* removes one, and its
+copies are refused by every launcher from that moment, whatever key it still holds. The hosts
+it had let in are vouched for anew under your own signature, so they stay. Then *Change the
+keys…*, because the hosts all hold the same hosts' key: Dropbox gives a fresh one, the old
+stops working on every other PC, and each remaining host pairs again with a new code, a minute
+each. Your own key does not move. Make a new On Air token with *New token…* if the person
+also had the table's address, and deactivate their game account. A launcher whose key was
+cancelled says so and offers *Pair with a table…*; nothing on that PC is lost.
+
+**When a PC is lost.** A laptop with the keys on it, stolen or gone, cannot be cut off from
+here: Dropbox cancels a key only from its own site, by disconnecting the app, which cancels
+every key of the table at once. *Cut off a lost PC…* opens that page and says what to do;
+when you are back, the launcher finds its own access refused and offers *Authorise again…*,
+both keys anew, after which each host pairs again. The vault softens the case: on Windows the
+keys are locked to your Windows login, so a thief without your password gets a file they
+cannot open.
+
+**Moving the administrator to another PC.** Install there, answer "I set the table up", press
+*Connect to an existing app* in the Dropbox guide and authorise twice. The first Start finds
+the seat taken by your old PC and asks whether to take it here; yes writes your new launcher
+into the table's file. The old PC steps down by itself the next time it opens: it sees the
+seat is no longer its own, cancels its own Dropbox key and forgets the table, saying who took
+the seat and when. The hosts see that the administrator's launcher changed and pair again with
+a code from the new PC. If the old PC is never opened again, its key stays valid until you
+cut it off as above.
 
 **When the launcher asks.** Three questions appear only when something is off, and nothing
 happens until you answer. *Two copies of the game*: the cloud has a newer copy, but this PC's
@@ -712,27 +803,57 @@ every other host is then asked to install it before hosting — or to install th
 version instead. A host whose launcher is too old to know the table's version shows as such
 in "hosted by"; ask them to update.
 
-**The token, renewed.** The administrator renews the table's token with *Lost the token?* as
-before; the new one goes into the table's folder, and every other host gets it at their next
-Start with nothing to do. If the relay refuses the token (a random address instead of the
-table's), the launcher says so in red. Once the game is on air, the launcher also checks that
-the table's address really answers from this PC, and warns when another program holds it:
-then the administrator renews the token. *Who is hosting?* makes the same check when nobody
-hosts: something answering at the table's address while no host runs the game means somebody
-else has the token.
+**The Table box.** One line says where things stand (the table, this PC's name as the other
+hosts see it, whose Dropbox, or who is hosting right now: the launcher asks the cloud by
+itself when it opens and every minute while you do not host, every 15 seconds while someone
+else does, so you see soon when they stop; and Start asks again before it
+takes the game), and under it the buttons in groups, from the most frequent to the day someone
+leaves, each with its use written next to it: for the administrator, *Letting another PC host*
+has *Pair a launcher…* and *Hosts of the table…*; *When someone leaves* has *Change the
+keys…* and *Cut off a lost PC…*; *This PC* has *Forget the table*. On this computer only a
+table keeps its box, but *Letting another PC host* has one line instead of its buttons: another
+PC's launcher must reach this one to use a pairing code, so pairing needs the network or online;
+the keys and *Forget the table* stay, since the copies still go to the cloud. When something holds the
+table's record that the table does not vouch for, a launcher struck off or a stranger with a
+copy of the keys, the box says so in red, offers no link to follow, and gives the administrator
+*Take the record back*. While you host, the box says so and offers only the pairing; while someone else hosts,
+*Join* and the administrator's *Ask to hand over…*. With a table, the address box
+above shows one line, because the token is not on this PC, and for the administrator *New
+token…*.
 
-**The administrator's *Force take-over*.** Shown when someone else hosts: their server stops
-within a minute (they may lose their last minutes of play) and the game moves to you.
+**The token, renewed.** The administrator renews the table's token with *New token…* in
+the address box, for the day it is lost or someone who had the address leaves; the new one goes
+into the table's folder, and every other host gets it at their next Start with nothing to do. If the relay refuses the token, the game does not go online at all
+(only this PC and the network reach it) and the launcher says so in red: renew the token,
+then Stop and Start again. Once the game is on air, the launcher also checks that
+the table's address really answers from this PC, and again every five minutes while you
+host, because the relay hands the address to whichever program connected last with the token
+and tells the one before nothing. If another program takes it, the launcher warns you: then
+the administrator renews the token. The minute's check of who is hosting makes the same
+check when nobody hosts: something answering at the table's address while no host runs the game means somebody
+else has the token (with nobody connected, the address answers "not found").
+
+**The administrator's *Ask to hand over…*.** Shown when someone else hosts. Their launcher
+is asked for the game: within half a minute it uploads its last copy, stops its server and
+says so to them; yours waits, saying how long, then starts with that copy. Nothing is lost.
+If their launcher does not answer within two minutes (closed, asleep, or a version from before
+the hand-over), you are asked whether to take the game anyway, which stops their server within
+a minute and may lose its last minutes of play, to keep waiting, or to cancel.
 
 **What to know.** A host's PC holds the whole game, secrets and password hashes included:
-that is why hosting is a trust decision, not a checkbox for everyone. The cloud credential is
-the administrator's own Dropbox access to that folder, and every host holds the same one, so
-it cannot be taken back from one host without taking it back from all. On each PC it is kept
-protected — by Windows, for that Windows user, or on Linux in a file only you can read,
-outside the game folder — so the launcher's settings file holds nothing in clear, and copying
-the game folder to another PC carries no access with it: there, connect to the table again. *Forget the cloud* removes
-it from a launcher, and the administrator can revoke it at Dropbox (*Connected apps*), after
-which every host connects again. The folder also holds a small record of who is hosting —
+that is why hosting is a trust decision, not a checkbox for everyone. There are two keys to
+the folder: the administrator's own, on their PC only, and the hosts' key, of which every host
+holds a copy, so a host's copy cannot be taken back alone: changing the keys replaces the
+hosts' key for all. On each PC the keys are kept protected, by Windows for that Windows user,
+or on Linux in a file only you can read outside the game folder, so the launcher's settings
+file holds nothing in clear, and copying the game folder to another PC carries no access with
+it: there, pair with the table again. Every launcher also has a signing key of its own, made
+once and never typed: it signs the record it holds, the copies it uploads, and, for the
+administrator, the table's file and the list of launchers. What is not signed by a launcher
+the table vouches for is refused, so a key thief can read the folder but cannot feed the table
+a doctored copy, forge who is hosting, or rewrite the table's file. *Forget the table* removes
+the keys from a launcher, and the administrator can revoke them at Dropbox (*Connected apps*),
+after which every host pairs again. The folder also holds a small record of who is hosting —
 the launcher's id, your Windows or Linux username and your computer's name, the game's
 address — which the other hosts read; Dropbox's own privacy policy applies to the folder. If
 the cloud does not answer, the launcher offers to host without it, in plain words: the game

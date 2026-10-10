@@ -52,7 +52,7 @@ secret in `X-Launcher-Secret`, anything else is a 404, and the route does not ex
 without the variable. It calls NiceGUI's `app.shutdown()`, so `theme._switch_off` writes the
 last save. `core.Server.stop` asks, waits `STOP_PATIENCE` seconds, then kills. The path is in
 `login.OPEN_PAGES` because the access middleware would otherwise redirect it to `/login`.
-The four other routes of the same family — status, snapshot, synced, credential — are
+The other routes of the same family — status, snapshot, synced, whoami, pairing, pair — are
 chapter 13.
 
 **Ports.** Before starting, `core.free_port` binds the chosen port to see whether it is free
@@ -94,7 +94,7 @@ on Windows a DPAPI blob in the scope of the current user, through `ctypes`; else
 owner-only file under `~/.local/share/kingmaker-kingdom-manager/secrets/`, or `KINGMAKER_VAULT_DIR`,
 which the suite points at the scene) and writes the file without them; `Settings.load` brings
 them back, or records `vault_error` when the blob was made by another user or on another PC,
-and the Cloud box asks to connect again. A file from before 1.4.0, with the secrets in clear,
+and the Table box asks to connect again. A file from before 1.4.0, with the secrets in clear,
 is migrated by its first save. `tests/test_vault.py` covers both schemes.
 
 **Updates.** `core.latest_release` asks the GitHub API for the latest release, in a thread, with
@@ -115,6 +115,11 @@ in the Save tab and on the creation page.
 **The cloud.** The *Cloud* box, the claim before Start, the hoster thread and the two
 dialogs are chapter 13; the window's part is `claim_then_start`, `begin_hosting`,
 `handle_cloud`, `handle_taken` and `refresh_cloud`, all driven through `Launcher.post`.
+On this computer only (`Launcher.local_only`) a table keeps its box, but `refresh_cloud` puts
+a muted line where *Pair a launcher…* and *Hosts of the table…* would be and
+`make_pairing_code` refuses, because the game answers at 127.0.0.1 where no other launcher
+reaches it for the code; `mode_changed` redraws the box and the address rows, which while the
+game is stopped list only what the chosen place gives (`core.links_for_mode`).
 
 **The administrator reset.** `core.reset_admin_password` opens the database directly (server
 stopped), gives the first active administrator a new random password with `must_change_pw`,
@@ -151,7 +156,10 @@ python packaging/build.py                                    # folder, installer
   stop through the shutdown route; a missing hidden import shows up here, not at a user's.
   Then Inno Setup on Windows (`kingmaker.iss`, found in its usual folders), or the tarball with
   `linux/kingmaker.desktop` and `linux/INSTALL.txt`. In CI it also refuses a tag that does not
-  match `kingmaker.__version__`.
+  match `kingmaker.__version__`. The `.desktop` file's `StartupWMClass=Kingmaker` matches
+  `core.WM_CLASS`, the class every launcher window is made with (`tk.Tk(className=...)`,
+  `tk.Toplevel(class_=...)`): without it Linux sees Tk's own "Tk" and "Toplevel", and GNOME
+  groups and labels the windows under those names.
 - `kingmaker.iss` — per-user install, no administrator rights, the destination page shown with
   `%LOCALAPPDATA%\Programs\Kingmaker Kingdom Manager` as default; `[InstallDelete]` removes
   `_internal` before an update and never touches `saves\` or `assets\`; the uninstaller removes
@@ -174,6 +182,18 @@ older runners. `ci.yml` runs the suite and the checkers on every push.
 The unsigned executable shows Windows SmartScreen's "Windows protected your PC" on a machine
 that has never seen the file; the README explains the *More info → Run anyway* click. A
 signing certificate would remove it and is a cost, not a code change.
+
+**The owner's signature (2.0.0).** What the launcher checks is another signature, the owner's
+own: after the draft is built, `packaging/sign_release.py sign <version>` downloads the two
+installers with `gh`, writes `SHA256SUMS` (one `hash  name` line each) and `SHA256SUMS.sig`
+(the Ed25519 signature of that file, hex, by the offline seed `new-key` made, whose public
+half is `launcher/keys.py: RELEASE_KEYS`) and uploads both to the release. The key never
+goes to GitHub: a compromised account can publish a release, not sign one. On the launcher's
+side `core.verify_download` runs after the download and before `run_update`: the two files
+are fetched, the signature checked under any shipped key, the installer's hash compared with
+its line; a failure deletes the file and says so (`window.update_rejected`), and a release
+without the two files is "unsigned": marked so in the versions window (`Release.signed`) and
+run only after a confirmation. `tests/test_updates.py` covers every refusal.
 
 ## Testing
 

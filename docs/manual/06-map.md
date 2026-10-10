@@ -28,9 +28,9 @@ sibling imports are resolved at call time, so no cycle. In the tests a function 
 
 ## The frame: `map_panel`
 
-![The Map tab on the test scene: fog, counts per status, the drawn river, the markers, the row of portraits.](img/screenshots/mappa.jpg)
+![The Map tab of a table under way: fog, counts per status, the drawn rivers and lakes, the markers, the row of portraits.](img/screenshots/mappa.jpg)
 
-*The Map tab on the test scene: fog, counts per status, the drawn river, the markers, the row of portraits.*
+*The Map tab of a table under way: fog, counts per status, the drawn rivers and lakes, the markers, the row of portraits.*
 
 ```mermaid
 flowchart TB

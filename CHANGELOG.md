@@ -8,6 +8,132 @@ what broke, what was learned — is in [docs/devlog.md](docs/devlog.md).
 The versions before 1.0.0 were never tagged: the app was played from a working copy and the
 numbers below were assigned afterwards, one per day of development, from the session history.
 
+## [2.0.0] — 2026-10-10
+
+The launcher learns who you are before anything else, and the folder in Dropbox stops being a
+place where any key opens every door: a code instead of a password to let a host in, a seat
+for the administrator, two keys, a signature on everything a launcher writes, installers
+signed by the author, a one-time code for accounts. The major number is earned twice over: the
+password hand-out of 1.x is gone, and the table's files changed format.
+
+### Added
+- **A welcome on the first run.** The first time the launcher opens it asks, one page each and
+  nothing it does not need: who you are at this table (the administrator, who sets it up, or
+  a host someone let in), where you play, and, online, whether the table gets a fixed address
+  (the On Air guide, a token you already have, or later). On the network or online it then
+  asks whether anyone else may host, saying plainly that this is optional and what it costs;
+  the Dropbox guide follows on yes. A host pairs with the table instead, and the table's
+  address says where it is played. The language is chosen on the first page; the last page
+  says what was set and what to press first. It shows once: *Reset the setup…* in the Settings
+  brings it back, after saying what is forgotten and what is kept.
+- **Two windows by role.** The administrator's launcher has everything; a host's has the
+  table and Start, with where the game is played taken from the table's address, and nothing
+  to set up. A host not paired yet is told so, with Start waiting for the pairing.
+- **Pairing by code.** The administrator, logged into the game, opens the accounts dialog and
+  presses *Pair a launcher…* (the launcher offers the same while the administrator hosts): a
+  code of eight letters and digits, valid ten minutes, one use, dead at the third wrong try.
+  The person joining types it in their launcher with the table's address and a name for their
+  PC, and nothing else: no password ever enters a launcher again. The launcher keeps what it
+  receives only once it has opened the table's folder and found the table the host named,
+  signed by the administrator; both the making and the use of a code go to the journal.
+- **The administrator's seat.** The table's file records the administrator's launcher, its
+  name and its key, and every other launcher trusts the file by that key. Moving to another
+  PC: run the setup there, *Connect to an existing app*, and the first Start asks whether to
+  take the seat; the old PC steps down by itself the next time it opens, cancelling its own
+  Dropbox key and saying who took the seat and when. The hosts pair again with a code from the
+  new PC.
+- **Two keys.** The set-up authorises twice: the administrator's own key, which never leaves
+  their PC, and the hosts' key, the one pairing hands out. *Change the keys…* replaces the
+  hosts' key alone, so the administrator never pairs again and taking the seat never touches
+  the hosts.
+- **A signature on everything a launcher writes.** Every launcher makes a key pair of its own
+  at its first start, never typed by anyone. It signs the record it holds while hosting and
+  every copy it uploads; the administrator signs the table's file and the list of launchers
+  let in, each entry vouched for by the launcher whose game made the code. A launcher loads
+  only copies signed by a launcher the table vouches for, shows *Join* only for a holder it
+  vouches for, and refuses a rewritten table file: a thief with the folder's key can read, but
+  cannot slip a copy in, pass as a host, or take the seat. Copies from before 2.0.0 stay
+  loadable.
+- **Hosts of the table…** lists every launcher let in, who let it in and since when; *Strike
+  off* refuses its copies from that moment and keeps the hosts it had let in, vouched for anew
+  by the administrator. **Cut off a lost PC…** opens the one page that cancels a key copy out of
+  reach, the connected apps on dropbox.com, and the launcher then offers *Authorise again…*.
+- **The hand-over.** *Ask to hand over…* replaces *Force take-over*: the current host's
+  launcher is asked, uploads its last copy within half a minute, stops and says so; the
+  administrator's waits, counting, then starts with exactly that copy. Nothing is lost. A host
+  that never answers is offered by force after two minutes, as before. The same look notices a
+  forced take-over at once instead of at the next write.
+- **Signed installers.** Every release from this one carries a list of its installers' hashes
+  signed with the author's own key, kept off GitHub. The launcher checks a downloaded installer
+  against it before running it and deletes one that fails; releases from before are marked
+  *unsigned* in the versions window and run only after asking.
+- **A second factor for accounts.** The shield in the game's header switches on a one-time code
+  after the password, from any authenticator app, with eight recovery codes shown once. Wrong
+  codes meet the same brake as wrong passwords; the administrator can clear another account's
+  from the accounts panel, written in the journal. A leaked password alone no longer opens the
+  account that makes pairing codes.
+- **The address check repeats every five minutes while hosting.** The relay gives the table's
+  address to whichever program connected last with the token and tells the one before nothing;
+  the launcher asks the address who answers there every five minutes and warns when it is
+  another program. With nobody connected the address answers "not found", which the quiet
+  check of who hosts relies on.
+- **Who is hosting, without a button.** The launcher asks the cloud by itself when it opens,
+  every minute while it does not host, every 15 seconds while someone else does, redrawing the
+  Table box only when something changed; Start still asks again before taking the game.
+- **Connect to an existing app** in the Dropbox guide, for an app made before on another PC.
+- **Linux names its windows** "Kingmaker", so GNOME groups them and finds the `.desktop` file.
+
+### Changed
+- **The launcher's boxes speak the table's language, and say less.** *Your table's address*:
+  one line says whether the address is fixed, *Set up a fixed address…* opens the guide, the
+  Token field is for who has one; with a table, one line and, for the administrator, *New
+  token…*. *The table*: before set-up, "Only this computer can start the game" with *Let
+  someone else host…*; after, the groups from the most frequent to the day someone leaves,
+  and on this computer only, where no other PC reaches the game to use a pairing code, a line
+  saying so in place of the pairing buttons. The address rows of a stopped game follow the
+  place chosen: no Online link left over from the last run.
+  Every page of the guides names the button to press; the welcome's pages carry no step count.
+- **Fewer calls to Dropbox.** A record's age is read off the Date header every answer carries,
+  so an idle launcher uploads nothing; each file is read with one download; the table's file is
+  reused for a minute during the quick checks.
+- **The Settings window** is in three groups with each button explained; the pairing code
+  dialog gives the address and the code each its own field with Copy.
+
+### Removed
+- **The password hand-out** (`POST /_launcher/credential`). A launcher of 1.x that tries
+  *Connect to a table…* against a 2.0 host is refused with its own "refused" sentence: update
+  it. The route answers 410 for this major version and goes away in 3.0.
+- **The *Can host* flag on accounts** and the `host_game` permission: who may host is decided
+  by the pairing code, which only the administrator makes.
+- *Who is hosting?*, *Force take-over*, *Lost the token?* and *Rotate the cloud access…* as
+  buttons: their work is done by the automatic check, *Ask to hand over…*, *New token…* and
+  *Change the keys…*.
+
+### Fixed
+- **The server's clock was frozen since the first cloud start.** The launcher learnt Dropbox's
+  time by rewriting an empty file, and Dropbox keeps an upload of identical bytes as the same
+  revision, time included: every record looked zero seconds old, so a crashed host's record
+  never went stale. The file changed at every write, and is now written only when an answer
+  carries no Date header.
+- **A refused On Air token leaves the game offline, not at a random address.** The relay
+  answers `Invalid device token` every five seconds and never connects; the launcher reads that
+  line, says in red that the game is not online, masks the token in the log, and no longer
+  mistakes its own advice line for the relay's.
+- The On Air box said the token is kept in clear in the game folder; it has been in the vault
+  since 1.4.0.
+- The label on a proposed journey's arrow was drawn in English on an Italian table: it now
+  reads in the window's language like the rest of the box.
+- The GM Screen's list of hexes ready to reveal showed the raw status word; it is translated.
+
+### Upgrading a table from 1.x
+1. The administrator installs 2.0.0. The first Start asks for one more authorisation, the
+   hosts' key, then upgrades the table's file: the seat is theirs, the file is signed, and
+   the copies from before stay accepted.
+2. Every host installs 2.0.0 and pairs again, one code each, because launchers now carry keys
+   of their own and the table must vouch for them. Nothing on their PCs is lost.
+3. New hosts pair by code from now on. If someone who should no longer hold the keys does,
+   *Strike off* and *Change the keys…*; if a PC is lost, *Cut off a lost PC…*.
+
 ## [1.4.0] — 2026-10-06
 
 The secrets rest protected, and a chosen password is harder to guess and quicker to notice.

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="400" style="color:#1f2a24" viewBox="0 0 900 400" role="img" aria-label="Sequence of a hand-over: the administrator writes a request into the host record, the current host's launcher sees it at its next look, uploads a last copy and releases the record, the administrator's wait ends, it claims the record, pulls that copy and starts.">
+<style>
+text{font-family:'IBM Plex Sans','Segoe UI',system-ui,sans-serif;font-size:12px;fill:#1f2a24}
+.mono{font-family:'IBM Plex Mono',Consolas,monospace;font-size:11px}
+.small{font-size:10.5px;fill:#5d6a63}
+.title{font-size:13px;font-weight:600}
+.box{fill:#ffffff;stroke:#1f2a24;stroke-width:1.2}
+.soft{fill:#d9ece2;stroke:#1f6f4a;stroke-width:1.2}
+.warnbox{fill:none;stroke:#9a5b00;stroke-width:1.2;stroke-dasharray:4 3}
+.edge{fill:none;stroke:#1f2a24;stroke-width:1.1}
+.edge.hot{stroke:#1f6f4a;stroke-width:1.6}
+.edge.dashed{stroke-dasharray:5 4}
+.lane{stroke:#c9cfc9;stroke-width:1}
+</style>
+<rect width="100%" height="100%" fill="#f6f5f1"/>
+
+<defs><marker id="a5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1f2a24"/></marker>
+<marker id="a5h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1f6f4a"/></marker></defs>
+<g class="title"><text x="140" y="30" text-anchor="middle">Administrator's launcher</text><text x="450" y="30" text-anchor="middle">host.json</text><text x="760" y="30" text-anchor="middle">Current host's launcher</text></g>
+<g class="lane"><line x1="140" y1="40" x2="140" y2="380"/><line x1="450" y1="40" x2="450" y2="380"/><line x1="760" y1="40" x2="760" y2="380"/></g>
+<text x="20" y="66" class="mono">0 s</text>
+<path d="M150 62 L440 62" class="edge hot" marker-end="url(#a5h)"/>
+<text x="295" y="54" text-anchor="middle" class="small">writes handover = {to, when} on the record's rev</text>
+<rect x="40" y="80" width="200" height="30" rx="4" class="box"/>
+<text x="140" y="99" text-anchor="middle" class="small">waits, reading every 10 s, counting</text>
+<text x="20" y="136" class="mono">≤30 s</text>
+<path d="M750 132 L460 132" class="edge dashed" marker-end="url(#a5)"/>
+<text x="605" y="124" text-anchor="middle" class="small">its look: one download, as every 30 s</text>
+<rect x="660" y="150" width="200" height="46" rx="4" class="soft"/>
+<text x="760" y="168" text-anchor="middle" class="small">sees the request: uploads a last copy,</text><text x="760" y="184" text-anchor="middle" class="small">marks the record released</text>
+<path d="M750 172 L460 172" class="edge hot" marker-end="url(#a5h)"/>
+<rect x="660" y="212" width="200" height="30" rx="4" class="box"/>
+<text x="760" y="231" text-anchor="middle" class="small">stops its server: "You handed the game to…"</text>
+<text x="20" y="266" class="mono">≤40 s</text>
+<path d="M440 262 L150 262" class="edge dashed" marker-end="url(#a5)"/>
+<text x="295" y="254" text-anchor="middle" class="small">released: the wait ends</text>
+<path d="M150 292 L440 292" class="edge hot" marker-end="url(#a5h)"/>
+<text x="295" y="284" text-anchor="middle" class="small">claims, epoch + 1</text>
+<rect x="40" y="310" width="200" height="46" rx="4" class="soft"/>
+<text x="140" y="328" text-anchor="middle" class="small">pulls exactly that last copy,</text><text x="140" y="344" text-anchor="middle" class="small">starts. Nothing lost.</text>
+<rect x="560" y="300" width="320" height="70" rx="4" class="warnbox"/>
+<text x="720" y="320" text-anchor="middle" class="small">If the host never looks (closed, asleep, old version):</text>
+<text x="720" y="336" text-anchor="middle" class="small">after 120 s the administrator chooses to take it by force,</text>
+<text x="720" y="352" text-anchor="middle" class="small">keep waiting, or cancel. Force is the old path.</text>
+</svg>

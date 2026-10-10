@@ -150,7 +150,7 @@ def _vehicle_row(entry: dict) -> None:
     label = entry.get("name") or catalogue.get("name", entry["vehicle"])
     metres, _reason = travel_mod.speed_from_stable(entry)
     text = (f'{travel_mod.vehicle_symbol(entry)} {label}'
-             + (f' — {format_metres(metres)}' if metres
+             + (f' · {format_metres(metres)}' if metres
                 else t("party.speed_entered")))
     color = "var(--km-gold)" if entry.get("available") else "var(--km-red)"
     ui.html(f'<span class="km-chip" style="font-size:.68rem;border-color:{color}">'

@@ -121,7 +121,8 @@ applied on import. `rename_asset_folders` renames `assets/personaggi` → `chara
 `veicoli` → `vehicles`, `miniature` → `thumbnails` at the first start. `tests/test_migration_v27.py`
 drives it on `tests/fixtures/v26.db`.
 
-`SCHEMA_VERSION` (29: schema 27, plus `users.units` in 28 and `users.can_host` in 29) is
+`SCHEMA_VERSION` (30: schema 27, plus `users.units` in 28, `users.can_host` in 29, and
+`users.totp_secret` with `users.recovery_codes` in 30, the second factor) is
 written in `meta`. Adding a column: one row in `ADDED_COLUMNS` with the new version **and** the
 same column in the `CREATE TABLE` (a test compares the two), then raise `SCHEMA_VERSION`. Adding
 a table: the `CREATE TABLE IF NOT EXISTS` in the `SCHEMA` is enough.

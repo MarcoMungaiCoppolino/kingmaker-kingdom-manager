@@ -108,7 +108,7 @@ def tallest_launcher(root, lang) -> window.Launcher:
     app.refresh_cloud()
     app.show_release(core.Release(version="9.9.9", page="https://example.org"))
     app.links = {"local": "http://127.0.0.1:8080", "lan": "http://192.168.1.10:8080",
-                 "online": "https://on-air.nicegui.io/device-0/abcdef"}
+                 "air": "https://on-air.nicegui.io/device-0/abcdef"}
     app.rebuild_links()
     app.set_status(i18n.t("launcher.status.port_moved", wanted=8080, port=8081), "busy")
     app.show_log.set(True)
@@ -143,6 +143,139 @@ else:
                 check(f"{tag} settings", app.settings_window, area)
                 app.settings_window.destroy()
 
+                # The host's window: paired with someone hosting, and not
+                # paired yet, when Start waits for the pairing.
+                host = core.Settings(mode="online", language=lang, role="host",
+                                     cloud=dict(app.settings.cloud, role="host"))
+                for paired in (True, False):
+                    host_root = tk.Tk()
+                    try:
+                        if not paired:
+                            host.cloud = {}
+                        guest = window.Launcher(host_root, host)
+                        guest.other = app.other
+                        guest.refresh_cloud()
+                        guest.show_log.set(True)
+                        guest.toggle_log()
+                        screen.present(host_root)
+                        label = f"{tag} host window ({'paired' if paired else 'not paired'})"
+                        check(label, host_root, area)
+                        results.append((f"{label}: nothing of the administrator's",
+                                        not hasattr(guest, "where") and guest.load_button is None))
+                        results.append((f"{label}: Start {'ready' if paired else 'waits for the pairing'}",
+                                        str(guest.start_button.cget("state")) == ("normal" if paired
+                                                                                    else "disabled")))
+                        if paired:
+                            guest.open_settings()
+                            check(f"{tag} host settings", guest.settings_window, area)
+                            guest.settings_window.destroy()
+                    finally:
+                        for pending in host_root.tk.call("after", "info"):
+                            host_root.after_cancel(pending)
+                        host_root.destroy()
+
+                # The administrator without a table: no Table box on this
+                # computer only, where nobody else reaches the game.
+                alone_root = tk.Tk()
+                try:
+                    alone = window.Launcher(alone_root, core.Settings(mode="local", language=lang, role="admin"))
+                    boxes = []
+                    for mode in ("local", "lan", "online", "local"):
+                        alone.mode_var.set(mode)
+                        alone.mode_changed()
+                        boxes.append(bool(alone.cloud.winfo_manager()))
+                    results.append((f"{tag} the Table box only on the network or online",
+                                    boxes == [False, True, True, False]))
+                finally:
+                    alone_root.update()
+                    for pending in alone_root.tk.call("after", "info"):
+                        alone_root.after_cancel(pending)
+                    alone_root.destroy()
+
+                # The administrator with a table, on this computer only: the
+                # box stays, but nobody else reaches the game for a pairing
+                # code, so a line says why instead of the pairing buttons;
+                # the keys and Forget stay. The address rows of the last run
+                # follow the place chosen while the game is stopped.
+                local_root = tk.Tk()
+                try:
+                    mine = window.Launcher(local_root, core.Settings(mode="local", language=lang,
+                                                                     check_updates=False,
+                                                                     cloud=dict(app.settings.cloud)))
+                    for pending in local_root.tk.call("after", "info"):
+                        local_root.after_cancel(pending)   # no watch of who hosts: no network here
+                    mine.links = {"local": "http://127.0.0.1:8080", "lan": "http://192.168.1.10:8080",
+                                  "air": "https://on-air.nicegui.io/device-0/abcdef"}
+
+                    def box_texts() -> set[str]:
+                        found, stack = set(), [mine.cloud_row]
+                        while stack:
+                            widget = stack.pop()
+                            try:
+                                found.add(str(widget.cget("text")))
+                            except tk.TclError:
+                                pass
+                            stack.extend(widget.winfo_children())
+                        return found
+
+                    def rows() -> list[str]:
+                        return [str(row.winfo_children()[0].cget("text"))
+                                for row in mine.links_frame.winfo_children()]
+
+                    pairing = {i18n.t("launcher.cloud.pair_launcher"), i18n.t("launcher.cloud.launchers")}
+                    keys = {i18n.t("launcher.cloud.rotate"), i18n.t("launcher.cloud.cut_off"),
+                            i18n.t("launcher.cloud.forget")}
+                    note = i18n.t("launcher.cloud.pair_local")
+                    seen = {}
+                    for mode in ("local", "lan", "online", "local"):
+                        mine.mode_var.set(mode)
+                        mine.mode_changed()
+                        seen.setdefault(mode, []).append((bool(mine.cloud.winfo_manager()), box_texts(), rows()))
+                    shown_box, texts, links = seen["local"][-1]
+                    results.append((f"{tag} on this computer only, a table keeps its box", shown_box))
+                    results.append((f"{tag} on this computer only, no pairing buttons", not pairing & texts))
+                    results.append((f"{tag} on this computer only, a line says why", note in texts))
+                    results.append((f"{tag} on this computer only, the keys and Forget stay", keys <= texts))
+                    results.append((f"{tag} the box went back to this computer only with the radio",
+                                    seen["local"][0][1] == texts))
+                    for mode in ("lan", "online"):
+                        _shown, texts_there, _links = seen[mode][0]
+                        results.append((f"{tag} {mode}: the pairing buttons, and no line",
+                                        pairing | keys <= texts_there and note not in texts_there))
+                    link = {kind: i18n.t(f"launcher.link.{kind}") for kind in ("local", "lan", "air")}
+                    results.append((f"{tag} stopped, on this computer only: one address row",
+                                    links == [link["local"]]))
+                    results.append((f"{tag} stopped, on the network: no Online row",
+                                    seen["lan"][0][2] == [link["local"], link["lan"]]))
+                    results.append((f"{tag} stopped, online: every row of the last run",
+                                    seen["online"][0][2] == [link["local"], link["lan"], link["air"]]))
+
+                    # Hosting on this computer only, the cloud keeping the
+                    # copies: still no code to make.
+                    mine.record = sync.HostRecord(host_id="me", host_name="This-PC", epoch=4, seq=1,
+                                                  since="2026-10-10T10:00:00Z")
+                    mine.refresh_cloud()
+                    texts = box_texts()
+                    results.append((f"{tag} hosting on this computer only: a line, no pairing button",
+                                    note in texts and i18n.t("launcher.cloud.pair_launcher") not in texts))
+                    told = []
+                    real_showinfo = window.messagebox.showinfo
+                    window.messagebox.showinfo = lambda _title, text, **_k: told.append(text)
+                    try:
+                        mine.make_pairing_code()
+                    finally:
+                        window.messagebox.showinfo = real_showinfo
+                    results.append((f"{tag} no pairing code on this computer only, and it says why",
+                                    told == [i18n.t("launcher.cloud.pair_needs_network")]))
+                    mine.record = None
+                finally:
+                    for pending in local_root.tk.call("after", "info"):
+                        local_root.after_cancel(pending)
+                    local_root.update()             # Tk's own idle work, before the window goes
+                    for pending in local_root.tk.call("after", "info"):
+                        local_root.after_cancel(pending)
+                    local_root.destroy()
+
                 before = set(root.winfo_children())
                 app.open_versions()
                 versions = next(w for w in root.winfo_children()
@@ -157,10 +290,10 @@ else:
                 check(f"{tag} password", dialog, area)
                 dialog.destroy()
 
-                connect = wizard.ConnectDialog(root, app.settings, lambda: None)
-                connect.failed(i18n.t("launcher.connect.unreachable",
+                connect = wizard.PairDialog(root, app.settings, lambda: None)
+                connect.failed(i18n.t("launcher.pair.unreachable",
                                       error="<urlopen error [WinError 10061] the machine refused it>"))
-                check(f"{tag} connect", connect.win, area)
+                check(f"{tag} pair", connect.win, area)
                 connect.win.destroy()
 
                 for cls, steps in ((wizard.SetupWizard, wizard.STEPS), (wizard.AirWizard, wizard.AIR_STEPS)):
@@ -184,8 +317,66 @@ else:
                                     f"{'' if not out else ' — out: ' + ', '.join(out)}", not out))
                     results.append((f"{tag} {cls.__name__}: the pictures are still there, shrunk",
                                     pictures >= len(steps) - 2))
+                    if cls is wizard.SetupWizard:
+                        # The road for an app made before: its own page, then
+                        # the key, as `use_existing` takes it (without the
+                        # browser it opens).
+                        guide.step = 0
+                        guide.existing = True
+                        guide.repage_cloud()
+                        guide.go_to("cloud/existing")
+                        lost = unreachable(guide.win)
+                        results.append((f"{tag} SetupWizard, an existing app: its page in reach, with "
+                                        f"its picture{'' if not lost else ' — lost: ' + ', '.join(lost)}",
+                                        not lost and not outside(guide.win, area) and guide.image is not None))
+                        guide.go_next()
+                        results.append((f"{tag} SetupWizard, an existing app: Next checks the permissions",
+                                        guide.page == "cloud/permissions" and guide.existing))
+                        guide.go_back()
+                        guide.go_back()
+                        guide.go_next()
+                        results.append((f"{tag} SetupWizard, back to a new app: Next goes to the permissions",
+                                        guide.page == "cloud/permissions" and not guide.existing))
                     guide.win.destroy()
+
+                # The welcome, along its longest road (the administrator,
+                # online, both guides) and the host's: every page it can
+                # show, with the Dropbox code page's failure text on.
+                for who, longest in (("admin", True), ("host", False)):
+                    # A fresh launcher: the one the welcome is for. (The
+                    # tallest launcher's settings hold a table, and a table
+                    # already set up skips the address and the others.)
+                    welcome = wizard.WelcomeWizard(root, core.Settings(), lambda: None)
+                    welcome.who.set(who)
+                    welcome.mode.set("online")
+                    welcome.air_way.set("guide")
+                    welcome.cloud_way.set("cloud")
+                    welcome.pages = welcome.plan()
+                    lost, out = [], []
+                    for i, name in enumerate(welcome.pages):
+                        welcome.step = i
+                        welcome.show()
+                        if name == "cloud/code":
+                            welcome.feedback.config(text=i18n.t("launcher.wizard.authorise.failed",
+                                                                error="HTTP Error 400: Bad Request"))
+                        if name == "welcome/pair":
+                            welcome.feedback.config(text=i18n.t("launcher.pair.refused"))
+                        lost += [f"{name}: {w}" for w in unreachable(welcome.win)]
+                        if outside(welcome.win, area):
+                            out.append(name)
+                    results.append((f"{tag} welcome ({who}): the road has the pages it should",
+                                    ("air/token" in welcome.pages and "cloud/code" in welcome.pages) == longest
+                                    and ("welcome/pair" in welcome.pages) != longest))
+                    results.append((f"{tag} welcome ({who}): every control of every page in reach"
+                                    f"{'' if not lost else ' — lost: ' + ', '.join(lost)}", not lost))
+                    results.append((f"{tag} welcome ({who}): every page inside the work area"
+                                    f"{'' if not out else ' — out: ' + ', '.join(out)}", not out))
+                    welcome.win.destroy()
             finally:
+                # The launcher's own timers (the poll, the watch of who
+                # hosts) would fire into a destroyed window otherwise.
+                for pending in root.tk.call("after", "info"):
+                    root.after_cancel(pending)
                 root.destroy()
     screen.work_area = real_work_area
 

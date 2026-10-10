@@ -320,7 +320,7 @@ def _hex_panel(mine: dict) -> None:
                     continue
                 where = (t("map.hex_panel.off_map") if not existing.get("hex")
                         else t("map.hex_panel.now", hex=existing["hex"][0], hex2=existing["hex"][1]))
-                options[f'{_common._SETTLEMENT_PREFIX}{existing["id"]}'] = f'🏘 {existing["name"]} — {where}'
+                options[f'{_common._SETTLEMENT_PREFIX}{existing["id"]}'] = f'🏘 {existing["name"]} · {where}'
 
             new = ui.select(options, label=t("map.hex_panel.add_feature")) \
                 .props("outlined dense").classes("w-56")
@@ -1080,7 +1080,7 @@ def _second_farmland(partners: list[dict], mapping) -> None:
     def label(p: dict) -> str:
         terrain = rules.BY_ID["terrain"].get(p["terrains"][0], {}).get("name", "") if p["terrains"] else ""
         name = f' · {p["name"]}' if p.get("name") else ""
-        return f'{p["col"]},{p["row"]}{name}{" — " + terrain if terrain else ""}'
+        return f'{p["col"]},{p["row"]}{name}{" · " + terrain if terrain else ""}'
 
     options = {f'{p["col"]},{p["row"]}': label(p) for p in partners}
     with theme.dialog() as dlg, ui.card().classes("km-panel").style("min-width:360px"):

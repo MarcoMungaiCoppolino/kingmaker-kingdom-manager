@@ -105,10 +105,10 @@ def resolve_online(online) -> str | bool | None:
     # revoked the relay refuses it and assigns an anonymous device
     # anyway. Better say what to look at than promise the address.
     print(f"On Air token read from {TOKEN_VARIABLE}.")
-    print("  Check the address below: if it looks like")
-    print("  https://europe.on-air.io/devices/XXXXXXXX/ the token was not")
-    print("  accepted, usually because it was revoked or regenerated.")
-    print("  Get a new one at https://on-air.nicegui.io/login.")
+    print("  If no 'NiceGUI is on air at ...' line follows and the log repeats")
+    print("  'Invalid device token', the relay refused the token (revoked,")
+    print("  regenerated or mistyped) and the game is NOT online: only this PC")
+    print("  and the network reach it. Get a new one at https://on-air.nicegui.io/login.")
     print()
     return online
 

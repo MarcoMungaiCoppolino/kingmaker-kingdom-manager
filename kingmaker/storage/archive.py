@@ -39,7 +39,7 @@ log = logging.getLogger(__name__)
 # 1.1.0 to 1.2.0 all write schema 29. Each step up has its migration, run in
 # order on an older file (see `_open`); a file with a higher number than this
 # is refused (`NewerSaveError`).
-SCHEMA_VERSION = 29
+SCHEMA_VERSION = 30
 
 
 class NewerSaveError(RuntimeError):
@@ -186,7 +186,11 @@ CREATE TABLE IF NOT EXISTS users (
     units             TEXT,
     -- May this person's launcher host the game (GM role only; administrators
     -- always can): the trust decision behind the cloud sync (schema 29).
-    can_host          INTEGER NOT NULL DEFAULT 0
+    can_host          INTEGER NOT NULL DEFAULT 0,
+    -- The second factor (30): the TOTP secret, base32, and the recovery
+    -- codes as a JSON list of hashes; NULL for an account without one.
+    totp_secret       TEXT,
+    recovery_codes    TEXT
 );
 
 -- The kingdom's stable: the vehicles the party really owns. `vehicle` is the
@@ -591,6 +595,11 @@ class Archive:
         (28, "users", "units TEXT"),
         # Whose launcher may host the game (schema 29).
         (29, "users", "can_host INTEGER NOT NULL DEFAULT 0"),
+        # 30: the second factor of an account (`access/totp.py`): the TOTP
+        # secret, base32, and the recovery codes as a JSON list of hashes.
+        # NULL for an account without one.
+        (30, "users", "totp_secret TEXT"),
+        (30, "users", "recovery_codes TEXT"),
         # A boat sits in the water on its own, and whoever boards it reaches
         # it. It is the opposite of a wagon, which sits where whoever tows it
         # is: a boat is not carried on one's shoulders to the river.
@@ -981,7 +990,8 @@ class Archive:
         if not fields:
             return
         allowed = {"username", "pw_hash", "salt", "iterations", "role",
-                   "active", "must_change_pw", "last_login", "language", "units", "can_host"}
+                   "active", "must_change_pw", "last_login", "language", "units", "can_host",
+                   "totp_secret", "recovery_codes"}
         unknowns = set(fields) - allowed
         if unknowns:
             raise ValueError(f"fields that cannot be modified: {sorted(unknowns)}")

@@ -59,6 +59,19 @@ sequenceDiagram
 The middleware (`ui/login.py`) serves above all for `/assets`: it is a static mount, not a page,
 and without the filter whoever guesses a file name downloads it from the public address.
 
+**The second factor** (`access/totp.py`, schema 30). An account may ask a one-time code
+after the password: RFC 6238 over SHA-1, thirty-second steps, six digits, a step either side
+accepted (`totp.matches`), the RFC's vectors in `tests/test_totp.py`. `users.totp_secret`
+holds the secret as base32, `users.recovery_codes` a JSON list of SHA-256 hashes of the eight
+recovery codes shown once (`auth.enable_second_factor`); `auth.second_factor_ok` takes the
+current code or spends a recovery code, and a wrong one goes through `_mark_failure` under the
+username, the same brake as a wrong password. `User.second_factor` says whether to ask: the
+login page keeps the verified user in the page's closure and shows the code field in place of
+the two others (`login_page`), so no session exists until the code passed. The account menu's
+shield (`second_factor_dialog`) switches it on with a code the app shows, or off with one; the
+administrator clears another account's from the accounts panel (`_clear_second_factor`), and
+both go to the journal.
+
 ## Roles and actions — `access/permissions.py`
 
 ![The Accounts panel: role, active, last login, entering another account, new password, new user.](img/screenshots/account.jpg)
@@ -113,5 +126,7 @@ Publishing with On Air the app does not sit at the root of the domain but under
 ourselves inside the SVG (`/assets/...`) `theme.with_prefix` adds it, reading
 `X-Forwarded-Prefix` once per window (`set_prefix`). `request_prefix` takes into account that
 under On Air the header and the `root_path` say the same thing (adding them wrote the prefix
-twice). The On Air token **is never written** in the code or in the files: `launch.py` reads it
-from the environment or from the Windows registry.
+twice). The On Air token is never in the code: `launch.py` reads it from the environment or
+from the Windows registry, and the launcher hands it to the server the same way — from its
+vault for whoever plays online without the cloud, from the table's folder (`table.json`,
+chapter 13) with the cloud, never from a file in clear.

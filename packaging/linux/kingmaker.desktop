@@ -6,3 +6,4 @@ Exec=kingmaker-kingdom-manager
 Icon=kingmaker
 Terminal=false
 Categories=Game;
+StartupWMClass=Kingmaker
