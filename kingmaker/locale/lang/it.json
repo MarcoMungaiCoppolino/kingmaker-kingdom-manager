@@ -390,6 +390,7 @@
   "launcher.cloud.row.take_over": "Chiede a {host} di caricare l'ultima copia e fermarsi; la partita poi riparte qui da quella, senza perdere niente. Se non risponde entro due minuti, puoi prenderla comunque.",
   "launcher.cloud.same_identity": "Un host con l'identità di questo launcher è ancora attivo nel cloud (visto {age} s fa). Riprendere la partita?\n\nRispondi sì solo se era questo PC, dopo un crash. Una cartella della partita copiata su un altro PC porta con sé la stessa identità, e prendergli la partita lascerebbe due host insieme.",
   "launcher.cloud.seat_changed": "Il launcher dell'amministratore è cambiato: è {name} dal {date}. Chiedigli un codice di accoppiamento e accoppiati di nuovo; su questo PC non si perde niente.",
+  "launcher.cloud.seat_elsewhere": "L'amministratore del tavolo è {name}, su un altro PC, dal {date}. Avvia chiede se prendere qui il posto.",
   "launcher.cloud.seat_take_confirm": "L'amministratore del tavolo è {name}, su un altro PC, dal {date}. Prendere qui il posto dell'amministratore? Quel launcher si fa da parte al suo prossimo controllo (il suo accesso Dropbox viene annullato), e ogni host si accoppia di nuovo con un codice che fai qui.",
   "launcher.cloud.seat_taken": "{name} ha preso il posto dell'amministratore il {date}: l'accesso Dropbox di questo launcher è stato annullato e dimenticato. Per ospitare di nuovo da questo PC, accoppialo come host con un codice del nuovo amministratore.",
   "launcher.cloud.seat_taken_here": "ha preso il posto dell'amministratore a {name}",

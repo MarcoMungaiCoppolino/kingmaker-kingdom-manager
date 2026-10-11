@@ -465,7 +465,10 @@ class DropboxPages:
             self.result = credential.to_dict()
             kept_hosts = self.settings.cloud.get("hosts_refresh_token", "")
             self.settings.cloud = {**credential.to_dict(), "table": self.table.get().strip() or "Kingmaker",
-                                   "role": "admin", "table_id": self.settings.cloud.get("table_id", "")}
+                                   "role": "admin", "table_id": self.settings.cloud.get("table_id", ""),
+                                   # The seat is Start's to create or take: until then a look
+                                   # finding another key on it leaves this launcher alone.
+                                   "seated": False}
             if kept_hosts:
                 self.settings.cloud["hosts_refresh_token"] = kept_hosts
             self.settings.host_name = ""

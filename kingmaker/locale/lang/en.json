@@ -390,6 +390,7 @@
   "launcher.cloud.row.take_over": "Asks {host} to upload their last copy and stop; the game then starts here with it, nothing lost. If they do not answer within two minutes, you may take it anyway.",
   "launcher.cloud.same_identity": "A host with this launcher's identity is still active in the cloud (seen {age} s ago). Take the game back?\n\nSay yes only if that was this PC, after a crash. A game folder copied to another PC carries the same identity, and taking the game from it would leave two hosts at once.",
   "launcher.cloud.seat_changed": "The administrator's launcher changed: it is {name} since {date}. Ask them for a pairing code and pair again; nothing on this PC is lost.",
+  "launcher.cloud.seat_elsewhere": "The table's administrator is {name}, on another PC, since {date}. Start asks whether to take the seat here.",
   "launcher.cloud.seat_take_confirm": "The table's administrator is {name}, on another PC, since {date}. Take the administrator's seat here? That launcher steps down at its next look (its own Dropbox access is cancelled), and every host pairs again with a code you make here.",
   "launcher.cloud.seat_taken": "{name} took the administrator's seat on {date}: this launcher's Dropbox access was cancelled and forgotten. To host from this PC again, pair it as a host with a code from the new administrator.",
   "launcher.cloud.seat_taken_here": "took the administrator's seat from {name}",

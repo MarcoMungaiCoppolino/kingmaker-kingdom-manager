@@ -146,6 +146,9 @@ class Launcher:
         # A host whose table file is signed by another seat than the one it
         # paired with: the administrator's launcher changed. Pair again.
         self.seat_changed = False
+        # The key found on a seat this administrator's launcher never held:
+        # said once in the log (the Table box keeps saying it), Start asks.
+        self.seat_elsewhere_said = ""
 
         root.title(core.APP_NAME)
         root.minsize(560, 420)
@@ -576,6 +579,10 @@ class Launcher:
             self.cloud_label.config(text=t(key, table=cloud.get("table", ""), who=who, role=role_name,
                                            account=cloud.get("account_name", "")), foreground=COLOURS["quiet"])
             if admin:
+                if self.seat_elsewhere():
+                    # Connected to the table's app on this PC, the seat still
+                    # another PC's: Start asks whether to take it here.
+                    self.note(self.seat_elsewhere_text(self.table))
                 # On this computer only nobody else reaches the game for a
                 # code: no pairing, and no hosts to look after. The keys stay,
                 # since the copies still go to the table from here.
@@ -775,19 +782,26 @@ class Launcher:
 
     def check_seat(self, table: sync.TableRecord | None) -> bool:
         """What the table file says about the seat, at every read. The
-        administrator finding another key on it has lost the seat to a
-        newer PC: its own Dropbox access is revoked and forgotten, the
-        window says who took it and when. A host whose file is no longer
-        signed by the administrator it paired with pairs again. True when
-        the box was redrawn for either."""
+        administrator finding another key on a seat it held has lost it
+        to a newer PC: its own Dropbox access is revoked and forgotten,
+        the window says who took it and when. One that never held the
+        seat (`cloud.seated` false: connected to the table's app on a
+        new PC, Start not pressed yet) is only told, and Start asks. A
+        host whose file is no longer signed by the administrator it
+        paired with pairs again. True when the box was redrawn for
+        either."""
         if table is None or table.format < 2:
             return False
         cloud = self.settings.cloud
         if cloud.get("role") == "admin":
             if table.admin_key and table.admin_key != self.settings.sign_key and not self.server.running \
                     and self.record is None:
-                self.seat_lost(table)
-                return True
+                if cloud.get("seated"):
+                    self.seat_lost(table)
+                    return True
+                if self.seat_elsewhere_said != table.admin_key:
+                    self.seat_elsewhere_said = table.admin_key
+                    self.append_log("cloud: " + self.seat_elsewhere_text(table))
             return False
         trusted = table.trusted_by(cloud.get("admin_key", ""))
         if trusted == (not self.seat_changed):
@@ -798,6 +812,18 @@ class Launcher:
             self.append_log("cloud: " + t("launcher.cloud.seat_changed", name=who, date=table.admin_since[:10]))
         self.refresh_cloud()
         return True
+
+    def seat_elsewhere(self) -> bool:
+        """Another PC holds the administrator's seat and this launcher
+        never did: nothing is lost here, and the next Start asks."""
+        table, cloud = self.table, self.settings.cloud
+        return (cloud.get("role") == "admin" and not cloud.get("seated") and table is not None
+                and table.format >= 2 and bool(table.admin_key)
+                and table.admin_key != self.settings.sign_key)
+
+    def seat_elsewhere_text(self, table: sync.TableRecord) -> str:
+        return t("launcher.cloud.seat_elsewhere", name=table.admin_name or table.admin_id,
+                 date=table.admin_since[:10])
 
     def seat_lost(self, table: sync.TableRecord) -> None:
         who, date = table.admin_name or table.admin_id, table.admin_since[:10]
@@ -911,6 +937,8 @@ class Launcher:
                 except HostsKeyNeeded:
                     self.post(self.need_hosts_key)
                     return
+                # The seat held, the table's id: kept now, not at the next save.
+                self.post(self.settings.save)
                 entries = sync.read_launchers(client)[0]
                 known = sync.known_launchers(table, entries)
                 self.post(lambda: self.learn_launchers(entries, known))
@@ -1047,6 +1075,9 @@ class Launcher:
             if local and table.air_token:
                 self.post(self.token_moved)
             cloud["admin_key"] = key
+            # Created, upgraded, taken, or ours already: from here the look
+            # finding another key on the seat means it was taken from us.
+            cloud["seated"] = True
         else:
             table = sync.read_table(client)
             if table is None:
@@ -1412,6 +1443,7 @@ class Launcher:
             err = error
             self.post(lambda: self.append_log(f"cloud: {err}"))
             return
+        self.settings.cloud["seated"] = True   # created now, upgraded, or ours before
         self.table = table
         self.post(self.token_moved)
 
@@ -1538,12 +1570,14 @@ class Launcher:
                         sync.take_seat(table, host_id, host_name, key, (current.epoch if current else 0) + 1)
                     table.access_generation += 1
                     sync.write_table(client, table, by=host_name, seed=seed)
+                    self.settings.cloud["seated"] = True
             except Exception as error:
                 err = error
                 self.post(lambda: self.append_log(t("launcher.cloud.rotate_failed", error=err)))
                 self.post(lambda: messagebox.showwarning(
                     t("launcher.cloud.rotate"), t("launcher.cloud.rotate_failed", error=err)))
                 return
+            self.post(self.settings.save)
             self.post(lambda: self.append_log("cloud: " + t("launcher.cloud.rotated")))
             self.post(lambda: messagebox.showinfo(t("launcher.cloud.rotate"), t("launcher.cloud.rotated")))
 

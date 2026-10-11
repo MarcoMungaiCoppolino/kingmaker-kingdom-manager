@@ -115,8 +115,11 @@ class Settings:
     check_updates: bool = True
     # The cloud: the Dropbox credential (app_key, refresh_token, account_id,
     # account_name, app_name), the table's name, and who we are to it
-    # (username, role). Empty until the administrator set it up here or
-    # this launcher connected to a table.
+    # (username, role). The administrator's also says whether this
+    # launcher holds the seat (`seated`: set by the Start that created,
+    # upgraded or took it, false from the welcome until then). Empty until
+    # the administrator set it up here or this launcher connected to a
+    # table.
     cloud: dict = field(default_factory=dict)
     # This launcher's identity in `host.json`: a random id made once, and a
     # name the others read ("Marco's PC").
@@ -229,6 +232,12 @@ class Settings:
             table_role = settings.cloud.get("role")
             settings.role = (table_role if table_role in ROLES
                              else "admin" if not settings.welcome_due else "")
+        if (settings.cloud.get("role") == "admin" and settings.cloud.get("app_key")
+                and "seated" not in settings.cloud):
+            # Set up before `seated` existed (2.1.1). Until then the minute's
+            # look deposed any administrator whose key was not on the seat,
+            # so one still connected holds it.
+            settings.cloud["seated"] = True
         if settings.mode not in MODES:
             settings.mode = "local"
         if not isinstance(settings.port, int) or not 1 <= settings.port <= 65535:

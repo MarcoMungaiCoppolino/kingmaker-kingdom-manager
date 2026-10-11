@@ -268,6 +268,35 @@ else:
                     results.append((f"{tag} no pairing code on this computer only, and it says why",
                                     told == [i18n.t("launcher.cloud.pair_needs_network")]))
                     mine.record = None
+
+                    # The seat found on another PC. A launcher that never held
+                    # it is told and left whole (Start asks); one that held it
+                    # steps down: access cancelled, the table forgotten.
+                    mine.settings.identity()
+                    other = sync.TableRecord(format=2, name="T", admin_id="h2", admin_name="Other-PC",
+                                             admin_key="f" * 64, admin_since="2026-10-10T10:00:00Z")
+                    revoked = []
+                    mine.cloud_client = lambda: type("Client", (), {"revoke": lambda _s: revoked.append(1)})()
+                    told = []
+                    window.messagebox.showinfo = lambda _title, text, **_k: told.append(text)
+                    try:
+                        mine.settings.cloud["seated"] = False
+                        mine.table = other
+                        untouched = not mine.check_seat(other)
+                        mine.refresh_cloud()
+                        elsewhere = i18n.t("launcher.cloud.seat_elsewhere", name="Other-PC", date="2026-10-10")
+                        results.append((f"{tag} another seat, never held here: nothing lost, the box says Start asks",
+                                        untouched and mine.settings.cloud_ready and not revoked and not told
+                                        and elsewhere in box_texts()))
+                        mine.settings.cloud["seated"] = True
+                        deposed = mine.check_seat(other)
+                        results.append((f"{tag} another seat, held here before: stepped down, access cancelled",
+                                        deposed and not mine.settings.cloud and revoked == [1]
+                                        and told == [i18n.t("launcher.cloud.seat_taken", name="Other-PC",
+                                                            date="2026-10-10")]))
+                    finally:
+                        window.messagebox.showinfo = real_showinfo
+                        mine.table = None
                 finally:
                     for pending in local_root.tk.call("after", "info"):
                         local_root.after_cancel(pending)

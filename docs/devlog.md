@@ -697,6 +697,26 @@ installers. The two-machine bench, the fake Dropbox served on every interface an
 driven from a file, stays in `prove/`, outside git, for the next time something has to be
 seen rather than believed.
 
+## 2.1.1 — 11 October 2026 · The seat, before the first Start
+
+The second laptop was set up the same night, and the test table was the first thing tried on
+it: the welcome, *Connect to an existing app*, two authorisations, and then, before Start was
+pressed, a red line saying the other laptop had taken the administrator's seat and this
+launcher's Dropbox access was cancelled and forgotten. Nothing had been taken. The launcher asks
+the cloud by itself every minute, and `check_seat`, written for the old PC that must step down
+when a new one takes the seat, could not tell that PC from a new one that had only connected
+and not asked yet: both are administrators whose key is not on the seat. Whichever came first,
+the minute's look or the person's Start, decided whether the move worked, and the rehearsals of
+2.0.0 had always pressed Start first.
+
+The fix is one more thing the launcher remembers: whether it ever held the seat, which only the
+Start that created the table, upgraded it from 1.x or took the seat can say, and which the
+welcome sets to no when it connects. A look that finds another seat on a launcher that never
+held one now only says so, in the log and in the Table box, and leaves Start to ask. Files from
+before this version count as seated, so an old PC upgraded to 2.1.1 still steps down by itself.
+The lesson is the old one about two code paths that look at the same fact: the look and Start
+both read the seat, and only one of them knew what this launcher had done before.
+
 ## 2.1.0 — 10 and 11 October 2026 · Our own calendar
 
 With 2.0.0 out, the owner asked what of the kingdom rules was still missing besides the armies,

@@ -2,7 +2,7 @@
 
 *In italiano: [it/guida-utente.md](it/guida-utente.md) (longer, with the history of every choice).*
 
-This guide describes the app as it is in version 2.1.0, tab by tab, with the reason behind
+This guide describes the app as it is in version 2.1.1, tab by tab, with the reason behind
 each choice where it matters at the table. To install and start it see the
 [README](../README.md); the window of the installed app is the first chapter below. The screenshots in [`manual/img/screenshots/`](manual/img/screenshots/)
 were taken on a real table: the kingdom, the characters and the journeys in them are those of a game
@@ -777,7 +777,8 @@ cannot open.
 **Moving the administrator to another PC.** Install there, answer "I set the table up", press
 *Connect to an existing app* in the Dropbox guide and authorise twice. The first Start finds
 the seat taken by your old PC and asks whether to take it here; yes writes your new launcher
-into the table's file. The old PC steps down by itself the next time it opens: it sees the
+into the table's file (until then the new launcher only notes, in its Table box, that the seat
+is your old PC's). The old PC steps down by itself the next time it opens: it sees the
 seat is no longer its own, cancels its own Dropbox key and forgets the table, saying who took
 the seat and when. The hosts see that the administrator's launcher changed and pair again with
 a code from the new PC. If the old PC is never opened again, its key stays valid until you

@@ -8,6 +8,22 @@ what broke, what was learned — is in [docs/devlog.md](docs/devlog.md).
 The versions before 1.0.0 were never tagged: the app was played from a working copy and the
 numbers below were assigned afterwards, one per day of development, from the session history.
 
+## [2.1.1] — 2026-10-11
+
+A new administrator's launcher is no longer deposed before it can take the seat.
+
+### Fixed
+- **Moving the administrator to another PC could end before the first Start.** The launcher
+  asks the cloud by itself every minute, and an administrator's launcher finding another key on
+  the seat concluded it had lost it: it cancelled its own Dropbox access and forgot the table.
+  That is right for the old PC and was wrong for the new one, which had only connected to the
+  existing app and not pressed Start yet: if the minute's look came first, the new launcher was
+  deposed before it could ask. The launcher now remembers whether it ever held the seat, which
+  only the Start that created, upgraded or took it can say. Until then a look that finds another
+  seat leaves the launcher whole, says so in the log and in the Table box, and the first Start
+  asks whether to take the seat, as before. A launcher set up before this version counts as
+  holding its seat, so an old PC still steps down by itself.
+
 ## [2.1.0] — 2026-10-11
 
 The first of the releases that close the kingdom rules still missing before the armies: a table

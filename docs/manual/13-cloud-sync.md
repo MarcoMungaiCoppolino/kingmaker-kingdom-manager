@@ -283,11 +283,15 @@ seed signs; hosts write the file no more (`window.settle_table`).
 
 **The seat.** `settle_table` on the administrator's side creates the file with its seat
 (`ensure_table(admin=…, seed=…)`), upgrades a format-1 file (`sync.take_seat` with the
-record's next epoch), or, finding another key on the seat, asks and takes it. Every read of
-the table (`window.checked` → `check_seat`) compares: the administrator whose key is no
-longer on the seat revokes its own Dropbox token, forgets the table and says who took the seat
-(`seat_lost`); a host whose file is no longer `trusted_by` its administrator's key shows "the
-administrator's launcher changed, pair again" (`seat_changed`).
+record's next epoch), or, finding another key on the seat, asks and takes it; each of these
+marks the launcher as holding the seat (`cloud.seated`, false from the welcome until then).
+Every read of the table (`window.checked` → `check_seat`) compares: the administrator whose
+key is no longer on a seat it held revokes its own Dropbox token, forgets the table and says
+who took the seat (`seat_lost`); one that never held it, connected on a new PC with Start not
+pressed yet, is only told, in the log and in the Table box (`seat_elsewhere`), and Start asks;
+a host whose file is no longer `trusted_by` its administrator's key shows "the administrator's
+launcher changed, pair again" (`seat_changed`). A settings file from before `seated` existed
+loads as seated, so an old PC upgraded to 2.1.1 still steps down.
 
 **`launchers.json`** (`read_launchers`, `add_launcher`): `{format: 1, entries: [...]}`, one
 admission per launcher id, appended by the newcomer with a compare-and-swap. An entry is

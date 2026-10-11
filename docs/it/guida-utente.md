@@ -2,7 +2,7 @@
 
 *In English: [../user-guide.md](../user-guide.md).*
 
-Questa guida descrive l'app com'è alla versione 2.1.0, scheda per scheda, con il perché di ogni
+Questa guida descrive l'app com'è alla versione 2.1.1, scheda per scheda, con il perché di ogni
 scelta. Per installarla e avviarla vedi il [README.it.md](../../README.it.md); la finestra
 dell'app installata è il primo capitolo qui sotto. Le schermate in
 [`manual/img/screenshots/it/`](../manual/img/screenshots/it/) sono dell'interfaccia italiana, prese
@@ -188,7 +188,9 @@ un ladro senza la tua password ha un file che non può aprire.
 **Spostare l'amministratore su un altro PC.** Installa lì, rispondi «Creo io il tavolo», premi
 *Collegati a un'app esistente* nella guida a Dropbox e autorizza due volte. Il primo Avvia
 trova il posto occupato dal tuo vecchio PC e chiede se prenderlo qui; sì scrive il tuo nuovo
-launcher nel file del tavolo. Il vecchio PC si fa da parte da solo la prima volta che si apre:
+launcher nel file del tavolo (fino ad allora il nuovo launcher si limita a notare, nel riquadro
+del tavolo, che il posto è del tuo vecchio PC). Il vecchio PC si fa da parte da solo la prima
+volta che si apre:
 vede che il posto non è più suo, annulla la propria chiave Dropbox e dimentica il tavolo,
 dicendo chi ha preso il posto e quando. Gli host vedono che il launcher dell'amministratore è
 cambiato e si accoppiano di nuovo con un codice del nuovo PC. Se il vecchio PC non si apre mai

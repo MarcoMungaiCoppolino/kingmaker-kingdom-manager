@@ -121,6 +121,23 @@ results.append(("the hosts' key and the signing seed go to the vault, not to the
                 reloaded.cloud.get("hosts_refresh_token") == "hosts-r" and reloaded.sign_seed == cloudy.sign_seed
                 and reloaded.sign_key == cloudy.sign_key and written["sign_seed"] == ""
                 and "hosts_refresh_token" not in written["cloud"] and "hosts-r" not in path.read_text(encoding="utf-8")))
+# The seat: an administrator's file from before `seated` existed counts as
+# seated (the look deposed anyone else within a minute); a launcher the
+# welcome only connected says it is not; hosts and the unconnected are not
+# marked at all.
+path.write_text('{"cloud": {"app_key": "k", "role": "admin", "table": "T"}}', encoding="utf-8")
+results.append(("an administrator's file from before 2.1.1 holds the seat",
+                core.Settings.load(path).cloud.get("seated") is True))
+path.write_text('{"cloud": {"app_key": "k", "role": "admin", "table": "T", "seated": false}}',
+                encoding="utf-8")
+results.append(("a launcher that only connected does not",
+                core.Settings.load(path).cloud.get("seated") is False))
+path.write_text('{"cloud": {"app_key": "k", "role": "host", "table": "T", "admin_key": "x"}}',
+                encoding="utf-8")
+results.append(("a host's file is not marked", "seated" not in core.Settings.load(path).cloud))
+path.write_text('{"cloud": {"role": "admin"}}', encoding="utf-8")
+results.append(("an administrator not connected yet is not marked",
+                "seated" not in core.Settings.load(path).cloud))
 del cloudy.cloud["hosts_refresh_token"]
 results.append(("no hand-out without a credential",
                 core.CREDENTIAL_VARIABLE not in core.server_environment(core.Settings(), "shh")))
