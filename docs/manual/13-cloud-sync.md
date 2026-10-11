@@ -285,6 +285,10 @@ seed signs; hosts write the file no more (`window.settle_table`).
 (`ensure_table(admin=…, seed=…)`), upgrades a format-1 file (`sync.take_seat` with the
 record's next epoch), or, finding another key on the seat, asks and takes it; each of these
 marks the launcher as holding the seat (`cloud.seated`, false from the welcome until then).
+A seat taken from another PC also admits that PC's launcher (`sync.admit_former_admin`, a
+`make_admission` signed by the new seat, from `settle_table` and `rotated`): the copies it
+uploaded, usually the newest of the game, still pass `newest_usable`'s signature check. Without
+it the new administrator found no usable copy and started an empty game.
 Every read of the table (`window.checked` → `check_seat`) compares: the administrator whose
 key is no longer on a seat it held revokes its own Dropbox token, forgets the table and says
 who took the seat (`seat_lost`); one that never held it, connected on a new PC with Start not

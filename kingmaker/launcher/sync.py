@@ -496,6 +496,28 @@ def make_admission(seed: bytes, admitted_by: str, host_id: str, name: str, key: 
     return entry
 
 
+def former_admin_admission(seed: bytes, admin_id: str, former: tuple[str, str, str]) -> dict | None:
+    """The outgoing administrator's launcher `(host_id, name, key)`, admitted
+    by the launcher that takes the seat, under its seed. The copies that
+    launcher uploaded, usually the newest of the game, stay loadable
+    (`newest_usable` wants a signer the table vouches for), and it stays in
+    the list of launchers, to strike off on its own if wanted. None when
+    the seat was empty (a table from 1.x) or already this launcher's."""
+    host_id, name, key = former
+    if not host_id or not key or host_id == admin_id:
+        return None
+    return make_admission(seed, admin_id, host_id, name, key)
+
+
+def admit_former_admin(client, seed: bytes, admin_id: str, former: tuple[str, str, str]) -> bool:
+    """`former_admin_admission` written to `launchers.json`; whether one was."""
+    entry = former_admin_admission(seed, admin_id, former)
+    if entry is None:
+        return False
+    add_launcher(client, entry)
+    return True
+
+
 def read_launchers(client) -> tuple[list[dict], str]:
     """The entries as written, and the file's rev ("" when absent)."""
     found = download_if_there(client, LAUNCHERS_FILE)

@@ -1048,6 +1048,7 @@ class Launcher:
             table, created = sync.ensure_table(client, name, token=local, by=host_name,
                                                admin=(host_id, host_name, key), seed=seed)
             changed = False
+            former: tuple[str, str, str] | None = None
             if created:
                 self.post(lambda: self.append_log(t("launcher.log.table_created", version=table.app_version)))
             elif table.format < 2:
@@ -1063,6 +1064,7 @@ class Launcher:
                         t("launcher.cloud.seat_title"),
                         t("launcher.cloud.seat_take_confirm", name=who, date=since))):
                     raise SeatChanged(who, since)
+                former = (table.admin_id, table.admin_name, table.admin_key)
                 sync.take_seat(table, host_id, host_name, key, table.signed_since or 1)
                 changed = True
                 self.post(lambda: self.append_log(t("launcher.cloud.seat_taken_here", name=who)))
@@ -1072,6 +1074,14 @@ class Launcher:
                 changed = True
             if changed:
                 table = sync.write_table(client, table, by=host_name, seed=seed)
+            if former is not None and seed is not None:
+                # The seat taken from another PC: its launcher is vouched for
+                # under the new seat, so the copies it uploaded still load.
+                try:
+                    sync.admit_former_admin(client, seed, host_id, former)
+                except Exception as error:
+                    err = error
+                    self.post(lambda: self.append_log(f"cloud: {err}"))
             if local and table.air_token:
                 self.post(self.token_moved)
             cloud["admin_key"] = key
@@ -1565,11 +1575,16 @@ class Launcher:
                 client = self.cloud_client()
                 table = sync.read_table(client)
                 if table is not None:
+                    former = None
                     if table.format < 2 or table.admin_key != key:
+                        if table.format >= 2:
+                            former = (table.admin_id, table.admin_name, table.admin_key)
                         current = sync.read_record(client)
                         sync.take_seat(table, host_id, host_name, key, (current.epoch if current else 0) + 1)
                     table.access_generation += 1
                     sync.write_table(client, table, by=host_name, seed=seed)
+                    if former is not None and seed is not None:
+                        sync.admit_former_admin(client, seed, host_id, former)
                     self.settings.cloud["seated"] = True
             except Exception as error:
                 err = error

@@ -3,6 +3,7 @@ good signature passes, a wrong key, a changed file, a missing name and
 an unreadable signature are refused, a release without sums is "unsigned"."""
 import hashlib
 import os
+import shutil
 import sys
 import tempfile
 from pathlib import Path
@@ -77,6 +78,41 @@ results.append(("the shipped key list holds hex keys of the right length",
                 all(len(k) == 64 and all(c in "0123456789abcdef" for c in k)
                     for k in __import__("importlib").reload(keys).RELEASE_KEYS)))
 
+# The latest release when GitHub's API refuses (its hourly limit per address):
+# the releases page names the tag, and the files follow from it.
+asked = []
+
+
+def api_refused() -> dict:
+    asked.append("api")
+    raise OSError("HTTP Error 403: rate limit exceeded")
+
+
+def page_off() -> str:
+    raise OSError("offline")
+
+
+found = core.latest_release(api=api_refused, page=lambda: "v2.1.2")
+names = [a["name"] for a in found.assets] if found else []
+results.append(("the API refused, the releases page names the tag: the release with its four files",
+                found is not None and found.version == "2.1.2" and found.signed
+                and "Kingmaker-Kingdom-Manager-2.1.2-Setup.exe" in names
+                and "Kingmaker-Kingdom-Manager-2.1.2-linux-x86_64.tar.gz" in names
+                and found.assets[0]["url"] == f"https://github.com/{core.REPOSITORY}/releases/download/v2.1.2/"
+                f"Kingmaker-Kingdom-Manager-2.1.2-Setup.exe"
+                and found.page.endswith("/releases/tag/v2.1.2")))
+results.append(("both refused: nothing, no error", core.latest_release(api=api_refused, page=page_off) is None))
+results.append(("a page naming no tag: nothing", core.latest_release(api=api_refused, page=lambda: "") is None))
+results.append(("a tag that is not a version: nothing",
+                core.latest_release(api=api_refused, page=lambda: "latest") is None))
+answered = core.latest_release(api=lambda: {"tag_name": "v9.9.9", "html_url": "h", "assets": []},
+                               page=page_off)
+results.append(("the API answering: its release, the page never asked",
+                answered is not None and answered.version == "9.9.9" and answered.page == "h"))
+results.append(("the release page's tag is read from the redirect's address",
+                core.release_from_tag("v2.0.0").version == "2.0.0" and core.release_from_tag("junk") is None))
+
+shutil.rmtree(folder, ignore_errors=True)
 for name, ok in results:
     print(f" {'ok' if ok else 'NO'}  {name}")
 print(f"{sum(1 for _n, ok in results if ok)}/{len(results)} passed")

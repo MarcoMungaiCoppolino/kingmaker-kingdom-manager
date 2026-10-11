@@ -12,6 +12,7 @@ brought into view by scrolling, and the window must sit inside the area.
 Needs a display: without one (a server, a container) it says so and passes.
 """
 import os
+import shutil
 import sys
 import tempfile
 
@@ -23,7 +24,15 @@ os.environ["KINGMAKER_DATA_DIR"] = tempfile.mkdtemp(prefix="km-screens-")
 import tkinter as tk  # noqa: E402
 from tkinter import ttk  # noqa: E402
 
+from kingmaker.access import ed25519  # noqa: E402
 from kingmaker.launcher import core, screen, sync, window, wizard  # noqa: E402
+
+# No window of this test may ask GitHub for updates: every Settings below says
+# check_updates=False, and this stub catches the one that forgets. The suite
+# once ran both laptops dry of the API's hourly quota, and the installed
+# launcher showed no update.
+asked_github: list = []
+core.latest_release = lambda *_a, **_k: asked_github.append(1)     # type: ignore[assignment]
 from kingmaker.locale import i18n  # noqa: E402
 
 results = []
@@ -98,7 +107,7 @@ def check(label, top, area) -> None:
 
 def tallest_launcher(root, lang) -> window.Launcher:
     """The main window with everything it can show at once."""
-    settings = core.Settings(mode="online", language=lang)
+    settings = core.Settings(mode="online", language=lang, check_updates=False)
     settings.cloud = {"app_key": "k", "refresh_token": "r", "account_id": "a", "account_name": "Marco",
                       "app_name": "x", "table": "Tavolo", "role": "admin", "username": "admin"}
     app = window.Launcher(root, settings)
@@ -145,7 +154,7 @@ else:
 
                 # The host's window: paired with someone hosting, and not
                 # paired yet, when Start waits for the pairing.
-                host = core.Settings(mode="online", language=lang, role="host",
+                host = core.Settings(mode="online", language=lang, role="host", check_updates=False,
                                      cloud=dict(app.settings.cloud, role="host"))
                 for paired in (True, False):
                     host_root = tk.Tk()
@@ -178,7 +187,8 @@ else:
                 # computer only, where nobody else reaches the game.
                 alone_root = tk.Tk()
                 try:
-                    alone = window.Launcher(alone_root, core.Settings(mode="local", language=lang, role="admin"))
+                    alone = window.Launcher(alone_root, core.Settings(mode="local", language=lang, role="admin",
+                                                                      check_updates=False))
                     boxes = []
                     for mode in ("local", "lan", "online", "local"):
                         alone.mode_var.set(mode)
@@ -288,6 +298,33 @@ else:
                         results.append((f"{tag} another seat, never held here: nothing lost, the box says Start asks",
                                         untouched and mine.settings.cloud_ready and not revoked and not told
                                         and elsewhere in box_texts()))
+                        # The seat ours, the former administrator's launcher still
+                        # hosting: admitted at the seat move, it is a known launcher,
+                        # so the box offers the hand-over, not the force for a stranger.
+                        seed_old, seed_mine = ed25519.new_seed(), mine.settings.seed()
+                        key_old = ed25519.public_key(seed_old).hex()
+                        ours = sync.TableRecord(format=2, name="T", admin_id=mine.settings.host_id,
+                                                admin_name="This-PC", admin_key=mine.settings.sign_key,
+                                                admin_since="2026-10-11T03:00:00Z", signed_since=1)
+                        ours.sign(seed_mine)
+                        entries = [sync.former_admin_admission(seed_mine, mine.settings.host_id,
+                                                               ("h-old", "Old-PC", key_old))]
+                        old_record = sync.HostRecord(host_id="h-old", host_name="Old-PC", epoch=3, seq=1,
+                                                     since="2026-10-11T03:05:00Z")
+                        old_record.sign(seed_old, key_old)
+                        mine.settings.cloud["seated"] = True
+                        mine.table, mine.entries = ours, entries
+                        mine.known = sync.known_launchers(ours, entries)
+                        mine.other = old_record
+                        mine.refresh_cloud()
+                        texts = box_texts()
+                        results.append((f"{tag} the former administrator still hosting is a known launcher: "
+                                        f"hand-over offered, no force",
+                                        mine.holder_known(old_record) and i18n.t("launcher.cloud.take_over") in texts
+                                        and i18n.t("launcher.cloud.take_force") not in texts))
+                        mine.other = None
+                        mine.known, mine.entries = {}, []
+                        mine.table = other
                         mine.settings.cloud["seated"] = True
                         deposed = mine.check_seat(other)
                         results.append((f"{tag} another seat, held here before: stepped down, access cancelled",
@@ -409,6 +446,8 @@ else:
                 root.destroy()
     screen.work_area = real_work_area
 
+results.append(("no launcher window asked GitHub for updates", not asked_github))
+shutil.rmtree(os.environ["KINGMAKER_DATA_DIR"], ignore_errors=True)
 for name, ok in results:
     print(f" {'ok' if ok else 'NO'}  {name}")
 print(f"{sum(1 for _n, ok in results if ok)}/{len(results)} passed")

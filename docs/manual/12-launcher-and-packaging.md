@@ -98,7 +98,11 @@ and the Table box asks to connect again. A file from before 1.4.0, with the secr
 is migrated by its first save. `tests/test_vault.py` covers both schemes.
 
 **Updates.** `core.latest_release` asks the GitHub API for the latest release, in a thread, with
-a five-second timeout and silence on failure; `core.is_newer` compares version tuples. On
+a five-second timeout and silence on failure; when the API refuses (sixty unauthenticated
+calls an hour per internet address: a shared network spends them) it reads the latest tag off
+the releases page's redirect instead (`latest_tag_from_page`, a HEAD request) and builds the
+release from the tag (`release_from_tag`: the files every build makes, at the tag's download
+addresses; the signature check is unchanged). `core.is_newer` compares version tuples. On
 Windows the launcher downloads the `-Setup.exe` asset to `%TEMP%` and starts it, then quits; on
 Linux it opens the release page. *Settings → Versions on GitHub…* (`window.open_versions`,
 `core.list_releases`: the releases API, drafts skipped, sorted by version tuple) installs any

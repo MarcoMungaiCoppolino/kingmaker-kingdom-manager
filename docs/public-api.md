@@ -78,7 +78,10 @@ The launcher starts the game as a child process; they talk through these.
 
 Every release on GitHub carries the Windows installer, the Linux tarball, `SHA256SUMS` and
 `SHA256SUMS.sig`, the owner's Ed25519 signature of the sums. The launcher refuses an installer
-the signature does not cover.
+the signature does not cover. The files are named `Kingmaker-Kingdom-Manager-X.Y.Z-Setup.exe`
+and `Kingmaker-Kingdom-Manager-X.Y.Z-linux-x86_64.tar.gz`, and the launcher relies on the
+pattern: when GitHub's API refuses, it learns the latest tag from the releases page and
+builds the files' addresses from the tag.
 
 ## Files the app reads
 

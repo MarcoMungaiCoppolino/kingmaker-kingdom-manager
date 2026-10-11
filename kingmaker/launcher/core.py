@@ -20,6 +20,7 @@ import subprocess
 import sys
 import threading
 import urllib.error
+import urllib.parse
 import urllib.request
 import uuid
 import webbrowser
@@ -363,19 +364,64 @@ class Release:
         return None
 
 
-def latest_release(timeout: float = 5.0) -> Release | None:
-    """The latest release on GitHub, or None when there is no network, no
-    release, or the API is not in the mood: the launcher must work offline."""
-    request = urllib.request.Request(RELEASES_API, headers={
+def _github_json(url: str, timeout: float) -> dict:
+    request = urllib.request.Request(url, headers={
         "Accept": "application/vnd.github+json",
         "User-Agent": f"{APP_NAME.replace(' ', '-')}/{__version__}",
     })
+    with urllib.request.urlopen(request, timeout=timeout) as answer:
+        return json.loads(answer.read().decode("utf-8"))
+
+
+def latest_tag_from_page(timeout: float = 5.0) -> str:
+    """The tag the releases page sends to: `/releases/latest` answers with a
+    redirect to `/releases/tag/vX.Y.Z`, read with a HEAD request. The page is
+    not under the API's limit. "" when the page names no tag."""
+    request = urllib.request.Request(RELEASES_PAGE, method="HEAD",
+                                     headers={"User-Agent": f"{APP_NAME.replace(' ', '-')}/{__version__}"})
+    with urllib.request.urlopen(request, timeout=timeout) as answer:
+        final = str(answer.geturl())
+    found = re.search(r"/releases/tag/([^/?#]+)/?$", final)
+    return urllib.parse.unquote(found.group(1)) if found else ""
+
+
+def release_from_tag(tag: str) -> Release | None:
+    """A release known by its tag alone: its files are the ones every build
+    makes (`packaging/build.py`, the names docs/public-api.md promises), at the
+    addresses GitHub gives a tag's files. The sizes and the date are unknown.
+    The sums and the signature are listed too: `verify_download` fetches them
+    and refuses the installer if they are not there."""
+    version = tag.lstrip("vV")
+    if not version_tuple(version):
+        return None
+    from kingmaker.launcher import keys
+    stem = f"{APP_NAME.replace(' ', '-')}-{version}"
+    names = (f"{stem}-Setup.exe", f"{stem}-linux-x86_64.tar.gz", keys.SUMS_NAME, keys.SIG_NAME)
+    return Release(version=version, page=f"https://github.com/{REPOSITORY}/releases/tag/{tag}",
+                   assets=[{"name": name, "size": 0,
+                            "url": f"https://github.com/{REPOSITORY}/releases/download/{tag}/{name}"}
+                           for name in names])
+
+
+def latest_release(timeout: float = 5.0, api: Callable[[], dict] | None = None,
+                   page: Callable[[], str] | None = None) -> Release | None:
+    """The latest release on GitHub, or None when there is no network or no
+    release: the launcher must work offline. The API first; when it refuses
+    (sixty unauthenticated calls an hour per internet address, which a shared
+    network spends) or fails, the releases page names the latest tag instead
+    and the files follow from it (`release_from_tag`). `api` and `page` are
+    the tests' hooks."""
     try:
-        with urllib.request.urlopen(request, timeout=timeout) as answer:
-            data = json.loads(answer.read().decode("utf-8"))
+        release = parse_release((api or (lambda: _github_json(RELEASES_API, timeout)))())
+        if release is not None:
+            return release
+    except Exception:
+        pass
+    try:
+        tag = (page or (lambda: latest_tag_from_page(timeout)))()
     except Exception:
         return None
-    return parse_release(data)
+    return release_from_tag(tag) if tag else None
 
 
 def parse_release(data: dict) -> Release | None:

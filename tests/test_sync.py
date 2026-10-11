@@ -327,6 +327,25 @@ forged_entry = dict(sync.make_admission(eve_seed, "host-admin", "host-eve2", "Ev
 chain = sync.known_launchers(signed, [dm_entry, bob_entry, eve_entry, forged_entry])
 results.append(("the chain: the administrator, a host it let in, a host that host let in",
                 chain == {"host-admin": admin_key, "host-dm": dm_key, "host-bob": bob_key}))
+# The seat taken by another PC: alone, the new seat vouches for nobody the old
+# one let in and not for the old launcher itself, so the copies it uploaded
+# would be skipped; the admission the new seat writes keeps them loadable.
+new_seed = ed25519.new_seed()
+new_key = ed25519.public_key(new_seed).hex()
+moved = sync.TableRecord.parse(signed.body(), {})
+former = (moved.admin_id, moved.admin_name, moved.admin_key)
+sync.take_seat(moved, "host-admin2", "Alice's laptop", new_key, moved.signed_since)
+moved.sign(new_seed)
+results.append(("after a seat move the old administrator's copies are no longer trusted on their own",
+                "host-admin" not in sync.known_launchers(moved, [dm_entry, bob_entry])))
+handed = sync.former_admin_admission(new_seed, "host-admin2", former)
+with_former = sync.known_launchers(moved, [dm_entry, bob_entry, handed])
+results.append(("the new seat admits the old launcher: its copies and the hosts it let in stay known",
+                handed is not None and with_former.get("host-admin") == admin_key
+                and with_former.get("host-dm") == dm_key and with_former.get("host-admin2") == new_key))
+results.append(("no admission for an empty seat or for the launcher's own",
+                sync.former_admin_admission(new_seed, "host-admin2", ("", "", "")) is None
+                and sync.former_admin_admission(new_seed, "host-admin2", ("host-admin2", "me", new_key)) is None))
 signed.revoked.append("host-dm")
 signed.sign(admin_seed)
 struck = sync.known_launchers(signed, [dm_entry, bob_entry])

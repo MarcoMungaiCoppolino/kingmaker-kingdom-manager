@@ -109,6 +109,12 @@ results.append(("a legacy JSON document translates too",
                 and translated["proficiencies"] == {"warfare": "master"}
                 and translated["current_phase"] == "commerce"))
 
+for archive in (A, A2):                 # open handles keep the files on Windows
+    try:
+        archive.close()
+    except Exception:
+        pass
+shutil.rmtree(folder, ignore_errors=True)
 for name, ok in results:
     print(f" {'ok' if ok else 'NO'}  {name}")
 print(f"\n{sum(1 for _n, e in results if e)}/{len(results)} passate")

@@ -36,7 +36,11 @@ fixtures = sorted(glob.glob(os.path.join(HERE, "fixtures", "v*.db")),
 
 
 def schema(path) -> int:
-    return Archive._schema_of(sqlite3.connect(path))
+    conn = sqlite3.connect(path)
+    try:
+        return Archive._schema_of(conn)
+    finally:
+        conn.close()                    # an open handle keeps the file on Windows
 
 
 def digest(path) -> str:

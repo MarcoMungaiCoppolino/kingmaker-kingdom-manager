@@ -45,6 +45,7 @@ results.append(("the backup file exists", copy.exists() and copy.stat().st_size 
 with sqlite3.connect(copy) as probe:
     tables = {r[0] for r in probe.execute("SELECT name FROM sqlite_master WHERE type='table'")}
     hexes_in_copy = probe.execute("SELECT COUNT(*) FROM hexes").fetchone()[0]
+probe.close()                       # the with commits; it does not close
 results.append(("the copy holds the game tables", {"meta", "campaigns", "hexes", "users"} <= tables))
 results.append(("the copy holds every hex", hexes_in_copy == before["hexes"]))
 
@@ -66,6 +67,7 @@ results.append(("a text file is refused as not SQLite", refused == "main.not_sql
 empty_db = folder / "empty.db"
 with sqlite3.connect(empty_db) as probe:
     probe.execute("CREATE TABLE something (x INTEGER)")
+probe.close()                       # the with commits; it does not close
 try:
     archive_mod.Archive.inspect(empty_db)
     refused = None
@@ -78,6 +80,7 @@ shutil.copy2(copy, newer)
 with sqlite3.connect(newer) as probe:
     probe.execute("UPDATE meta SET value=? WHERE key='schema_version'",
                   (str(archive_mod.SCHEMA_VERSION + 5),))
+probe.close()                       # the with commits; it does not close
 try:
     archive_mod.Archive.inspect(newer)
     refused = None

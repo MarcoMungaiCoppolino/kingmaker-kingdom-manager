@@ -113,6 +113,7 @@ back.save(path)
 results.append(("no secrets, no vault", core.Settings.load(path).vault == {}
                 and '"vault": {}' in path.read_text(encoding="utf-8")))
 
+__import__("shutil").rmtree(folder, ignore_errors=True)
 for name, ok in results:
     print(f" {'ok' if ok else 'NO'}  {name}")
 print(f"{sum(1 for _n, ok in results if ok)}/{len(results)} passed")

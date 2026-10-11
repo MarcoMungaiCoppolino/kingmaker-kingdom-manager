@@ -697,6 +697,31 @@ installers. The two-machine bench, the fake Dropbox served on every interface an
 driven from a file, stays in `prove/`, outside git, for the next time something has to be
 seen rather than believed.
 
+## 2.1.2 — 11 October 2026 · What the second laptop found
+
+Everything in this release was found in one night by setting up a second laptop and moving the
+test table's seat back and forth between the two. The first move, with 2.1.1, took the seat
+and opened an empty kingdom: a launcher loads only copies signed by a launcher the table
+vouches for, and the launcher that had held the seat was neither the administrator any more
+nor a host anyone had admitted, so every copy it had uploaded was refused, and the new seat
+started a fresh game and uploaded it as the newest copy. The rehearsals of 2.0.0 had never
+shown it because the arriving launcher always had the save locally. The fix reuses what
+pairing already had: taking the seat writes an admission for the outgoing launcher, signed by
+the new seat, and its copies verify as before. The recovery was its own small lesson: the blank
+copy had to be left untrusted and then superseded, so the old laptop took the seat back on the
+unfixed code, kept its game and uploaded once more, and only then did the fixed launcher take
+the seat and find the kingdom.
+
+The same night the installed launcher on the home PC showed no update for 2.1.1. GitHub's API
+answered 403: the test suite builds launcher windows, every one of them had asked for updates
+for real, and two laptops behind one address had spent the hour's sixty unauthenticated calls.
+Two fixes: the test windows no longer ask, with a stub that fails the suite if one does, and the
+launcher itself no longer depends on the API alone. The releases page redirects to the newest
+tag and is not under the quota; the files' names are the same for every build, so the launcher
+builds their addresses from the tag and the signature check does not change. A shared network
+that has spent the quota now sees the update like any other. On the way, the tests learned to
+remove the folders they make: a hundred and seventy had piled up in the temporary directory.
+
 ## 2.1.1 — 11 October 2026 · The seat, before the first Start
 
 The second laptop was set up the same night, and the test table was the first thing tried on

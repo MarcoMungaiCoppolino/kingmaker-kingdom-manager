@@ -8,6 +8,39 @@ what broke, what was learned — is in [docs/devlog.md](docs/devlog.md).
 The versions before 1.0.0 were never tagged: the app was played from a working copy and the
 numbers below were assigned afterwards, one per day of development, from the session history.
 
+## [2.1.2] — 2026-10-11
+
+The fixes found while moving between two laptops the night 2.1.1 shipped: the seat move brings
+the game with it, the update check works where GitHub's API quota is spent, and the test suite
+stops reaching GitHub and leaving folders behind.
+
+### Fixed
+- **Taking the administrator's seat from another PC started an empty game.** A launcher loads
+  only copies signed by a launcher the table vouches for: the administrator and the hosts it
+  let in. The launcher that had the seat before was neither once the seat moved, so every copy
+  it had uploaded was skipped, no usable copy was left, and the new administrator's launcher
+  started a new game and uploaded it as the newest copy. Taking the seat now also admits the
+  previous launcher, with the same signed admission pairing uses, so its copies still load and
+  the game comes down with the seat. It stays in *Hosts of the table…*, to strike off if wanted,
+  and while it still hosts, the Table box offers the hand-over, not the force meant for a
+  stranger.
+- **The update check survives GitHub's API limit.** The API allows sixty unauthenticated calls
+  an hour per internet address, and on a shared network (an office, a university, some mobile
+  carriers) they can be gone: the launcher then saw no release and showed no update. When the
+  API refuses or fails, the launcher now reads the latest tag off the releases page, which is
+  not under the limit, and builds the files' addresses from it. The signature check is the
+  same.
+- **The test suite no longer calls GitHub.** Its launcher windows checked for updates for real,
+  sixty times a run, and spent the hour's quota of the address they ran from. They no longer
+  check, and a test fails if one does.
+- **The test suite no longer leaves folders in the temporary directory.** Every folder a test
+  made for itself is removed at its end; about 170 had piled up.
+
+### Removed
+- **Dead lines in `.gitignore`.** The author's old scratch folders, the root workspace file, the
+  caches of tools the project never used, the line for `tools/shoot_air_guide.py` (gone in 2.1.1)
+  and Claude Code's folder, which is the author's and is now excluded per clone instead.
+
 ## [2.1.1] — 2026-10-11
 
 A new administrator's launcher is no longer deposed before it can take the seat.
