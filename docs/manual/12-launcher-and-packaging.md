@@ -40,7 +40,7 @@ reads its stdout from a thread. The token and the shutdown secret travel in the 
 flushed, on stdout: `KM ready http://127.0.0.1:8080` from an `app.on_startup` hook,
 `KM lan http://192.168.1.7:8080` per address when listening on `0.0.0.0` (`main.lan_addresses`,
 from `ifaddr` like NiceGUI's own welcome line, without loopback and link-local),
-`KM admin-password …` on the first start next to the human block. The On Air address is the one
+`KM admin-password …` on the first start next to the human block, `KM paired <host_id> <name>` when a launcher spends a pairing code (2.2.0). The On Air address is the one
 line NiceGUI itself prints, `NiceGUI is on air at …`. `core.parse_line` turns them into events;
 everything else is log. These lines are the contract between the two processes; the human
 text around them is free to change.
@@ -172,7 +172,9 @@ python packaging/build.py                                    # folder, installer
 - `icon/make_icon.py` — cuts `kingmaker.ico` (16 to 256 px, rounded corners) and
   `kingmaker.png` out of `icon/party.png`, the crest of the party that founded the kingdom at
   the author's table; the outputs are committed, so a build never needs Pillow for this.
-- Pillow is bundled, so "read the water from the image" works in the installed app.
+- Pillow is bundled, so "read the water from the image" works in the installed app, and the
+  guides' pictures shrink by resampling (`wizard.resampled`) instead of Tk's pixel dropping
+  (`wizard.fit`, the road without Pillow).
 
 ## The release workflow (`.github/workflows/release.yml`)
 
@@ -197,7 +199,14 @@ side `core.verify_download` runs after the download and before `run_update`: the
 are fetched, the signature checked under any shipped key, the installer's hash compared with
 its line; a failure deletes the file and says so (`window.update_rejected`), and a release
 without the two files is "unsigned": marked so in the versions window (`Release.signed`) and
-run only after a confirmation. `tests/test_updates.py` covers every refusal.
+run only after a confirmation, and only when it is from before `keys.SIGNED_SINCE` (2.0.0):
+a later release without the list is refused outright (2.2.0), since whoever could publish a
+release could also drop the list and leave the person a question with a wrong premise. The
+installer is taken under the one name the build gives this version's (`core.installer_names`,
+`Release.installer`), never any file ending in `-Setup.exe`: the signed list binds a hash to a
+name and the name carries the version, so an older release's signed installer under a newer
+tag no longer passes (2.2.0); `sign_release.py` downloads and signs the two exact names only.
+A No to an unsigned installer deletes it too. `tests/test_updates.py` covers every refusal.
 
 ## Testing
 

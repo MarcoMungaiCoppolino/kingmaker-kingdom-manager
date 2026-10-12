@@ -25,7 +25,9 @@ On the host's computer only:
 - **Images** — the map, the characters' portraits and tokens, uploaded by the table.
 - **The session cookie** — a signed cookie that keeps you logged in. It is the only cookie the
   app sets, it is strictly necessary for the login to work, and it holds no tracking. Its
-  content (your account id and language) is kept on the host in `.nicegui/`.
+  content (your account id and language) is kept on the host in `.nicegui/`. Under On Air it
+  is scoped to the relay's host, like every cookie there, so other apps on the relay receive
+  it: SECURITY.md says what that means.
 - **Login attempts** — counted in memory, by username and by address, to slow down password
   guessing. They are never written to disk and vanish when the server stops.
 
@@ -54,11 +56,12 @@ its launcher's random id, the **Windows or Linux username and the computer's nam
 hosts, the game's address and the app's version. Dropbox's own
 [privacy policy](https://www.dropbox.com/privacy) applies to that folder, and the Dropbox app the
 administrator creates for it is theirs, under Dropbox's developer terms. A host's launcher
-receives a Dropbox credential for that app folder when it pairs with a code the administrator
-makes in the game (no password travels): the hosts' key, made by the administrator with a
-second authorisation and shared by every host, so it cannot be revoked for one host without
-replacing it for all (the administrator's *Change the keys…*, after which every host pairs
-again); the administrator's own key stays on the administrator's PC. The folder also lists
+receives a Dropbox credential for that app folder when it pairs with a code the administrator's
+launcher makes (no password travels): since 2.2.0 a key of its own, authorised by the
+administrator for that one host, so striking the host off cancels that key and no other (hosts
+paired on the shared key of earlier versions keep it until each is paired again and the
+administrator retires it); the administrator's own key stays on the administrator's PC, which
+also keeps a copy of every host's key in its vault, to cancel it. The folder also lists
 every launcher let in, by a public key each launcher makes for itself, and every copy of the
 game uploaded carries that launcher's signature. On each host's PC the keys, the launcher's
 signing seed, and the On Air token of whoever plays online without the cloud, are stored

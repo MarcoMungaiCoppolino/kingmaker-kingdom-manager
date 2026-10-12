@@ -57,10 +57,12 @@ _failures: list[float] = []            # when each failure happened, everyone's
 # Called when a name's brake trips (`on_abuse(username, how_many)`): the login
 # page wires it to the journal, so the table sees guessing happen.
 on_abuse: "Callable[[str, int], None] | None" = None
-# The passwords nobody should choose: the most common ones, next to this
-# file, loaded once. A password in it, or one that is the username, is
-# refused at creation and at change — guessing starts from exactly these.
+# The passwords nobody should choose: the most common ones of fifteen
+# characters or more, from the public breach lists, next to this file,
+# loaded once. A password in it, or one that is the username, is refused at
+# creation and at change — guessing starts from exactly these.
 COMMON_PASSWORDS_FILE = "common_passwords.txt"
+MIN_PASSWORD = 15       # NIST SP 800-63B-4: a password that stands alone
 _common: set[str] | None = None
 
 
@@ -194,10 +196,12 @@ def common_passwords() -> set[str]:
 
 def check_password(password: str, username: str = "") -> None:
     """Raises ValueError, with the reason to show, for a password the app
-    refuses: shorter than eight characters, one of the most common ones,
-    or the username itself (also with digits around it)."""
-    if len(password) < 8:
-        raise ValueError(t("auth.password_must_least_8"))
+    refuses: shorter than `MIN_PASSWORD` characters, one of the most common
+    ones, or the username itself (also with digits around it). Length is
+    the rule, as NIST and OWASP ask now: no mixture of character types is
+    demanded, every character counts, nothing expires."""
+    if len(password) < MIN_PASSWORD:
+        raise ValueError(t("auth.password_must_least_15", count=MIN_PASSWORD))
     lowered = password.lower()
     if lowered in common_passwords():
         raise ValueError(t("auth.password_too_common"))

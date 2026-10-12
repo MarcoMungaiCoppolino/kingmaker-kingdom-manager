@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import sys
 import threading
+import time
 import tkinter as tk
 import webbrowser
 from pathlib import Path
@@ -39,17 +40,25 @@ APP_CONSOLE = "https://www.dropbox.com/developers/apps/create"
 # before (on another PC, say) and only has to connect to it again.
 APP_LIST = "https://www.dropbox.com/developers/apps"
 DROPBOX_HOME = "https://www.dropbox.com/register"
-# Two authorisations: the administrator's own key, then a second key "for
-# the hosts", the one pairing hands out. Changing the keys replaces the
-# hosts' one alone (`start="hosts_authorise"`); a lost own access is
-# authorised again from `start="authorise"`, and the hosts' key follows.
-STEPS = ("account", "create", "permissions", "key", "authorise", "code",
-         "hosts_authorise", "hosts_code", "done")
+# One authorisation, the administrator's own key; the hosts' keys come one
+# at a time, at each pairing (`PairWizard`, 2.2.0). A lost own access is
+# authorised again from `start="authorise"`.
+STEPS = ("account", "create", "permissions", "key", "authorise", "code", "done")
 # The same road for an app made before: picked from the list instead of
-# made. The permissions page stays: an app made and left before that step
-# would otherwise fail at the first upload, with its key accepted.
-EXISTING_STEPS = ("account", "create", "existing", "permissions", "key", "authorise", "code",
-                  "hosts_authorise", "hosts_code", "done")
+# made, then straight to its key (2.2.0): its permissions were set when it
+# was made. An app made and left before that step fails at its first
+# upload with Dropbox's own words, and the permissions page of the guide
+# opened alone from the main window is the fix.
+EXISTING_STEPS = ("account", "create", "existing", "key", "authorise", "code", "done")
+# The seat back on a launcher that stepped down (2.2.0): the table's app
+# exists and the account is the same, so no page for either. A first page
+# says what is going on and has the one button, "Connect to the existing
+# app", which opens the list; with the app's key still known, that page
+# says so instead and Next is the authorisation.
+SEAT_BACK_STEPS = ("seat_back", "existing", "key", "authorise", "code", "done")
+SEAT_KNOWN_STEPS = ("seat_known", "authorise", "code", "done")
+# Letting one launcher in (2.2.0): a key for it, the code, what to pass on.
+PAIR_STEPS = ("authorise", "code", "share")
 AIR_STEPS = ("site", "login", "github", "add", "token", "renew", "done")
 # The welcome's own pages; which of them show, and which guide pages come
 # between them, depends on the answers (`WelcomeWizard.plan`).
@@ -85,15 +94,44 @@ def picture(win: tk.Toplevel, parent: ttk.Frame, path: Path, before: tk.Widget) 
     except tk.TclError:
         return None
     wider, taller = screen.room(win)
-    image = fit(image, win.winfo_reqwidth() + wider - 2 * PAGE_PAD - screen.BAR, taller - 8)
+    width, height = win.winfo_reqwidth() + wider - 2 * PAGE_PAD - screen.BAR, taller - 8
+    image = resampled(path, image, width, height) or fit(image, width, height)
     if image is not None:
         ttk.Label(parent, image=image).pack(anchor="w", pady=(0, 8), before=before)
     return image
 
 
+def resampled(path: Path, image: tk.PhotoImage, width: int, height: int) -> tk.PhotoImage | None:
+    """The picture shrunk to fit width × height by Pillow, which averages
+    pixels and keeps a screenshot's small text readable; Tk's own shrink
+    (`fit`) drops pixels and turns it into noise. None when it fits as it
+    is, when Pillow is missing (then `fit`), or when nothing fits."""
+    if image.width() <= width and image.height() <= height:
+        return None
+    try:
+        from PIL import Image
+    except ImportError:
+        return None
+    scale = min(width / image.width(), height / image.height())
+    size = (int(image.width() * scale), int(image.height() * scale))
+    if scale <= 0 or min(size) < 1:
+        return None
+    import base64
+    import io
+    try:
+        with Image.open(path) as opened:
+            shrunk = opened.convert("RGBA").resize(size, Image.LANCZOS)
+            buffer = io.BytesIO()
+            shrunk.save(buffer, format="PNG")
+        return tk.PhotoImage(master=image.tk, data=base64.b64encode(buffer.getvalue()).decode("ascii"))
+    except (OSError, ValueError, tk.TclError):
+        return None
+
+
 def fit(image: tk.PhotoImage, width: int, height: int) -> tk.PhotoImage | None:
     """The image as it is when it fits in width × height, else the largest
-    of FRACTIONS of it that does; None when not even the smallest does."""
+    of FRACTIONS of it that does; None when not even the smallest does.
+    The road without Pillow (`resampled`)."""
     if image.width() <= width and image.height() <= height:
         return image
     for zoom, subsample in FRACTIONS:
@@ -114,6 +152,8 @@ def page_text(page: str, what: str, **params) -> str:
         return t(f"launcher.air.wizard.{name}.{what}", **params)
     if group == "cloud":
         return t(f"launcher.wizard.{name}.{what}", **params)
+    if group == "pair":
+        return t(f"launcher.pair_wizard.{name}.{what}", **params)
     return t(f"launcher.welcome.{name}.{what}", **params)
 
 
@@ -122,8 +162,10 @@ def page_picture(page: str) -> Path | None:
     if group == "air":
         return guide_folder() / "air" / f"{name}.png"
     if group == "cloud":
-        # The hosts' authorisation shows the same two screens again.
-        return guide_folder() / f"{name.removeprefix('hosts_')}.png"
+        return guide_folder() / f"{name}.png"
+    if group == "pair" and name in ("authorise", "code"):
+        # The same two Dropbox screens as the set-up's.
+        return guide_folder() / f"{name}.png"
     return None
 
 
@@ -337,8 +379,12 @@ class DropboxPages:
 
     def init_cloud(self, settings: core.Settings) -> None:
         # Whether the app is one made before, picked from the list: the
-        # road then has "existing" where it had "permissions".
+        # road then has "existing" where it had "permissions", and goes to
+        # the key from there. `seat_back` is the shorter road of a launcher
+        # that stepped down (`SEAT_BACK_STEPS`).
         self.existing = False
+        self.seat_back = False
+        self.seat_road: tuple[str, ...] = SEAT_BACK_STEPS
         self.verifier = dropbox.new_verifier()
         self.app_key = tk.StringVar(value=settings.cloud.get("app_key", ""))
         self.table = tk.StringVar(value=settings.cloud.get("table", ""))
@@ -357,6 +403,9 @@ class DropboxPages:
         elif name == "existing":
             ttk.Button(row, text=t("launcher.wizard.existing.button"),
                        command=lambda: webbrowser.open(APP_LIST)).pack(side="left")
+        elif name == "seat_back":
+            ttk.Button(row, text=t("launcher.wizard.seat_back.button"),
+                       command=self.connect_existing).pack(side="left")
         elif name == "key":
             ttk.Label(row, text=t("launcher.wizard.key.label")).pack(side="left")
             ttk.Entry(row, textvariable=self.app_key, width=28).pack(side="left", padx=8)
@@ -368,10 +417,10 @@ class DropboxPages:
             # it is a label, and nothing else.
             ttk.Label(self.body, text=t("launcher.wizard.key.table_hint"), wraplength=WRAP,
                       justify="left", foreground=COLOURS["quiet"]).pack(anchor="w", pady=(4, 0))
-        elif name in ("authorise", "hosts_authorise"):
+        elif name == "authorise":
             ttk.Button(row, text=t("launcher.wizard.authorise.button"), command=self.open_authorise
                        ).pack(side="left")
-        elif name in ("code", "hosts_code"):
+        elif name == "code":
             ttk.Label(row, text=t("launcher.wizard.authorise.label")).pack(side="left")
             ttk.Entry(row, textvariable=self.code, width=48).pack(side="left", padx=8)
             self.feedback = ttk.Label(self.body, text="", wraplength=WRAP, foreground=COLOURS["quiet"])
@@ -382,6 +431,8 @@ class DropboxPages:
                       foreground=COLOURS["ok"]).pack(side="left")
 
     def cloud_steps(self) -> tuple[str, ...]:
+        if self.seat_back:
+            return self.seat_road
         return EXISTING_STEPS if self.existing else STEPS
 
     def cloud_pages(self) -> list[str]:
@@ -392,6 +443,12 @@ class DropboxPages:
         current = self.page
         self.pages = self.cloud_pages()
         self.step = self.pages.index(current)
+
+    def connect_existing(self) -> None:
+        """The seat-back road's one button: the list of apps opens, and the
+        next page says which one to click."""
+        webbrowser.open(APP_LIST)
+        self.go_next()
 
     def use_existing(self) -> None:
         """The app was made before: its list opens in the browser, and the
@@ -409,10 +466,10 @@ class DropboxPages:
         if name == "key" and not self.app_key.get().strip():
             messagebox.showinfo(t("launcher.wizard.title"), t("launcher.wizard.key.missing"), parent=win)
             return False
-        if name in ("code", "hosts_code"):
-            self.connect(for_hosts=name == "hosts_code")
+        if name == "code":
+            self.connect()
             return False                    # `connected` moves on when Dropbox answered
-        if name in ("authorise", "hosts_authorise"):
+        if name == "authorise":
             # A fresh code verifier for each authorisation: Dropbox ties the
             # code it shows to the one the page was opened with.
             self.code.set("")
@@ -421,7 +478,7 @@ class DropboxPages:
     def open_authorise(self) -> None:
         webbrowser.open(dropbox.authorize_url(self.app_key.get().strip(), self.verifier))
 
-    def connect(self, for_hosts: bool = False) -> None:
+    def connect(self) -> None:
         code = self.code.get().strip()
         if not code:
             self.feedback.config(text=t("launcher.wizard.authorise.missing"), foreground=COLOURS["bad"])
@@ -443,7 +500,7 @@ class DropboxPages:
                                                   or account.get("email") or "")
                 except dropbox.DropboxError:
                     credential.account_name = ""
-                self.post(lambda: self.connected(credential, for_hosts))
+                self.post(lambda: self.connected(credential))
             except (dropbox.DropboxError, KeyError, OSError) as error:
                 err = error
                 self.post(lambda: self.failed(err))
@@ -454,36 +511,32 @@ class DropboxPages:
         self.next.config(state="normal")
         self.feedback.config(text=t("launcher.wizard.authorise.failed", error=error), foreground=COLOURS["bad"])
 
-    def connected(self, credential: dropbox.Credential, for_hosts: bool = False) -> None:
-        """The first authorisation is the administrator's own access: the
-        cloud settings are made from it (the table's name, the seat's role),
-        keeping the hosts' key if one is there already. The second is the
-        hosts' key alone, kept next to it. Each goes to the vault at save."""
-        if for_hosts:
-            self.settings.cloud["hosts_refresh_token"] = credential.refresh_token
-        else:
-            self.result = credential.to_dict()
-            kept_hosts = self.settings.cloud.get("hosts_refresh_token", "")
-            self.settings.cloud = {**credential.to_dict(), "table": self.table.get().strip() or "Kingmaker",
-                                   "role": "admin", "table_id": self.settings.cloud.get("table_id", ""),
-                                   # The seat is Start's to create or take: until then a look
-                                   # finding another key on it leaves this launcher alone.
-                                   "seated": False}
-            if kept_hosts:
-                self.settings.cloud["hosts_refresh_token"] = kept_hosts
-            self.settings.host_name = ""
-            self.settings.identity()
-            # The administrator trusts its own key for the table file.
-            self.settings.cloud["admin_key"] = self.settings.sign_key
+    def connected(self, credential: dropbox.Credential) -> None:
+        """The authorisation is the administrator's own access: the cloud
+        settings are made from it (the table's name, the seat's role),
+        keeping the shared hosts' key of 2.0.0 if one is there still. The
+        hosts' keys come one at a time, at each pairing (`PairWizard`).
+        It goes to the vault at save."""
+        self.result = credential.to_dict()
+        kept_hosts = self.settings.cloud.get("hosts_refresh_token", "")
+        self.settings.cloud = {**credential.to_dict(), "table": self.table.get().strip() or "Kingmaker",
+                               "role": "admin", "table_id": self.settings.cloud.get("table_id", ""),
+                               # The seat is Start's to create or take: until then a look
+                               # finding another key on it leaves this launcher alone.
+                               "seated": False}
+        self.settings.left_table = {}
+        if kept_hosts:
+            self.settings.cloud["hosts_refresh_token"] = kept_hosts
+        self.settings.host_name = ""
+        self.settings.identity()
+        # The administrator trusts its own key for the table file.
+        self.settings.cloud["admin_key"] = self.settings.sign_key
         self.settings.save()
         self.next.config(state="normal")
         self.verifier = dropbox.new_verifier()  # the next authorisation starts afresh
         self.code.set("")
-        # The hosts' key follows the administrator's; then the group's own
-        # last page when there is one, else whatever the window has next.
-        if not for_hosts and "cloud/hosts_authorise" in self.pages:
-            self.go_to("cloud/hosts_authorise")
-            return
+        # The group's own last page when there is one, else whatever the
+        # window has next.
         self.step = self.pages.index("cloud/done") if "cloud/done" in self.pages else self.step + 1
         self.show()
 
@@ -498,10 +551,19 @@ class SetupWizard(DropboxPages, Wizard):
 
     def __init__(self, root: tk.Tk, settings: core.Settings, on_done: Callable[[], None],
                  post: Callable[[Callable[[], None]], None] | None = None,
-                 start: str = STEPS[0]) -> None:
+                 start: str = STEPS[0], seat_back: bool = False) -> None:
+        """`seat_back`: the short road of a launcher that stepped down:
+        `SEAT_KNOWN_STEPS` when the app's key is still in the settings,
+        `SEAT_BACK_STEPS` otherwise; `start` is its first page by default."""
         self.init_cloud(settings)
+        self.seat_back = self.existing = seat_back
+        if seat_back:
+            self.seat_road = SEAT_KNOWN_STEPS if self.app_key.get().strip() else SEAT_BACK_STEPS
+            if start == STEPS[0]:
+                start = self.seat_road[0]
+        steps = self.cloud_steps()
         super().__init__(root, settings, on_done, post=post,
-                         pages=[f"cloud/{name}" for name in STEPS], start=STEPS.index(start))
+                         pages=[f"cloud/{name}" for name in steps], start=steps.index(start))
 
     def render(self, page: str, row: ttk.Frame) -> None:
         self.render_cloud(page.split("/", 1)[1], row)
@@ -510,7 +572,7 @@ class SetupWizard(DropboxPages, Wizard):
         return [f"cloud/{name}" for name in self.cloud_steps()]
 
     def next_text(self, page: str) -> str:
-        if page in ("cloud/code", "cloud/hosts_code"):
+        if page == "cloud/code":
             return t("launcher.wizard.connect")
         return super().next_text(page)
 
@@ -543,6 +605,120 @@ class AirWizard(AirPages, Wizard):
 
     def leaving(self, page: str) -> bool:
         return self.leaving_air(page.split("/", 1)[1], self.win)
+
+
+class PairWizard(Wizard):
+    """Letting one launcher in (2.2.0), by the administrator while it hosts:
+    a Dropbox key authorised for that host alone, the code the running game
+    makes to hand it out, and the code with the table's address for the
+    person to pass on. The key waits in `Settings.pending_key` until the
+    newcomer's admission names the host it belongs to."""
+
+    title_key = "launcher.pair_wizard.title"
+
+    def __init__(self, root: tk.Tk, settings: core.Settings, server, address: str,
+                 on_done: Callable[[], None],
+                 post: Callable[[Callable[[], None]], None] | None = None) -> None:
+        self.server = server
+        self.address = address
+        self.verifier = dropbox.new_verifier()
+        self.code = tk.StringVar()
+        self.pairing_code = ""
+        self.feedback: ttk.Label | None = None
+        super().__init__(root, settings, on_done, post=post, pages=[f"pair/{name}" for name in PAIR_STEPS])
+
+    def render(self, page: str, row: ttk.Frame) -> None:
+        name = page.split("/", 1)[1]
+        if name == "authorise":
+            app_key = str(self.settings.cloud.get("app_key", ""))
+            ttk.Button(row, text=t("launcher.wizard.authorise.button"),
+                       command=lambda: webbrowser.open(dropbox.authorize_url(app_key, self.verifier))
+                       ).pack(side="left")
+        elif name == "code":
+            ttk.Label(row, text=t("launcher.wizard.authorise.label")).pack(side="left")
+            ttk.Entry(row, textvariable=self.code, width=48).pack(side="left", padx=8)
+            self.feedback = ttk.Label(self.body, text="", wraplength=WRAP, foreground=COLOURS["quiet"])
+            self.feedback.pack(anchor="w", pady=(8, 0))
+        elif name == "share":
+            # Each in a field with its Copy, named as the other person's
+            # pairing form names it: they paste both, nobody types by hand.
+            grid = ttk.Frame(self.body)
+            grid.pack(fill="x", pady=(4, 0))
+            grid.columnconfigure(1, weight=1)
+            self.copyable(grid, 0, t("launcher.pair.address"), self.address,
+                          width=min(max(len(self.address) + 2, 20), 64))
+            self.copyable(grid, 1, t("launcher.pair.code"), self.pairing_code,
+                          font=("TkFixedFont", 12), justify="center")
+            ttk.Label(self.body, text=t("launcher.cloud.pair_code_note"), foreground=COLOURS["quiet"],
+                      wraplength=WRAP, justify="left").pack(anchor="w", pady=(8, 4))
+
+    def copyable(self, grid: ttk.Frame, line: int, label: str, value: str, **options) -> None:
+        ttk.Label(grid, text=label).grid(row=line, column=0, sticky="w", padx=(0, 8), pady=3)
+        entry = ttk.Entry(grid, state="readonly", **options)
+        entry.var = tk.StringVar(value=value)         # type: ignore[attr-defined]
+        entry.config(textvariable=entry.var)          # type: ignore[attr-defined]
+        entry.grid(row=line, column=1, sticky="ew", pady=3)
+        ttk.Button(grid, text=t("launcher.copy"), command=lambda: self.copy(value)
+                   ).grid(row=line, column=2, padx=(8, 0), pady=3)
+
+    def copy(self, value: str) -> None:
+        self.win.clipboard_clear()
+        self.win.clipboard_append(value)
+
+    def skippable(self, page: str) -> bool:
+        return page != "pair/share"         # the code is out: only Finish is left
+
+    def leaving(self, page: str) -> bool:
+        name = page.split("/", 1)[1]
+        if name == "authorise":
+            self.code.set("")
+            return True
+        if name == "code":
+            self.exchange()
+            return False                    # `keyed` moves on when the game answered
+        return True
+
+    def exchange(self) -> None:
+        code = self.code.get().strip()
+        if not code:
+            if self.feedback is not None:
+                self.feedback.config(text=t("launcher.wizard.authorise.missing"), foreground=COLOURS["bad"])
+            return
+        self.next.config(state="disabled")
+        if self.feedback is not None:
+            self.feedback.config(text=t("launcher.wizard.authorise.working"), foreground=COLOURS["quiet"])
+        app_key = str(self.settings.cloud.get("app_key", ""))
+        verifier, server = self.verifier, self.server
+
+        def work() -> None:
+            try:
+                answer = dropbox.exchange_code(app_key, verifier, code)
+                token = str(answer["refresh_token"])
+                made = server.pairing(token)
+                self.post(lambda: self.keyed(token, str(made.get("code", ""))))
+            except (dropbox.DropboxError, KeyError, OSError, ValueError) as error:
+                err = error
+                self.post(lambda: self.failed(err))
+
+        threading.Thread(target=work, daemon=True).start()
+
+    def keyed(self, token: str, pairing_code: str) -> None:
+        """The key is the game's to hand out now, with the code; kept here
+        under "pending" until the newcomer's admission says whose it is."""
+        self.settings.pending_key = {"token": token,
+                                     "since": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+        self.settings.save()
+        self.pairing_code = pairing_code
+        self.verifier = dropbox.new_verifier()
+        self.code.set("")
+        self.next.config(state="normal")
+        self.step += 1
+        self.show()
+
+    def failed(self, error: Exception) -> None:
+        self.next.config(state="normal")
+        if self.feedback is not None:
+            self.feedback.config(text=t("launcher.wizard.authorise.failed", error=error), foreground=COLOURS["bad"])
 
 
 class PairForm:
@@ -835,7 +1011,7 @@ class WelcomeWizard(AirPages, DropboxPages, Wizard):
     def next_text(self, page: str) -> str:
         if page == "welcome/pair":
             return t("launcher.pair.button")
-        if page in ("cloud/code", "cloud/hosts_code"):
+        if page == "cloud/code":
             return t("launcher.wizard.connect")
         if page == "air/token":
             return t("common.save")

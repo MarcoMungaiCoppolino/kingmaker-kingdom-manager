@@ -326,6 +326,7 @@ def _hex_panel(mine: dict) -> None:
                 .props("outlined dense").classes("w-56")
             label = ui.input(t("map.hex_panel.detail_e_g_lumber")).props("outlined dense").classes("w-40")
 
+            @theme.requires(permissions.EDIT_KINGDOM)
             def add() -> None:
                 if not new.value:
                     return

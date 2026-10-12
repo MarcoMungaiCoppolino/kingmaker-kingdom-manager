@@ -70,7 +70,7 @@ STOP_PATIENCE = 8.0
 # Ports tried after the chosen one when it is busy.
 PORT_ATTEMPTS = 20
 
-KM_LINE = re.compile(r"^KM (ready|lan|admin-password) (\S.*)$")
+KM_LINE = re.compile(r"^KM (ready|lan|admin-password|paired) (\S.*)$")
 AIR_LINE = re.compile(r"NiceGUI is on air at (https?://\S+)")
 # What the relay says, through NiceGUI's logger, when it refuses the token:
 # every five seconds, and the game never goes online (seen on the real relay,
@@ -151,9 +151,25 @@ class Settings:
     sign_seed: str = ""
     sign_key: str = ""
 
+    # One Dropbox key per host (2.2.0): `{host_id: refresh token}`, each
+    # authorised by the administrator at that host's pairing and kept here
+    # so that striking the host off cancels its key alone. `pending_key` is
+    # the key of a pairing under way: `{"token", "since"}` until the
+    # newcomer's admission appears and names the host it belongs to. Both
+    # are secrets and go to the vault with the others (`save`).
+    host_keys: dict = field(default_factory=dict)
+    pending_key: dict = field(default_factory=dict)
+    # The table this launcher stepped down from (`window.seat_lost`):
+    # `{"table", "name", "date"}`, said in the box with the way back until
+    # the launcher joins a table again, as administrator or as host.
+    left_table: dict = field(default_factory=dict)
+
     # The secrets among `cloud`'s keys: the administrator's own Dropbox
-    # access, and the second one made for the hosts, which pairing hands out.
-    SECRET_FIELDS = ("refresh_token", "hosts_refresh_token")
+    # access, the shared hosts' key of 2.0.0 (kept until the hosts paired
+    # on it have keys of their own and it is retired), and the On Air token
+    # of the table file the administrator last signed (`table_body` keeps
+    # the rest of that file; `window.sign_table`).
+    SECRET_FIELDS = ("refresh_token", "hosts_refresh_token", "table_air_token")
 
     @property
     def welcome_due(self) -> bool:
@@ -257,6 +273,13 @@ class Settings:
                     settings.cloud[name] = str(kept[name])
             if kept.get("token") and not settings.token:
                 settings.token = str(kept["token"])
+            for name in ("host_keys", "pending_key"):
+                try:
+                    found = json.loads(kept[name]) if kept.get(name) else {}
+                except (ValueError, TypeError):
+                    found = {}
+                if isinstance(found, dict) and found and not getattr(settings, name):
+                    setattr(settings, name, found)
             if kept.get("sign_seed") and not settings.sign_seed:
                 settings.sign_seed = str(kept["sign_seed"])
         return settings
@@ -272,6 +295,10 @@ class Settings:
         held = {name: str(self.cloud.get(name, "")) for name in self.SECRET_FIELDS}
         held["token"] = self.token.strip()
         held["sign_seed"] = self.sign_seed.strip()
+        held["host_keys"] = json.dumps(self.host_keys) if self.host_keys else ""
+        held["pending_key"] = json.dumps(self.pending_key) if self.pending_key else ""
+        written["host_keys"] = {}
+        written["pending_key"] = {}
         if any(held.values()):
             from kingmaker.launcher import vault
             try:
@@ -356,12 +383,30 @@ class Release:
         return keys.SUMS_NAME in names and keys.SIG_NAME in names
 
     def installer(self) -> dict | None:
-        """The file for this platform: the Windows setup, or the Linux tarball."""
-        wanted = "-Setup.exe" if sys.platform == "win32" else "-linux-x86_64.tar.gz"
+        """The file for this platform: the Windows setup, or the Linux
+        tarball, under the one name the build gives this version's
+        (`installer_name`). Any other file on the release, whatever its
+        suffix, is not the installer: the signed list binds a hash to a
+        name, and the name carries the version."""
+        wanted = installer_name(self.version)
         for asset in self.assets:
-            if str(asset.get("name", "")).endswith(wanted):
+            if str(asset.get("name", "")) == wanted:
                 return asset
         return None
+
+
+def installer_names(version: str) -> tuple[str, str]:
+    """The two installers of `version`, as the build names them
+    (`packaging/build.py`, the names docs/public-api.md promises): the
+    Windows setup and the Linux tarball."""
+    stem = f"{APP_NAME.replace(' ', '-')}-{version}"
+    return f"{stem}-Setup.exe", f"{stem}-linux-x86_64.tar.gz"
+
+
+def installer_name(version: str) -> str:
+    """This platform's installer for `version`."""
+    setup, tarball = installer_names(version)
+    return setup if sys.platform == "win32" else tarball
 
 
 def _github_json(url: str, timeout: float) -> dict:
@@ -483,15 +528,24 @@ def verify_download(path: Path, release: "Release",
 
     "signed": the release carries a `SHA256SUMS` signed by one of the
     owner's keys (`launcher/keys.py`) and the file's hash is in it.
-    "unsigned": the release carries no sums or no signature, a release
-    from before 2.0.0; the window asks before running one. Anything else
-    raises ValueError and the file must not run: a signature that is not
-    the owner's, a hash that differs, a file the list does not name."""
+    "unsigned": the release carries no sums or no signature and is from
+    before `keys.SIGNED_SINCE`; the window asks before running one.
+    Anything else raises ValueError and the file must not run: a release
+    from `SIGNED_SINCE` on without the list, a file that is not this
+    version's installer by name (the list binds a hash to a name, and an
+    older release's signed installer under a newer tag would otherwise
+    pass), a signature that is not the owner's, a hash that differs, a
+    file the list does not name."""
     from kingmaker.access import ed25519
     from kingmaker.launcher import keys
+    if path.name not in installer_names(release.version):
+        raise ValueError(f"the file is not version {release.version}'s installer")
     named = {str(a.get("name", "")): a for a in release.assets}
     sums, sig = named.get(keys.SUMS_NAME), named.get(keys.SIG_NAME)
     if sums is None or sig is None:
+        if version_tuple(release.version) >= version_tuple(keys.SIGNED_SINCE):
+            raise ValueError(f"a release from {keys.SIGNED_SINCE} on carries the owner's signed list, "
+                             "and this one does not")
         return "unsigned"
     fetch = fetch or fetch_bytes
     sums_bytes = fetch(str(sums.get("url", "")))
@@ -606,14 +660,14 @@ def server_environment(settings: Settings, secret: str = "", cloud: bool = True,
     if secret:
         env[SECRET_VARIABLE] = secret
     if cloud and settings.cloud_ready:
-        # What a launcher receives when it pairs with a code: the cloud, the
-        # table's name and id, the administrator's key to trust the table
-        # file by. The hosts' Dropbox access, never the administrator's own
-        # (a host hands out the one it holds, which is the hosts'). Not the
+        # What a launcher receives when it pairs with a code: the cloud app,
+        # the table's name and id, the administrator's key to trust the table
+        # file by. No Dropbox key here: since 2.2.0 each host gets a key of
+        # its own, authorised by the administrator for that pairing and
+        # handed to the game with the code (`LocalServer.pairing`). Not the
         # token (it is in the table's folder), never the database's business.
         handout = {**{k: settings.cloud.get(k, "") for k in
                       ("app_key", "account_id", "account_name", "app_name")},
-                   "refresh_token": settings.cloud.get("hosts_refresh_token") or settings.cloud.get("refresh_token", ""),
                    "table": settings.cloud.get("table", ""),
                    "table_id": settings.cloud.get("table_id", ""),
                    "admin_key": settings.cloud.get("admin_key", "")}
@@ -636,7 +690,8 @@ def mask_secrets(line: str) -> str:
 
 def parse_line(line: str) -> tuple[str, str] | None:
     """`("ready", url)`, `("lan", url)`, `("admin-password", pw)`, `("air", url)`,
-    `("air-refused", "")` or None for a line that is just log."""
+    `("paired", "<host_id> <name>")`, `("air-refused", "")` or None for a line
+    that is just log."""
     line = line.strip()
     found = KM_LINE.match(line)
     if found:
@@ -928,6 +983,22 @@ def mode_for_address(address: str) -> str:
     return "online" if "on-air.nicegui.io" in (address or "").lower() else "lan"
 
 
+def web_address(address: str) -> str:
+    """`address`, stripped, when it is a web address (http or https, with
+    a host), else "": the only kind the launcher opens in a browser or
+    probes. A record in the folder is written by another launcher, and
+    `webbrowser.open` on Windows hands anything else to the shell."""
+    address = (address or "").strip()
+    try:
+        parts = urllib.parse.urlsplit(address)
+        host = parts.hostname
+    except ValueError:
+        return ""
+    if parts.scheme not in ("http", "https") or not host:
+        return ""
+    return address
+
+
 def is_random_air_address(url: str) -> bool:
     """Whether the relay handed out an anonymous device instead of the
     token's: the address then has `/devices/` in it, as `cli.py` says."""
@@ -1044,7 +1115,9 @@ def adopt_pairing(settings: Settings, answer: dict, host_name: str = "") -> None
     settings.cloud["table"] = table.name or str(answer.get("table") or answer.get("kingdom") or "")
     settings.cloud["table_id"] = table.table_id
     settings.cloud["admin_key"] = admin_key
+    settings.cloud["table_serial"] = table.serial    # no earlier file of the seat's is believed again
     settings.cloud["role"] = "host"
+    settings.left_table = {}
     settings.token = ""                  # the token is the table's, read at Start
     if host_name.strip():
         settings.host_name = host_name.strip()

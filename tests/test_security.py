@@ -3,7 +3,7 @@
 import types
 
 from kingmaker.access import auth, permissions
-from kingmaker import config
+from kingmaker import config, rules
 from kingmaker.state import STATE
 from kingmaker.ui import login, hexmap, theme
 from kingmaker.ui.tabs import sheet, turn
@@ -48,6 +48,11 @@ results.append(("nor the turn", STATE.k["turn"] == turn_before))
 state_before = STATE.hex(3, 3)["status"]
 hex_panel._set_field(hexagon_33 := STATE.hex(3, 3), "status", "claimed")
 results.append(("nor a hexagon", hexagon_33["status"] == state_before))
+lines_before = len(STATE.journal(200))
+sheet._assurance_roll(next(iter(rules.BY_ID["skills"])), 10)
+turn._simple_check(10, "a flat check")
+results.append(("nor roll an assurance or a flat check into the journal (2.2.0)",
+                len(STATE.journal(200)) == lines_before))
 how(PLAYER)
 sheet._set_level(level_before + 3)
 results.append(("a player instead does", STATE.k["level"] == level_before + 3))
@@ -86,7 +91,7 @@ try:
 except ValueError:
     results.append(("a player does not change the GM's password", True))
 results.append(("the GM still verifies their own",
-              auth.verify(A, "gm", "prova-gm-1234") is not None))
+              auth.verify(A, "gm", "prova-gm-123456") is not None))
 
 # --- 6. the last administrator stays -------------------------------------
 how(ADMIN)
@@ -101,6 +106,11 @@ results.append(("the last active administrator is not switched off",
 login._change_role(ADMIN.id, permissions.PLAYER)
 results.append(("and does not demote themselves",
               A.user_by_id(ADMIN.id)["role"] == permissions.ADMIN))
+how(PLAYER)
+login._clear_second_factor({"id": GM.id, "username": "gm"})   # refused before any dialog is built
+results.append(("clearing a second factor is checked like the other account buttons (2.2.0)",
+              hasattr(login._clear_second_factor, "__wrapped__")))
+how(ADMIN)
 
 # --- 7. the window's identity is refreshed --------------------------------
 theme._WINDOWS["fake_one"] = {"user": PLAYER, "user_rev": A.rev}
@@ -194,22 +204,28 @@ results.append(("the login page wires that hook to the journal", hook_before is 
 auth.on_abuse = hook_before
 auth._attempts.pop("tripwire", None)
 auth._failures.clear()
-for password, why in (("password1", "a common"), ("Password123", "a common, whatever the case"),
-                      ("tmpuser1", "the username as"), ("tmpuser", "the username as")):
+for password, why in (("prova-tmp-9876", "a fourteen-character"),
+                      ("passwordpassword", "a common"),
+                      ("PasswordPassword", "a common, whatever the case"),
+                      ("tmpuserwithlongname1", "the username as"),
+                      ("tmpuserwithlongname", "the username as")):
     try:
-        auth.check_password(password, "tmpuser")
+        auth.check_password(password, "tmpuserwithlongname")
         refused = False
     except ValueError:
         refused = True
     results.append((f"{why} password is refused", refused))
 try:
-    auth.check_password("prova-tmp-9876", "tmpuser")
+    auth.check_password("prova-tmp-987654", "tmpuser")
     passes = True
 except ValueError:
     passes = False
-results.append(("an ordinary password passes", passes))
-results.append(("the list of common passwords is there and long enough to matter",
-                len(auth.common_passwords()) >= 200 and "password" in auth.common_passwords()))
+results.append(("a fifteen-character password passes, no symbol or capital asked (2.2.0)",
+                passes and auth.MIN_PASSWORD == 15))
+results.append(("the list of common passwords holds the long ones of the breach lists (2.2.0)",
+                len(auth.common_passwords()) >= 50_000 and "passwordpassword" in auth.common_passwords()
+                and "1234567890123456" in auth.common_passwords()
+                and all(len(p) >= auth.MIN_PASSWORD for p in auth.common_passwords())))
 
 # --- the pairing code: once, three tries, ten minutes
 from kingmaker.access import pairing  # noqa: E402
@@ -246,7 +262,7 @@ gm_row = A.user_by_name("gm")
 secret = totp.new_secret()
 codes = totp.new_recovery_codes()
 auth.enable_second_factor(A, gm_row["id"], secret, codes)
-with_sf = auth.verify(A, "gm", "prova-gm-1234")
+with_sf = auth.verify(A, "gm", "prova-gm-123456")
 results.append(("the password alone still verifies, and the user says a second step is asked",
                 with_sf is not None and with_sf.second_factor))
 results.append(("the secret is kept base32 and the recovery codes only as hashes",
@@ -266,7 +282,7 @@ results.append(("wrong codes trip the same brake as wrong passwords",
 auth._attempts.clear()
 auth.disable_second_factor(A, gm_row["id"], by="admin")
 results.append(("cleared, the account asks no code and any code passes",
-                not auth.verify(A, "gm", "prova-gm-1234").second_factor
+                not auth.verify(A, "gm", "prova-gm-123456").second_factor
                 and auth.second_factor_ok(A, gm_row["id"], "whatever")))
 results.append(("an account without a second factor passes without a code",
                 auth.second_factor_ok(A, A.user_by_name("admin")["id"], "")))

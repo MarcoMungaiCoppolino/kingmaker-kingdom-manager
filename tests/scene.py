@@ -9,7 +9,7 @@ touched. The hex terrains come from `scene_hexes.json` (the same grid as the
 table's map, without notes or names), so the tests that measure the real
 map — connectivity, costs, shores — stay true.
 
-Accounts: admin / gm / player, all with password `prova-<name>-1234`.
+Accounts: admin / gm / player, all with password `prova-<name>-123456`.
 """
 import base64
 import json
@@ -91,7 +91,7 @@ def build() -> None:
     users = {}
     for name, role in (("admin", permissions.ADMIN), ("gm", permissions.GM),
                         ("player", permissions.PLAYER)):
-        users[name] = auth.create_user(A, name, f"prova-{name}-1234", role=role).id
+        users[name] = auth.create_user(A, name, f"prova-{name}-123456", role=role).id
 
     ids = {}
     for name, cos, (col, row), account in CHARACTERS:

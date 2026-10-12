@@ -314,7 +314,7 @@ def main() -> None:
                    default=(190.0, -64.0))
     p.add_argument("--centre", type=pair, default=(19, 4))
     p.add_argument("--capital", type=pair, default=(18, 7))
-    p.add_argument("--traveller", default="Argyon")
+    p.add_argument("--traveller", default="Traveller")
     p.add_argument("--destination", type=pair, default=(20, 3))
     args = p.parse_args()
     if args.out is None:

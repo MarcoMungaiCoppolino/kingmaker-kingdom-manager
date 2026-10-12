@@ -8,6 +8,165 @@ what broke, what was learned — is in [docs/devlog.md](docs/devlog.md).
 The versions before 1.0.0 were never tagged: the app was played from a working copy and the
 numbers below were assigned afterwards, one per day of development, from the session history.
 
+## [2.2.0] — 2026-10-12
+
+The security fixes below were written as a 2.1.3 patch and folded into this release on the
+owner's decision; the kingdom events planned for it move to 2.3.0.
+
+A review of the whole repository, surface by surface, and the fixes it asked for: what a crafted
+save or a rewritten table file could do, and what the launcher gave up on a file's word alone. A
+second pass over the fixed tree found what the first had missed, below from the ninth bullet of
+the fixes on. Out of the same reading came the keys' redesign: one Dropbox key per host, and
+letting a launcher in as the administrator's act alone.
+
+### Added
+- **One Dropbox key per host.** Each launcher let in gets a key of its own, authorised by the
+  administrator at that pairing and kept in the administrator's vault, so striking a host off
+  cancels its key alone at Dropbox: nobody else is touched, nobody pairs again. The hosts paired
+  before this release keep working on the shared key of 2.0.0 until each is paired again;
+  *Hosts of the table…* says how many are still on it and retires it once none is left.
+- **Hosts of the table… is the table's control room.** This launcher and its key, the hosts with
+  the key each holds and a *Strike off* for each, the seats before this one, and the way out for
+  a lost PC, in sections. It opens while hosting too, and a strike-off needs no Stop: the running
+  game holds no Dropbox key any more. A host that held the seat before is marked so on its row.
+- **The table file remembers the seats before this one**, so the control room can list the
+  former administrator launchers, with when each held the seat.
+
+### Changed
+- **Letting a launcher in is the administrator's act alone, and guided.** *Pair a launcher…*
+  opens a window of three steps: a key for that host at Dropbox, the code the running game makes
+  to hand it out, and the address and the code to pass on, each with a Copy button. A hosting
+  player's launcher makes no codes any more, and neither does the game's accounts dialog.
+- **The welcome asks for one authorisation, not two.** The administrator authorises its own
+  access; the hosts' keys come one at a time, at each pairing.
+- **Connecting to an existing app goes from the app list straight to its App key.** The
+  permissions page was set when the app was made; the road is one step shorter.
+- **A password is fifteen characters at least, and the list of refused ones grew.** The floor
+  was eight. Fifteen is what NIST asks of a password that stands alone, and length is the only
+  rule: no capital, digit or symbol is demanded, and a password never expires. The common
+  passwords the app refuses are now the long ones of the public breach lists, some fifty
+  thousand, instead of a few hundred short ones that the new floor refuses anyway. Existing
+  passwords keep working until changed. The field that repeats a new password has the eye that
+  shows it, like the others.
+- **The launcher shows it is at work.** A moving bar beside the status line while it talks to
+  the cloud, and, during a seat take, which copy of the game it is reading, so a window that
+  says nothing for a minute no longer looks crashed. The second listing of the copies after the
+  claim reads only the ones not listed yet, and a copy from before this release, read in full
+  once, gets its stamp written beside it, so no seat take downloads it again.
+- **A launcher that stepped down shows one thing to do.** Until it joins a table again, its
+  Table box says which table it left, who holds the seat and since when, and offers *Take the
+  seat back…*: the Dropbox guide on a short road of its own, without the account and the
+  app-creation pages: a first page says what is going on and has the one button, *Connect to the
+  existing app*, then the app to click, its key and the authorisation; when the app's key is
+  still known, the page says so and Next is the authorisation. Start then asks whether to take
+  the seat. The Start row, the save file and the address
+  box are gone meanwhile, so nothing on the window leads to a game apart from the table;
+  *Forget this table* brings an ordinary launcher back. The line was a status message that
+  vanished with the window, doubled by a popup; the popup is gone.
+
+### Fixed
+- **Stop froze the window while the last copy went up.** The upload ran on the window's own
+  thread, so for its length the launcher did not answer and Windows called it unresponsive. It
+  runs beside the window now, with the status line and the moving bar alive; closing the window
+  still waits for the copy.
+- **A guide picture shrunk to fit a short screen was unreadable.** Tk shrinks by dropping
+  pixels, which turns a screenshot's small text into noise. The picture is now resampled with
+  Pillow, bundled with the app since 1.1.0, and Tk's shrink stays only for a launcher run from
+  source without it.
+- **The host's record went out unsigned over its address, and no launcher vouched for the
+  holder.** The launcher signed the record when it took the game, before the server had said
+  where it is, then wrote the address into the record without signing again; the address is
+  inside the signature, so every other launcher saw a record "the table does not vouch for",
+  with no link to follow. On a table with a fixed address it only hit the first Start on a PC,
+  since the next ones copied the address before signing; on a random address, every Start. The
+  record is now signed again before every heartbeat.
+- **The key made for a pairing code reached the administrator's vault only after Stop.** The
+  game now tells its launcher who spent the code the moment it happens, and the key goes under
+  that launcher's name at once, so striking it off works from the first minute.
+- **A zipped save could write outside the images folder on Windows.** A member named with a
+  leading separator, or with a drive and no separator, passed the check that refuses `..` and
+  absolute paths, because on Windows a path is absolute only with both, and unpacked to the root
+  of the drive or to the current folder. The check now refuses a root or a drive on its own, and
+  every image is written only after its resolved path is checked to lie inside the folder.
+  Restoring a save also unpacks only files named and made as images, so no page can be planted
+  in the folder the browsers read.
+- **The administrator's launcher acted on a table file it had not verified.** It read the seat,
+  the struck-off list and the epoch of the signatures off the file and signed them again at its
+  next write, so anyone with the hosts' key could rewrite them and have them vouched for. A file
+  that names this launcher without its signature is now rebuilt from what the launcher last
+  signed, or signed again on request when it has no such record; one that names another seat
+  without that seat's signature is only reported, and nothing is taken or given up.
+- **The seat was given up on the file's word, from the minute's look.** A table file naming
+  another key made the administrator's launcher cancel its own Dropbox access and forget the
+  table, without a question. It now asks once, with the other launcher's key to compare, and only
+  when the file is signed by that key; no keeps the seat here, and the next Start asks whether to
+  take it back. Taking a seat shows the same key, and every administrator's launcher shows its
+  own under *Hosts of the table…*.
+- **Unsigned copies were accepted on their own word.** A copy claiming an epoch from before the
+  signatures was loaded without one, and the epoch came from the copy itself. Under a signed
+  table every copy must now carry the signature of a launcher the table vouches for.
+- **Two writes of the table file left it unsigned.** The version move and the first write of the
+  table's address changed the file's time stamp, which the signature covers, without signing it
+  again: the hosts then saw "the administrator's launcher changed", pairing refused, and the
+  administrator's own next Start skipped every copy. Both writes are signed, and only the
+  administrator makes them.
+- **Join opened whatever the host's record said.** The address in a host's record is opened with
+  the system's browser, which on Windows runs anything the shell knows. Only a web address is
+  offered now, and the row shows it.
+- **A page could be fetched by a script on the same origin.** Under On Air every table is served
+  from the relay's one origin, next to whatever else runs there, and a script on another page
+  could read the game's page with the session's cookie. The pages now answer only a browser's
+  navigation (`Sec-Fetch-Dest: document`); a request without the header passes as before.
+- **Clearing another account's second factor did not check the permission.** The button was
+  drawn only for an administrator, but the handler did not check again like its neighbours; a
+  demoted administrator whose page had not reloaded could still use it.
+- **An earlier table file could be written back.** A signed file stays signed, and nothing in it
+  said how recent it was: whoever holds the hosts' key could put back the file from before a
+  strike-off or a token change, and every launcher believed it. Every signed write now raises a
+  serial inside the signature; the administrator's launcher goes by its own record when the
+  file is behind it and rewrites the file at the next Start, and a host never believes a file
+  older than the last one it trusted. The question asked when the file is unsigned and there is
+  no record says what the file names, and the first signed file read on 2.2.0 becomes the record
+  before Start.
+- **Changing the keys took another PC's seat without asking.** The rotation now asks, with that
+  launcher's key shown, as Start does.
+- **A signed copy could carry images the signature never saw.** The signature covers the manifest
+  and the database; a member added beside them was unpacked into the folder the browsers read.
+  A copy holding any other member is refused.
+- **A seat taken from another PC kept that PC vouched for.** Since 2.1.2 the new seat admitted
+  the old launcher so its copies, the newest of the game, still loaded, and the old PC stayed a
+  trusted host until somebody struck it off. The new seat now lists the copies it finds, by their
+  hashes, inside its own signature, and admits the old seat's hosts again; the old launcher gets
+  nothing, so what it uploads after the move is ignored and a lost PC needs no further step.
+  Every copy also gets its stamp written beside it, so the move reads a few small files instead
+  of the copies.
+- **An unsigned release was offered with a wrong premise.** A release without the signed list was
+  treated as one from before the signatures whatever its version, one Yes ran it, and the file
+  was kept on a No. From 2.0.0 on a release without the list is refused outright, the launcher
+  takes only the installer named for the release's version, so an older signed installer under
+  a newer tag no longer passes, and the installer is deleted on a No. The signing script signs
+  only the two files named for the version.
+- **A restored save kept the triggers and views it carried.** They would have run at every later
+  write, under the app's rights, long after the person finished looking at the file. Restoring
+  drops every trigger and view the file brought and makes the app's own again; a file with a
+  virtual table is refused before the copy.
+- **The page check went by a header a script can set.** The navigation check now goes by the
+  path the router sees, never by the forwarded prefix.
+- **Four buttons did not check the permission.** Adding a feature to a hex, linking a settlement
+  to a hex, the Assurance roll of the sheet and the flat check of the Turn tab ran for a
+  spectator too; they check like their neighbours now.
+- **Journeys of characters hidden by the fog were listed with their destination**, in the Map
+  tab and the Turn tab, to players who could not see those characters; the map already drew
+  nothing for them. The lists follow the map now.
+- **The journal's account lines reached every role.** Who changed a password, how many
+  attempts were refused under a name, who downloaded the save: shown only to whoever manages
+  accounts now.
+
+### Removed
+- **"When someone leaves" leaves the main window.** *Change the keys…* goes with the shared
+  key it changed; *Cut off a lost PC…* lives in *Hosts of the table…* now.
+- **The pairing code of the game's accounts dialog**, and a host's *Pair a launcher…*.
+
 ## [2.1.2] — 2026-10-11
 
 The fixes found while moving between two laptops the night 2.1.1 shipped: the seat move brings

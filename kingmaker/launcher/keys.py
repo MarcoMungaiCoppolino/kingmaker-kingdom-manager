@@ -6,11 +6,15 @@ of these (`core.verify_download`). A list, so a release signed by the old
 key may ship a new one next to it; the old key is dropped a release later.
 
 A release from before the signatures carries no sums and no signature:
-the launcher says so and asks before running it."""
+the launcher says so and asks before running it. From `SIGNED_SINCE` on
+every release is signed, so one without the list is refused outright:
+otherwise whoever could publish a release could also drop the list and
+leave the person a question with the wrong premise."""
 
 RELEASE_KEYS: tuple[str, ...] = (
     # 2026-10-10, the first key
     "2aa3c7305e0158ce8b811523b157825fcd95d69f94d14f5d5922146179362fa2",
 )
 SUMS_NAME = "SHA256SUMS"
+SIGNED_SINCE = "2.0.0"
 SIG_NAME = "SHA256SUMS.sig"

@@ -31,14 +31,18 @@ The project follows [Semantic Versioning](https://semver.org/). This list was fi
 version of the same major number.
 
 **Cloud snapshots** (`.zip`): `manifest.json` with `epoch`, `seq` and the hashes of the images,
-and `kingmaker.db`, signed from 2.0.0 (`signature.json`).
+and `kingmaker.db`, signed from 2.0.0 (`signature.json`), and nothing else: a snapshot holding
+another member is refused (2.2.0). From 2.2.0 each snapshot has its stamp beside it,
+`<name>.zip.sig`: signer, the two hashes and the signature, readable without the copy.
 
 ## The table in the cloud
 
 The files a table keeps in its Dropbox folder. Launchers of the same major number read each
 other's files; a launcher older than the table's version is asked to update before it hosts.
 - `table.json`: the table's name, id, version pin and On Air token (format 1), and from 2.0.0
-  the administrator's seat and key, signed (format 2).
+  the administrator's seat and key, signed (format 2); from 2.2.0 a `serial` inside the
+  signature, raised at every signed write, and `inherited`, the copies a seat found when it
+  was taken, by their hashes (format 2 still).
 - `host.json`: who holds the game right now, with heartbeat and address, signed.
 - `launchers.json`: the launchers let in, each vouched for by the launcher that admitted it.
 - `.clock`: written only to read the server's time.
@@ -48,7 +52,8 @@ other's files; a launcher older than the table's version is asked to update befo
 ## The launcher and the server
 
 The launcher starts the game as a child process; they talk through these.
-- **Lines on standard output:** `KM ready <url>`, `KM lan <url>`, `KM admin-password <pw>`, and
+- **Lines on standard output:** `KM ready <url>`, `KM lan <url>`, `KM admin-password <pw>`,
+  `KM paired <host_id> <name>` (2.2.0), and
   NiceGUI's own "NiceGUI is on air at <url>".
 - **Local routes** (answer only to 127.0.0.1 with the right secret): `POST /_launcher/shutdown`,
   `GET /_launcher/status` (`rev`, `kingdom`, `synced`), `POST /_launcher/snapshot` (with the

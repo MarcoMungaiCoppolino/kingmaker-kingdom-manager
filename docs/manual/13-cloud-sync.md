@@ -37,11 +37,14 @@ source and Docker know nothing about it.
 host.json                        host_id, host_name, epoch, seq, since, released, address,
                                  app_version, beat, seen
 recent/save-e<epoch>-s<seq>.zip  the last five snapshots, written while playing
-daily/save-<YYYY-MM-DD>.zip      the first snapshot of each UTC day, thirty kept
+recent/<name>.zip.sig            the copy's stamp beside it (2.2.0): signer, hashes, signature
+daily/save-<YYYY-MM-DD>.zip      the first snapshot of each UTC day, thirty kept, with .sig too
 assets/<sha256>.<ext>            the images, one file per content hash, uploaded once
 .clock                           an empty file, rewritten to read the server's time
 table.json                       format, table_id, name, app_version, air_token, air_address,
-                                 air_generation, access_generation, set_by, set_at (since 1.3.0)
+                                 air_generation, access_generation, set_by, set_at (since 1.3.0);
+                                 format 2 adds admin, revoked, signed_since, signature (2.0.0),
+                                 serial and inherited (2.2.0)
 ```
 
 A **snapshot** (`bundle.write_snapshot`) is the database alone — a consistent copy through
@@ -71,8 +74,10 @@ and only the document is compared, as before.
 
 Images travel with three checks on the way down (`sync.pull_assets`), because the manifest
 was written by another host: the path must stay inside the assets folder (`bundle.safe_asset`,
-the same test `bundle.restore` makes on a zip) and end in an image's extension
-(`images.EXTENSIONS`); the bytes must hash to the name they came under; and they must be an
+the same test `bundle.restore` makes on a zip: no root, drive, backslash or `..`, judged as
+both Windows and POSIX read the name, and `bundle.inside` on the resolved target) and end in
+an image's extension (`images.EXTENSIONS`); the bytes must hash to the name they came under;
+and they must be an
 image (`imgsize.sizes`, the uploads' sniff). A refusal is one line in the log, and the file is
 written through a `.part` sibling, so nothing half-arrived is ever served.
 
@@ -84,7 +89,8 @@ newer that claims the record and finds no file creates it (`sync.ensure_table`):
 version pins the table, and its local token goes in if it has one. Every later Start reads it
 (`window.settle_table`) before claiming anything. Writes go through a compare-and-swap on the
 file's rev (`sync.write_table`; a conflict reads again and writes once more, keeping what the
-caller set). Any member of the folder can write the file — Dropbox gives no finer right — so
+caller set; with a seed it raises `serial` and signs). Any member of the folder can write the
+file — Dropbox gives no finer right — so
 the launcher's manners below are a convention, not a wall, and the user guide says so.
 
 **The version.** `TableRecord.mismatch` is an exact string match, patch releases included,
@@ -138,8 +144,9 @@ the manual's security notes say so.
 0. Read `table.json` (created if absent); a version mismatch ends here, with the dialog above.
 1. Read `host.json` (absent: free) and the server's time.
 2. Held by someone else and not `force` → `sync.Held`; the window shows "hosted by X since…",
-   *Join* (the address the host wrote in the record) and, for an administrator, *Ask to hand
-   over…* (below). Held by us (a crash and a restart) → the epoch stays.
+   *Join* (the address the host wrote in the record, when it is a web address) and, for an
+   administrator, *Ask to hand over…* (below). Held by us (a crash and a restart) → the epoch
+   stays.
 3. Write the record with `epoch + 1` in `update` mode on the rev just read (`add` when
    absent). A `path/conflict` means somebody wrote first: read again, three times at most.
 4. `sync.newest_usable`: the recent copies newest first, then the daily ones; each is
@@ -196,7 +203,10 @@ A thread ticking every `STATUS_EVERY` (30 s):
   UTC day has no copy yet), the retention (`sync.prune`: 5 and 30), the record rewritten
   with the new `seq`, `POST /_launcher/synced` so the database records the marks. Recording
   the marks is itself a write that bumps `rev`, so the revision is read again afterwards.
-- **On Stop** (`Hoster.stop(final=True)`): a last snapshot, then the record rewritten with
+- **On Stop** (`Hoster.stop(final=True)` and then the server's own shutdown, in a thread of
+  `window.stop` since 2.2.0, the window told by `window.stopped` when both are done and answering
+  meanwhile; closing waits for that thread): a
+  last snapshot, then the record rewritten with
   `released: true`, so the next host need not wait 180 s; `sync.release` asks three times
   with a pause when Dropbox does not answer, and gives up quietly (the record then goes stale
   on its own). A server that died on its own releases the record without uploading
@@ -218,24 +228,35 @@ Registered only when the launcher started the server (the secret in
 | `POST /_launcher/snapshot?epoch=&seq=` | the database-only bundle, after `theme.write_to_disk()` |
 | `POST /_launcher/synced` | records `{"epoch","seq","krev","trev"}` in `meta.sync_marks` |
 | `GET /_launcher/whoami?nonce=` | **over the network**, open: `{"proof": HMAC(secret, nonce), "app"}` |
-| `POST /_launcher/pairing` | a fresh pairing code for the launcher that started us |
+| `POST /_launcher/pairing` | a fresh pairing code for the launcher that started us, with the key it hands out (`{"refresh_token"}`, 2.2.0) |
 | `POST /_launcher/pair` | **over the network**: `{"code","host_name"}` → the credential, once |
 | `POST /_launcher/credential` | the hand-out of 1.x: `410`, gone in 3.0 |
 
-The pairing routes exist only when the launcher passed a credential in
-`KINGMAKER_SYNC_CREDENTIAL` (`core.server_environment`: the Dropbox app key and refresh
-token, the account, the table's name and `table_id`; not the token, which is in `table.json`).
-`access/pairing.py` keeps one code at a time as its SHA-256, with its expiry (ten minutes),
-its wrong tries (three kill it) and who made it; `pairing.check` spends the right code at its
-first use. The route answers 404 to everything else and consults the table's brake for
-everyone (`auth.global_wait`) first; the making and the use of a code are written to the
-journal. The administrator's launcher offers the same code while it hosts
-(`window.make_pairing_code` → `LocalServer.pairing` → the local route; the dialog shows the
-code with the address the other launcher must type), and the Table box says so in words. On
-the joining side `core.pair` sends the code with the launcher's id and public key, and the
-game answers with the hosts' credential, the table's id, the administrator's public key and
-an **admission** (`sync.make_admission`): the newcomer's id, name and key signed with the
-hosting launcher's seed, which reached the game through the environment
+The pairing routes exist only when the launcher passed the table's fields in
+`KINGMAKER_SYNC_CREDENTIAL` (`core.server_environment`: the Dropbox app key, the account, the
+table's name and `table_id`, the administrator's public key; no Dropbox key since 2.2.0, and not
+the token, which is in `table.json`). `access/pairing.py` keeps one code at a time as its
+SHA-256, with its expiry (ten minutes), its wrong tries (three kill it), who made it and the
+hand-out it carries; `pairing.take` spends the right code at its first use and returns the
+hand-out. The route answers 404 to everything else, to a code made without a key, and consults
+the table's brake for everyone (`auth.global_wait`) first; the making and the use of a code are
+written to the journal. **Letting a launcher in is the administrator's act alone (2.2.0):**
+*Pair a launcher…*, while it hosts, opens `wizard.PairWizard`, three pages: the Dropbox
+authorisation for that one host (the same two screens as the set-up's, a fresh PKCE verifier),
+the code Dropbox shows, exchanged for a refresh token that goes to the running game with the
+request for a pairing code (`LocalServer.pairing(refresh_token)` → the local route, the token
+kept with the code until it is spent), and the address and the code to pass on, each with
+Copy. The token waits in `Settings.pending_key` (vaulted) until the code is spent: the game
+says so on stdout (`KM paired <host_id> <name>`, `main.announce`), and `window.key_taken` puts
+the key under that id in `Settings.host_keys` (vaulted too) at once. The look of the list after
+Stop (`window.settle_pending_key`) does the same for an admission made by this launcher since
+the key was, and revokes a key nobody took within the code's life and a margin
+(`PENDING_KEY_LIFE_S`). A host's launcher offers no
+pairing, and the game's accounts dialog makes no codes. On the joining side `core.pair` sends
+the code with the launcher's id and public key, and the game answers with the credential (the
+table's fields plus the key made for this code), the table's id, the administrator's public
+key and an **admission** (`sync.make_admission`): the newcomer's id, name and key signed with
+the hosting launcher's seed, which reached the game through the environment
 (`KINGMAKER_LAUNCHER_SIGN`, `KINGMAKER_LAUNCHER_ID`). `core.adopt_pairing` keeps the answer
 only after it opened the table's folder, found the `table_id` the host named on a table file
 `trusted_by` the administrator's key handed out, and found the admission vouched for
@@ -250,18 +271,30 @@ eavesdropper sees nothing (the relay sees everything, as it does for every login
 the exchange is plain HTTP, exactly as exposed as every password typed at the login page
 there. No home-made encryption, on purpose.
 
-**Change the keys** (`window.rotate_access`, the administrator's Table box): the set-up
-wizard reopened at the *hosts_authorise* step with the app key already known → a new hosts'
-refresh token (`cloud.hosts_refresh_token`), saved; the old one revoked with a client built on
-it (`auth/token/revoke` disables the calling token and no other); the administrator's own
-token untouched; `table.json.access_generation` raised and the file re-signed; a closing
-dialog that says what to do (a code for each remaining host; a new On Air token if the person
-also had the table's address). On every other PC the next cloud call fails at the token
-refresh with `invalid_grant`, which `window.note_lost_access` reads as a state, not an outage:
-the Table box says the keys were changed and offers *Pair with a table…*. The administrator's
-own access refused the same way (the app disconnected on dropbox.com after *Cut off a lost
-PC…*, `core.DROPBOX_APPS_PAGE`) shows *Authorise again…* instead (`window.reauthorise`: both
-keys from the *authorise* step, then the same closing).
+**One key per host (2.2.0).** *Strike off* (`window.strike_off`, in *Hosts of the table…*)
+adds the host to `revoked`, re-signs the table, re-vouches the hosts that launcher had let in,
+and revokes the host's own key with a client built on it (`auth/token/revoke` disables the
+calling token and no other), dropping it from `host_keys`: nobody else is touched. The shared
+hosts' key of 2.0.0 (`cloud.hosts_refresh_token`) survives in the administrator's vault only
+while hosts paired on it remain: the window counts them (`launcher.launchers.shared_left`),
+each is paired again to get a key of its own, and *Retire the shared key…*
+(`window.retire_shared_key`) revokes it, raises `access_generation` and re-signs; whoever still
+held it finds the next cloud call failing at the token refresh with `invalid_grant`, which
+`window.note_lost_access` reads as a state, not an outage: the Table box says the keys were
+changed and offers *Pair with a table…*. The administrator's own access refused the same way
+(the app disconnected on dropbox.com after *Cut off a lost PC…*, `core.DROPBOX_APPS_PAGE`, in
+the same window) shows *Authorise again…* (`window.reauthorise` → `reauthorised`: the own key
+from the *authorise* step, the seat kept or taken, `access_generation` raised, every host key
+forgotten, since the disconnection killed them all, and every host pairs again).
+
+**The control room** (`window.open_launchers`, *Hosts of the table…*): this launcher (name,
+key, the seat since when), the hosts (each with `launcher.launchers.key_own` / `key_shared` /
+`key_unknown`, `held_seat` when its id is in the seats' history, and *Strike off*), the seats
+before this one (`TableRecord.seats`, appended by `take_seat`, inside the signature once there
+is one) and the lost PC's cut-off. The box offers it while hosting too, and `strike_off` and
+`retire_shared_key` ask for no Stop: the server holds no Dropbox key since 2.2.0, and the
+table file is the administrator's to write at any time. The table knows no roles among the
+hosts: a launcher is on the seat or let in.
 
 ## Trust in the folder: the seat, the keys, the signatures (2.0.0)
 
@@ -274,28 +307,79 @@ authorisation in the set-up wizard (`SetupWizard` pages *hosts_authorise*, *host
 `core.server_environment` hands the hosts' one out, never the administrator's.
 
 **`table.json` format 2** (`TableRecord`): the fields of format 1 plus `admin` {host_id, name,
-key, since}, `revoked` (launcher ids struck off), `signed_since` (the first epoch whose copies
-must be signed; a table upgraded from 1.x keeps its older copies accepted unsigned) and
-`signature` over the canonical JSON of the rest (`sync.canonical`: sorted keys, no spaces).
-`verified` checks the signature under the key the file names; `trusted_by(key)` is a host's
-question, with the key it learned at pairing (`cloud.admin_key`). Only `write_table` with a
-seed signs; hosts write the file no more (`window.settle_table`).
+key, since}, `revoked` (launcher ids struck off), `signed_since` (the epoch the seat was taken
+at; since 2.2.0 no copy is accepted unsigned under a signed table, so it is a record, not a
+rule) and `signature` over the canonical JSON of the rest (`sync.canonical`: sorted keys, no
+spaces). `verified` checks the signature under the key the file names; `trusted_by(key)` is a
+host's question, with the key it learned at pairing (`cloud.admin_key`). Only `write_table`
+with a seed signs, and every write of the administrator's goes through `window.sign_table`,
+which keeps what it signed in the settings (`cloud.table_body`, the token apart: it is a
+secret and goes to the vault as `table_air_token`); hosts write the file no more,
+and since 2.2.0 neither do the version move and the address write go out unsigned (both
+changed `set_at`, which the signature covers, and left every host at "pair again").
 
 **The seat.** `settle_table` on the administrator's side creates the file with its seat
 (`ensure_table(admin=…, seed=…)`), upgrades a format-1 file (`sync.take_seat` with the
-record's next epoch), or, finding another key on the seat, asks and takes it; each of these
-marks the launcher as holding the seat (`cloud.seated`, false from the welcome until then).
-A seat taken from another PC also admits that PC's launcher (`sync.admit_former_admin`, a
-`make_admission` signed by the new seat, from `settle_table` and `rotated`): the copies it
-uploaded, usually the newest of the game, still pass `newest_usable`'s signature check. Without
-it the new administrator found no usable copy and started an empty game.
+record's next epoch), or, finding another key on the seat and the file signed by that key, asks
+and takes it; each of these marks the launcher as holding the seat (`cloud.seated`, false from
+the welcome until then). The question shows the other launcher's key (`sync.fingerprint`, the
+first sixteen digits in fours), and the *Hosts of the table* window shows the launcher's own
+(`launcher.launchers.own`, `window.open_launchers`): the person compares the two, the one trust that no signature can
+replace when a new PC meets the folder for the first time.
+
+**The seat inherits the copies (2.2.0).** The copies in the folder, usually the newest of the
+game, were signed by the old seat's launcher, and from 2.1.1 to the first 2.2.0 drafts the new
+seat admitted that launcher so they still loaded, which left the old PC vouched for until
+somebody struck it off. Now (`window.inherit`, from `settle_table` and `rotated`) the new seat
+lists them instead: every copy signed by a launcher the old table vouched for goes into
+`table.json` as `inherited: {name: [manifest sha256, db sha256]}`, inside the signature, and
+the hosts the old seat vouched for are admitted again under the new seat; the old launcher
+itself gets no admission, so what it uploads after the move is neither signed by a known
+launcher nor listed, and `newest_usable(inherited=…)` skips it. The list is read without
+fetching the copies: every upload writes the copy's stamp beside it, `<name>.zip.sig`
+(`sync.sidecar_for`: signer, the two hashes, the signature over them, as inside the zip, plus
+the name for the eye), and `sync.inherit_copies` reads the sidecars, falling back to the copy
+itself for one from before the sidecars and then writing the sidecar beside it, once verified,
+so the copy is never downloaded for its hashes again (`launcher.log.sidecar_added`); `prune`
+deletes a sidecar with its copy. The list is
+written twice at a move: at the seat, and again after the claim, for the last copy a hand-over
+brings; the second pass reads only the copies not listed yet (`skip`), and each copy read is
+said in the status line (`progress`, `launcher.cloud.inheriting`), beside the moving bar
+(`window.working_bar`, shown with every status in the busy colour unless `working=False`); a
+crash between the two leaves the next Start to finish, since the file then names the seat
+with no list. Dead entries go with the copies the retention deletes, pruned at the
+next signed write of the list.
+
+**A file the administrator does not believe (2.2.0).** Before 2.2.0 the administrator's launcher
+never called `verified()` on its own table: it read `signed_since`, `revoked` and the token off
+the file and signed them again at its next write, so anyone with the hosts' key could rewrite
+them and have them vouched for. Now a format-2 file without the signature of the seat it names
+is one of two things. Naming this launcher: rebuilt from `cloud.table_body` (`restore_table`),
+or, without such a record (a launcher from before 2.2.0 wrote it), signed as it is on the
+person's word at Start (`launcher.cloud.table_unsigned_ours`) and refused elsewhere
+(`own_table`, raising `TableRefused`, which the token, the keys and a strike-off all go
+through). Naming another seat: `TableRefused` at Start, a line in the log and a note in the box
+(`table_tampered`), nothing taken or given up.
 Every read of the table (`window.checked` → `check_seat`) compares: the administrator whose
-key is no longer on a seat it held revokes its own Dropbox token, forgets the table and says
-who took the seat (`seat_lost`); one that never held it, connected on a new PC with Start not
-pressed yet, is only told, in the log and in the Table box (`seat_elsewhere`), and Start asks;
-a host whose file is no longer `trusted_by` its administrator's key shows "the administrator's
-launcher changed, pair again" (`seat_changed`). A settings file from before `seated` existed
-loads as seated, so an old PC upgraded to 2.1.1 still steps down.
+key is no longer on a seat it held is asked once per key (`seat_asked`,
+`launcher.cloud.seat_taken_ask`, with the key to compare), and only when the file is signed by
+that key: yes revokes its own Dropbox token, forgets the table and says who took the seat
+(`seat_lost`; `Settings.left_table` keeps the table's name, its app key, who took it and when;
+while it is set and no table is joined, `window.stepped_down`, the box is the red line
+`launcher.cloud.left_table` with *Take the seat back…* (`take_seat_back`: the guide on its short
+road, a first page that says what is going on with the one button *Connect to the existing app*
+(`connect_existing`: the list opens, Next), then `wizard.SEAT_BACK_STEPS`: the app to click,
+the key, the authorisation, the code, done; with the app key seeded into `cloud` from
+`left_table`, `SEAT_KNOWN_STEPS` instead: the page says the app is known, then the
+authorisation, the code, done; then Start asks for the seat) and
+*Forget this table* (`forget_left`), and `stepped_down_view` unpacks the Start row and the
+address box; the wizard, `core.adopt_pairing` and *Forget* clear it; no popup and no status
+line, the log keeps `launcher.cloud.seat_taken`); no clears `seated` and keeps the seat here (`launcher.cloud.seat_kept`), so the
+next Start asks whether to take it back. One that never held the seat, connected on a new PC
+with Start not pressed yet, is only told, in the log and in the Table box (`seat_elsewhere`,
+again only for a signed file), and Start asks; a host whose file is no longer `trusted_by` its
+administrator's key shows "the administrator's launcher changed, pair again" (`seat_changed`).
+A settings file from before `seated` existed loads as seated.
 
 **`launchers.json`** (`read_launchers`, `add_launcher`): `{format: 1, entries: [...]}`, one
 admission per launcher id, appended by the newcomer with a compare-and-swap. An entry is
@@ -307,13 +391,32 @@ signature, each still listed to strike on its own.
 
 **Signed records and copies.** `HostRecord` carries `key` and a `signature` over the fields a
 thief would want to write (id, name, epoch, since, address, version, key), not over the
-heartbeat's; `claim` signs. The window shows *Join* only for a holder the table vouches for
-(`holder_known`) and gives the administrator *Take the record back* otherwise. A snapshot
+heartbeat's; `claim` signs, and `Hoster.beat` signs again before every heartbeat, because the
+window writes the address into the record only once the server has said where it is (2.2.0;
+before, a record with an address set after the claim went out unverifiable, and no launcher
+vouched for the holder). The window shows *Join* only for a holder the table vouches for
+(`holder_known`) and only for a web address (`core.web_address`: http or https with a host,
+since `webbrowser.open` on Windows hands anything else to the shell; the row shows the
+address), and gives the administrator *Take the record back* otherwise. The idle probe
+(`probe_idle`) asks the same of `air_address`. A snapshot
 leaves the game unsigned and is signed by the launcher before the upload
 (`sync.sign_snapshot`: a `signature.json` member over the hashes of `manifest.json` and
 `kingmaker.db`, with the launcher's id and key), so the seed never leaves the launcher;
-`newest_usable(trusted=known_launchers(...), signed_since=…)` skips a copy at or above
-`signed_since` whose signer is not trusted, with a line in the log.
+`newest_usable(trusted=known_launchers(...))` skips every copy whose signer is not trusted, with
+a line in the log, and every copy holding a member beside `manifest.json`, `kingmaker.db` and
+`signature.json` (`SNAPSHOT_MEMBERS`, `snapshot_members_ok`: the signature never saw such a
+member). Until 2.2.0 a copy claiming an epoch below `signed_since` was exempt, and the epoch came
+from the copy's own manifest.
+
+**Freshness (2.2.0).** A signature says who wrote the file, not whether it is the latest: an
+earlier signed file written back still verifies. `TableRecord.serial` rises by one at every
+signed write (`write_table`) and sits inside the signature once above zero, so files from before
+it still verify and no file can shed it. The administrator compares the file's serial with its
+record (`stale_table`): a file behind the record is reported once and the record is believed
+(`believed_table`, for the known launchers and the box), and the next Start, or any
+administrator's write (`own_table`), rewrites the file from the record. A host keeps the highest
+serial it trusted (`cloud.table_serial`, set at pairing by `core.adopt_pairing` and raised by
+`check_seat` and `settle_table`) and treats a lower one as not trusted.
 
 ## The guides and the welcome (`launcher/wizard.py`)
 
@@ -375,9 +478,10 @@ the code; the code pasted back on its own step (`dropbox.exchange_code` → the 
 `Client.account()` for the name, kept even if that lookup fails, since the code is spent);
 done. For an app made before (another PC, a reinstall), *Connect to an existing app* on the
 create step (`use_existing`) opens `APP_LIST` and switches the road to `EXISTING_STEPS`: the
-`existing` page, with its picture of which app to click, goes in before the permissions, which
-stay on the road (an app made and left before that step would pass the key and fail at the
-first upload); Next from the create step again goes back
+`existing` page, with its picture of which app to click, goes in where the permissions were,
+and Next goes to the key from there (2.2.0; the permissions were set when the app was made; an
+app made and left before that step fails at its first upload with Dropbox's own words, and the
+guide opened alone from the main window has the page); Next from the create step again goes back
 to a new app (`leaving_cloud`). `repage_cloud` swaps the page list keeping the current page,
 through `cloud_pages` (the guide's own list, or the welcome's `plan`). The pictures are the owner's screenshots of the console, numbered where the order of
 clicks matters. Each

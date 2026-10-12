@@ -100,9 +100,9 @@ results.append(("the identity is made once and named after the account",
                 len(host_id) == 12 and host_name.startswith("dm@") and back.identity() == (host_id, host_name)))
 env_cloud = core.server_environment(cloudy, "shh")
 handout = __import__("json").loads(env_cloud[core.CREDENTIAL_VARIABLE])
-results.append(("the hand-out carries the cloud and the table's name and id, never the token",
-                handout["refresh_token"] == "r" and "token" not in handout and handout["table"] == "T"
-                and "table_id" in handout))
+results.append(("the hand-out carries the cloud app and the table's name and id, never the token nor a key (2.2.0)",
+                "refresh_token" not in handout and "token" not in handout and handout["table"] == "T"
+                and "table_id" in handout and handout["app_key"] == cloudy.cloud["app_key"]))
 cloudy.identity()                       # the key pair comes with the identity, made at Start
 env_cloud = core.server_environment(cloudy, "shh")
 results.append(("the hand-out carries the signing seed and the launcher's id for the admissions",
@@ -110,10 +110,13 @@ results.append(("the hand-out carries the signing seed and the launcher's id for
                 and env_cloud.get(core.LAUNCHER_ID_VARIABLE) == cloudy.host_id))
 cloudy.cloud["hosts_refresh_token"] = "hosts-r"
 cloudy.cloud["admin_key"] = cloudy.sign_key
+cloudy.cloud["table_air_token"] = "air-t"     # the token of the table file last signed (2.2.0)
 two_keys = __import__("json").loads(core.server_environment(cloudy, "shh")[core.CREDENTIAL_VARIABLE])
-results.append(("with two keys the hand-out carries the hosts' one and the administrator's public key",
-                two_keys["refresh_token"] == "hosts-r" and "hosts_refresh_token" not in two_keys
-                and two_keys["admin_key"] == cloudy.sign_key))
+results.append(("the hand-out carries no Dropbox key at all (one per host, given with the code), the administrator's public key yes",
+                "refresh_token" not in two_keys and "hosts_refresh_token" not in two_keys
+                and two_keys["admin_key"] == cloudy.sign_key and "table_air_token" not in two_keys))
+cloudy.host_keys = {"h-one": "key-one"}                # a host's own key (2.2.0)
+cloudy.pending_key = {"token": "key-pending", "since": "2026-10-12T10:00:00Z"}
 cloudy.save(path)
 reloaded = core.Settings.load(path)
 written = __import__("json").loads(path.read_text(encoding="utf-8"))
@@ -121,6 +124,14 @@ results.append(("the hosts' key and the signing seed go to the vault, not to the
                 reloaded.cloud.get("hosts_refresh_token") == "hosts-r" and reloaded.sign_seed == cloudy.sign_seed
                 and reloaded.sign_key == cloudy.sign_key and written["sign_seed"] == ""
                 and "hosts_refresh_token" not in written["cloud"] and "hosts-r" not in path.read_text(encoding="utf-8")))
+results.append(("so does the token of the table file last signed (2.2.0)",
+                reloaded.cloud.get("table_air_token") == "air-t" and "table_air_token" not in written["cloud"]
+                and "air-t" not in path.read_text(encoding="utf-8")))
+results.append(("and the hosts' own keys, and the one of a pairing under way (2.2.0)",
+                reloaded.host_keys == {"h-one": "key-one"} and reloaded.pending_key.get("token") == "key-pending"
+                and written["host_keys"] == {} and written["pending_key"] == {}
+                and "key-one" not in path.read_text(encoding="utf-8")
+                and "key-pending" not in path.read_text(encoding="utf-8")))
 # The seat: an administrator's file from before `seated` existed counts as
 # seated (the look deposed anyone else within a minute); a launcher the
 # welcome only connected says it is not; hosts and the unconnected are not

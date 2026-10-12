@@ -2,7 +2,7 @@
 
 *In English: [../user-guide.md](../user-guide.md).*
 
-Questa guida descrive l'app com'è alla versione 2.1.2, scheda per scheda, con il perché di ogni
+Questa guida descrive l'app com'è alla versione 2.2.0, scheda per scheda, con il perché di ogni
 scelta. Per installarla e avviarla vedi il [README.it.md](../../README.it.md); la finestra
 dell'app installata è il primo capitolo qui sotto. Le schermate in
 [`manual/img/screenshots/it/`](../manual/img/screenshots/it/) sono dell'interfaccia italiana, prese
@@ -113,7 +113,9 @@ launcher controlla che il file sia quello costruito dall'autore: ogni release po
 degli hash degli installer firmato con la chiave dell'autore, tenuta fuori da GitHub, e un
 installer il cui hash non è in quell'elenco, o il cui elenco non è firmato con quella chiave,
 viene cancellato e rifiutato. Le release di prima della 2.0.0 non hanno l'elenco: nella
-finestra delle versioni sono segnate *non firmata* e partono solo se lo confermi.
+finestra delle versioni sono segnate *non firmata* e partono solo se lo confermi; una release
+successiva senza l'elenco viene rifiutata, come qualsiasi file che non sia l'installer con il
+nome di quella versione.
 L'installatore non è firmato con un certificato a pagamento, quindi Windows avverte comunque la
 prima volta. Su Linux apre
 la pagina della release. *Impostazioni → Versioni su GitHub…* elenca tutte le
@@ -145,57 +147,77 @@ Solo l'amministratore ha bisogno di un account Dropbox. Il tuo launcher tiene al
 dell'amministratore: il file del tavolo registra il suo nome e la sua chiave, e ogni altro
 launcher si fida del file per quella chiave. Chi aveva già creato l'app del tavolo, su un altro PC, preme invece
 *Collegati a un'app esistente* nel passo *Crea un'app*: si apre l'elenco delle sue app,
-un'immagine mostra quale cliccare, e Avanti passa dai permessi, per controllare che siano
-spuntati, prima della sua App key. Le pagine del benvenuto non mostrano il numero del passo, perché le
+un'immagine mostra quale cliccare, e Avanti chiede la sua App key. Le pagine del benvenuto non mostrano il numero del passo, perché le
 risposte cambiano quante ne seguono; le guide aperte da sole dalla finestra principale dicono
 «Passo 3 di 7».
 
-**Gli altri host.** Mentre qualcuno ospita, l'amministratore crea un codice di accoppiamento:
-nel gioco, dalla finestra degli account (*Accoppia un launcher…*), oppure, quando a ospitare è
-l'amministratore stesso, dallo stesso pulsante nel riquadro Il tavolo del launcher. È un codice di
-otto lettere e cifre, buono per dieci minuti e una volta sola. Lo dice al DM, che apre
-*Accoppia con un tavolo…* nel
-suo launcher: l'indirizzo del tavolo, il codice, e un nome per il suo PC che gli altri host
-leggeranno. Nessuna password viene chiesta. Il suo launcher manda col codice una chiave sua,
-fatta da solo e mai scritta da nessuno, e il gioco che ospita la garantisce con un'ammissione
-firmata. Il launcher tiene quello che riceve solo dopo aver aperto la cartella del tavolo,
-trovato lì il tavolo giusto, firmato dall'amministratore, e verificato l'ammissione; scrive la
-sua ammissione nell'elenco dei launcher del tavolo, e da lì in poi può ospitare anche lui.
-Ogni copia che un launcher carica porta la sua firma, e ogni launcher carica solo copie firmate
-da un launcher di cui il tavolo risponde: un ladro con la chiave della cartella può leggere, ma
-non infilare una copia. Un codice scritto male tre volte muore; crearne uno nuovo manda in
-pensione il vecchio; sia la creazione che l'uso finiscono nel diario.
+**Gli altri host.** Far entrare un launcher spetta a te solo, e il launcher ti guida: mentre
+ospiti, *Accoppia un launcher…* nel riquadro Il tavolo apre una finestra in tre passi. Prima
+una chiave Dropbox per quel solo host: si apre la pagina di autorizzazione, premi Consenti,
+Dropbox mostra un codice, lo incolli. Poi la partita in corso crea un codice di accoppiamento
+che consegna quella chiave, e la finestra mostra le due cose da mandare alla persona,
+l'indirizzo del tavolo e il codice, ciascuna con un pulsante Copia. Il codice è di otto lettere
+e cifre, buono per dieci minuti e una volta sola. Loro aprono *Accoppiati a un tavolo…* nel
+loro launcher: l'indirizzo, il codice, e un nome per il loro PC che gli altri host leggeranno.
+Nessuna password viene chiesta. Il loro launcher manda col codice una chiave sua, fatta da solo
+e mai scritta da nessuno, e il gioco che ospita la garantisce con un'ammissione firmata. Il
+launcher tiene quello che riceve solo dopo aver aperto la cartella del tavolo, trovato lì il
+tavolo giusto, firmato da te, e verificato l'ammissione; scrive la sua ammissione nell'elenco
+dei launcher del tavolo, e da lì in poi può ospitare anche lui. Ogni copia che un launcher
+carica porta la sua firma, e ogni launcher carica solo copie firmate da un launcher di cui il
+tavolo risponde: un ladro con una chiave della cartella può leggere, ma non infilare una copia.
+Un codice scritto male tre volte muore; crearne uno nuovo manda in pensione il vecchio; sia la
+creazione che l'uso finiscono nel diario. Un host non può far entrare nessuno: ospitare è
+l'unica cosa che a un host è data.
 
-**Quando qualcuno lascia il tavolo.** Due cose, entrambe nel riquadro Il tavolo. *Gli host del
-tavolo…* elenca ogni launcher fatto entrare, chi lo ha fatto entrare e da quando; *Cancella* ne
-toglie uno, e le sue copie vengono rifiutate da ogni launcher da quel momento, qualunque chiave
-abbia ancora. Gli host che lui aveva fatto entrare vengono garantiti di nuovo con la tua firma,
-quindi restano. Poi *Cambia le chiavi…*, perché gli host hanno tutti la stessa chiave degli
-host: Dropbox ne dà una nuova, la vecchia smette di funzionare su ogni altro PC, e ogni host
-rimasto si accoppia di nuovo con un codice nuovo, un minuto ciascuno. La tua chiave non si
-muove. Crea un nuovo token On Air con *Nuovo token…* se la persona aveva anche l'indirizzo del
-tavolo, e disattiva il suo account nel gioco. Un launcher la cui chiave è stata annullata lo
-dice e offre *Accoppia con un tavolo…*; su quel PC non si perde niente.
+**Quando qualcuno lascia il tavolo.** *Gli host del tavolo…* è la sala di controllo del
+tavolo, aperta anche mentre ospiti: questo launcher e la sua chiave, ogni host con la chiave
+che tiene, i PC che hanno tenuto il posto dell'amministratore prima di questo, e la via
+d'uscita per un PC perso. Il tavolo non conosce ruoli tra gli host: un launcher o è sul posto o
+è stato fatto entrare, e il tuo altro PC, una volta che il posto è qui, è un host come gli
+altri; uno che ha tenuto il posto prima lo dice sulla sua riga.
+*Cancella* accanto a un host toglie lui solo: le sue copie vengono rifiutate da ogni launcher
+da quel momento, gli host che lui aveva fatto entrare vengono garantiti di nuovo con la tua
+firma, e la chiave Dropbox che avevi fatto per lui viene annullata su Dropbox, così niente su
+quel PC apre più la cartella. Nessun altro se ne accorge e nessuno si accoppia di nuovo. Crea
+un nuovo token On Air con *Nuovo token…* se la persona aveva anche l'indirizzo del tavolo, e
+disattiva il suo account nel gioco. Gli host accoppiati prima di questa versione condividono
+una vecchia chiave: la finestra dice quanti la tengono ancora, accoppi di nuovo ciascuno per
+dargli una chiave propria, e *Ritira la chiave condivisa…* annulla la vecchia quando non resta
+nessuno.
 
 **Quando un PC va perso.** Un portatile con le chiavi sopra, rubato o sparito, non si può
 tagliare fuori da qui: Dropbox annulla una chiave solo dal suo sito, scollegando l'app, il che
-annulla tutte le chiavi del tavolo insieme. *Taglia fuori un PC perso…* apre quella pagina e
-dice cosa fare; al ritorno, il launcher trova il proprio accesso rifiutato e propone *Autorizza
-di nuovo…*, entrambe le chiavi da capo, dopo di che ogni host si accoppia di nuovo. La
-cassaforte attenua il caso: su Windows le chiavi sono legate al tuo accesso di Windows, quindi
+annulla tutte le chiavi del tavolo insieme. *Taglia fuori un PC perso…*, in *Gli host del
+tavolo…*, apre quella pagina e dice cosa fare; al ritorno, il launcher trova il proprio accesso
+rifiutato e propone *Autorizza di nuovo…*, la propria chiave da capo, dopo di che ogni host si
+accoppia di nuovo e riceve una chiave propria nuova. Il PC perso di un giocatore non ha
+bisogno di tutto questo: *Cancella* annulla la sua chiave da solo. La cassaforte attenua il
+caso: su Windows le chiavi sono legate al tuo accesso di Windows, quindi
 un ladro senza la tua password ha un file che non può aprire.
 
 **Spostare l'amministratore su un altro PC.** Installa lì, rispondi «Creo io il tavolo», premi
-*Collegati a un'app esistente* nella guida a Dropbox e autorizza due volte. Il primo Avvia
-trova il posto occupato dal tuo vecchio PC e chiede se prenderlo qui; sì scrive il tuo nuovo
-launcher nel file del tavolo e garantisce per il launcher del tuo vecchio PC, così le copie che
-ha caricato si caricano ancora e la partita arriva insieme al posto (fino ad allora il nuovo
-launcher si limita a notare, nel riquadro del tavolo, che il posto è del tuo vecchio PC). Il
-vecchio PC si fa da parte da solo la prima volta che si apre:
-vede che il posto non è più suo, annulla la propria chiave Dropbox e dimentica il tavolo,
-dicendo chi ha preso il posto e quando. Gli host vedono che il launcher dell'amministratore è
-cambiato e si accoppiano di nuovo con un codice del nuovo PC. Se il vecchio PC non si apre mai
-più, la sua chiave resta valida finché non lo tagli fuori come sopra.
+*Collegati a un'app esistente* nella guida a Dropbox e autorizza una volta. Il primo Avvia
+trova il posto occupato dal tuo vecchio PC e chiede se prenderlo qui, mostrando la chiave del
+vecchio launcher: confrontala con quella sotto *Gli host del tavolo…* sul tuo vecchio PC, e di' sì solo se
+coincidono. Sì scrive il tuo nuovo launcher nel file del
+tavolo ed elenca le copie della partita nella cartella come del tavolo, così la partita arriva
+insieme al posto (questo legge ogni copia nella cartella, un minuto o due su una linea lenta:
+la riga di stato dice a quale copia è arrivato, e una barra in movimento accanto dice che il
+launcher sta lavorando); il launcher del tuo vecchio PC non è più garantito, e quello che carica da
+allora viene ignorato (fino ad allora il nuovo launcher si limita a notare, nel riquadro del
+tavolo, che il posto è del tuo vecchio PC). Il vecchio PC
+chiede la prima volta che si apre: vede che il posto non è più suo, mostra la chiave del nuovo
+launcher e chiede se farsi da parte. Sì annulla la propria chiave Dropbox e dimentica il
+tavolo, e la sua finestra mostra allora una cosa sola da fare, *Riprendi il posto…*, che
+autorizza di nuovo Dropbox e lascia che Avvia chieda il posto; Avvia stesso, il file di
+salvataggio e il riquadro dell'indirizzo restano da parte fino ad allora, e *Dimentica questo
+tavolo* lo riporta a un launcher qualunque; no lo lascia amministratore, e il suo prossimo Avvia chiede se
+riprendere il posto. Un
+file del tavolo che indica un altro posto senza la firma di quel posto non sposta niente: il
+launcher si limita a dirlo. Gli host vedono che il launcher dell'amministratore è cambiato e si
+accoppiano di nuovo con un codice del nuovo PC. Se il vecchio PC non si apre mai più, la sua
+chiave resta valida finché non lo tagli fuori come sopra.
 
 **Quando il launcher chiede.** Tre domande compaiono solo quando qualcosa non torna, e niente
 succede finché non rispondi. *Due copie della partita*: il cloud ha una copia più recente, ma la
@@ -212,7 +234,8 @@ che l'host più nuovo giocasse.
 **Giocare.** *Avvia* chiede prima al cloud chi ospita. Nessuno: il launcher prende la
 partita, carica dal cloud la copia più recente se è più nuova della sua, porta le immagini
 che gli mancano e parte. Qualcuno: il riquadro dice «ospitata da X (versione) dal…», con
-*Entra* per aprire il gioco lì. Mentre ospiti, il cloud riceve una copia della partita ogni
+*Entra* per aprire il gioco lì (la riga mostra l'indirizzo, e si apre solo un indirizzo
+web). Mentre ospiti, il cloud riceve una copia della partita ogni
 pochi minuti quando qualcosa è cambiato, le immagini una volta sola, e un'ultima copia quando
 premi *Ferma*. Nella cartella restano cinque copie recenti e una al giorno per trenta giorni;
 il totale resta sotto i cento megabyte per anni.
@@ -233,9 +256,9 @@ come lo vedono gli altri host, di chi è il Dropbox, o chi sta ospitando adesso:
 chiede al cloud da solo quando si apre e ogni minuto mentre non ospiti, ogni 15 secondi
 mentre ospita qualcun altro, così vedi presto quando smette; e Avvia lo richiede
 prima di prendere la partita), e sotto i pulsanti a gruppi, dal più frequente al giorno in cui
-qualcuno se ne va, ognuno con il suo uso scritto accanto: per l'amministratore, *Far ospitare un altro PC* ha *Accoppia un launcher…* e *Quando
-qualcuno se ne va* ha *Cambia le chiavi…* e *Taglia fuori un PC perso…*; *Far ospitare un
-altro PC* ha anche *Gli host del tavolo…*; *Questo PC* ha *Dimentica il tavolo*. Solo su
+qualcuno se ne va, ognuno con il suo uso scritto accanto: per l'amministratore, *Far ospitare
+un altro PC* ha *Accoppia un launcher…* e *Gli host del tavolo…*, la sala di controllo del
+tavolo; *Questo PC* ha *Dimentica il tavolo*. Solo su
 questo computer un tavolo già creato tiene il suo riquadro, ma *Far ospitare un altro PC* ha una
 riga al posto dei pulsanti: il launcher di un altro PC deve raggiungere questo per usare un
 codice di accoppiamento, quindi l'accoppiamento chiede la rete o l'online; le chiavi e *Dimentica
@@ -319,9 +342,9 @@ Al primo avvio l'app crea l'account `admin` e stampa in console una password cas
 una volta sola, appuntala. Al primo accesso ti chiede di cambiarla, e da lì crei gli account
 degli altri: in alto a destra, accanto al tuo nome, l'icona 👤⚙ *Account dei giocatori* (la
 vedi solo tu che sei amministratore). Ogni account nuovo nasce con una password generata da
-mostrare al diretto interessato: non è recuperabile, ma puoi sempre generarne un'altra. La
-stessa finestra ha *Accoppia un launcher…*, il codice che permette a un altro PC di ospitare la
-partita: vedi *Giocare da più PC (il cloud)*.
+mostrare al diretto interessato: non è recuperabile, ma puoi sempre generarne un'altra. Far
+ospitare la partita a un altro PC è affare del launcher, non di questa finestra: vedi *Giocare
+da più PC (il cloud)*.
 
 | Ruolo | Cosa può fare |
 |---|---|
@@ -483,10 +506,13 @@ Accenderlo o spegnerlo su un viaggio già disegnato **non ne sceglie un altro**:
 quella che hai tracciato e cambiano solo i giorni, che è la domanda che ti stavi facendo. Vale
 anche per la marcia forzata.
 
-Una password deve avere almeno otto caratteri, e l'app rifiuta le più comuni (`password1`,
-`qwerty123` e qualche centinaio come loro) e il nome utente stesso. Dopo cinque tentativi
+Una password deve avere almeno quindici caratteri, e l'app rifiuta le più comuni di quella
+lunghezza (`passwordpassword`, `1234567890123456` e una cinquantina di migliaia come loro, dalle
+liste pubbliche delle violazioni) e il nome utente stesso. Nient'altro è richiesto: nessuna
+maiuscola, cifra o simbolo, e una password non scade mai. Dopo cinque tentativi
 sbagliati su un nome l'accesso aspetta trenta secondi, e nel diario compare una riga che lo
-dice: è così che il GM e l'amministratore vedono qualcuno tirare a indovinare; quando tutto il
+dice, visibile a chi gestisce gli account: è così che l'amministratore vede qualcuno tirare a
+indovinare; quando tutto il
 tavolo conta cinquanta accessi falliti in dieci minuti, aspettano tutti un minuto. Le password
 non sono salvate: se ne conserva solo l'impronta PBKDF2-HMAC-SHA256, con un sale
 diverso per ognuna, nella tabella `users` di `saves/kingmaker.db` — sul tuo disco, come tutto il
@@ -521,7 +547,8 @@ amministra ha già il file del database, e da lì una password la può riscriver
 il modo onesto di farlo, e si vede che sta succedendo:
 
 * l'intestazione dice **«nei panni di X»** in rosso, con accanto il pulsante per tornare indietro;
-* il registro del regno segna chi è entrato in quale account, e resta scritto;
+* il registro del regno segna chi è entrato in quale account (una riga che vede solo chi
+  gestisce gli account), e resta scritto;
 * il permesso si controlla su chi ha fatto l'accesso *davvero*, quindi indossare i panni di un
   giocatore non è una scala per risalire da qualche altra parte;
 * niente cambio password forzato mentre sei negli altrui: quella la sceglie chi l'account ce l'ha.

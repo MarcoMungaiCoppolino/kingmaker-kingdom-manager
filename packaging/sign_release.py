@@ -32,7 +32,14 @@ from kingmaker.access import ed25519  # noqa: E402
 from kingmaker.launcher import keys  # noqa: E402
 
 DEFAULT_KEY = Path.home() / ".kingmaker" / "release-key.txt"
-INSTALLER_PATTERNS = ("*-Setup.exe", "*-linux-x86_64.tar.gz")
+STEM = "Kingmaker-Kingdom-Manager"
+
+
+def installer_names(version: str) -> tuple[str, str]:
+    """The two files a release carries, by their exact names: nothing else
+    on the draft gets signed, however it is named (`core.installer_name`
+    wants the same names)."""
+    return f"{STEM}-{version}-Setup.exe", f"{STEM}-{version}-linux-x86_64.tar.gz"
 
 
 def new_key(path: Path) -> int:
@@ -68,13 +75,14 @@ def sign(version: str, key_path: Path) -> int:
     tag = version if version.startswith("v") else f"v{version}"
     with tempfile.TemporaryDirectory(prefix="km-sign-") as tmp:
         folder = Path(tmp)
+        wanted = installer_names(tag[1:])
         command = ["gh", "release", "download", tag, "--dir", str(folder)]
-        for pattern in INSTALLER_PATTERNS:
-            command += ["--pattern", pattern]
+        for name in wanted:
+            command += ["--pattern", name]
         subprocess.run(command, check=True, cwd=str(ROOT))
         files = sorted(p for p in folder.iterdir() if p.is_file())
-        if not files:
-            raise SystemExit(f"no installer found on {tag}")
+        if {p.name for p in files} != set(wanted):
+            raise SystemExit(f"{tag}: expected exactly {list(wanted)}, found {[p.name for p in files]}")
         lines = [f"{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.name}" for p in files]
         sums = ("\n".join(lines) + "\n").encode("ascii")
         signature = ed25519.sign(seed, sums).hex() + "\n"

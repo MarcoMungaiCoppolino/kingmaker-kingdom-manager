@@ -16,7 +16,7 @@ from kingmaker.ui.tabs.party import pace
 from kingmaker.geometry import waterways, hexgrid, sections
 from kingmaker.travel import daily
 from kingmaker.media import images
-from kingmaker.access import permissions
+from kingmaker.access import permissions, view as view_mod
 from kingmaker import travel as travel_mod
 from kingmaker.locale import units
 
@@ -2073,7 +2073,8 @@ def _remove_from_group(char_id: str, mine: dict, mapping) -> None:
 # from the menu, from the marker of whoever is making it, or by clicking its
 # route on the map — brings it to the top and lights it on the map.
 def _planned_journeys_list(mine: dict, mapping) -> None:
-    journeys = STATE.archive.list_journeys(STATE.campaign, "in_progress")
+    sight = view_mod.MapView(theme.user(), STATE)
+    journeys = [v for v in STATE.archive.list_journeys(STATE.campaign, "in_progress") if sight.sees_journey(v)]
     if not journeys:
         return
     names = {p["id"]: p["name"] for p in STATE.characters()}

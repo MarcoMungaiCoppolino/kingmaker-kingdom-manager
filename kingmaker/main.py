@@ -501,13 +501,16 @@ def launcher_route(secret: str, credential_json: str = "", sign_seed: str = "",
       answers there is this server; it reveals nothing, the secret being
       this start's alone.
     - `POST /_launcher/pairing`: local, with the secret: a fresh pairing code
-      (`access.pairing`), the launcher's own door to the same thing the
-      accounts dialog does in the game.
+      (`access.pairing`), with the Dropbox key the administrator's launcher
+      authorised for the one host that will spend it (`{"refresh_token"}`
+      in the body), kept with the code until then.
     - `POST /_launcher/pair`: the other route open to the network — the
       launcher of a new host sends `{"code","host_name"}` and, for the right
-      code while it lives, receives the cloud credential this server was
-      given at start, once. Never registered without one. A wrong, used or
-      expired code, or the table's brake for everyone: 404.
+      code while it lives, receives the cloud credential, once: the table's
+      fields this server was given at start, and the key made for that code.
+      Never registered without the fields; a code without a key hands out
+      nothing. A wrong, used or expired code, or the table's brake for
+      everyone: 404.
     - `POST /_launcher/credential`: the hand-out of 1.x, answered with 410.
     """
     if not secret:
@@ -601,7 +604,13 @@ def launcher_route(secret: str, credential_json: str = "", sign_seed: str = "",
         the game being the usual place."""
         if not _local(request):
             return Response(status_code=404)
-        code = pairing.new_code("launcher")
+        try:
+            asked = json.loads((await request.body()).decode("utf-8") or "{}")
+        except ValueError:
+            asked = {}
+        handout = {"refresh_token": str(asked.get("refresh_token", ""))[:512]} \
+            if isinstance(asked, dict) and asked.get("refresh_token") else {}
+        code = pairing.new_code("launcher", handout=handout)
         STATE.record(t("login.pair_made", username=t("main.the_launcher")), "account")
         theme.mark_dirty()
         return Response(json.dumps({"code": code, "expires_in": pairing.LIFETIME}),
@@ -618,7 +627,13 @@ def launcher_route(secret: str, credential_json: str = "", sign_seed: str = "",
             new_id, new_key = str(payload.get("host_id", ""))[:32], str(payload.get("key", ""))[:64]
         except (ValueError, KeyError, TypeError):
             return Response(status_code=404)
-        if auth.global_wait() > 0 or not pairing.check(code):
+        taken = pairing.take(code) if auth.global_wait() <= 0 else None
+        if taken is None:
+            return Response(status_code=404)
+        # The table's fields from the start, the key from the code: a code
+        # made without one (the game's own, before 2.2.0) hands out nothing.
+        handed = {**credential, **taken}
+        if not handed.get("refresh_token"):
             return Response(status_code=404)
         # The admission: the newcomer's id and key, signed with the hosting
         # launcher's seed, so every launcher of the table can tell the
@@ -632,9 +647,13 @@ def launcher_route(secret: str, credential_json: str = "", sign_seed: str = "",
                                                 host_name, new_key)
             except ValueError:
                 admission = None
+        # The launcher that started us holds the key made for this code:
+        # told now, it puts the key under the newcomer's id at once.
+        if new_id:
+            announce("paired", f"{new_id} {host_name}".strip())
         STATE.record(t("main.launcher_paired", host=host_name or "?"), "account")
         theme.mark_dirty()
-        return Response(json.dumps({"credential": credential, "table_id": credential.get("table_id", ""),
+        return Response(json.dumps({"credential": handed, "table_id": credential.get("table_id", ""),
                                     "table": credential.get("table", ""),
                                     "kingdom": STATE.k.get("name") or "",
                                     "admission": admission}),

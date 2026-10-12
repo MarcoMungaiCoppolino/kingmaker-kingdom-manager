@@ -47,6 +47,7 @@ def roll_skill(skill_id: str, cd: int, extra_title: str = "", outcome_text: str 
     return res
 
 
+@theme.requires(permissions.EDIT_KINGDOM)
 def _assurance_roll(skill_id: str, cd: int) -> None:
     """Kingdom Assurance from the sheet: 10 + proficiency, no die."""
     res = STATE.assurance_result(skill_id, cd)

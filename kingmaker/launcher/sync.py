@@ -39,7 +39,7 @@ from kingmaker import __version__
 from kingmaker.access import ed25519
 from kingmaker.launcher.dropbox import DropboxError
 from kingmaker.locale.i18n import t
-from kingmaker.media import images, imgsize
+from kingmaker.media import imgsize
 from kingmaker.storage import bundle
 from kingmaker.storage.archive import Archive
 
@@ -76,6 +76,14 @@ def _signed(public_hex: str, body: dict, signature_hex: str) -> bool:
 
 def _now_text() -> str:
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+
+def fingerprint(key: str) -> str:
+    """The first sixteen digits of a public key, in fours: what a person
+    reads off one PC's launcher and compares with another's before taking
+    or giving up the seat."""
+    head = (key or "")[:16].upper()
+    return " ".join(head[i:i + 4] for i in range(0, len(head), 4)) or "?"
 
 
 @dataclass
@@ -346,6 +354,23 @@ class TableRecord:
     admin_since: str = ""
     revoked: list[str] = field(default_factory=list)
     signed_since: int = 0
+    # Raised by one at every signed write (`write_table`): an earlier file
+    # of the same seat, written back by whoever holds the folder's key,
+    # still verifies, and only this says it is earlier. Inside the
+    # signature once it is above zero, so the files from before it still
+    # verify and a file cannot shed it.
+    serial: int = 0
+    # The copies a seat taken from another PC found in the folder, signed
+    # by a launcher the old seat vouched for: `{copy name: [manifest sha256,
+    # db sha256]}`, inside the signature once there is one. A launcher loads
+    # a copy signed by a vouched-for launcher, or one whose hashes are here;
+    # the old launcher itself is vouched for no more, and what it uploads
+    # after the move is neither (2.2.0).
+    inherited: dict[str, list[str]] = field(default_factory=dict)
+    # The seats before this one, oldest first: `{host_id, name, since, until}`,
+    # appended by `take_seat` (2.2.0), inside the signature once there is
+    # one; what the Hosts window lists as the former administrator launchers.
+    seats: list[dict] = field(default_factory=list)
     set_by: str = ""
     set_at: str = ""
     signature: str = ""
@@ -361,6 +386,12 @@ class TableRecord:
             raw = {}
         admin = raw.get("admin") if isinstance(raw.get("admin"), dict) else {}
         revoked = raw.get("revoked") if isinstance(raw.get("revoked"), list) else []
+        found = raw.get("inherited") if isinstance(raw.get("inherited"), dict) else {}
+        inherited = {str(k): [str(h) for h in v] for k, v in found.items()
+                     if isinstance(v, list) and len(v) == 2}
+        seats = [{k: str(s.get(k, "")) for k in ("host_id", "name", "since", "until")}
+                 for s in (raw.get("seats") if isinstance(raw.get("seats"), list) else [])
+                 if isinstance(s, dict)]
         return cls(format=int(raw.get("format") or 1), table_id=str(raw.get("table_id", "")),
                    name=str(raw.get("name", "")), app_version=str(raw.get("app_version", "")),
                    air_token=str(raw.get("air_token", "")), air_address=str(raw.get("air_address", "")),
@@ -369,6 +400,7 @@ class TableRecord:
                    admin_id=str(admin.get("host_id", "")), admin_name=str(admin.get("name", "")),
                    admin_key=str(admin.get("key", "")), admin_since=str(admin.get("since", "")),
                    revoked=[str(r) for r in revoked], signed_since=int(raw.get("signed_since") or 0),
+                   serial=int(raw.get("serial") or 0), inherited=inherited, seats=seats,
                    set_by=str(raw.get("set_by", "")), set_at=str(raw.get("set_at", "")),
                    signature=str(raw.get("signature", "")), rev=str(meta.get("rev", "")))
 
@@ -384,6 +416,12 @@ class TableRecord:
                              "key": self.admin_key, "since": self.admin_since}
             body["revoked"] = list(self.revoked)
             body["signed_since"] = self.signed_since
+            if self.serial:
+                body["serial"] = self.serial
+            if self.inherited:
+                body["inherited"] = {name: list(hashes) for name, hashes in sorted(self.inherited.items())}
+            if self.seats:
+                body["seats"] = [dict(s) for s in self.seats]
         return body
 
     def body(self) -> bytes:
@@ -428,6 +466,7 @@ def write_table(client, table: TableRecord, by: str = "", seed: bytes | None = N
             table.set_by = by
         table.set_at = _now_text()
         if seed is not None and table.format >= 2:
+            table.serial += 1
             table.sign(seed)
         mode, rev = ("update", table.rev) if table.rev else ("add", None)
         try:
@@ -469,8 +508,14 @@ def take_seat(table: TableRecord, host_id: str, name: str, key: str, epoch: int)
     if table.format < 2:
         table.format = TABLE_FORMAT
         table.signed_since = epoch
+    if table.admin_id and table.admin_id != host_id:
+        table.seats.append({"host_id": table.admin_id, "name": table.admin_name,
+                            "since": table.admin_since, "until": _now_text()})
+        table.seats = table.seats[-12:]       # the last dozen seats are history enough
     table.admin_id, table.admin_name, table.admin_key = host_id, name, key
     table.admin_since = _now_text()
+    # A launcher struck off as a host and now on the seat vouches for itself.
+    table.revoked = [r for r in table.revoked if r != host_id]
     return table
 
 
@@ -494,28 +539,6 @@ def make_admission(seed: bytes, admitted_by: str, host_id: str, name: str, key: 
              "admitted_by": admitted_by}
     entry["signature"] = ed25519.sign(seed, canonical(admission_body(entry))).hex()
     return entry
-
-
-def former_admin_admission(seed: bytes, admin_id: str, former: tuple[str, str, str]) -> dict | None:
-    """The outgoing administrator's launcher `(host_id, name, key)`, admitted
-    by the launcher that takes the seat, under its seed. The copies that
-    launcher uploaded, usually the newest of the game, stay loadable
-    (`newest_usable` wants a signer the table vouches for), and it stays in
-    the list of launchers, to strike off on its own if wanted. None when
-    the seat was empty (a table from 1.x) or already this launcher's."""
-    host_id, name, key = former
-    if not host_id or not key or host_id == admin_id:
-        return None
-    return make_admission(seed, admin_id, host_id, name, key)
-
-
-def admit_former_admin(client, seed: bytes, admin_id: str, former: tuple[str, str, str]) -> bool:
-    """`former_admin_admission` written to `launchers.json`; whether one was."""
-    entry = former_admin_admission(seed, admin_id, former)
-    if entry is None:
-        return False
-    add_launcher(client, entry)
-    return True
 
 
 def read_launchers(client) -> tuple[list[dict], str]:
@@ -610,6 +633,21 @@ class NewerCopy(Exception):
 
 
 SIGNATURE_MEMBER = "signature.json"
+# What a copy holds, and nothing else: the signature covers the manifest and
+# the database, so a member added beside them (an image, say, for the
+# folder the browsers read) would travel under a signature that never saw it.
+SNAPSHOT_MEMBERS = frozenset({bundle.MANIFEST, bundle.DB_NAME, SIGNATURE_MEMBER})
+
+
+def snapshot_members_ok(path: Path) -> bool:
+    """Whether the copy holds only the members a copy may hold."""
+    import zipfile
+    try:
+        with zipfile.ZipFile(path) as zf:
+            names = set(zf.namelist())
+    except (zipfile.BadZipFile, OSError):
+        return False
+    return names <= SNAPSHOT_MEMBERS
 
 
 def sign_snapshot(data: bytes, seed: bytes, host_id: str, key: str) -> bytes:
@@ -631,6 +669,115 @@ def sign_snapshot(data: bytes, seed: bytes, host_id: str, key: str) -> bytes:
                 dst.writestr(item, src.read(item.filename))
         dst.writestr(SIGNATURE_MEMBER, json.dumps(stamp, indent=2))
     return out.getvalue()
+
+
+SIDECAR_SUFFIX = ".sig"
+
+
+def snapshot_hashes(zf) -> dict:
+    """The two hashes a copy's signature is over."""
+    return {"manifest": hashlib.sha256(zf.read(bundle.MANIFEST)).hexdigest(),
+            "db": hashlib.sha256(zf.read(bundle.DB_NAME)).hexdigest()}
+
+
+def sidecar_for(data: bytes, name: str) -> bytes | None:
+    """The copy's stamp as a file of its own, to read beside the copy without
+    fetching it: the signer's id and key, the two hashes and the signature
+    over them, as inside the zip, plus the copy's name for the eye. None
+    for an unsigned copy."""
+    import io
+    import zipfile
+    try:
+        with zipfile.ZipFile(io.BytesIO(data)) as zf:
+            if SIGNATURE_MEMBER not in zf.namelist():
+                return None
+            stamp = json.loads(zf.read(SIGNATURE_MEMBER).decode("utf-8"))
+            hashes = snapshot_hashes(zf)
+    except (zipfile.BadZipFile, KeyError, ValueError, UnicodeDecodeError):
+        return None                         # not a signed copy: nothing to put beside it
+    if not isinstance(stamp, dict):
+        return None
+    return json.dumps({"name": name, "host_id": str(stamp.get("host_id", "")), "key": str(stamp.get("key", "")),
+                       "hashes": hashes, "signature": str(stamp.get("signature", ""))}, indent=2).encode("utf-8")
+
+
+def read_sidecar(data: bytes) -> tuple[str, str, dict] | None:
+    """`(host_id, key, hashes)` of a sidecar whose signature verifies under
+    the key it names, else None."""
+    try:
+        stamp = json.loads(data.decode("utf-8"))
+    except (ValueError, UnicodeDecodeError):
+        return None
+    if not isinstance(stamp, dict) or not isinstance(stamp.get("hashes"), dict):
+        return None
+    hashes = {k: str(stamp["hashes"].get(k, "")) for k in ("manifest", "db")}
+    host_id, key, signature = (str(stamp.get("host_id", "")), str(stamp.get("key", "")),
+                               str(stamp.get("signature", "")))
+    if not _signed(key, hashes, signature):
+        return None
+    return host_id, key, hashes
+
+
+def inherit_copies(client, trusted_before: dict[str, str], into: Path | None = None,
+                   log: Callable[[str], None] = lambda _t: None,
+                   skip: set[str] | None = None,
+                   progress: Callable[[int, int, str], None] = lambda _d, _n, _name: None
+                   ) -> dict[str, list[str]]:
+    """The copies in the folder signed by a launcher the seat being taken
+    vouched for (`trusted_before`, the old table's `known_launchers`), as
+    `{name: [manifest sha256, db sha256]}`: what the new seat lists as the
+    table's (`TableRecord.inherited`). Read from the sidecars; a copy
+    without one is downloaded and read inside, when `into` is given, and
+    its stamp is then written beside it (the sidecar it never had), so no
+    launcher downloads that copy for its hashes again. The names in `skip`
+    (listed already) are not read; `progress(done, total, name)` is called
+    before each copy read, for the window."""
+    import tempfile
+    found: dict[str, list[str]] = {}
+    entries = [entry for folder, pattern in ((RECENT, SNAPSHOT_NAME), (DAILY, DAILY_NAME))
+               for entry in _snapshots(client, folder, pattern)
+               if not skip or entry["name"] not in skip]
+    for done, entry in enumerate(entries, 1):
+        progress(done, len(entries), entry["name"])
+        signer: tuple[str, str] | None = None
+        hashes: dict | None = None
+        side = download_if_there(client, entry["path"] + SIDECAR_SUFFIX)
+        if side is not None:
+            read = read_sidecar(side[0])
+            if read is not None:
+                signer, hashes = (read[0], read[1]), read[2]
+        if signer is None and into is not None:
+            try:
+                data, _meta = client.download(entry["path"])
+                with tempfile.NamedTemporaryFile(prefix="km-inherit-", suffix=".zip", dir=into,
+                                                 delete=False) as part:
+                    part.write(data)
+                    target = Path(part.name)
+                try:
+                    signer = snapshot_signer(target)
+                    if signer is not None:
+                        import zipfile
+                        with zipfile.ZipFile(target) as zf:
+                            hashes = snapshot_hashes(zf)
+                finally:
+                    target.unlink(missing_ok=True)
+            except (DropboxError, OSError) as error:
+                log(t("launcher.log.skipping", name=entry["name"], error=error))
+                continue
+            if signer is not None and trusted_before.get(signer[0]) == signer[1]:
+                # Verified, and from before the sidecars: its stamp goes
+                # beside it now. A failure here costs nothing but the next
+                # download.
+                side_bytes = sidecar_for(data, entry["name"])
+                if side_bytes is not None:
+                    try:
+                        client.upload(entry["path"] + SIDECAR_SUFFIX, side_bytes, mode="overwrite")
+                        log(t("launcher.log.sidecar_added", name=entry["name"]))
+                    except DropboxError as error:
+                        log(t("launcher.log.sidecar_failed", name=entry["name"], error=error))
+        if signer is not None and hashes is not None and trusted_before.get(signer[0]) == signer[1]:
+            found[entry["name"]] = [hashes["manifest"], hashes["db"]]
+    return found
 
 
 def snapshot_signer(path: Path) -> tuple[str, str] | None:
@@ -656,8 +803,9 @@ def snapshot_signer(path: Path) -> tuple[str, str] | None:
 
 
 def newest_usable(client, into: Path, log: Callable[[str], None] = lambda _t: None,
-                  record: HostRecord | None = None, trusted: dict[str, str] | None = None,
-                  signed_since: int = 0) -> Path | None:
+                  record: HostRecord | None = None,
+                  trusted: dict[str, str] | None = None,
+                  inherited: dict[str, list[str]] | None = None) -> Path | None:
     """Downloads copies newest first, recent then daily, and returns the
     first one that passes the checks, or None.
 
@@ -667,8 +815,11 @@ def newest_usable(client, into: Path, log: Callable[[str], None] = lambda _t: No
     would know. A recent copy whose epoch is above the record's cannot have
     been written by any host the record ever named (epochs come from the
     record alone), so it is skipped and said in the log. With `trusted`
-    (`known_launchers`), a copy at an epoch from `signed_since` on must
-    carry the signature of one of them, or it is skipped and said.
+    (`known_launchers`), every copy must carry the signature of one of
+    them, or hash to an entry of `inherited` (the copies a seat found when
+    it was taken), or it is skipped and said: the exemption for the copies
+    from before the signatures read the epoch off the copy itself, and a
+    copy is free to claim any epoch it likes.
     """
     into.mkdir(parents=True, exist_ok=True)
     for folder, pattern in ((RECENT, SNAPSHOT_NAME), (DAILY, DAILY_NAME)):
@@ -684,10 +835,15 @@ def newest_usable(client, into: Path, log: Callable[[str], None] = lambda _t: No
                 if not bundle.integrity_ok(target):
                     raise ValueError("integrity")
                 if trusted is not None:
-                    epoch = int(bundle.manifest(target).get("epoch") or entry["key"][0] or 0)
-                    if epoch >= signed_since:
-                        signer = snapshot_signer(target)
-                        if signer is None or trusted.get(signer[0]) != signer[1]:
+                    if not snapshot_members_ok(target):
+                        raise ValueError("members")
+                    signer = snapshot_signer(target)
+                    if signer is None or trusted.get(signer[0]) != signer[1]:
+                        import zipfile
+                        with zipfile.ZipFile(target) as zf:
+                            hashes = snapshot_hashes(zf)
+                        listed = [hashes["manifest"], hashes["db"]] in list((inherited or {}).values())
+                        if not listed:
                             raise ValueError("signature")
             except ValueError as error:
                 target.unlink(missing_ok=True)
@@ -727,7 +883,7 @@ def pull_assets(client, assets_dir: Path, wanted: dict[str, str],
         if have.get(relative) == digest:
             continue
         safe = bundle.safe_asset(f"{bundle.ASSETS}/{relative}")
-        if safe is None or safe.suffix.lower() not in images.EXTENSIONS:
+        if safe is None or not bundle.inside(Path(assets_dir) / safe, Path(assets_dir)):
             log(t("launcher.log.image_refused", path=relative,
                   reason=t("launcher.log.image_reason.path")))
             continue
@@ -775,6 +931,7 @@ def prune(client, folder: str, pattern: re.Pattern, keep: int) -> int:
     entries = _snapshots(client, folder, pattern)
     for entry in entries[keep:]:
         client.delete(entry["path"])
+        client.delete(entry["path"] + SIDECAR_SUFFIX)    # idempotent: a copy may have none
     return max(0, len(entries) - keep)
 
 
@@ -783,11 +940,16 @@ def upload_snapshot(client, data: bytes, epoch: int, seq: int, today: str | None
     then the retention. Returns what was done."""
     name = f"save-e{epoch}-s{seq}.zip"
     client.upload(f"{RECENT}/{name}", data, mode="overwrite")
+    side = sidecar_for(data, name)
+    if side is not None:
+        client.upload(f"{RECENT}/{name}{SIDECAR_SUFFIX}", side, mode="overwrite")
     done = {"recent": name, "daily": None, "pruned": 0}
     today = today or time.strftime("%Y-%m-%d", time.gmtime())
     if not any(e["key"][0] == today for e in _snapshots(client, DAILY, DAILY_NAME)):
         daily = f"save-{today}.zip"
         client.upload(f"{DAILY}/{daily}", data, mode="overwrite")
+        if side is not None:
+            client.upload(f"{DAILY}/{daily}{SIDECAR_SUFFIX}", sidecar_for(data, daily), mode="overwrite")
         done["daily"] = daily
         done["pruned"] += prune(client, DAILY, DAILY_NAME, KEEP_DAILY)
     done["pruned"] += prune(client, RECENT, SNAPSHOT_NAME, KEEP_RECENT)
@@ -822,9 +984,12 @@ class LocalServer:
         self._request("/_launcher/synced", method="POST",
                       body=json.dumps({"epoch": epoch, "seq": seq}).encode("utf-8"))
 
-    def pairing(self) -> dict:
-        """A fresh pairing code from the running game: `{"code", "expires_in"}`."""
-        data, _h = self._request("/_launcher/pairing", method="POST", body=b"")
+    def pairing(self, refresh_token: str = "") -> dict:
+        """A fresh pairing code from the running game: `{"code", "expires_in"}`.
+        With `refresh_token`, the key the code hands out to the one host that
+        spends it (2.2.0); without one the code hands out nothing."""
+        body = json.dumps({"refresh_token": refresh_token}).encode("utf-8") if refresh_token else b"{}"
+        data, _h = self._request("/_launcher/pairing", method="POST", body=body)
         return json.loads(data.decode("utf-8"))
 
 
@@ -897,7 +1062,7 @@ class Hoster:
             if self.look():
                 return
             if now - self.state.last_heartbeat >= HEARTBEAT_EVERY:
-                heartbeat(self.client, self.record)
+                self.beat()
                 self.state.last_heartbeat = now
             self.upload_once()
         except DropboxError as error:
@@ -960,6 +1125,18 @@ class Hoster:
         self.on_event("handed", name)
         self.on_handed(name)
 
+    def beat(self) -> None:
+        """The heartbeat, the record signed again first. The address is
+        inside the signature, and the window writes it into the record
+        only once the server has said where it is (`KM lan`, the On Air
+        line), after `claim` signed: without this, a record with an
+        address set after the claim went out unverifiable, and no launcher
+        vouched for the holder (2.2.0; on a fixed address it only hit the
+        first Start, on a random one every Start)."""
+        if self.seed is not None and self.key:
+            self.record.sign(self.seed, self.key)
+        heartbeat(self.client, self.record)
+
     def upload_once(self, force: bool = False) -> bool:
         now = self.clock()
         status = self.server.status()
@@ -978,7 +1155,7 @@ class Hoster:
         self.state.known_assets = push_assets(self.client, self.assets_dir, hashes,
                                               self.state.known_assets)
         done = upload_snapshot(self.client, data, self.record.epoch, self.record.seq)
-        heartbeat(self.client, self.record)          # the seq travels in the record too
+        self.beat()                                  # the seq travels in the record too
         self.state.last_heartbeat = now
         self.server.synced(self.record.epoch, self.record.seq)
         # Recording the marks is itself a write: read the revision again, or

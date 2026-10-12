@@ -10,6 +10,7 @@ the widgets.
 """
 from __future__ import annotations
 
+import dataclasses
 import queue
 import sys
 import tempfile
@@ -69,6 +70,9 @@ def run() -> None:
 # and every 15 seconds while someone else hosts: that is when somebody is
 # waiting for them to stop, to start the game here.
 WATCH_EVERY_MS = 60_000
+# A key authorised for a pairing that nobody spent: cancelled after the
+# code's life (ten minutes) and a margin (2.2.0).
+PENDING_KEY_LIFE_S = 900
 WATCH_HOSTED_MS = 15_000
 # While someone else hosts, the quick checks ask only who holds the game; the
 # table's file (its name, address and token, which rarely change) is read
@@ -90,8 +94,11 @@ class SeatChanged(Exception):
         self.who, self.since = who, since
 
 
-class HostsKeyNeeded(Exception):
-    """An administrator's launcher without a key for the hosts yet."""
+class TableRefused(Exception):
+    """The table's file cannot be acted on: it names a seat without that
+    seat's signature (rewritten by hand), or it names this launcher
+    without its signature and the person declined to sign it. The text
+    says which, for the log and the window."""
 
 
 class Launcher:
@@ -112,6 +119,9 @@ class Launcher:
         self.hoster: sync.Hoster | None = None
         self.other: sync.HostRecord | None = None
         self.cloud_busy = False
+        # Stop's last upload, in its thread (`stop`): the window is told
+        # when it is done (`stopped`), and closing waits for it.
+        self.stop_thread: threading.Thread | None = None
         # Whether this process has held the record once: a living record
         # with our own identity is then a crash and a restart, otherwise it
         # may be a copied game folder on another PC, and we ask.
@@ -149,6 +159,18 @@ class Launcher:
         # The key found on a seat this administrator's launcher never held:
         # said once in the log (the Table box keeps saying it), Start asks.
         self.seat_elsewhere_said = ""
+        # The key found on the seat this launcher held: asked about once
+        # (step down, or keep the seat and let Start take it back).
+        self.seat_asked = ""
+        # A file naming another seat without that seat's signature: said
+        # once per such file, nothing done about it.
+        self.tampered_said = ""
+        # An earlier file of this seat's written back: said once per file.
+        self.stale_said = ""
+        # A seat just taken from another PC: `(old admin id, the launchers
+        # the old seat vouched for)`, until the copies are listed and the
+        # hosts admitted again under this seat (`inherit`).
+        self.inherit_from: tuple[str, dict[str, str]] | None = None
 
         root.title(core.APP_NAME)
         root.minsize(560, 420)
@@ -251,8 +273,14 @@ class Launcher:
             self.load_button = ttk.Button(actions, text=t("launcher.load_save"), command=self.load_save)
             self.load_button.pack(side="right")
 
-        self.status = ttk.Label(body, wraplength=520, foreground=COLOURS["quiet"])
-        self.status.pack(anchor="w", **PAD)
+        self.status_row = status_row = ttk.Frame(body)
+        status_row.pack(fill="x", **PAD)
+        self.status = ttk.Label(status_row, wraplength=440, foreground=COLOURS["quiet"])
+        self.status.pack(side="left", anchor="w")
+        # Shown, moving, while the launcher works on the cloud (a status in
+        # the busy colour): a seat take reads every copy in the folder, and
+        # a window that says nothing for a minute looks crashed.
+        self.working_bar = ttk.Progressbar(status_row, mode="indeterminate", length=120)
 
         self.links_frame = ttk.Frame(body)
         self.links_frame.pack(fill="x", padx=12)
@@ -342,6 +370,52 @@ class Launcher:
         self.refresh_cloud()
         self.rebuild_links()
 
+    def stepped_down(self) -> bool:
+        """An administrator's launcher that stepped down from a table and
+        has not joined one since (`Settings.left_table`)."""
+        left = self.settings.left_table
+        return (not self.settings.host and not self.settings.cloud_ready
+                and isinstance(left, dict) and bool(left.get("name")))
+
+    def stepped_down_view(self, on: bool) -> None:
+        """Stepped down, the window keeps the box and little else: the Start
+        row (Start, the browser, the save file) and the address box go, so
+        nothing on it leads to a game apart from the table. Off, both come
+        back where they were."""
+        if self.actions is None or self.settings.host:
+            return
+        if on:
+            self.actions.pack_forget()
+            self.air.pack_forget()
+        else:
+            if not self.actions.winfo_manager():
+                self.actions.pack(fill="x", before=self.status_row, **PAD)
+            if self.mode_var.get() == "online" and not self.air.winfo_manager():
+                self.air.pack(fill="x", after=self.mode_hint.master, **PAD)
+
+    def take_seat_back(self) -> None:
+        """From a launcher that stepped down: the Dropbox guide on its short
+        road (the app list, the key, the authorisation, the code), at the
+        authorisation when the app's key is still known, and Start then
+        asks whether to take the seat. The account and the app exist: no
+        page for either."""
+        left = self.settings.left_table
+        app_key = str(left.get("app_key", ""))
+        self.settings.cloud = {"app_key": app_key, "table": str(left.get("table", ""))} if app_key else {}
+        wizard.SetupWizard(self.root, self.settings, on_done=self.refresh_cloud, post=self.post, seat_back=True)
+
+    def forget_left(self) -> None:
+        """The way out for a PC that goes its own way: the step-down is
+        forgotten, the window is an ordinary launcher's again."""
+        left = self.settings.left_table
+        if not messagebox.askyesno(t("launcher.cloud.left_forget"),
+                                   t("launcher.cloud.left_forget_confirm", table=left.get("table", ""))):
+            return
+        self.settings.left_table = {}
+        self.settings.cloud = {}
+        self.settings.save()
+        self.refresh_cloud()
+
     def local_only(self) -> bool:
         """"On this computer only": the game answers at 127.0.0.1, where no
         other PC's launcher reaches it, so there is no pairing from here."""
@@ -355,11 +429,16 @@ class Launcher:
             return                          # still being built: `mode_changed` comes after
         cloud = self.settings.cloud
         alone = (not self.settings.host and self.mode_var.get() == "local"
-                 and not self.settings.cloud_ready and not cloud.get("app_key"))
+                 and not self.settings.cloud_ready and not cloud.get("app_key")
+                 and not self.stepped_down())
         if alone:
             self.cloud.pack_forget()
         else:
-            self.cloud.pack(fill="x", before=self.actions, **PAD)
+            # Above the Start row; above the status line while that row is
+            # unpacked (the stepped-down view), since Tk anchors only on a
+            # packed widget.
+            anchor = self.actions if self.actions.winfo_manager() else self.status_row
+            self.cloud.pack(fill="x", before=anchor, **PAD)
 
     def toggle_token(self) -> None:
         self.token_entry.config(show="" if self.show_token.get() else "•")
@@ -386,9 +465,20 @@ class Launcher:
         self.log.config(state="disabled")
         self.log.see("end")
 
-    def set_status(self, text: str, kind: str = "quiet", about_host: bool = False) -> None:
+    def set_status(self, text: str, kind: str = "quiet", about_host: bool = False,
+                   working: bool | None = None) -> None:
+        """`working` shows the moving bar beside the text; by default a
+        status in the busy colour is work under way, the others are not."""
         self.status.config(text=text, foreground=COLOURS.get(kind, COLOURS["quiet"]))
         self.status_about_host = about_host
+        if working is None:
+            working = kind == "busy"
+        if working and not self.working_bar.winfo_manager():
+            self.working_bar.pack(side="right", padx=(8, 0))
+            self.working_bar.start(15)
+        elif not working and self.working_bar.winfo_manager():
+            self.working_bar.stop()
+            self.working_bar.pack_forget()
 
     # --------------------------------------------------------------- links
     def rebuild_links(self) -> None:
@@ -397,6 +487,12 @@ class Launcher:
         for child in self.links_frame.winfo_children():
             child.destroy()
         links = self.links if self.server.running else core.links_for_mode(self.links, self.mode_var.get())
+        # An emptied frame keeps its last size in Tk: without rows it leaves
+        # the window, or the room its rows took stays blank under Start.
+        if not links:
+            self.links_frame.pack_forget()
+        elif not self.links_frame.winfo_manager():
+            self.links_frame.pack(fill="x", padx=12, after=self.status_row)
         for kind, url in links.items():
             row = ttk.Frame(self.links_frame)
             row.pack(fill="x", pady=2)
@@ -449,7 +545,8 @@ class Launcher:
         self.rebuild_links()
         self.port_in_use = port
         if port != self.settings.port:
-            self.set_status(t("launcher.status.port_moved", wanted=self.settings.port, port=port), "busy")
+            self.set_status(t("launcher.status.port_moved", wanted=self.settings.port, port=port), "busy",
+                            working=False)
         else:
             self.set_status(t("launcher.status.starting"), "busy")
         self.append_log("$ " + " ".join(core.server_command(self.settings, port)))
@@ -464,16 +561,45 @@ class Launcher:
             return
         self.reflect_running()
 
-    def stop(self) -> None:
+    def stop(self, wait: bool = False) -> None:
+        """Stop: the last copy up and the record released (the hoster's
+        stop), then the server down. The upload runs in a thread and the
+        window is told when it is done (`stopped`): it can take a while,
+        and a window that does not answer meanwhile looks crashed. `wait`
+        (closing) does it here, so the process does not leave before the
+        copy is up."""
         self.set_status(t("launcher.status.stopping"), "busy")
         self.start_button.config(state="disabled")
         self.root.update_idletasks()
-        if self.hoster is not None:
-            hoster, self.hoster = self.hoster, None
+        hoster, self.hoster = self.hoster, None
+        self.record = None
+        if hoster is not None:
             self.set_status(t("launcher.cloud.final_upload"), "busy")
             self.root.update_idletasks()
-            hoster.stop(final=True)
-            self.record = None
+        if wait:
+            if hoster is not None:
+                hoster.stop(final=True)
+            self.stopped()
+            return
+
+        def work() -> None:
+            # The last copy, then the server's own shutdown, which writes
+            # the game's last save and takes a few seconds too.
+            try:
+                if hoster is not None:
+                    hoster.stop(final=True)
+                    self.post(lambda: self.set_status(t("launcher.status.stopping"), "busy"))
+                self.server.stop()
+            finally:
+                self.post(self.stopped)
+
+        self.stop_thread = threading.Thread(target=work, daemon=True)
+        self.stop_thread.start()
+
+    def stopped(self) -> None:
+        """The last copy up and the server gone (or asked to go here, when
+        closing): the window is a stopped one."""
+        self.stop_thread = None
         self.server.stop()
         self.offline = False
         self.token_for_start = None
@@ -490,6 +616,20 @@ class Launcher:
             child.destroy()
         cloud = self.settings.cloud
         admin = cloud.get("role") == "admin"
+        self.stepped_down_view(self.stepped_down())
+        if self.stepped_down():
+            # Stepped down from a table: one thing to do here, the seat
+            # back, and a way out for a PC that goes its own way. Nothing
+            # that starts a game apart from the table.
+            left = self.settings.left_table
+            self.cloud_label.config(text=t("launcher.cloud.left_table", table=left.get("table", ""),
+                                           name=left.get("name", ""), date=str(left.get("date", ""))[:10]),
+                                    foreground=COLOURS["bad"])
+            self.action(t("launcher.cloud.take_seat_back"), self.take_seat_back,
+                        t("launcher.cloud.row.take_seat_back"))
+            self.action(t("launcher.cloud.left_forget"), self.forget_left, t("launcher.cloud.row.left_forget"))
+            self.place_table_box()
+            return
         if not self.settings.cloud_ready:
             if self.settings.vault_error and cloud.get("app_key"):
                 # The secrets were protected by another Windows user or on
@@ -549,6 +689,8 @@ class Launcher:
                 else:
                     self.action(t("launcher.cloud.pair_launcher"), self.make_pairing_code,
                                 t("launcher.cloud.row.pair_launcher"))
+                    self.action(t("launcher.cloud.launchers"), self.open_launchers,
+                                t("launcher.cloud.row.launchers"))
         elif self.offline and self.server.running:
             self.cloud_label.config(text=t("launcher.cloud.offline", table=cloud.get("table", "")),
                                     foreground=COLOURS["bad"])
@@ -558,9 +700,14 @@ class Launcher:
             if self.holder_known(self.other):
                 self.cloud_label.config(text=self.hosted_text(self.other), foreground=COLOURS["busy"])
                 if self.other.address:
-                    address = self.other.address
-                    self.action(t("launcher.cloud.join"), lambda: webbrowser.open(address),
-                                t("launcher.cloud.row.join", host=host))
+                    # Only a web address is opened: the record is another
+                    # launcher's, and the shell would run anything else.
+                    address = core.web_address(self.other.address)
+                    if address:
+                        self.action(t("launcher.cloud.join"), lambda: webbrowser.open(address),
+                                    t("launcher.cloud.row.join", host=host, address=address))
+                    else:
+                        self.note(t("launcher.cloud.address_not_web", host=host))
                 if admin:
                     self.action(t("launcher.cloud.take_over"), self.take_over,
                                 t("launcher.cloud.row.take_over", host=host))
@@ -583,6 +730,8 @@ class Launcher:
                     # Connected to the table's app on this PC, the seat still
                     # another PC's: Start asks whether to take it here.
                     self.note(self.seat_elsewhere_text(self.table))
+                elif self.table_tampered():
+                    self.note(self.tampered_text(self.table))
                 # On this computer only nobody else reaches the game for a
                 # code: no pairing, and no hosts to look after. The keys stay,
                 # since the copies still go to the table from here.
@@ -594,10 +743,6 @@ class Launcher:
                                 t("launcher.cloud.row.pair_launcher"))
                     self.action(t("launcher.cloud.launchers"), self.open_launchers,
                                 t("launcher.cloud.row.launchers"))
-                self.group(t("launcher.cloud.group.leaving"))
-                self.action(t("launcher.cloud.rotate"), self.rotate_access,
-                            t("launcher.cloud.row.rotate"))
-                self.action(t("launcher.cloud.cut_off"), self.cut_off, t("launcher.cloud.row.cut_off"))
             self.group(t("launcher.cloud.group.this_pc"))
             self.action(t("launcher.cloud.forget"), self.forget_cloud, t("launcher.cloud.row.forget"))
         self.refresh_air()
@@ -643,6 +788,12 @@ class Launcher:
         if it made sense here: why it does not."""
         ttk.Label(self.cloud_row, text=text, wraplength=480, justify="left",
                   foreground=COLOURS["quiet"]).pack(anchor="w", padx=8, pady=2)
+
+    def warn(self, text: str) -> None:
+        """The same line in the colour of bad news: something the person
+        should read before the buttons."""
+        ttk.Label(self.cloud_row, text=text, wraplength=480, justify="left",
+                  foreground=COLOURS["bad"]).pack(anchor="w", padx=8, pady=2)
 
     def open_air_new(self) -> None:
         """A new On Air token for the table — the whole guide for a first
@@ -733,7 +884,9 @@ class Launcher:
         if fresh:
             self.table_read_at = time.monotonic()
             self.entries = entries or []
-            self.known = sync.known_launchers(table, self.entries) if table is not None else {}
+            believed = self.believed_table(table)
+            self.known = sync.known_launchers(believed, self.entries) if believed is not None else {}
+            self.settle_pending_key()
             if self.check_seat(table):
                 return                      # the seat moved: the box says so
         self.other = record if record is not None and record.held() else None
@@ -741,7 +894,8 @@ class Launcher:
         if self.other is None:
             if speak:
                 self.set_status(t("launcher.cloud.nobody"), "quiet", about_host=True)
-            if table is not None and table.air_token and table.air_address and not self.server.running:
+            if (table is not None and table.air_token and core.web_address(table.air_address)
+                    and not self.server.running):
                 threading.Thread(target=self.probe_idle, args=(table.air_address,), daemon=True).start()
         else:
             self.alarmed = None
@@ -782,28 +936,54 @@ class Launcher:
 
     def check_seat(self, table: sync.TableRecord | None) -> bool:
         """What the table file says about the seat, at every read. The
-        administrator finding another key on a seat it held has lost it
-        to a newer PC: its own Dropbox access is revoked and forgotten,
-        the window says who took it and when. One that never held the
-        seat (`cloud.seated` false: connected to the table's app on a
-        new PC, Start not pressed yet) is only told, and Start asks. A
-        host whose file is no longer signed by the administrator it
-        paired with pairs again. True when the box was redrawn for
-        either."""
+        administrator finding another key on a seat it held is asked,
+        once per key: step down (its own Dropbox access revoked and
+        forgotten, the window says who took the seat and when), or keep
+        the seat here and let Start ask whether to take it back. Nothing
+        is given up on the file's word alone: a file naming another seat
+        without that seat's signature was rewritten by hand, and is only
+        said. One that never held the seat (`cloud.seated` false:
+        connected to the table's app on a new PC, Start not pressed yet)
+        is only told, and Start asks. A host whose file is no longer
+        signed by the administrator it paired with pairs again. True
+        when the box was redrawn for either."""
         if table is None or table.format < 2:
             return False
         cloud = self.settings.cloud
         if cloud.get("role") == "admin":
             if table.admin_key and table.admin_key != self.settings.sign_key and not self.server.running \
                     and self.record is None:
+                if not table.verified():
+                    if self.tampered_said != table.admin_key + table.signature:
+                        self.tampered_said = table.admin_key + table.signature
+                        self.append_log("cloud: " + self.tampered_text(table))
+                    return False
                 if cloud.get("seated"):
-                    self.seat_lost(table)
+                    if self.seat_asked == table.admin_key:
+                        return False
+                    self.seat_asked = table.admin_key
+                    if messagebox.askyesno(t("launcher.cloud.seat_title"), self.seat_taken_ask_text(table),
+                                           default="no"):
+                        self.seat_lost(table)
+                        return True
+                    # Kept: still the administrator here, and the next
+                    # Start asks whether to take the seat back.
+                    cloud["seated"] = False
+                    self.settings.save()
+                    self.append_log("cloud: " + t("launcher.cloud.seat_kept",
+                                                  name=table.admin_name or table.admin_id,
+                                                  date=table.admin_since[:10]))
+                    self.refresh_cloud()
                     return True
                 if self.seat_elsewhere_said != table.admin_key:
                     self.seat_elsewhere_said = table.admin_key
                     self.append_log("cloud: " + self.seat_elsewhere_text(table))
             return False
-        trusted = table.trusted_by(cloud.get("admin_key", ""))
+        remembered = int(cloud.get("table_serial") or 0)
+        trusted = table.trusted_by(cloud.get("admin_key", "")) and table.serial >= remembered
+        if trusted and table.serial > remembered:
+            cloud["table_serial"] = table.serial
+            self.settings.save()
         if trusted == (not self.seat_changed):
             return False
         self.seat_changed = not trusted
@@ -814,16 +994,175 @@ class Launcher:
         return True
 
     def seat_elsewhere(self) -> bool:
-        """Another PC holds the administrator's seat and this launcher
-        never did: nothing is lost here, and the next Start asks."""
+        """Another PC holds the administrator's seat, the file signed by
+        it, and this launcher does not: nothing is lost here, and the
+        next Start asks."""
         table, cloud = self.table, self.settings.cloud
         return (cloud.get("role") == "admin" and not cloud.get("seated") and table is not None
                 and table.format >= 2 and bool(table.admin_key)
-                and table.admin_key != self.settings.sign_key)
+                and table.admin_key != self.settings.sign_key and table.verified())
 
     def seat_elsewhere_text(self, table: sync.TableRecord) -> str:
         return t("launcher.cloud.seat_elsewhere", name=table.admin_name or table.admin_id,
                  date=table.admin_since[:10])
+
+    def seat_taken_ask_text(self, table: sync.TableRecord) -> str:
+        return t("launcher.cloud.seat_taken_ask", name=table.admin_name or table.admin_id,
+                 date=table.admin_since[:10], fingerprint=sync.fingerprint(table.admin_key))
+
+    def table_tampered(self) -> bool:
+        """A table file naming another seat without that seat's signature:
+        rewritten by whoever holds the folder's key."""
+        table = self.table
+        return (self.settings.cloud.get("role") == "admin" and table is not None and table.format >= 2
+                and bool(table.admin_key) and table.admin_key != self.settings.sign_key
+                and not table.verified())
+
+    def tampered_text(self, table: sync.TableRecord) -> str:
+        return t("launcher.cloud.table_tampered", name=table.admin_name or table.admin_id,
+                 date=table.admin_since[:10], fingerprint=sync.fingerprint(table.admin_key))
+
+    def restore_table(self, table: sync.TableRecord) -> bool:
+        """The table's signed fields back from the record of what this
+        launcher last signed (`cloud.table_body`, kept by `sign_table`):
+        for a file that names this seat without its signature, rewritten
+        by hand or by a launcher from before 2.2.0. False without a record
+        of this seat; the caller then asks, or stops."""
+        body = self.settings.cloud.get("table_body")
+        if not isinstance(body, dict) or not body:
+            return False
+        admin = body.get("admin") if isinstance(body.get("admin"), dict) else {}
+        if str(admin.get("key", "")) != self.settings.sign_key:
+            return False
+        table.format = max(int(body.get("format") or sync.TABLE_FORMAT), sync.TABLE_FORMAT)
+        for name in ("table_id", "name", "app_version", "air_address"):
+            setattr(table, name, str(body.get(name, "")))
+        table.air_token = str(self.settings.cloud.get("table_air_token", ""))
+        for name in ("air_generation", "access_generation", "signed_since"):
+            setattr(table, name, int(body.get(name) or 0))
+        table.admin_id, table.admin_name = str(admin.get("host_id", "")), str(admin.get("name", ""))
+        table.admin_key, table.admin_since = self.settings.sign_key, str(admin.get("since", ""))
+        table.revoked = [str(r) for r in (body.get("revoked") or [])]
+        table.serial = int(body.get("serial") or 0)
+        return True
+
+    def stale_table(self, table: sync.TableRecord) -> bool:
+        """A file signed by this launcher, but earlier than what it last
+        signed: written back by whoever holds the folder's key, to undo a
+        strike-off, a token or the keys' generation. It verifies; only the
+        serial says it is old."""
+        body = self.settings.cloud.get("table_body")
+        return (isinstance(body, dict) and bool(body) and table.format >= 2
+                and table.admin_key == self.settings.sign_key and table.verified()
+                and table.serial < int(body.get("serial") or 0))
+
+    def believed_table(self, table: sync.TableRecord | None) -> sync.TableRecord | None:
+        """The table the box and the known launchers go by: the file, or,
+        for an administrator reading an earlier file of its own written
+        back (`stale_table`), the record of what it last signed, said
+        once; the next Start rewrites the file from it. A verified own
+        file read before any record exists starts the record: the look
+        comes before Start, and the first file read is the one believed."""
+        if table is None or self.settings.cloud.get("role") != "admin":
+            return table
+        if table.format >= 2 and table.admin_key == self.settings.sign_key and table.verified():
+            if not self.settings.cloud.get("table_body"):
+                self.remember_table(table)
+                self.settings.save()
+            elif self.stale_table(table):
+                if self.stale_said != table.signature:
+                    self.stale_said = table.signature
+                    self.append_log("cloud: " + t("launcher.cloud.table_stale_seen"))
+                believed = dataclasses.replace(table)
+                self.restore_table(believed)
+                return believed
+        return table
+
+    def sign_table(self, client, table: sync.TableRecord, host_name: str, seed: bytes | None) -> sync.TableRecord:
+        """Every write of the table by the administrator: signed, and what
+        was signed kept in the settings, so a file that comes back without
+        the signature can be rebuilt from here (`restore_table`)."""
+        table = sync.write_table(client, table, by=host_name, seed=seed)
+        if seed is not None and table.format >= 2:
+            self.remember_table(table)
+            self.post(self.settings.save)
+        return table
+
+    def remember_table(self, table: sync.TableRecord) -> None:
+        """What the file says under this launcher's signature, in the
+        settings: the token apart, which is a secret and goes to the vault
+        with the other secrets of `cloud` (`Settings.SECRET_FIELDS`)."""
+        body = table.signing_body()
+        self.settings.cloud["table_air_token"] = str(body.pop("air_token", ""))
+        self.settings.cloud["table_body"] = body
+
+    def own_table(self, client, table: sync.TableRecord | None = None) -> sync.TableRecord:
+        """The table's file for an administrator's write (the token, the
+        keys, a strike-off): read, and when it names this seat without
+        its signature, rebuilt from this launcher's record. A file naming
+        another seat, or this one without a record to rebuild from, is
+        `TableRefused`: those writes are Start's to sort out, which asks."""
+        if table is None:
+            table = sync.read_table(client)
+        if table is None:
+            raise TableRefused(t("launcher.cloud.table_missing"))
+        if table.format >= 2 and not table.verified():
+            if table.admin_key != self.settings.sign_key:
+                raise TableRefused(self.tampered_text(table))
+            if not self.restore_table(table):
+                raise TableRefused(t("launcher.cloud.table_unsigned_refused"))
+            self.post(lambda: self.append_log("cloud: " + t("launcher.cloud.table_restored")))
+        elif self.stale_table(table):
+            self.restore_table(table)
+            self.post(lambda: self.append_log("cloud: " + t("launcher.cloud.table_stale")))
+            table = self.sign_table(client, table, self.settings.identity()[1], self.settings.seed())
+        return table
+
+    def inherit(self, client, table: sync.TableRecord, host_name: str, seed: bytes | None,
+                final: bool = False) -> sync.TableRecord:
+        """After a seat taken from another PC (`inherit_from`): the copies in
+        the folder signed by a launcher the old seat vouched for go on this
+        seat's list (`TableRecord.inherited`), and the hosts the old seat
+        vouched for are admitted again under this one; the old launcher
+        itself is not, so what it uploads from now on is nobody's. Called at
+        the seat, and once more after the claim (`final`), for the last copy
+        a hand-over brings; a crash in between leaves the next Start to do
+        it, since the file then names this seat with no list."""
+        if self.inherit_from is None:
+            return table
+        old_admin, before = self.inherit_from
+        host_id = self.settings.host_id
+        admitted = 0
+        if seed is not None:
+            self.post(lambda: self.set_status(t("launcher.cloud.readmitting"), "busy"))
+            entries = sync.read_launchers(client)[0]
+            by_id = {str(e.get("host_id", "")): e for e in entries}
+            for other, key in before.items():
+                if other in (old_admin, host_id) or other in table.revoked:
+                    continue
+                entry = by_id.get(other)
+                if entry is None or entry.get("admitted_by") == host_id:
+                    continue
+                sync.add_launcher(client, sync.make_admission(seed, host_id, other, str(entry.get("name", "")), key))
+                admitted += 1
+        # The copies listed already (by the old seat, or by this one at the
+        # seat) are not read again: after the claim only the new ones are.
+        found = sync.inherit_copies(client, before, into=core.game_folder() / "cloud",
+                                    log=lambda m: self.events.put(("line", f"cloud: {m}")),
+                                    skip=set(table.inherited),
+                                    progress=lambda done, total, name: self.post(
+                                        lambda: self.set_status(t("launcher.cloud.inheriting", done=done,
+                                                                  total=total, name=name), "busy")))
+        new = {name: hashes for name, hashes in found.items() if table.inherited.get(name) != hashes}
+        if new:
+            table.inherited.update(new)
+            table = self.sign_table(client, table, host_name, seed)
+        if new or admitted:
+            self.post(lambda: self.append_log("cloud: " + t("launcher.cloud.inherited", copies=len(new),
+                                                             hosts=admitted)))
+        if final:
+            self.inherit_from = None
+        return table
 
     def seat_lost(self, table: sync.TableRecord) -> None:
         who, date = table.admin_name or table.admin_id, table.admin_since[:10]
@@ -831,6 +1170,9 @@ class Launcher:
             self.cloud_client().revoke()    # our own access, not the hosts'
         except Exception as error:
             self.append_log(t("launcher.log.cloud_revoke_failed", error=error))
+        self.settings.left_table = {"table": table.name or str(self.settings.cloud.get("table", "")),
+                                    "name": who, "date": date,
+                                    "app_key": str(self.settings.cloud.get("app_key", ""))}
         self.settings.cloud = {}
         self.settings.token = ""
         self.settings.save()
@@ -838,11 +1180,11 @@ class Launcher:
         self.table = None
         self.known = {}
         self.entries = []
-        text = t("launcher.cloud.seat_taken", name=who, date=date)
-        self.append_log(f"cloud: {text}")
-        self.set_status(text, "bad")
+        # Said once, in the box (`left_table`), until this launcher joins a
+        # table again; the log keeps the line. No popup, no status line.
+        self.append_log("cloud: " + t("launcher.cloud.seat_taken", name=who, date=date))
+        self.set_status(t("launcher.status.stopped"), "quiet")
         self.refresh_cloud()
-        messagebox.showinfo(t("launcher.cloud.seat_title"), text)
 
     def probe_idle(self, address: str) -> None:
         """Nobody hosts, says the record: does anything answer at the
@@ -934,8 +1276,9 @@ class Launcher:
                     moved = changed
                     self.post(lambda: self.seat_refused(moved))
                     return
-                except HostsKeyNeeded:
-                    self.post(self.need_hosts_key)
+                except TableRefused as refused:
+                    why = refused
+                    self.post(lambda: self.table_refused(why))
                     return
                 # The seat held, the table's id: kept now, not at the next save.
                 self.post(self.settings.save)
@@ -966,12 +1309,20 @@ class Launcher:
                     take = decided
                 record = sync.claim(client, host_id, host_name, force=take,
                                     seed=self.settings.seed(), key=self.settings.sign_key)
+                if self.inherit_from is not None:
+                    # The seat was just taken: the copies in the folder now,
+                    # the last one of a hand-over included, go on the list.
+                    table = self.inherit(client, table, host_name, self.settings.seed(), final=True)
+                    entries = sync.read_launchers(client)[0]
+                    known = sync.known_launchers(table, entries)
+                    self.post(lambda: self.learn_launchers(entries, known))
+                    self.table = table
                 say(t("launcher.cloud.pulling"))
                 try:
                     pulled = sync.newest_usable(client, core.game_folder() / "cloud",
                                                 log=cloud_log, record=record,
                                                 trusted=known if table.format >= 2 else None,
-                                                signed_since=table.signed_since)
+                                                inherited=table.inherited if table.format >= 2 else None)
                 except sync.NewerCopy as newer:
                     sync.release(client, record)
                     found = newer
@@ -1007,8 +1358,10 @@ class Launcher:
                 if move:
                     # Only now, with the newest copy read: a move down that
                     # could not read it stopped above, the table untouched.
+                    # Signed, as every write of the administrator's: the
+                    # write changes `set_at`, which the signature covers.
                     table.app_version = __version__
-                    sync.write_table(client, table, by=host_name)
+                    self.sign_table(client, table, host_name, self.settings.seed())
                     self.post(lambda: self.append_log(
                         "cloud: " + t("launcher.cloud.version.moved", version=__version__)))
                 self.post(lambda: self.claimed(record, loaded, token))
@@ -1033,7 +1386,7 @@ class Launcher:
         it, asks whether to take it (the other PC steps down at its next
         look; every host pairs again) and raises `SeatChanged` on no. Its
         local token goes into the file (a renewal made while the cloud was
-        away arrives this way). Without a hosts' key yet, `HostsKeyNeeded`.
+        away arrives this way).
         A host: the file must be signed by the administrator it paired
         with, else `SeatChanged`; hosts write nothing here any more."""
         cloud = self.settings.cloud
@@ -1043,28 +1396,57 @@ class Launcher:
         host_id, _name = self.settings.identity()
         seed, key = self.settings.seed(), self.settings.sign_key
         if admin:
-            if not cloud.get("hosts_refresh_token"):
-                raise HostsKeyNeeded()
             table, created = sync.ensure_table(client, name, token=local, by=host_name,
                                                admin=(host_id, host_name, key), seed=seed)
             changed = False
-            former: tuple[str, str, str] | None = None
             if created:
                 self.post(lambda: self.append_log(t("launcher.log.table_created", version=table.app_version)))
             elif table.format < 2:
-                # A table from 1.x: the seat is ours, the copies before this
-                # epoch stay accepted unsigned.
+                # A table from 1.x: the seat is ours. Its copies from before
+                # the signatures are not loaded again: the first Start here
+                # uploads a signed one.
                 current = sync.read_record(client)
                 sync.take_seat(table, host_id, host_name, key, (current.epoch if current else 0) + 1)
                 changed = True
                 self.post(lambda: self.append_log(t("launcher.log.table_upgraded")))
+            elif not table.verified():
+                # The file does not carry the signature of the seat it
+                # names. Another seat's: rewritten by hand, nothing is taken
+                # from it. Ours: rebuilt from what this launcher last signed,
+                # or, without such a record (a launcher from before 2.2.0
+                # wrote it, which left the signature behind), signed as it is
+                # on the person's word.
+                if table.admin_key != key:
+                    raise TableRefused(self.tampered_text(table))
+                if self.restore_table(table):
+                    self.post(lambda: self.append_log("cloud: " + t("launcher.cloud.table_restored")))
+                elif not self.ask(lambda: messagebox.askyesno(
+                        t("launcher.cloud.seat_title"),
+                        t("launcher.cloud.table_unsigned_ours", struck=len(table.revoked),
+                          generation=table.air_generation), default="no")):
+                    raise TableRefused(t("launcher.cloud.table_unsigned_refused"))
+                changed = True
+            elif self.stale_table(table):
+                # An earlier file of ours written back: the record wins,
+                # and the file is written again from it.
+                self.restore_table(table)
+                self.post(lambda: self.append_log("cloud: " + t("launcher.cloud.table_stale")))
+                changed = True
             elif table.admin_key != key:
+                # Another PC's seat, the file signed by it: asked, with that
+                # launcher's key to compare with what it shows. Yes takes the
+                # seat; the copies the old seat vouched for are listed as the
+                # table's and its hosts admitted again (`inherit`), the old
+                # launcher itself vouched for no more.
                 who, since = table.admin_name or table.admin_id, table.admin_since[:10]
+                shown = sync.fingerprint(table.admin_key)
                 if not self.ask(lambda: messagebox.askyesno(
                         t("launcher.cloud.seat_title"),
-                        t("launcher.cloud.seat_take_confirm", name=who, date=since))):
+                        t("launcher.cloud.seat_take_confirm", name=who, date=since, fingerprint=shown),
+                        default="no")):
                     raise SeatChanged(who, since)
-                former = (table.admin_id, table.admin_name, table.admin_key)
+                entries = sync.read_launchers(client)[0]
+                self.inherit_from = (table.admin_id, sync.known_launchers(table, entries))
                 sync.take_seat(table, host_id, host_name, key, table.signed_since or 1)
                 changed = True
                 self.post(lambda: self.append_log(t("launcher.cloud.seat_taken_here", name=who)))
@@ -1073,15 +1455,13 @@ class Launcher:
                 table.air_generation += 1
                 changed = True
             if changed:
-                table = sync.write_table(client, table, by=host_name, seed=seed)
-            if former is not None and seed is not None:
-                # The seat taken from another PC: its launcher is vouched for
-                # under the new seat, so the copies it uploaded still load.
-                try:
-                    sync.admit_former_admin(client, seed, host_id, former)
-                except Exception as error:
-                    err = error
-                    self.post(lambda: self.append_log(f"cloud: {err}"))
+                table = self.sign_table(client, table, host_name, seed)
+            elif table.format >= 2 and not self.settings.cloud.get("table_body"):
+                # Signed by us and nothing to write: the record of it starts
+                # here, for the day the file comes back without the signature.
+                self.remember_table(table)
+            if self.inherit_from is not None:
+                table = self.inherit(client, table, host_name, seed)
             if local and table.air_token:
                 self.post(self.token_moved)
             cloud["admin_key"] = key
@@ -1092,8 +1472,11 @@ class Launcher:
             table = sync.read_table(client)
             if table is None:
                 raise SeatChanged("", "")
-            if not table.trusted_by(cloud.get("admin_key", "")):
+            remembered = int(cloud.get("table_serial") or 0)
+            if not table.trusted_by(cloud.get("admin_key", "")) or table.serial < remembered:
                 raise SeatChanged(table.admin_name or table.admin_id, table.admin_since[:10])
+            if table.serial > remembered:
+                cloud["table_serial"] = table.serial
         if table.air_generation:
             self.post(lambda: self.append_log(
                 t("launcher.log.token_generation", generation=table.air_generation)))
@@ -1314,10 +1697,15 @@ class Launcher:
     def handle_cloud(self, kind: str, text: str) -> None:
         if kind == "uploaded":
             self.append_log(t("launcher.log.cloud_uploaded", what=text))
-            self.set_status(t("launcher.cloud.uploaded", name=text), "ok")
+            if self.stop_thread is not None:
+                # The last copy of a Stop: the record's release and the
+                # server's shutdown still follow, so the bar stays.
+                self.set_status(t("launcher.status.stopping"), "busy")
+            else:
+                self.set_status(t("launcher.cloud.uploaded", name=text), "ok")
         elif kind == "error":
             self.append_log(f"cloud: {text}")
-            self.set_status(t("launcher.cloud.upload_failed", error=text), "busy")
+            self.set_status(t("launcher.cloud.upload_failed", error=text), "busy", working=False)
 
     def handle_taken(self) -> None:
         """The administrator took the game: stop without a final upload."""
@@ -1442,13 +1830,14 @@ class Launcher:
                                                 seed=seed)
             if table.format >= 2 and table.admin_key != key:
                 return                      # another seat: the next Start asks about it
+            table = self.own_table(client, table)
             if table.air_token != token or table.format < 2:
                 if table.format < 2:
                     current = sync.read_record(client)
                     sync.take_seat(table, host_id, host_name, key, (current.epoch if current else 0) + 1)
                 table.air_token = token
                 table.air_generation += 1
-                sync.write_table(client, table, by=host_name, seed=seed)
+                self.sign_table(client, table, host_name, seed)
         except Exception as error:          # unreachable, refused: kept locally for now
             err = error
             self.post(lambda: self.append_log(f"cloud: {err}"))
@@ -1458,66 +1847,26 @@ class Launcher:
         self.post(self.token_moved)
 
     def make_pairing_code(self) -> None:
-        """A pairing code from the running game, for the launcher of the next
-        host — the same code the game's accounts dialog makes, from here.
-        Not on this computer only: the other launcher could not reach the
-        game to use it."""
+        """Letting one launcher in (2.2.0): the guided window authorises a
+        Dropbox key for that host alone, asks the running game for a code
+        that hands it out, and shows the code with the table's address for
+        the person to pass on. Not on this computer only: the other
+        launcher could not reach the game to use it."""
         if self.local_only():
             messagebox.showinfo(t("launcher.cloud.pair_launcher"), t("launcher.cloud.pair_needs_network"))
             return
         if not (self.server.running and self.record is not None and not self.offline):
             messagebox.showinfo(t("launcher.cloud.pair_launcher"), t("launcher.cloud.pair_needs_hosting"))
             return
-        local = sync.LocalServer(self.server.port or 0, self.server.secret)
-
-        def work() -> None:
-            try:
-                answer = local.pairing()
-            except Exception as error:
-                err = error
-                self.post(lambda: messagebox.showerror(t("launcher.error.title"), str(err)))
-                return
-            code = str(answer.get("code", ""))
-            self.post(lambda: self.show_pairing_code(code))
-
-        threading.Thread(target=work, daemon=True).start()
-
-    def show_pairing_code(self, code: str) -> None:
-        """The code, large, with the address the other launcher must type."""
         address = self.links.get("air") or self.links.get("lan") or self.links.get("local") or ""
-        dialog = tk.Toplevel(self.root, class_=core.WM_CLASS)
-        dialog.withdraw()                   # shown by screen.present, sized and placed
-        dialog.title(t("launcher.cloud.pair_code_title"))
-        dialog.transient(self.root)
-        ttk.Button(dialog, text=t("launcher.password.ok"), command=dialog.destroy
-                   ).pack(side="bottom", pady=(12, 14))
-        scroller = screen.Scrolled(dialog)
-        scroller.pack(fill="both", expand=True)
-        ttk.Label(scroller.inner, text=t("launcher.cloud.pair_code_text"),
-                  wraplength=420, justify="left").pack(anchor="w", padx=16, pady=(14, 8))
+        wizard.PairWizard(self.root, self.settings, server=sync.LocalServer(self.server.port or 0, self.server.secret),
+                          address=address, on_done=self.pairing_made, post=self.post)
 
-        # Each in a field with its Copy, named as the other person's pairing
-        # form names it: they paste both, nobody types a web address by hand.
-        grid = ttk.Frame(scroller.inner)
-        grid.pack(fill="x", padx=16)
-        grid.columnconfigure(1, weight=1)
-
-        def copyable(line: int, label: str, value: str, **options) -> None:
-            ttk.Label(grid, text=label).grid(row=line, column=0, sticky="w", padx=(0, 8), pady=3)
-            entry = ttk.Entry(grid, state="readonly", **options)
-            entry.var = tk.StringVar(value=value)     # type: ignore[attr-defined]
-            entry.config(textvariable=entry.var)      # type: ignore[attr-defined]
-            entry.grid(row=line, column=1, sticky="ew", pady=3)
-            ttk.Button(grid, text=t("launcher.copy"), command=lambda: self.copy(value)
-                       ).grid(row=line, column=2, padx=(8, 0), pady=3)
-
-        # Wide enough to read the whole address before sending it.
-        copyable(0, t("launcher.pair.address"), address, width=min(max(len(address) + 2, 20), 64))
-        copyable(1, t("launcher.pair.code"), code, font=("TkFixedFont", 12), justify="center")
-        ttk.Label(scroller.inner, text=t("launcher.cloud.pair_code_note"), foreground=COLOURS["quiet"],
-                  wraplength=420, justify="left").pack(anchor="w", padx=16, pady=(8, 4))
-        dialog.bind("<Return>", lambda _e: dialog.destroy())
-        screen.present(dialog, grab=True)
+    def pairing_made(self) -> None:
+        """The code is out with its key: the next looks watch for the
+        newcomer's admission, to put the key under its name (`settle_pending_key`)."""
+        self.append_log("cloud: " + t("launcher.launchers.code_made"))
+        self.refresh_cloud()
 
     def open_pair(self) -> None:
         wizard.PairDialog(self.root, self.settings, on_done=self.paired, post=self.post)
@@ -1535,66 +1884,69 @@ class Launcher:
         self.refresh_cloud()
         self.check_host()
 
-    def rotate_access(self) -> None:
-        """Change the keys: a fresh hosts' key, the old one cancelled on
-        every PC that holds a copy. The administrator's own never moves.
-        For the day someone left the table or a PC was lost; every other
-        host pairs again afterwards."""
-        if self.record is not None or self.server.running:
-            messagebox.showinfo(t("launcher.cloud.title"), t("launcher.load_save.stop_first"))
-            return
-        if not messagebox.askyesno(t("launcher.cloud.rotate"), t("launcher.cloud.rotate_confirm")):
-            return
-        old = str(self.settings.cloud.get("hosts_refresh_token", ""))
-        wizard.SetupWizard(self.root, self.settings, on_done=lambda: self.rotated(old),
-                           post=self.post, start="hosts_authorise")
-
     def reauthorise(self) -> None:
-        """The administrator's own access refused by Dropbox: both keys
-        anew, then every host pairs again (`rotated`)."""
+        """The administrator's own access refused by Dropbox (a lost PC cut
+        off, the app disconnected): its key anew, after which every key
+        handed out before is dead and every host pairs again (`reauthorised`)."""
         if self.record is not None or self.server.running:
             messagebox.showinfo(t("launcher.cloud.title"), t("launcher.load_save.stop_first"))
             return
-        old = str(self.settings.cloud.get("hosts_refresh_token", ""))
-        wizard.SetupWizard(self.root, self.settings, on_done=lambda: self.rotated(old, lost=True),
+        before = str(self.settings.cloud.get("refresh_token", ""))
+        wizard.SetupWizard(self.root, self.settings, on_done=lambda: self.reauthorised(before),
                            post=self.post, start="authorise")
 
-    def rotated(self, old: str, lost: bool = False) -> None:
-        new = str(self.settings.cloud.get("hosts_refresh_token", ""))
-        if not new or new == old:
+    def reauthorised(self, before: str) -> None:
+        new = str(self.settings.cloud.get("refresh_token", ""))
+        if not new or new == before:
             return                          # the wizard was cancelled: nothing changed
-        app_key = str(self.settings.cloud.get("app_key", ""))
         host_id, host_name = self.settings.identity()
         seed, key = self.settings.seed(), self.settings.sign_key
         self.access_lost = False
 
         def work() -> None:
             try:
-                if old and not lost:
-                    dropbox.Client(dropbox.Credential(app_key=app_key, refresh_token=old)).revoke()
                 client = self.cloud_client()
                 table = sync.read_table(client)
                 if table is not None:
-                    former = None
+                    if table.format >= 2 and table.admin_key != key and not table.verified():
+                        # Another seat on the file without its signature:
+                        # not taken on the file's word. Start asks about it.
+                        raise TableRefused(self.tampered_text(table))
+                    if table.format >= 2 and table.admin_key == key:
+                        table = self.own_table(client, table)
                     if table.format < 2 or table.admin_key != key:
                         if table.format >= 2:
-                            former = (table.admin_id, table.admin_name, table.admin_key)
+                            # Another PC's seat, signed by it: asked, as at
+                            # Start, with its key to compare; yes admits it.
+                            who, since = table.admin_name or table.admin_id, table.admin_since[:10]
+                            shown = sync.fingerprint(table.admin_key)
+                            if not self.ask(lambda: messagebox.askyesno(
+                                    t("launcher.cloud.seat_title"),
+                                    t("launcher.cloud.seat_take_confirm", name=who, date=since,
+                                      fingerprint=shown), default="no")):
+                                raise TableRefused(self.seat_elsewhere_text(table))
+                            entries = sync.read_launchers(client)[0]
+                            self.inherit_from = (table.admin_id, sync.known_launchers(table, entries))
                         current = sync.read_record(client)
                         sync.take_seat(table, host_id, host_name, key, (current.epoch if current else 0) + 1)
                     table.access_generation += 1
-                    sync.write_table(client, table, by=host_name, seed=seed)
-                    if former is not None and seed is not None:
-                        sync.admit_former_admin(client, seed, host_id, former)
+                    table = self.sign_table(client, table, host_name, seed)
+                    if self.inherit_from is not None:
+                        table = self.inherit(client, table, host_name, seed, final=True)
                     self.settings.cloud["seated"] = True
+                # Every key handed out under the old access died with it.
+                self.settings.host_keys = {}
+                self.settings.pending_key = {}
+                self.settings.cloud.pop("hosts_refresh_token", None)
             except Exception as error:
                 err = error
                 self.post(lambda: self.append_log(t("launcher.cloud.rotate_failed", error=err)))
                 self.post(lambda: messagebox.showwarning(
-                    t("launcher.cloud.rotate"), t("launcher.cloud.rotate_failed", error=err)))
+                    t("launcher.cloud.reauthorise"), t("launcher.cloud.rotate_failed", error=err)))
                 return
             self.post(self.settings.save)
             self.post(lambda: self.append_log("cloud: " + t("launcher.cloud.rotated")))
-            self.post(lambda: messagebox.showinfo(t("launcher.cloud.rotate"), t("launcher.cloud.rotated")))
+            self.post(lambda: messagebox.showinfo(t("launcher.cloud.reauthorise"), t("launcher.cloud.rotated")))
 
         self.refresh_cloud()
         threading.Thread(target=work, daemon=True).start()
@@ -1609,6 +1961,7 @@ class Launcher:
                 t("launcher.cloud.forget"), t("launcher.cloud.revoke_confirm"))):
             self.revoke_both()
         self.settings.cloud = {}
+        self.settings.left_table = {}
         self.other = None
         self.table = None
         self.known = {}
@@ -1634,6 +1987,63 @@ class Launcher:
     def learn_launchers(self, entries: list[dict], known: dict[str, str]) -> None:
         self.entries = entries
         self.known = known
+        self.settle_pending_key()
+
+    def settle_pending_key(self) -> None:
+        """The key authorised for a pairing under way (`Settings.pending_key`)
+        goes under the newcomer's id once its admission, made by this
+        launcher since the key was, is in the list. A key nobody took within
+        the code's life and a margin is cancelled: the code is dead, and a
+        key nobody holds is one key too many."""
+        pending = self.settings.pending_key
+        if not pending or not isinstance(pending, dict):
+            return
+        mine = self.settings.host_id
+        since = str(pending.get("since", ""))
+        newcomers = [e for e in self.entries
+                     if str(e.get("admitted_by", "")) == mine and str(e.get("host_id", "")) in self.known
+                     and str(e.get("host_id", "")) not in self.settings.host_keys
+                     and str(e.get("since", "")) >= since]
+        if newcomers:
+            newest = max(newcomers, key=lambda e: str(e.get("since", "")))
+            host_id = str(newest.get("host_id", ""))
+            self.settings.host_keys[host_id] = str(pending.get("token", ""))
+            self.settings.pending_key = {}
+            self.settings.save()
+            self.append_log("cloud: " + t("launcher.launchers.key_given", name=newest.get("name") or host_id))
+            return
+        try:
+            age = time.time() - sync._parse_time(since)
+        except (ValueError, TypeError):
+            age = PENDING_KEY_LIFE_S + 1
+        if age > PENDING_KEY_LIFE_S:
+            token = str(pending.get("token", ""))
+            app_key = str(self.settings.cloud.get("app_key", ""))
+            self.settings.pending_key = {}
+            self.settings.save()
+            self.append_log("cloud: " + t("launcher.launchers.key_unused"))
+            if token and app_key:
+                threading.Thread(target=lambda: self.revoke_quietly(app_key, token), daemon=True).start()
+
+    def key_taken(self, host_id: str, name: str) -> None:
+        """The game says a launcher spent the pairing code (`KM paired`):
+        the key waiting for it goes under that id now. The list's look
+        (`settle_pending_key`) would do the same, but it only comes after
+        Stop, and the pairing happens while hosting."""
+        pending = self.settings.pending_key
+        if not host_id or not pending or not isinstance(pending, dict):
+            return
+        self.settings.host_keys[host_id] = str(pending.get("token", ""))
+        self.settings.pending_key = {}
+        self.settings.save()
+        self.append_log("cloud: " + t("launcher.launchers.key_given", name=name or host_id))
+
+    def revoke_quietly(self, app_key: str, token: str) -> None:
+        try:
+            dropbox.Client(dropbox.Credential(app_key=app_key, refresh_token=token)).revoke()
+        except Exception as error:
+            err = error
+            self.post(lambda: self.append_log(f"cloud: {err}"))
 
     def seat_refused(self, changed: "SeatChanged") -> None:
         """Start stopped at the table file: the administrator declined the
@@ -1648,22 +2058,21 @@ class Launcher:
         self.table = None
         self.refresh_cloud()
 
-    def need_hosts_key(self) -> None:
-        """An administrator from before the two keys: the hosts need a key
-        of their own before the table can be hosted at this version."""
+    def table_refused(self, refused: "TableRefused") -> None:
+        """Start stopped at the table file: rewritten by hand, or this
+        seat's without its signature and not signed on request."""
         self.cloud_busy = False
         self.start_button.config(state="normal")
         self.set_status(t("launcher.cloud.cancelled"), "quiet")
-        messagebox.showinfo(t("launcher.cloud.title"), t("launcher.cloud.hosts_key_needed"))
-        old = str(self.settings.cloud.get("hosts_refresh_token", ""))
-        wizard.SetupWizard(self.root, self.settings, on_done=lambda: self.rotated(old, lost=True),
-                           post=self.post, start="hosts_authorise")
+        self.append_log(f"cloud: {refused}")
+        messagebox.showwarning(t("launcher.cloud.seat_title"), str(refused))
+        self.refresh_cloud()
 
     def open_launchers(self) -> None:
-        """The launchers the table vouches for, each with who let it in and
-        since when, and a button to strike it off: its copies are refused
-        from then on and the record it holds is nobody's. The hosts' key it
-        still holds is changed with *Change the keys…*."""
+        """The control room of the table (2.2.0): this launcher and its seat,
+        the hosts the table vouches for (each with the key it holds and a
+        button to strike it off, which cancels that key alone), the seats
+        before this one, and the way out for a lost PC."""
         if self.table is None or self.table.format < 2:
             messagebox.showinfo(t("launcher.launchers.title"), t("launcher.launchers.none"))
             return
@@ -1676,44 +2085,132 @@ class Launcher:
         scroller = screen.Scrolled(win)
         scroller.pack(fill="both", expand=True, padx=16, pady=12)
         body = scroller.inner
-        ttk.Label(body, text=t("launcher.launchers.text"), wraplength=480, justify="left"
-                  ).pack(anchor="w", pady=(0, 8))
+        quiet = COLOURS["quiet"]
+
+        def section(title: str, first: bool = False) -> None:
+            ttk.Label(body, text=title, font=("TkDefaultFont", 10, "bold")
+                      ).pack(anchor="w", pady=(0 if first else 12, 4))
+
+        def line(text: str, colour: str | None = None, pady=(0, 2)) -> None:
+            ttk.Label(body, text=text, wraplength=480, justify="left",
+                      **({"foreground": colour} if colour else {})).pack(anchor="w", pady=pady)
+
+        # This launcher: its name and key, and the seat.
+        section(t("launcher.launchers.section.this"), first=True)
+        line(t("launcher.launchers.own", name=self.settings.identity()[1],
+               fingerprint=sync.fingerprint(self.settings.sign_key)))
+        line(t("launcher.launchers.seat_since", date=self.table.admin_since[:10]), quiet)
+
+        # The hosts, each with the key it holds.
+        section(t("launcher.launchers.section.hosts"))
+        line(t("launcher.launchers.text"), quiet, pady=(0, 6))
         names = {self.table.admin_id: self.table.admin_name}
         names.update({str(e.get("host_id", "")): str(e.get("name", "")) for e in self.entries})
         listed = [e for e in self.entries if str(e.get("host_id", "")) in self.known]
         if not listed:
-            ttk.Label(body, text=t("launcher.launchers.none"), foreground=COLOURS["quiet"]).pack(anchor="w")
+            line(t("launcher.launchers.none"), quiet)
+        shared_key = bool(self.settings.cloud.get("hosts_refresh_token"))
+        on_shared = 0
+        # The table knows no roles among the hosts: a launcher is on the seat
+        # or let in. One let in after holding the seat is marked so.
+        seat_until = {str(s.get("host_id", "")): str(s.get("until", ""))[:10] for s in self.table.seats}
         for entry in listed:
             host_id = str(entry.get("host_id", ""))
-            line = ttk.Frame(body)
-            line.pack(fill="x", pady=3)
-            ttk.Label(line, text=t("launcher.launchers.entry", name=entry.get("name") or host_id,
-                                   since=str(entry.get("since", ""))[:10],
-                                   by=names.get(str(entry.get("admitted_by", "")), entry.get("admitted_by", ""))),
-                      wraplength=360, justify="left").pack(side="left")
-            ttk.Button(line, text=t("launcher.launchers.strike"),
+            if host_id in self.settings.host_keys:
+                kind = "key_own"
+            elif shared_key:
+                kind, on_shared = "key_shared", on_shared + 1
+            else:
+                kind = "key_unknown"
+            text = (t("launcher.launchers.entry", name=entry.get("name") or host_id,
+                      since=str(entry.get("since", ""))[:10],
+                      by=names.get(str(entry.get("admitted_by", "")), entry.get("admitted_by", "")))
+                    + " · " + t(f"launcher.launchers.{kind}"))
+            if host_id in seat_until:
+                text += " · " + t("launcher.launchers.held_seat", until=seat_until[host_id])
+            row = ttk.Frame(body)
+            row.pack(fill="x", pady=3)
+            ttk.Label(row, text=text, wraplength=360, justify="left").pack(side="left")
+            ttk.Button(row, text=t("launcher.launchers.strike"),
                        command=lambda h=host_id, w=win: self.strike_off(h, w)).pack(side="right")
+        if shared_key:
+            line(t("launcher.launchers.shared_left", n=on_shared), quiet, pady=(8, 2))
+            ttk.Button(body, text=t("launcher.launchers.retire"),
+                       command=lambda w=win: self.retire_shared_key(w)).pack(anchor="w")
+
+        # The seats before this one.
+        section(t("launcher.launchers.section.former"))
+        if not self.table.seats:
+            line(t("launcher.launchers.former_none"), quiet)
+        for seat in self.table.seats:
+            line(t("launcher.launchers.former_entry", name=seat.get("name") or seat.get("host_id") or "?",
+                   since=str(seat.get("since", ""))[:10], until=str(seat.get("until", ""))[:10]))
+        line(t("launcher.launchers.former_note"), quiet, pady=(4, 0))
+
+        # A lost PC.
+        section(t("launcher.launchers.section.lost"))
+        line(t("launcher.cloud.row.cut_off"), quiet, pady=(0, 6))
+        ttk.Button(body, text=t("launcher.cloud.cut_off"), command=self.cut_off).pack(anchor="w")
         screen.present(win)
 
-    def strike_off(self, host_id: str, win: tk.Toplevel) -> None:
-        if self.record is not None or self.server.running:
-            messagebox.showinfo(t("launcher.cloud.title"), t("launcher.load_save.stop_first"))
+    def retire_shared_key(self, win: tk.Toplevel) -> None:
+        """The shared hosts' key of 2.0.0, cancelled for good once every host
+        has a key of its own: whoever still held it pairs again."""
+        if not messagebox.askyesno(t("launcher.launchers.retire"), t("launcher.launchers.retire_confirm"),
+                                   default="no"):
             return
+        old = str(self.settings.cloud.get("hosts_refresh_token", ""))
+        app_key = str(self.settings.cloud.get("app_key", ""))
+        host_name = self.settings.identity()[1]
+        seed = self.settings.seed()
+
+        def work() -> None:
+            try:
+                if old:
+                    dropbox.Client(dropbox.Credential(app_key=app_key, refresh_token=old)).revoke()
+                client = self.cloud_client()
+                table = self.own_table(client)
+                table.access_generation += 1
+                self.sign_table(client, table, host_name, seed)
+            except Exception as error:
+                err = error
+                self.post(lambda: self.append_log(t("launcher.cloud.rotate_failed", error=err)))
+                return
+            self.settings.cloud.pop("hosts_refresh_token", None)
+            self.post(self.settings.save)
+            self.post(lambda: self.append_log("cloud: " + t("launcher.launchers.retired")))
+            self.post(lambda: win.winfo_exists() and win.destroy())
+            self.post(self.refresh_cloud)
+
+        threading.Thread(target=work, daemon=True).start()
+
+    def strike_off(self, host_id: str, win: tk.Toplevel) -> None:
+        """Also while hosting: the running game holds no Dropbox key (2.2.0),
+        and the table file is the administrator's to write at any time."""
         name = next((str(e.get("name", "")) for e in self.entries if e.get("host_id") == host_id), host_id)
         if not messagebox.askyesno(t("launcher.launchers.title"), t("launcher.launchers.strike_confirm", name=name)):
             return
         admin_id, host_name = self.settings.identity()
         seed = self.settings.seed()
+        app_key = str(self.settings.cloud.get("app_key", ""))
 
         def work() -> None:
             try:
                 client = self.cloud_client()
-                table = sync.read_table(client)
-                if table is None:
-                    return
+                table = self.own_table(client)
                 if host_id not in table.revoked:
                     table.revoked.append(host_id)
-                table = sync.write_table(client, table, by=host_name, seed=seed)
+                table = self.sign_table(client, table, host_name, seed)
+                # Its own key dies with it (2.2.0): a host on the shared key
+                # of 2.0.0 keeps that one until the key is retired.
+                token = self.settings.host_keys.pop(host_id, "")
+                if token:
+                    self.post(self.settings.save)
+                    try:
+                        dropbox.Client(dropbox.Credential(app_key=app_key, refresh_token=token)).revoke()
+                    except Exception as error:
+                        err = error
+                        self.post(lambda: self.append_log(f"cloud: {err}"))
                 entries = sync.read_launchers(client)[0]
                 # The hosts the struck-off launcher had let in would fall
                 # with it: the administrator vouches for them anew, under
@@ -1831,6 +2328,9 @@ class Launcher:
                 webbrowser.open(value)
             if self.record is not None:
                 self.begin_hosting()
+        elif kind == "paired":
+            host_id, _space, name = value.partition(" ")
+            self.key_taken(host_id, name)
         elif kind == "lan":
             self.links.setdefault("lan", value)
             self.rebuild_links()
@@ -1889,13 +2389,19 @@ class Launcher:
             self.root.after(self.RECHECK_EVERY_MS, lambda: self.server.running and threading.Thread(
                 target=self.verify_address, args=(address, secret, False), daemon=True).start())
         if state == "ours":
-            if self.table is not None and self.table.air_address != address:
+            if (self.table is not None and self.table.air_address != address
+                    and self.settings.cloud.get("role") == "admin"
+                    and (self.table.format < 2 or self.table.admin_key == self.settings.sign_key)):
+                # The administrator's to write, signed: the write changes
+                # `set_at`, which the signature covers, and a host's write
+                # would leave the file unsigned for everyone.
                 self.table.air_address = address
                 table, host_name = self.table, self.settings.identity()[1]
+                seed = self.settings.seed()
 
                 def remember() -> None:
                     try:
-                        sync.write_table(self.cloud_client(), table, by=host_name)
+                        self.sign_table(self.cloud_client(), table, host_name, seed)
                     except Exception as error:
                         err = error
                         self.post(lambda: self.append_log(f"cloud: {err}"))
@@ -1916,6 +2422,8 @@ class Launcher:
         if self.record is not None:
             threading.Thread(target=self.drop_record, daemon=True).start()
         self.offline = False
+        self.links = {}                  # the addresses were this server's
+        self.rebuild_links()
         self.reflect_running()
         if code not in (0, None) and self.port_in_use is not None:
             self.set_status(t("launcher.status.died", code=code), "bad")
@@ -2011,6 +2519,10 @@ class Launcher:
             if verdict == "unsigned" and not self.ask(lambda: messagebox.askyesno(
                     t("launcher.update_ready_title"), t("launcher.update.unsigned_confirm",
                                                         version=release.version), default="no")):
+                try:
+                    target.unlink(missing_ok=True)      # not run, not kept either
+                except OSError:
+                    pass
                 self.post(lambda: self.update_failed(ValueError(t("launcher.update.unsigned_kept"))))
                 return
             self.post(lambda: self.run_update(target))
@@ -2244,10 +2756,15 @@ class Launcher:
 
     # --------------------------------------------------------------- close
     def on_close(self, force: bool = False) -> None:
+        if self.stop_thread is not None:
+            # A Stop under way: its last copy first, the thread would die
+            # with the process otherwise.
+            self.stop_thread.join()
+            self.stop_thread = None
         if self.server.running:
             if not force and not messagebox.askyesno(core.APP_NAME, t("launcher.close.running")):
                 return
-            self.stop()
+            self.stop(wait=True)
         self.drop_record()
         self.gather()
         try:

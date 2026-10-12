@@ -487,7 +487,7 @@ class Archive:
 
     # Why a file is refused as a save: catalog keys, shown by the interface.
     INSPECT_ERRORS = {"sqlite": "main.not_sqlite", "tables": "main.missing_tables",
-                      "newer": "main.newer_schema"}
+                      "newer": "main.newer_schema", "schema": "main.foreign_schema"}
 
     @classmethod
     def inspect(cls, path: Path) -> dict:
@@ -508,6 +508,13 @@ class Archive:
                       if "campaigns" in tables else {"meta", "campagne", "regni", "utenti"})
             if not needed <= tables:
                 raise ValueError(cls.INSPECT_ERRORS["tables"], {})
+            # A save is trusted for its data, never for code: a virtual table
+            # runs a module of SQLite's at every read, and the app writes none.
+            # Triggers and views are dropped at the restore (`_scrub_schema`).
+            foreign = [r["name"] for r in conn.execute("SELECT name, sql FROM sqlite_master WHERE type='table'")
+                       if (r["sql"] or "").lstrip().upper().startswith("CREATE VIRTUAL")]
+            if foreign:
+                raise ValueError(cls.INSPECT_ERRORS["schema"], {"name": foreign[0]})
             version = cls._schema_of(conn)
             history = cls._read_history(conn)
             app = history[-1].get("app", "") if history else ""
@@ -553,9 +560,25 @@ class Archive:
                     leftover.unlink()
             shutil.copy2(path, self.path)
             self._open()
+            self._scrub_schema()
             self.rev += 1
         log.info("save restored from %s; the previous one kept as %s", path.name, kept.name)
         return kept
+
+    def _scrub_schema(self) -> None:
+        """Drops every trigger and view the restored file brought. A save is
+        trusted for its data, not for code: a trigger of its own would run
+        at every later write under this app's rights, long after the
+        person finished looking at what the file held. The app's own
+        triggers (`_track_tables`) are made again from their constant
+        text, so a forged one of the same name goes too."""
+        rows = self._conn.execute(
+            "SELECT type, name FROM sqlite_master WHERE type IN ('trigger', 'view')").fetchall()
+        for kind, name in rows:
+            quoted = str(name).replace('"', '""')
+            self._conn.execute(f'DROP {str(kind).upper()} IF EXISTS "{quoted}"')
+        self._track_tables()
+        self._conn.commit()
 
     # ------------------------------------------------------------- migrations
     # Columns that arrived after the first version of the schema: `CREATE

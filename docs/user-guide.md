@@ -2,7 +2,7 @@
 
 *In italiano: [it/guida-utente.md](it/guida-utente.md) (longer, with the history of every choice).*
 
-This guide describes the app as it is in version 2.1.2, tab by tab, with the reason behind
+This guide describes the app as it is in version 2.2.0, tab by tab, with the reason behind
 each choice where it matters at the table. To install and start it see the
 [README](../README.md); the window of the installed app is the first chapter below. The screenshots in [`manual/img/screenshots/`](manual/img/screenshots/)
 were taken on a real table: the kingdom, the characters and the journeys in them are those of a game
@@ -105,7 +105,9 @@ starts it, keeping your game. Before running it the launcher checks that the fil
 the author built: every release carries a list of the installers' hashes signed with the
 author's own key, kept off GitHub, and an installer whose hash is not in that list, or whose
 list is not signed with that key, is deleted and refused. Releases from before 2.0.0 carry
-no such list: they are marked *unsigned* in the versions window and run only after you say so.
+no such list: they are marked *unsigned* in the versions window and run only after you say so;
+a later release without the list is refused, as is any file that is not the installer named
+for that version.
 The installer is not signed with a paid certificate, so Windows itself still warns the first
 time. On Linux it opens the release page. *Settings → Versions on GitHub…* lists every release, newest first, with the
 installed one marked, and installs the one you pick; going back to an older version is allowed,
@@ -119,9 +121,9 @@ At the first start the app creates the `admin` account and prints a random passw
 console, once: write it down. The first login asks you to change it, and from there you create
 the other accounts: top right, next to your name, the 👤⚙ *Player accounts* icon (only the
 administrator sees it). Every new account is born with a generated password to hand to its
-owner; it cannot be recovered, but you can always generate another one. The same dialog has
-*Pair a launcher…*, the code that lets another PC host the game: see *Playing from several
-PCs (the cloud)*.
+owner; it cannot be recovered, but you can always generate another one. Letting another PC
+host the game is the launcher's business, not this dialog's: see *Playing from several PCs
+(the cloud)*.
 
 | Role | What it can do |
 |---|---|
@@ -130,10 +132,13 @@ PCs (the cloud)*.
 | **Player** | Plays: activities, turn, cities, map. |
 | **Spectator** | Only watches. |
 
-A password must be at least eight characters, and the app refuses the most common ones
-(`password1`, `qwerty123` and a few hundred like them) and the username itself. After five
+A password must be at least fifteen characters, and the app refuses the most common ones of
+that length (`passwordpassword`, `1234567890123456` and some fifty thousand like them, from the
+public breach lists) and the username itself. Nothing else is asked: no capital, digit or
+symbol, and a password never expires. After five
 wrong attempts on a name the login waits thirty seconds, and the journal gets a line saying so,
-which is how the GM and the administrator see guessing happen; when the whole table counts
+shown to whoever manages accounts, which is how the administrator sees guessing happen; when
+the whole table counts
 fifty failures in ten minutes, everyone waits a minute. Passwords are not stored: only a
 PBKDF2-HMAC-SHA256 digest with a salt per user, in the `users`
 table of `saves/kingmaker.db`, on your disk like everything else. No external service sees
@@ -147,7 +152,8 @@ outside the game folder on Linux, so on another PC you connect to the table agai
 **Entering another account.** From the Accounts panel the administrator can look at the app
 through another account's eyes (the 🔓 icon on each row) without knowing or changing its
 password. It is the honest way to see what a player sees: the header says **«as X»** in red
-with a button to come back, the kingdom journal records who entered which account,
+with a button to come back, the kingdom journal records who entered which account (a line
+only account managers see),
 permissions are checked on who *really* logged in, and no password can be changed while
 wearing someone else's clothes.
 
@@ -737,54 +743,70 @@ leaves your PC, and the hosts' key, the one pairing hands out. Only the administ
 Dropbox account. Your launcher then holds the administrator's seat: the table's file records
 its name and its key, and every other launcher trusts the file by that key. Whoever made the table's app before, on another PC, presses *Connect to an
 existing app* on the *Create an app* step instead: the list of their apps opens, a picture shows
-which one to click, and Next passes by the permissions, to check they are ticked, on the way
-to its App key. The welcome's pages carry no step count, because the answers change how many follow; the
+which one to click, and Next asks for its App key. The welcome's pages carry no step count, because the answers change how many follow; the
 guides opened alone from the main window say "Step 3 of 7".
 
-**The other hosts.** While anyone is hosting, the administrator makes a pairing code: in the
-game, from the accounts dialog (*Pair a launcher…*), or, when the administrator is the one
-hosting, from the same button in the launcher's Table box. It is a code of eight letters and
-digits, good for ten minutes and one use. They tell it to the DM, who opens *Pair with a table…* in their
-launcher: the table's address, the code, and a name for their PC that the other hosts will
-read. No password is asked. Their launcher sends its own key with the code, made by itself
-and never typed by anyone, and the hosting game vouches for it in a signed admission. The
-launcher keeps what it receives only after it has opened the table's folder, found the right
-table there, signed by the administrator, and verified the admission; it writes its admission
-into the table's list of launchers, and from then on it can host too. Every copy a launcher
-uploads carries its signature, and every launcher loads only copies signed by a launcher the
-table vouches for: a thief with the folder's key can read, but cannot slip a copy in. A code
-typed wrong three times dies; making a new one retires the old; both the making and the use
-are written in the journal.
+**The other hosts.** Letting a launcher in is yours alone, and the launcher walks you through
+it: while you host, *Pair a launcher…* in the Table box opens a window of three steps. First
+a Dropbox key for that one host: the authorisation page opens, you press Allow, Dropbox shows
+a code, you paste it. Then the running game makes a pairing code that hands that key out, and
+the window shows the two things to send to the person, the table's address and the code, each
+with a Copy button. The code is eight letters and digits, good for ten minutes and one use.
+They open *Pair with a table…* in their launcher: the address, the code, and a name for their
+PC that the other hosts will read. No password is asked. Their launcher sends its own key with
+the code, made by itself and never typed by anyone, and the hosting game vouches for it in a
+signed admission. The launcher keeps what it receives only after it has opened the table's
+folder, found the right table there, signed by you, and verified the admission; it writes its
+admission into the table's list of launchers, and from then on it can host too. Every copy a
+launcher uploads carries its signature, and every launcher loads only copies signed by a
+launcher the table vouches for: a thief with a folder key can read, but cannot slip a copy in.
+A code typed wrong three times dies; making a new one retires the old; both the making and
+the use are written in the journal. A host cannot let anyone in: hosting is the one thing a
+host is given.
 
-**When someone leaves the table.** Two things, both in the Table box. *Hosts of the table…*
-lists every launcher let in, who let it in and since when; *Strike off* removes one, and its
-copies are refused by every launcher from that moment, whatever key it still holds. The hosts
-it had let in are vouched for anew under your own signature, so they stay. Then *Change the
-keys…*, because the hosts all hold the same hosts' key: Dropbox gives a fresh one, the old
-stops working on every other PC, and each remaining host pairs again with a new code, a minute
-each. Your own key does not move. Make a new On Air token with *New token…* if the person
-also had the table's address, and deactivate their game account. A launcher whose key was
-cancelled says so and offers *Pair with a table…*; nothing on that PC is lost.
+**When someone leaves the table.** *Hosts of the table…* is the table's control room, open
+while you host as well: this launcher and its key, every host with the key it holds, the PCs
+that held the administrator's seat before this one, and the way out for a lost PC. The table
+knows no roles among the hosts: a launcher is either on the seat or let in, and your own other
+PC, once the seat is here, is a host like any other; one that held the seat before says so on
+its row. *Strike off* next to a host removes it
+alone: its copies are refused by every launcher from that moment, the hosts it had let in are
+vouched for anew under your own signature, and the Dropbox key you made for it is cancelled at
+Dropbox, so nothing on that PC opens the folder any more. Nobody else notices and nobody pairs
+again. Make a new On Air token with *New token…* if the person also had the table's address,
+and deactivate their game account. Hosts paired before this version share one old key: the
+window says how many still hold it, you pair each again to give it a key of its own, and
+*Retire the shared key…* cancels the old one once none is left.
 
 **When a PC is lost.** A laptop with the keys on it, stolen or gone, cannot be cut off from
 here: Dropbox cancels a key only from its own site, by disconnecting the app, which cancels
-every key of the table at once. *Cut off a lost PC…* opens that page and says what to do;
-when you are back, the launcher finds its own access refused and offers *Authorise again…*,
-both keys anew, after which each host pairs again. The vault softens the case: on Windows the
+every key of the table at once. *Cut off a lost PC…*, in *Hosts of the table…*, opens that
+page and says what to do; when you are back, the launcher finds its own access refused and
+offers *Authorise again…*, its own key anew, after which each host pairs again and gets a fresh
+key of its own. A lost player's PC needs none of this: *Strike off* cancels its key by itself.
+The vault softens the case: on Windows the
 keys are locked to your Windows login, so a thief without your password gets a file they
 cannot open.
 
 **Moving the administrator to another PC.** Install there, answer "I set the table up", press
-*Connect to an existing app* in the Dropbox guide and authorise twice. The first Start finds
-the seat taken by your old PC and asks whether to take it here; yes writes your new launcher
-into the table's file and vouches for your old PC's launcher, so the copies it uploaded still
-load and the game comes down with the seat (until then the new launcher only notes, in its
-Table box, that the seat is your old PC's). The old PC steps down by itself the next time it
-opens: it sees the
-seat is no longer its own, cancels its own Dropbox key and forgets the table, saying who took
-the seat and when. The hosts see that the administrator's launcher changed and pair again with
-a code from the new PC. If the old PC is never opened again, its key stays valid until you
-cut it off as above.
+*Connect to an existing app* in the Dropbox guide and authorise once. The first Start finds
+the seat taken by your old PC and asks whether to take it here, showing the old launcher's key:
+compare it with the key under *Hosts of the table…* on your old PC, and say yes only if they
+match. Yes writes your new launcher into the table's file and lists the copies of the game in
+the folder as the table's, so the game comes down with the seat (this reads every copy in the
+folder, a minute or two on a slow line: the status line says which copy it is on, and a moving
+bar beside it says the launcher is at work); your old PC's launcher is no
+longer vouched for, and whatever it uploads from then on is ignored (until then the new
+launcher only notes, in its Table box, that the seat is your old PC's). The old PC
+asks the next time it opens: it sees the seat is no longer its own, shows the new launcher's
+key, and asks whether to step down. Yes cancels its own Dropbox key and forgets the table, and
+its window then shows one thing to do, *Take the seat back…*, which authorises Dropbox again
+and lets Start ask for the seat; Start itself, the save file and the address box stay out of
+the way until then, and *Forget this table* turns it back into an ordinary launcher; no keeps it as administrator, and its
+next Start asks whether to take the seat back. A table file
+that names another seat without that seat's signature moves nothing: the launcher only says
+so. The hosts see that the administrator's launcher changed and pair again with a code from the
+new PC. If the old PC is never opened again, its key stays valid until you cut it off as above.
 
 **When the launcher asks.** Three questions appear only when something is off, and nothing
 happens until you answer. *Two copies of the game*: the cloud has a newer copy, but this PC's
@@ -800,7 +822,7 @@ whole table back to before the newer host played.
 **Playing.** *Start* first asks the cloud who hosts. Nobody: the launcher takes the game,
 loads the newest copy from the cloud if it is newer than its own, brings the images it lacks,
 and starts. Somebody: the box says "hosted by X (version) since…", with *Join* to open the game
-there. While you host, the cloud receives a copy of the game every few minutes when something
+there (the row shows the address, and only a web address is opened). While you host, the cloud receives a copy of the game every few minutes when something
 changed, the images once, and a last copy when you press *Stop*. Five recent copies and one
 per day for thirty days are kept in the folder; the total stays under a hundred megabytes for
 years.
@@ -821,11 +843,11 @@ itself when it opens and every minute while you do not host, every 15 seconds wh
 else does, so you see soon when they stop; and Start asks again before it
 takes the game), and under it the buttons in groups, from the most frequent to the day someone
 leaves, each with its use written next to it: for the administrator, *Letting another PC host*
-has *Pair a launcher…* and *Hosts of the table…*; *When someone leaves* has *Change the
-keys…* and *Cut off a lost PC…*; *This PC* has *Forget the table*. On this computer only a
+has *Pair a launcher…* and *Hosts of the table…*, the table's control room; *This PC* has
+*Forget the table*. On this computer only a
 table keeps its box, but *Letting another PC host* has one line instead of its buttons: another
 PC's launcher must reach this one to use a pairing code, so pairing needs the network or online;
-the keys and *Forget the table* stay, since the copies still go to the cloud. When something holds the
+*Forget the table* stays, since the copies still go to the cloud. When something holds the
 table's record that the table does not vouch for, a launcher struck off or a stranger with a
 copy of the keys, the box says so in red, offers no link to follow, and gives the administrator
 *Take the record back*. While you host, the box says so and offers only the pairing; while someone else hosts,

@@ -516,6 +516,7 @@ def _position_block(sett: dict, refresh) -> None:
         row = ui.number(t("city.row"), value=sett["hex"][1] if sett.get("hex") else None, format="%d") \
             .props("outlined dense").classes("w-20")
 
+        @theme.requires(permissions.EDIT_KINGDOM)
         def link() -> None:
             if col.value is None or row.value is None:
                 theme.notify(t("city.column_row_are_required"), "negative")

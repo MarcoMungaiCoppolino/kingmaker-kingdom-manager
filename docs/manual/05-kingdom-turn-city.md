@@ -106,7 +106,9 @@ flowchart LR
 - **`advance_turn` does not touch the interface**: the clock calls it too at the end of the
   month (chapter 10), from a timer where there is no window to notify.
 - `journeys_in_progress` / `_resolve_journey`: the journeys departed from the map are resolved
-  by hand from here (chapter 8).
+  by hand from here (chapter 8). A player's list holds only the journeys with a character on
+  the map for them (`view.MapView.sees_journey`, the rule the map draws routes by), and the
+  journal (`_journal`) shows the `account` lines only to whoever manages accounts (2.2.0).
 
 ## The Cities — `ui/tabs/city.py`
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from nicegui import ui
 
-from kingmaker.access import permissions
+from kingmaker.access import permissions, view as view_mod
 from kingmaker import rules
 from kingmaker.travel import daily
 from kingmaker.state import STATE
@@ -495,6 +495,7 @@ def quick_adjustments(compact: bool = False) -> None:
 
 
 # --------------------------------------------------------------------------
+@theme.requires(permissions.EDIT_KINGDOM)
 def _simple_check(cd: int, title, on_success="", on_failure="") -> None:
     """A flat check: a d20 against `cd`, on screen for everybody. The texts
     may be functions, so each window reads them in its own language."""
@@ -1078,8 +1079,13 @@ def _journal() -> None:
     in every window at every roll; nothing in a line is clickable, so the
     whole list is one element now.
     """
+    # The account lines (a password changed, attempts refused under a name,
+    # a save downloaded) are the administrator's business, not the table's.
+    accounts = permissions.can(theme.user(), permissions.MANAGE_USERS)
     rows = []
     for entry in STATE.journal(80):
+        if entry.get("category") == "account" and not accounts:
+            continue
         detail = (f'<div style="font-size:.7rem;color:var(--km-muted)">{theme.esc(entry["detail"])}</div>'
                   if entry.get("detail") else "")
         rows.append('<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:6px">'
@@ -1098,7 +1104,8 @@ def journeys_in_progress() -> None:
     They remain proposals until someone confirms them: resolving a journey
     moves the markers, and it is the players who say when it really happened.
     """
-    journeys = STATE.archive.list_journeys(STATE.campaign, "in_progress")
+    sight = view_mod.MapView(theme.user(), STATE)
+    journeys = [v for v in STATE.archive.list_journeys(STATE.campaign, "in_progress") if sight.sees_journey(v)]
     if not journeys:
         return
     characters = {p["id"]: p for p in STATE.characters()}

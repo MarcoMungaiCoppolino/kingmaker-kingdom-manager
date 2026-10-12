@@ -47,8 +47,31 @@ results.append(("a good signature over a matching hash: signed",
                 core.verify_download(installer, release(), fetch=fetch) == "signed"))
 results.append(("the other installer of the same list too",
                 core.verify_download(other, release(), fetch=fetch) == "signed"))
-results.append(("a release without sums is unsigned, not an error",
-                core.verify_download(installer, release(False), fetch=fetch) == "unsigned"))
+try:
+    core.verify_download(installer, release(False), fetch=fetch)
+    results.append(("a release from 2.0.0 on without the signed list is refused (2.2.0)", False))
+except ValueError as error:
+    results.append(("a release from 2.0.0 on without the signed list is refused (2.2.0)",
+                    keys.SIGNED_SINCE in str(error)))
+old_installer = folder / "Kingmaker-Kingdom-Manager-1.4.0-Setup.exe"
+old_installer.write_bytes(b"MZ an installer from before the signatures")
+old_release = core.Release(version="1.4.0", page="https://example/releases",
+                           assets=[{"name": old_installer.name, "url": "mem://old"}])
+results.append(("a release from before the signatures without sums is unsigned, not an error",
+                core.verify_download(old_installer, old_release, fetch=fetch) == "unsigned"))
+newer_tag = core.Release(version="2.1.4", page="https://example/releases", assets=release().assets)
+try:
+    core.verify_download(installer, newer_tag, fetch=fetch)
+    results.append(("an older release's signed installer under a newer tag is refused (2.2.0)", False))
+except ValueError as error:
+    results.append(("an older release's signed installer under a newer tag is refused (2.2.0)",
+                    "2.1.4" in str(error)))
+decoy = core.Release(version="2.0.0", page="https://example/releases",
+                     assets=[{"name": "Evil-Setup.exe", "url": "mem://evil"},
+                             {"name": "Evil-linux-x86_64.tar.gz", "url": "mem://evil2"}])
+results.append(("a release offers no installer under another name, only this version's own",
+                decoy.installer() is None
+                and release().installer()["name"] == core.installer_name("2.0.0")))
 
 
 def refused(name: str, path: Path, serving: dict) -> None:

@@ -16,14 +16,16 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import shutil
 import sqlite3
 import tempfile
 import time
 import zipfile
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 from kingmaker import __version__
+from kingmaker.media import images, imgsize
 
 DB_NAME = "kingmaker.db"
 JSON_NAME = "kingdom.json"
@@ -136,14 +138,40 @@ def integrity_ok(path: Path) -> bool:
 
 def safe_asset(name: str) -> Path | None:
     """The path inside the assets folder a member unpacks to, or None for a
-    member that is not an asset or tries to climb out. The cloud pull asks
-    the same question of every path a snapshot's manifest names."""
-    if not name.startswith(ASSETS + "/") or name.endswith("/"):
+    member that is not an asset, is not an image by name, or tries to
+    climb out. The cloud pull asks the same question of every path a
+    snapshot's manifest names.
+
+    Climbing out is more than `..`: on Windows a name that starts with a
+    separator is rooted without being absolute (`Path.is_absolute` wants a
+    drive as well), and joining it to the assets folder keeps only the
+    folder's drive; a name with a drive and no root (`C:x`) is relative to
+    that drive's current folder. Both are refused by the root and the
+    drive they carry, and a backslash, which no zip written by the app
+    uses, is refused as such. The name is judged as Windows and as POSIX
+    read it, whatever this machine is: a zip travels, and the answer
+    must be the same on every PC it reaches."""
+    if not name.startswith(ASSETS + "/") or name.endswith("/") or "\\" in name:
         return None
-    relative = Path(name[len(ASSETS) + 1:])
-    if relative.is_absolute() or not relative.parts or any(p in ("..", "") for p in relative.parts):
+    rest = name[len(ASSETS) + 1:]
+    for read_as in (PurePosixPath, PureWindowsPath):
+        seen = read_as(rest)
+        if (seen.drive or seen.root or seen.is_absolute() or not seen.parts
+                or any(p in ("..", "") for p in seen.parts)):
+            return None
+    relative = Path(rest)
+    if relative.suffix.lower() not in images.EXTENSIONS:
         return None
     return relative
+
+
+def inside(target: Path, folder: Path) -> bool:
+    """Whether `target`, resolved, lies under `folder`: the last word before
+    anything is written at a path a file named."""
+    try:
+        return Path(target).resolve().is_relative_to(Path(folder).resolve())
+    except OSError:
+        return False
 
 
 def _open_zip(path: Path) -> zipfile.ZipFile:
@@ -198,7 +226,17 @@ def restore(archive, assets_dir: Path, path: Path) -> Path:
             if relative is None:
                 continue
             target = assets_dir / relative
+            if not inside(target, assets_dir):
+                continue
             target.parent.mkdir(parents=True, exist_ok=True)
-            with zf.open(name) as src, open(target, "wb") as dst:
+            # Written beside its place and moved over once its bytes say it
+            # is an image: the folder is served to the browsers, and a page
+            # dressed as a picture must not land there.
+            part = target.with_name(target.name + ".part")
+            with zf.open(name) as src, open(part, "wb") as dst:
                 shutil.copyfileobj(src, dst)
+            if imgsize.sizes(part) is None:
+                part.unlink(missing_ok=True)
+                continue
+            os.replace(part, target)
     return kept

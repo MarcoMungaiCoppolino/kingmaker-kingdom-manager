@@ -126,6 +126,17 @@ class MapView:
             outside.append(char)
         return outside
 
+    def sees_journey(self, journey: dict) -> bool:
+        """Whether a journey under way is this person's to see: the GM's,
+        all of them; a player's, those with at least one character on the
+        map for them (`markers`). The route of hidden characters is drawn
+        for nobody else, and a listing with its destination would say as
+        much as the route."""
+        if self.gm:
+            return True
+        shown = {c["id"] for c in self.markers()}
+        return any(i in shown for i in journey.get("characters") or [])
+
     # ---------------------------------------------------------------- counts
     def counts(self) -> dict[str, int]:
         """How many hexes per status, over the whole grid.

@@ -120,8 +120,10 @@ from kingmaker.storage import bundle  # noqa: E402
 import zipfile  # noqa: E402
 assets = folder / "assets"
 (assets / "characters").mkdir(parents=True)
-(assets / "map.png").write_bytes(b"\x89PNG map")
-(assets / "characters" / "aldric.png").write_bytes(b"\x89PNG face")
+# A one-pixel PNG: restoring keeps only what is an image (2.2.0).
+PNG = __import__("base64").b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==")
+(assets / "map.png").write_bytes(PNG + b" map")
+(assets / "characters" / "aldric.png").write_bytes(PNG + b" face")
 (assets / "README.md").write_text("not shipped", encoding="utf-8")
 zipped = bundle.write(A, STATE.export(), assets, folder / "kingmaker-bundle.zip")
 with zipfile.ZipFile(zipped) as zf:
@@ -156,8 +158,50 @@ target_assets = folder / "restored-assets"
 kept_bundle = bundle.restore(A, target_assets, zipped)
 results.append(("restore from a zip keeps the previous save",
                 kept_bundle.exists() and kept_bundle.name.startswith("kingmaker.db.before-restore-")))
+# A save carrying code (2.2.0): a trigger or a view of its own goes at the
+# restore, the app's own triggers are made again, a virtual table is refused.
+evil_db = folder / "evil.db"
+A.backup_to(evil_db)
+evil = sqlite3.connect(evil_db)
+evil.execute("CREATE TRIGGER planted AFTER UPDATE ON users BEGIN UPDATE users SET role='admin'; END")
+evil.execute("CREATE VIEW peek AS SELECT * FROM users")
+tracked = archive_mod.Archive.TRACKED_TABLES[0]     # a forged counter trigger, on a tracked table
+evil.execute(f"DROP TRIGGER IF EXISTS km_tables_rev_{tracked}_update")
+evil.execute(f"CREATE TRIGGER km_tables_rev_{tracked}_update AFTER UPDATE ON {tracked} BEGIN "
+             "UPDATE users SET role='admin'; END")
+evil.commit()
+evil.close()
+bundle.restore(A, target_assets, evil_db)
+probe = sqlite3.connect(A.path)
+leftovers = {(kind, name) for kind, name in probe.execute(
+    "SELECT type, name FROM sqlite_master WHERE type IN ('trigger', 'view')")}
+own_again = probe.execute("SELECT sql FROM sqlite_master WHERE name=?",
+                          (f"km_tables_rev_{tracked}_update",)).fetchone()
+probe.close()
+results.append(("a restored save's own triggers and views are dropped",
+                ("trigger", "planted") not in leftovers and ("view", "peek") not in leftovers
+                and all(name.startswith("km_tables_rev_") for kind, name in leftovers)))
+results.append(("and the app's counter triggers are made again from their own text",
+                own_again is not None and "role" not in own_again[0]))
+virtual_db = folder / "virtual.db"
+A.backup_to(virtual_db)
+virtual = sqlite3.connect(virtual_db)
+try:
+    virtual.execute("CREATE VIRTUAL TABLE lookups USING fts5(words)")
+    virtual.commit()
+    has_fts = True
+except sqlite3.OperationalError:
+    has_fts = False                       # a build without FTS5: the check is skipped
+virtual.close()
+if has_fts:
+    try:
+        bundle.inspect(virtual_db)
+        results.append(("a save with a virtual table is refused before the copy", False))
+    except ValueError as exc:
+        results.append(("a save with a virtual table is refused before the copy",
+                        exc.args[0] == "main.foreign_schema" and exc.args[1].get("name") == "lookups"))
 results.append(("the images are unpacked in place",
-                (target_assets / "map.png").read_bytes() == b"\x89PNG map"
+                (target_assets / "map.png").read_bytes() == PNG + b" map"
                 and (target_assets / "characters" / "aldric.png").exists()))
 results.append(("the climbing member is ignored", not (folder / "escaped.txt").exists()
                 and not (target_assets / "escaped.txt").exists()))

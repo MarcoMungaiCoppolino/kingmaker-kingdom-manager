@@ -697,51 +697,6 @@ installers. The two-machine bench, the fake Dropbox served on every interface an
 driven from a file, stays in `prove/`, outside git, for the next time something has to be
 seen rather than believed.
 
-## 2.1.2 — 11 October 2026 · What the second laptop found
-
-Everything in this release was found in one night by setting up a second laptop and moving the
-test table's seat back and forth between the two. The first move, with 2.1.1, took the seat
-and opened an empty kingdom: a launcher loads only copies signed by a launcher the table
-vouches for, and the launcher that had held the seat was neither the administrator any more
-nor a host anyone had admitted, so every copy it had uploaded was refused, and the new seat
-started a fresh game and uploaded it as the newest copy. The rehearsals of 2.0.0 had never
-shown it because the arriving launcher always had the save locally. The fix reuses what
-pairing already had: taking the seat writes an admission for the outgoing launcher, signed by
-the new seat, and its copies verify as before. The recovery was its own small lesson: the blank
-copy had to be left untrusted and then superseded, so the old laptop took the seat back on the
-unfixed code, kept its game and uploaded once more, and only then did the fixed launcher take
-the seat and find the kingdom.
-
-The same night the installed launcher on the home PC showed no update for 2.1.1. GitHub's API
-answered 403: the test suite builds launcher windows, every one of them had asked for updates
-for real, and two laptops behind one address had spent the hour's sixty unauthenticated calls.
-Two fixes: the test windows no longer ask, with a stub that fails the suite if one does, and the
-launcher itself no longer depends on the API alone. The releases page redirects to the newest
-tag and is not under the quota; the files' names are the same for every build, so the launcher
-builds their addresses from the tag and the signature check does not change. A shared network
-that has spent the quota now sees the update like any other. On the way, the tests learned to
-remove the folders they make: a hundred and seventy had piled up in the temporary directory.
-
-## 2.1.1 — 11 October 2026 · The seat, before the first Start
-
-The second laptop was set up the same night, and the test table was the first thing tried on
-it: the welcome, *Connect to an existing app*, two authorisations, and then, before Start was
-pressed, a red line saying the other laptop had taken the administrator's seat and this
-launcher's Dropbox access was cancelled and forgotten. Nothing had been taken. The launcher asks
-the cloud by itself every minute, and `check_seat`, written for the old PC that must step down
-when a new one takes the seat, could not tell that PC from a new one that had only connected
-and not asked yet: both are administrators whose key is not on the seat. Whichever came first,
-the minute's look or the person's Start, decided whether the move worked, and the rehearsals of
-2.0.0 had always pressed Start first.
-
-The fix is one more thing the launcher remembers: whether it ever held the seat, which only the
-Start that created the table, upgraded it from 1.x or took the seat can say, and which the
-welcome sets to no when it connects. A look that finds another seat on a launcher that never
-held one now only says so, in the log and in the Table box, and leaves Start to ask. Files from
-before this version count as seated, so an old PC upgraded to 2.1.1 still steps down by itself.
-The lesson is the old one about two code paths that look at the same fact: the look and Start
-both read the seat, and only one of them knew what this launcher had done before.
-
 ## 2.1.0 — 10 and 11 October 2026 · Our own calendar
 
 With 2.0.0 out, the owner asked what of the kingdom rules was still missing besides the armies,
@@ -784,3 +739,157 @@ everything that does not belong in a public repository, the test scripts, the pl
 procedure and the notes the sessions work from, moved into a private repository of its own,
 with a way to carry unfinished work from one laptop to the other without any of it reaching
 `main` before it is a release.
+
+## 2.1.1 — 11 October 2026 · The seat, before the first Start
+
+The second laptop was set up the same night, and the test table was the first thing tried on
+it: the welcome, *Connect to an existing app*, two authorisations, and then, before Start was
+pressed, a red line saying the other laptop had taken the administrator's seat and this
+launcher's Dropbox access was cancelled and forgotten. Nothing had been taken. The launcher asks
+the cloud by itself every minute, and `check_seat`, written for the old PC that must step down
+when a new one takes the seat, could not tell that PC from a new one that had only connected
+and not asked yet: both are administrators whose key is not on the seat. Whichever came first,
+the minute's look or the person's Start, decided whether the move worked, and the rehearsals of
+2.0.0 had always pressed Start first.
+
+The fix is one more thing the launcher remembers: whether it ever held the seat, which only the
+Start that created the table, upgraded it from 1.x or took the seat can say, and which the
+welcome sets to no when it connects. A look that finds another seat on a launcher that never
+held one now only says so, in the log and in the Table box, and leaves Start to ask. Files from
+before this version count as seated, so an old PC upgraded to 2.1.1 still steps down by itself.
+The lesson is the old one about two code paths that look at the same fact: the look and Start
+both read the seat, and only one of them knew what this launcher had done before.
+
+## 2.1.2 — 11 October 2026 · What the second laptop found
+
+Everything in this release was found in one night by setting up a second laptop and moving the
+test table's seat back and forth between the two. The first move, with 2.1.1, took the seat
+and opened an empty kingdom: a launcher loads only copies signed by a launcher the table
+vouches for, and the launcher that had held the seat was neither the administrator any more
+nor a host anyone had admitted, so every copy it had uploaded was refused, and the new seat
+started a fresh game and uploaded it as the newest copy. The rehearsals of 2.0.0 had never
+shown it because the arriving launcher always had the save locally. The fix reuses what
+pairing already had: taking the seat writes an admission for the outgoing launcher, signed by
+the new seat, and its copies verify as before. The recovery was its own small lesson: the blank
+copy had to be left untrusted and then superseded, so the old laptop took the seat back on the
+unfixed code, kept its game and uploaded once more, and only then did the fixed launcher take
+the seat and find the kingdom.
+
+The same night the installed launcher on the home PC showed no update for 2.1.1. GitHub's API
+answered 403: the test suite builds launcher windows, every one of them had asked for updates
+for real, and two laptops behind one address had spent the hour's sixty unauthenticated calls.
+Two fixes: the test windows no longer ask, with a stub that fails the suite if one does, and the
+launcher itself no longer depends on the API alone. The releases page redirects to the newest
+tag and is not under the quota; the files' names are the same for every build, so the launcher
+builds their addresses from the tag and the signature check does not change. A shared network
+that has spent the quota now sees the update like any other. On the way, the tests learned to
+remove the folders they make: a hundred and seventy had piled up in the temporary directory.
+
+## 2.2.0 — October 2026 · One key per host
+
+The first review of the whole repository for security, done the morning after 2.1.2 shipped,
+read the five surfaces of the app in parallel: the server and its access control, the pages,
+the launcher's cloud model, the save formats, the build and release pipeline. The server and the
+pages came out clean; what the review found sat where the code trusts a file. A zipped save
+unpacked its images through a check that refused `..` and absolute names, and on Windows that is
+not enough: a name that starts with a separator is rooted without being absolute, and joining it
+to the images folder keeps only the folder's drive. The launcher that administers a table never
+verified the table's own file: it read the seat, the struck-off list and the token off it and
+signed them again at its next write, so whoever held the hosts' key, which every paired player
+does, could rewrite them and have the administrator vouch for the result. The same file, naming
+another key, made the administrator's launcher give up its seat from the minute's look, with no
+question asked. And the exemption that let copies from before the signatures load unsigned read
+the epoch off the copy itself.
+
+The fixes follow one line: nothing is believed on a file's word, and nothing is given up without
+asking. The image check refuses a root or a drive on its own and the resolved path is checked
+before any write; under a signed table every copy needs a trusted signature; the administrator's
+launcher keeps a record of what it last signed and rebuilds a file that comes back without its
+signature, refuses one that names another seat without that seat's signature, and asks, once and
+with the other launcher's key shown, before stepping down. The person compares the keys between
+two PCs, the one trust no signature replaces when a new PC meets the folder for the first time.
+On the way the review found that two writes of the table file had gone out unsigned since 2.0.0,
+the version move and the first write of the address: each changes a time stamp the signature
+covers. Hosts would have seen "the administrator's launcher changed" at their next Start; none
+had paired on 2.x yet.
+
+Two smaller things closed the list. *Join* opened whatever address a host's record carried, and
+on Windows the system's browser call hands anything that is not a web address to the shell; only
+web addresses are offered now, and the row shows the one it opens. And the pages answer only a
+browser's navigation: NiceGUI On Air serves every app from one origin, so a script on another
+tenant's page could have fetched the game's page with the session's cookie and, with the ids in
+it, driven the page as the person. The review could not try that against the relay, and the fix
+costs nothing either way.
+
+The next morning the review ran again over the fixed tree, each reader told what the first had
+found, and the second pass earned its keep. A signed table file stays signed, and nothing in it
+said how recent it was: a struck-off host could put back the file from before its strike-off,
+and every launcher would have believed it. Every signed write now carries a serial inside the
+signature, and a launcher never believes a file older than the last it trusted. The signature
+on a copy of the game covered the manifest and the database, not a member added beside them, so
+a copy holding anything else is refused whole. The update check had its own version of the same
+mistake: a release without the signed list was taken for one from before the signatures, whatever
+its version, and the installer was matched by name only, so an older signed installer under a
+newer tag would have passed; both doors are shut. And a restored save was trusted for its whole
+schema, triggers and views included, which would have run at every later write; now only its data
+survives the restore. The lesson of the day is that a signature answers "who wrote this" and not
+"is this the latest", and that the two questions need two answers.
+
+The owner, reading how a seat moves, asked why the old PC should stay vouched for at all, and
+proposed the better design on the spot: let the new seat list the copies it finds, by their
+hashes, inside its own signature, and admit the old seat's hosts again under itself; the old
+launcher gets nothing, so what it uploads after the move is simply ignored, and a lost PC needs
+no strike-off. The one cost was reading every copy to check its signature, until the second
+idea: write each copy's stamp beside it as a small file, since the signature is over the
+hashes, not the bytes, and the move then reads five tiny files instead of five copies. Both
+went into this release rather than a 2.1.4, one concept per release being the rule here.
+
+The same conversation ended the shared hosts' key. Two keys had opened the folder since 2.0.0,
+the administrator's own and one every host held a copy of, so removing one host meant changing
+the key for all of them and sending each a new code. The owner's question was the obvious one
+once asked: why not a key per host? Dropbox hands a key out only for a click on its own page,
+which is why 2.0.0 had settled for two, but a click per host is a small price next to a
+re-pairing of everyone, and it puts letting someone in where it belongs, with the administrator
+alone: a host is given one right, to host, and delegates nothing. *Pair a launcher…* became a
+guided window, the authorisation at the welcome went from two to one, "When someone leaves"
+left the main window, and *Hosts of the table…* became the control room, each host listed with
+the key it holds and a strike-off that cancels that key and nothing else.
+
+Reading Dropbox's documentation afterwards, to see whether the one key a personal account
+cannot revoke from outside, a lost administrator PC's, could have been avoided, settled that it
+could not: a refresh token is cancelled by whoever can present it, or by disconnecting the whole
+app, and the finer grain exists only for Business teams. The same reading went on to what a
+stolen PC holds, and from there to the passwords in the save. They are PBKDF2 digests at
+OWASP's own figure, but the floor was eight characters, the old number; NIST's current one for
+a password that stands alone is fifteen, with length as the only rule, no composition, no
+expiry, and a blocklist of the common ones. So the floor went to fifteen, and the list of a few
+hundred short passwords, which the new floor refuses before the list is looked at, became the
+long entries of the public breach lists, a megabyte of them. The eye that shows what is typed,
+already on the login and on the new-password fields, went on the field that repeats it too.
+
+The first rehearsal of the new pairing on the test table then found a bug older than this
+release. The host launcher, paired with a key of its own, called the administrator's own record
+one the table does not vouch for, and no log line said why, so a read-only report script was
+written to print what each launcher sees. It showed the table fine and the record unverifiable:
+the launcher signs its record when it takes the game, before the server has said where it is,
+and then writes the address into the record without signing again, although the address is
+inside the signature since 2.0.0. On the real table, with its fixed address, only the first
+Start on a PC went out that way, since the next ones copied the address before signing; on the
+test table, with a random address every time, every Start did. The hoster signs again before
+every heartbeat now. The same rehearsal showed the key made for a pairing code reaching the
+administrator's vault only after Stop, since the launcher's list is read at its idle look; the
+game now tells its launcher who spent the code, on the stdout line contract, and the key goes
+under that name at once.
+
+The rest of the day was the rehearsal itself, on the two laptops and the test table, and what
+it asked for. A launcher that stepped down forgot everything and showed an ordinary window,
+Start included, which on that PC leads to a game apart from the table; it now says what
+happened and offers one thing, the seat back, on a guide of its own that skips the account and
+the app to create. The control room opens while hosting, since the running game holds no key
+any more. The guide's pictures, shrunk to a short screen by dropping pixels, had turned to
+noise; Pillow resamples them. Stop froze the window for the length of the last upload and the
+server's shutdown, both on the window's own thread since 1.1.0; they run beside it now, with a
+moving bar wherever the launcher waits on the cloud, and a seat take says which copy it is
+reading, writes the missing stamp beside an old copy so nobody downloads it again, and reads
+only the new copies on its second pass. The kingdom events, the release's planned content, go
+to 2.3.0 with the rules across turns: the keys would not wait.

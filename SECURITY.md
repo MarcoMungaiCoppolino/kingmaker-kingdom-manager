@@ -17,8 +17,9 @@ and every five minutes while hosting, and warns when another program holds it; t
 detection, not prevention — the relay gives the address to whichever program connected last
 with the token, silently, so whoever holds the token can take the address until the
 administrator renews it. The launcher's secrets
-(the two Dropbox keys, the launcher's signing seed, the On Air token of whoever plays online
-without the cloud) rest protected by Windows for the user (DPAPI) or in an owner-only file
+(the administrator's Dropbox key and the keys it made for the hosts, the launcher's signing
+seed, the On Air token of whoever plays online without the cloud) rest protected by Windows
+for the user (DPAPI) or in an owner-only file
 outside the game folder on Linux; that keeps them from a copied folder and from other users
 of the PC, not from a program running as you.
 
@@ -27,12 +28,16 @@ it: every launcher signs the record it holds and the copies it uploads with a ke
 the administrator signs the table's file and the list of launchers it vouches for, and a
 launcher loads only what a vouched-for launcher signed (see *Trust in the folder* in the
 manual's chapter 13). A stolen key reads the folder; it cannot feed the table a copy, take the
-seat, or pass as a host. Installers are signed by the owner's offline key and refused by the
-launcher otherwise; an account may ask a one-time code after its password. Reports of a way
-around any of these are the ones most worth sending.
+seat, pass as a host, or put back an earlier file of the seat's (every signed write carries a
+serial, since 2.2.0). Installers are signed by the owner's offline key and refused by the
+launcher otherwise, and a release from 2.0.0 on without the signed list is refused outright;
+an account may ask a one-time code after its password. Reports of a way around any of these
+are the ones most worth sending.
 
 Out of scope: what the documentation already says is not protected. The On Air relay can read
-the traffic; a host's disk holds the whole game; whoever has the database file can rewrite a
+the traffic, and it serves every app on it from one origin, so a page of another On Air app
+opened while logged in receives the game's session cookie and can open its pages as you:
+play online with people you do not know only behind an origin of your own; a host's disk holds the whole game; whoever has the database file can rewrite a
 password; a rented server needs an HTTPS proxy in front. See *Hosting and security* in the
 [README](README.md#hosting-and-security) and [PRIVACY.md](PRIVACY.md).
 

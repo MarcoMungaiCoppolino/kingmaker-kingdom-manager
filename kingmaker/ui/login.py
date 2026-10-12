@@ -3,9 +3,10 @@ from __future__ import annotations
 
 from nicegui import app, run, ui
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import RedirectResponse
+from starlette.routing import get_route_path
+from starlette.responses import RedirectResponse, Response
 
-from kingmaker.access import auth, pairing, permissions
+from kingmaker.access import auth, permissions
 from kingmaker import config
 from kingmaker.locale import i18n, units
 from kingmaker.locale.i18n import t
@@ -23,6 +24,31 @@ OPEN_PAGES = {"/login", "/favicon.ico", "/_launcher/shutdown", "/_launcher/statu
 # `/_km/fonts/` holds the typefaces the app serves itself (`theme.FONTS_ROUTE`):
 # the login page wears them too, before anyone has signed in.
 OPEN_PREFIXES = ("/_nicegui/", "/_nicegui_ws", "/_km/fonts/")
+# The pages built for a browser. A page is for a navigation only: a script on
+# another page of the same origin would fetch it with the session's cookie,
+# and with the page the ids that drive it. Under On Air every table is served
+# from the relay's one origin, next to whatever else runs there. Browsers say
+# what asked in `Sec-Fetch-Dest`; a request without the header (a tool, an
+# older browser) passes as before. The page is told by the path the router
+# sees (`get_route_path`: the mount's root stripped, the forwarded prefix
+# never looked at, since a script can set that header and would otherwise
+# talk the check out of its page). Two documents of the same origin can
+# still script each other (`window.open`): on the shared relay the check
+# narrows the door, and only an origin of one's own closes it.
+PAGES = {"/", "/login", "/logout"}
+
+
+def _stripped(path: str, prefix: str = "") -> str:
+    if prefix and path.startswith(prefix):
+        return path[len(prefix):] or "/"
+    return path
+
+
+def _navigation(request) -> bool:
+    """Whether the request is a browser going to the page, not a script
+    reading it: `Sec-Fetch-Dest: document`, or no such header at all."""
+    dest = request.headers.get("sec-fetch-dest")
+    return dest is None or dest.lower() == "document"
 
 
 def _is_free(path: str, prefix: str = "") -> bool:
@@ -35,8 +61,7 @@ def _is_free(path: str, prefix: str = "") -> bool:
     logged in did not notice — with the session in their pocket they never go
     through that redirect.
     """
-    if prefix and path.startswith(prefix):
-        path = path[len(prefix):] or "/"
+    path = _stripped(path, prefix)
     return path in OPEN_PAGES or path.startswith(OPEN_PREFIXES)
 
 
@@ -68,6 +93,8 @@ class AccessMiddleware(BaseHTTPMiddleware):
         # mounted under a path the `root_path` stays attached: it is stripped
         # before looking.
         prefix = theme.request_prefix(request)
+        if get_route_path(request.scope) in PAGES and not _navigation(request):
+            return Response(status_code=403)
         if (not _is_free(request.url.path, prefix)
                 and auth.id_in_session() is None):
             return RedirectResponse("/login")
@@ -334,12 +361,17 @@ def second_factor_dialog(user: auth.User) -> None:
     dlg.open()
 
 
+@theme.requires(permissions.MANAGE_USERS)
 def _clear_second_factor(row: dict) -> None:
     """The administrator clears another account's second factor: for the
-    day the phone is lost with the recovery codes. Written in the journal."""
+    day the phone is lost with the recovery codes. Written in the journal.
+    Checked on the way in and again on the click, like every other button
+    of the accounts dialog: the dialog is drawn for whoever could manage
+    accounts when the page was built, and a role can change meanwhile."""
     with theme.dialog() as dlg, ui.card().classes("km-panel"):
         ui.label(t("login.sf.clear_confirm", username=row["username"])).style("white-space:normal")
 
+        @theme.requires(permissions.MANAGE_USERS)
         def confirm() -> None:
             me = auth.current_user(STATE.archive)
             auth.disable_second_factor(STATE.archive, row["id"], by=me.username if me else None)
@@ -372,7 +404,7 @@ def change_password_dialog(user: auth.User, mandatory: bool = False) -> None:
             .props("outlined dense").classes("w-full")
         before = ui.input(t("login.new_password"), password=True, password_toggle_button=True) \
             .props("outlined dense").classes("w-full")
-        second_one = ui.input(t("login.repeat"), password=True) \
+        second_one = ui.input(t("login.repeat"), password=True, password_toggle_button=True) \
             .props("outlined dense").classes("w-full")
         warning = ui.label("").style("color:var(--km-red);font-size:.8rem;min-height:1.2em")
 
@@ -487,30 +519,6 @@ def users_panel(user: auth.User) -> None:
                 _show_password(name, password)
 
             ui.button(t("common.create"), on_click=create).props("dense color=amber")
-
-        theme.sep()
-        with ui.row().classes("items-center gap-2 w-full no-wrap"):
-            ui.label(t("login.pair_intro")).style("color:var(--km-muted);font-size:.8rem;flex:1")
-            ui.button(t("login.pair_launcher"), icon="link",
-                      on_click=lambda: _pair_launcher(user)).props("dense color=amber")
-
-
-@theme.requires(permissions.MANAGE_USERS)
-def _pair_launcher(user: auth.User) -> None:
-    """A pairing code for a launcher joining the table: made here, by the
-    administrator, and told to the person; their launcher sends it to this
-    server with no password. Ten minutes, one use."""
-    code = pairing.new_code(user.username)
-    STATE.record(t("login.pair_made", username=user.username), "account")
-    theme.mark_dirty()
-    with theme.dialog() as dlg, ui.card().classes("km-panel").style("min-width:340px"):
-        theme.title(t("login.pair_title"), 2)
-        ui.label(t("login.pair_text")).style("color:var(--km-muted);font-size:.82rem;white-space:normal")
-        ui.html(f'<div class="km-pixel" style="font-size:1.3rem;color:var(--km-gold);'
-                f'user-select:all;padding:8px 0">{theme.esc(code)}</div>')
-        ui.label(t("login.pair_expires")).style("color:var(--km-muted);font-size:.78rem")
-        ui.button(t("login.done"), on_click=dlg.close).props("color=amber")
-    dlg.open()
 
 
 def _enter_as(row: dict) -> None:

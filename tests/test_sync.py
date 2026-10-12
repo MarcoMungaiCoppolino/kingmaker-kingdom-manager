@@ -16,6 +16,7 @@ import sqlite3
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -273,6 +274,34 @@ results.append(("a name that is not an image's is refused",
                 sync.pull_assets(client, other_assets, {"script.svg": hashes["map.png"]}) == 0
                 and not (other_assets / "script.svg").exists()))
 
+# 4c. a zipped save whose members try to leave the images folder (2.2.0):
+#     on Windows a rooted name without a drive is not absolute, and a drive
+#     without a root is relative to that drive's current folder.
+BS = chr(92)
+climbing = ["assets//Windows/Temp/x.png", "assets/" + BS + "Windows" + BS + "x.png", "assets/C:x.png",
+            "assets/D:x.png", "assets/../x.png", "assets/a/../x.png", "assets/C:/x.png"]
+results.append(("every member name that climbs out is refused by name",
+                all(bundle.safe_asset(n) is None for n in climbing)))
+results.append(("a member that is not an image by name is refused, a nested image accepted",
+                bundle.safe_asset("assets/page.html") is None
+                and bundle.safe_asset("assets/characters/ok.PNG") == Path("characters/ok.PNG")))
+slip = folder / "slip.zip"
+slip_db = folder / "slip.db"
+A.backup_to(slip_db)
+with zipfile.ZipFile(slip, "w") as zf:
+    zf.write(slip_db, bundle.DB_NAME)
+    zf.writestr(bundle.MANIFEST, "{}")
+    for name in climbing:
+        zf.writestr(name, PNG)
+    zf.writestr("assets/page.png", b"<html>not an image</html>")
+    zf.writestr("assets/page.html", PNG)
+    zf.writestr("assets/fine.png", PNG + b"fine")
+unpacked = folder / "slip-assets"
+bundle.restore(type("Arc", (), {"restore_from": lambda _s, p: p})(), unpacked, slip)
+landed = sorted(p.relative_to(unpacked).as_posix() for p in unpacked.rglob("*") if p.is_file())
+results.append(("restoring it unpacks the one real image and nothing else",
+                landed == ["fine.png"] and (unpacked / "fine.png").read_bytes() == PNG + b"fine"))
+
 # 5c. a copy from a newer app stops the pull; a copy above the record's
 #     epoch is ignored
 newer_db = folder / "newer.db"
@@ -327,25 +356,30 @@ forged_entry = dict(sync.make_admission(eve_seed, "host-admin", "host-eve2", "Ev
 chain = sync.known_launchers(signed, [dm_entry, bob_entry, eve_entry, forged_entry])
 results.append(("the chain: the administrator, a host it let in, a host that host let in",
                 chain == {"host-admin": admin_key, "host-dm": dm_key, "host-bob": bob_key}))
-# The seat taken by another PC: alone, the new seat vouches for nobody the old
-# one let in and not for the old launcher itself, so the copies it uploaded
-# would be skipped; the admission the new seat writes keeps them loadable.
+# The seat taken by another PC (2.2.0): the new seat vouches for nobody the old
+# one let in, and not for the old launcher; the hosts are admitted again under
+# the new seat, the old launcher's copies go on the seat's signed list.
 new_seed = ed25519.new_seed()
 new_key = ed25519.public_key(new_seed).hex()
 moved = sync.TableRecord.parse(signed.body(), {})
-former = (moved.admin_id, moved.admin_name, moved.admin_key)
+before_move = sync.known_launchers(moved, [dm_entry, bob_entry])
 sync.take_seat(moved, "host-admin2", "Alice's laptop", new_key, moved.signed_since)
 moved.sign(new_seed)
-results.append(("after a seat move the old administrator's copies are no longer trusted on their own",
-                "host-admin" not in sync.known_launchers(moved, [dm_entry, bob_entry])))
-handed = sync.former_admin_admission(new_seed, "host-admin2", former)
-with_former = sync.known_launchers(moved, [dm_entry, bob_entry, handed])
-results.append(("the new seat admits the old launcher: its copies and the hosts it let in stay known",
-                handed is not None and with_former.get("host-admin") == admin_key
-                and with_former.get("host-dm") == dm_key and with_former.get("host-admin2") == new_key))
-results.append(("no admission for an empty seat or for the launcher's own",
-                sync.former_admin_admission(new_seed, "host-admin2", ("", "", "")) is None
-                and sync.former_admin_admission(new_seed, "host-admin2", ("host-admin2", "me", new_key)) is None))
+results.append(("after a seat move the old administrator and its hosts are no longer vouched for",
+                "host-admin" not in sync.known_launchers(moved, [dm_entry, bob_entry])
+                and "host-dm" not in sync.known_launchers(moved, [dm_entry, bob_entry])))
+readmit = [sync.make_admission(new_seed, "host-admin2", h, h, k) for h, k in before_move.items()
+           if h != "host-admin"]
+again = sync.known_launchers(moved, [dm_entry, bob_entry] + readmit)
+struck_then_seated = sync.TableRecord.parse(signed.body(), {})
+struck_then_seated.revoked.append("host-dm")
+sync.take_seat(struck_then_seated, "host-dm", "DM's PC", dm_key, 1)
+struck_then_seated.sign(dm_seed)
+results.append(("a launcher struck off as a host and then seated vouches for itself",
+                sync.known_launchers(struck_then_seated, []).get("host-dm") == dm_key))
+results.append(("the new seat admits the old seat's hosts again, not the old launcher",
+                again.get("host-dm") == dm_key and again.get("host-bob") == bob_key
+                and "host-admin" not in again and again.get("host-admin2") == new_key))
 signed.revoked.append("host-dm")
 signed.sign(admin_seed)
 struck = sync.known_launchers(signed, [dm_entry, bob_entry])
@@ -376,6 +410,15 @@ results.append(("heartbeats and a hand-over request leave the signature valid",
 doctored = sync.HostRecord.parse(back.body(), {}, 0.0)
 doctored.address = "https://evil.example/"
 results.append(("a record with its address rewritten no longer verifies", not doctored.verified()))
+# The window writes the address into the record once the server says where
+# it is, after the claim signed: the hoster signs again at every heartbeat.
+mine = sync.claim(client, "host-dm", "DM's PC", force=True, seed=dm_seed, key=dm_key)
+mine.address = "https://on-air.example/devices/abc/"
+sync.Hoster(client, mine, StubServer(), folder / "no-assets", on_event=lambda kind, text: None,
+            on_taken_over=lambda: None, seed=dm_seed, key=dm_key).beat()
+written = sync.read_record(client)
+results.append(("the hoster signs the record again at each heartbeat, the address inside (2.2.0)",
+                written.address == mine.address and written.verified() and written.key == dm_key))
 for path_ in [p for p in box.files if p.startswith(("/recent/", "/daily/"))]:
     del box.files[path_]
 good = bundle.write_snapshot(A, assets, folder / "good.zip", {"epoch": 9, "seq": 1})
@@ -395,12 +438,85 @@ stranger = sync.sign_snapshot(bundle.write_snapshot(A, assets, folder / "strange
 sync.upload_snapshot(client, stranger, 11, 1, today="2026-10-03")
 trusted = sync.known_launchers(signed, [dm_entry, bob_entry])
 said: list[str] = []
-pulled = sync.newest_usable(client, folder / "pull-signed", log=said.append, trusted=trusted, signed_since=9)
+pulled = sync.newest_usable(client, folder / "pull-signed", log=said.append, trusted=trusted)
 results.append(("the pull skips a stranger's copy and an unsigned one, and loads the known launcher's",
                 pulled is not None and sync.marks_of(pulled) == (9, 1) and len(said) >= 2))
-pulled = sync.newest_usable(client, folder / "pull-legacy", trusted=trusted, signed_since=11)
-results.append(("copies from before the signatures are still loaded unsigned",
-                pulled is not None and sync.marks_of(pulled) == (10, 1)))
+# The seat's inherited list (2.2.0): a copy signed by the old seat is listed by
+# its hashes, read from the sidecar beside it, and loads under the new seat
+# without the old launcher being vouched for; a copy the old launcher uploads
+# after the move is neither signed by a known launcher nor listed.
+results.append(("every upload writes a sidecar with the copy's stamp beside it",
+                all(f"/{sync.RECENT}/{n}{sync.SIDECAR_SUFFIX}" in box.files for n in ("save-e9-s1.zip",))
+                and sync.read_sidecar(client.download(f"{sync.RECENT}/save-e9-s1.zip{sync.SIDECAR_SUFFIX}")[0]) is not None
+                and sync.read_sidecar(client.download(f"{sync.RECENT}/save-e9-s1.zip{sync.SIDECAR_SUFFIX}")[0])[0] == "host-dm"))
+new_seat_only = {"host-admin2": new_key}
+inherited = sync.inherit_copies(client, {"host-dm": dm_key})
+results.append(("the copies the old seat vouched for are listed by their hashes, the stranger's not",
+                set(inherited) == {"save-e9-s1.zip", "save-2026-10-01.zip"}
+                and all(len(v) == 2 for v in inherited.values())))
+# A copy from before the sidecars: downloaded in full once, and its stamp
+# written beside it, so the next listing reads the sidecar alone.
+side_path = f"{sync.RECENT}/save-e9-s1.zip{sync.SIDECAR_SUFFIX}"
+del box.files["/" + side_path]
+without = sync.inherit_copies(client, {"host-dm": dm_key})
+backfilled = sync.inherit_copies(client, {"host-dm": dm_key}, into=folder)
+side_back = sync.read_sidecar(client.download(side_path)[0]) if "/" + side_path in box.files else None
+results.append(("a copy without a sidecar is listed only when it may be downloaded, and the download "
+                "writes the sidecar beside it (2.2.0)",
+                "save-e9-s1.zip" not in without and "save-e9-s1.zip" in backfilled
+                and side_back is not None and side_back[0] == "host-dm"
+                and backfilled["save-e9-s1.zip"] == inherited["save-e9-s1.zip"]))
+steps: list[tuple[int, int]] = []
+again = sync.inherit_copies(client, {"host-dm": dm_key}, skip={"save-e9-s1.zip"},
+                            progress=lambda done, total, _name: steps.append((done, total)))
+results.append(("a copy listed already is skipped, and the window hears of each one read (2.2.0)",
+                set(again) == {"save-2026-10-01.zip"} and steps and steps[-1][0] == steps[-1][1]
+                and all(total == steps[-1][1] for _d, total in steps)
+                and "save-e9-s1.zip" not in [name for name in again]))
+pulled = sync.newest_usable(client, folder / "pull-inherited", log=said.append, trusted=new_seat_only,
+                            inherited=inherited)
+results.append(("a listed copy loads under the new seat, the old launcher no longer vouched for",
+                pulled is not None and sync.marks_of(pulled) == (9, 1)))
+after_move = sync.sign_snapshot(bundle.write_snapshot(A, assets, folder / "after.zip",
+                                                      {"epoch": 13, "seq": 1}).read_bytes(), dm_seed, "host-dm", dm_key)
+sync.upload_snapshot(client, after_move, 13, 1, today="2026-10-06")
+said.clear()
+pulled = sync.newest_usable(client, folder / "pull-after", log=said.append, trusted=new_seat_only,
+                            inherited=inherited)
+results.append(("what the old launcher uploads after the move is skipped",
+                pulled is not None and sync.marks_of(pulled) == (9, 1) and any("signature" in s for s in said)))
+sync.prune(client, sync.RECENT, sync.SNAPSHOT_NAME, 0)
+results.append(("pruning a copy removes its sidecar too",
+                not any(p.startswith(f"/{sync.RECENT}/") for p in box.files)))
+sync.upload_snapshot(client, good_bytes, 9, 1, today="2026-10-01")
+sync.upload_snapshot(client, unsigned, 10, 1, today="2026-10-02")
+sync.upload_snapshot(client, stranger, 11, 1, today="2026-10-03")
+# A signed copy with a member beside the manifest and the database (2.2.0):
+# the signature never saw it, so the copy is refused whole.
+padded = folder / "padded.zip"
+padded.write_bytes(good.read_bytes())
+with zipfile.ZipFile(padded, "a") as zf:
+    zf.writestr("assets/map.png", PNG)
+sync.upload_snapshot(client, sync.sign_snapshot(padded.read_bytes(), dm_seed, "host-dm", dm_key),
+                     12, 1, today="2026-10-05")
+said.clear()
+pulled = sync.newest_usable(client, folder / "pull-padded", log=said.append, trusted=trusted)
+results.append(("a signed copy carrying an extra member is refused, the clean one loaded",
+                pulled is not None and sync.marks_of(pulled) == (9, 1)
+                and any("members" in line for line in said)))
+# An unsigned copy claiming an epoch from before the signatures, the only
+# copy left: refused all the same (2.2.0; the epoch was the copy's own word).
+for path_ in [p for p in box.files if p.startswith(("/recent/", "/daily/"))]:
+    del box.files[path_]
+early = bundle.write_snapshot(A, assets, folder / "early.zip", {"epoch": 0, "seq": 99}).read_bytes()
+sync.upload_snapshot(client, early, 0, 99, today="2026-10-04")
+said.clear()
+pulled = sync.newest_usable(client, folder / "pull-legacy", log=said.append, trusted=trusted)
+results.append(("an unsigned copy is refused whatever epoch it claims",
+                pulled is None and any("signature" in line for line in said)))
+sync.upload_snapshot(client, good_bytes, 9, 1, today="2026-10-01")
+sync.upload_snapshot(client, unsigned, 10, 1, today="2026-10-02")
+sync.upload_snapshot(client, stranger, 11, 1, today="2026-10-03")
 pulled = sync.newest_usable(client, folder / "pull-any", trusted=None)
 results.append(("without a signed table nothing is asked of the copies",
                 pulled is not None and sync.marks_of(pulled) == (11, 1)))
@@ -487,12 +603,24 @@ fresh = sync.take_seat(fresh, "host-admin", "Alice's PC", admin_key, epoch=1)
 fresh = sync.write_table(client, fresh, by="Alice", seed=admin_seed)
 results.append(("the administrator's seat is written and signed",
                 sync.read_table(client).trusted_by(admin_key) and fresh.format == 2))
+# Every signed write raises the serial, inside the signature (2.2.0): an
+# earlier file written back still verifies, and only the serial says so.
+earlier = sync.read_table(client).body()
+fresh = sync.write_table(client, fresh, by="Alice", seed=admin_seed)
+results.append(("every signed write raises the file's serial, inside the signature",
+                fresh.serial == 2 and fresh.signing_body().get("serial") == 2
+                and sync.read_table(client).serial == 2 and sync.read_table(client).verified()))
+client.upload(sync.TABLE_FILE, earlier, mode="overwrite")
+replayed = sync.read_table(client)
+results.append(("an earlier signed file written back still verifies; only its serial is behind",
+                replayed.verified() and replayed.serial == 1 < fresh.serial))
+fresh.rev = replayed.rev
+fresh = sync.write_table(client, fresh, by="Alice", seed=admin_seed)
 env = dict(os.environ, KINGMAKER_DATA_DIR=str(game / "saves"), KINGMAKER_ASSETS_DIR=str(game / "assets"),
            KINGMAKER_LAUNCHER_SECRET="shh", PYTHONIOENCODING="utf-8", PYTHONPATH=ROOT,
            KINGMAKER_LAUNCHER_SIGN=admin_seed.hex(), KINGMAKER_LAUNCHER_ID="host-admin",
-           KINGMAKER_SYNC_CREDENTIAL=json.dumps({"app_key": "key", "refresh_token": "rt-secret",
-                                                  "table": "Testland", "table_id": fresh.table_id,
-                                                  "admin_key": admin_key}))
+           KINGMAKER_SYNC_CREDENTIAL=json.dumps({"app_key": "key", "table": "Testland",
+                                                  "table_id": fresh.table_id, "admin_key": admin_key}))
 server = subprocess.Popen([sys.executable, os.path.join(ROOT, "launch.py"), "--serve", "--no-browser",
                            "--port", str(port)], env=env, cwd=ROOT,
                           stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8")
@@ -522,9 +650,12 @@ def ask(code, name="Bob's PC", who=None):
         return str(error)
 
 
-def new_code(secret="shh"):
+def new_code(secret="shh", token="rt-bob"):
+    """A code from the running game, with the key it hands out (2.2.0: one
+    key per host, made by the administrator's launcher for that pairing)."""
+    body = json.dumps({"refresh_token": token}).encode("utf-8") if token else b"{}"
     request = urllib.request.Request(f"http://127.0.0.1:{port}/_launcher/pairing", method="POST",
-                                     headers={"X-Launcher-Secret": secret})
+                                     data=body, headers={"X-Launcher-Secret": secret})
     with urllib.request.urlopen(request, timeout=10) as answer_:
         return json.loads(answer_.read().decode("utf-8"))["code"]
 
@@ -535,11 +666,13 @@ try:
 except urllib.error.HTTPError as error:
     results.append(("a pairing code is made only for the launcher that started us", error.code == 404))
 results.append(("no code yet: pairing is a 404", ask("abcd-efgh") == "404"))
+keyless = new_code(token="")
+results.append(("a code made without a key hands out nothing (2.2.0)", ask(keyless) == "404"))
 code = new_code()
 results.append(("the code has the shape of a short password", len(code) == 9 and code[4] == "-"))
 got = ask(code.upper().replace("-", " "))
-results.append(("the right code, however typed, hands the credential out with the table's id and no token",
-                isinstance(got, dict) and got["credential"]["refresh_token"] == "rt-secret"
+results.append(("the right code, however typed, hands out the key made for it with the table's id and no token",
+                isinstance(got, dict) and got["credential"]["refresh_token"] == "rt-bob"
                 and got["table_id"] == fresh.table_id and "token" not in got["credential"]
                 and got["table"] == "Testland"))
 results.append(("and an admission for Bob's key, signed by the hosting launcher",
@@ -547,6 +680,25 @@ results.append(("and an admission for Bob's key, signed by the hosting launcher"
                 and got["admission"]["host_id"] == bob.host_id and got["admission"]["key"] == bob.sign_key
                 and got["admission"]["admitted_by"] == "host-admin"
                 and sync.known_launchers(fresh, [got["admission"]]).get(bob.host_id) == bob.sign_key))
+# The game tells the launcher that started it who spent the code, on stdout.
+said: list[str] = []
+
+
+def read_until_paired() -> None:
+    for _ in range(200):
+        line = server.stdout.readline()
+        if not line:
+            return
+        said.append(line.rstrip())
+        if line.startswith("KM paired "):
+            return
+
+
+reader = threading.Thread(target=read_until_paired, daemon=True)
+reader.start()
+reader.join(10)
+results.append(("the game announces the pairing to its launcher, with the newcomer's id and name (2.2.0)",
+                f"KM paired {bob.host_id} Bob's PC" in said))
 results.append(("the same code a second time is refused", ask(code) == "404"))
 code = new_code()
 for _ in range(3):
@@ -619,6 +771,24 @@ try:
     results.append(("a nonce that is not hex is a 404", False))
 except urllib.error.HTTPError as error:
     results.append(("a nonce that is not hex is a 404", error.code == 404))
+
+
+def page_status(path: str, headers: dict) -> int:
+    """The pages answer a navigation only (2.2.0): a script on another page
+    of the same origin asks with `Sec-Fetch-Dest: empty`, and gets a 403."""
+    request_ = urllib.request.Request(f"http://127.0.0.1:{port}{path}", headers=headers)
+    try:
+        with urllib.request.urlopen(request_, timeout=10) as answer_:
+            return answer_.status
+    except urllib.error.HTTPError as error:
+        return error.code
+
+
+results.append(("the login page answers a navigation, and a request without the header",
+                page_status("/login", {"Sec-Fetch-Dest": "document"}) == 200 and page_status("/login", {}) == 200))
+results.append(("and refuses a script's fetch of a page",
+                page_status("/login", {"Sec-Fetch-Dest": "empty"}) == 403
+                and page_status("/", {"Sec-Fetch-Dest": "empty"}) == 403))
 probed, why = core.probe_address(f"http://127.0.0.1:{port}", "0a1b2c")
 results.append(("the launcher's probe reads the proof through the address",
                 probed is not None and probed["proof"] == core.whoami_proof("shh", "0a1b2c") and why == ""))

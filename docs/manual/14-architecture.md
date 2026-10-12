@@ -30,7 +30,9 @@ host's launcher reads and writes it with the same key.
 *The epoch rises each time the game changes hands, the seq at each upload: together they order
 every copy. Dropbox opens the whole folder to any key, so what a launcher believes of a file
 comes from its signature, never from the folder (`sync.TableRecord.verified`,
-`sync.known_launchers`, `sync.snapshot_signer`). A copy from a newer save format stops the pull
+`sync.known_launchers`, `sync.snapshot_signer`), and what it believes of a file's age comes from
+a serial inside the signature (`TableRecord.serial`, 2.2.0): an earlier signed file written back
+is not the latest, and nobody acts on it. A copy from a newer save format stops the pull
 (`NewerCopy`) rather than falling back to an older one.*
 
 ## Pressing Start with a table
@@ -47,10 +49,12 @@ together cannot both win.*
 
 ## Letting a host in: the pairing code
 
-No password travels. The administrator makes a short code in the game while hosting
-(`access/pairing.py`), says it aloud, and the new launcher trades it for the keys
-(`core.pair`), which it keeps only after checking that they open the right table
-(`core.adopt_pairing`).
+No password travels. The administrator's launcher, while hosting, authorises a Dropbox key
+for the one host and asks the running game for a short code that hands it out
+(`wizard.PairWizard`, `access/pairing.py`); the person passes the address and the code on,
+and the new launcher trades them for the key (`core.pair`), which it keeps only after checking
+that it opens the right table (`core.adopt_pairing`). Since 2.2.0 only the administrator lets
+a launcher in: a host hosts, and delegates nothing.
 
 ![Pairing](img/architecture-pairing.svg)
 
@@ -74,11 +78,15 @@ take-over at once.*
 
 ## Who holds which key
 
-Two Dropbox keys open the folder: the administrator's own (`cloud.refresh_token`) and the
-hosts' key (`cloud.hosts_refresh_token`), of which every host holds a copy. On top of them
+The administrator's own Dropbox key (`cloud.refresh_token`) opens the folder, and since 2.2.0
+one key per host (`Settings.host_keys`), each authorised by the administrator at that host's
+pairing and kept in its vault, so striking a host off cancels that key alone; the shared hosts'
+key of 2.0.0 (`cloud.hosts_refresh_token`) survives only until every host paired on it has a
+key of its own. On top of them
 every launcher has a signing key of its own (`Settings.sign_seed`, `sign_key`), never typed by
 anyone, and the table's file says which launchers it vouches for; *Trust in the folder* in
-[chapter 13](13-cloud-sync.md) has the formats.
+[chapter 13](13-cloud-sync.md) has the formats. Nothing moves a seat on a file's word: a launcher
+asked to step down, or to take a seat, sees the other launcher's key and answers (2.2.0).
 
 ![Who holds which key](img/architecture-keys.svg)
 

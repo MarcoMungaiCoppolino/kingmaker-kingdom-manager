@@ -23,8 +23,12 @@
   fires and `login._abuse_noted` writes one line in the journal: the only place the table would
   ever see guessing happen.
 - Weak passwords are refused at creation and at change (`auth.check_password`): shorter than
-  eight characters, one of the most common ones (`access/common_passwords.txt`, loaded once,
-  compared in lower case; bundled by the spec), or the username itself with digits around it.
+  `auth.MIN_PASSWORD` (15, the NIST SP 800-63B-4 floor for a password standing alone; 2.2.0, it
+  was 8), one of the most common ones (`access/common_passwords.txt`: the entries of fifteen
+  characters or more of the SecLists breach lists, in order of frequency, cut at a megabyte,
+  some 56,000; loaded once, compared in lower case; bundled by the spec), or the username itself
+  with digits around it. No composition rule and no expiry, as NIST and OWASP ask; every
+  password field has the eye that shows what is typed.
 - The session is `app.storage.user["user_id"]`, signed with `config.storage_secret()`: the
   `KINGMAKER_STORAGE_SECRET` environment variable or a `saves/.storage_secret` file generated at
   the first start. Whoever knows the key forges an administrator cookie: that is why it is not
@@ -43,7 +47,9 @@ sequenceDiagram
     participant L as /login
     participant P as / (page)
     B->>M: GET /something
-    alt free path (/login, /_nicegui/*, /favicon.ico)
+    alt a page asked by a script (Sec-Fetch-Dest present, not document)
+        M->>B: 403
+    else free path (/login, /_nicegui/*, /favicon.ico)
         M->>B: passes
     else no user in session
         M->>B: 302 /login (NiceGUI adds the On Air prefix)
@@ -57,7 +63,15 @@ sequenceDiagram
 ```
 
 The middleware (`ui/login.py`) serves above all for `/assets`: it is a static mount, not a page,
-and without the filter whoever guesses a file name downloads it from the public address.
+and without the filter whoever guesses a file name downloads it from the public address. Since
+2.2.0 it also answers 403 on the pages (`PAGES`: `/`, `/login`, `/logout`) when the browser says
+the request is not a navigation (`Sec-Fetch-Dest` present and not `document`): under On Air
+every app shares the relay's origin, and a script on another tenant's page could otherwise fetch
+the game's page with the session's cookie and drive it with the ids it carries. The page is told
+by the path the router sees (`starlette.routing.get_route_path`), never by `X-Forwarded-Prefix`,
+which a script can set. Two documents of the same origin can still script each other
+(`window.open`), and the relay's session cookie is scoped to its host: on the shared relay the
+check narrows the door, and only an origin of one's own closes it.
 
 **The second factor** (`access/totp.py`, schema 30). An account may ask a one-time code
 after the password: RFC 6238 over SHA-1, thirty-second steps, six digits, a step either side
@@ -69,8 +83,8 @@ username, the same brake as a wrong password. `User.second_factor` says whether 
 login page keeps the verified user in the page's closure and shows the code field in place of
 the two others (`login_page`), so no session exists until the code passed. The account menu's
 shield (`second_factor_dialog`) switches it on with a code the app shows, or off with one; the
-administrator clears another account's from the accounts panel (`_clear_second_factor`), and
-both go to the journal.
+administrator clears another account's from the accounts panel (`_clear_second_factor`, under
+`MANAGE_USERS` like every other button of the panel since 2.2.0), and both go to the journal.
 
 ## Roles and actions — `access/permissions.py`
 

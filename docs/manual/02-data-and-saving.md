@@ -173,8 +173,13 @@ releases share one number (1.1.0 to 1.2.0 all write 29). The rules:
   raises a `ValueError` carrying a catalog key; `bundle.restore` goes through
   `Archive.restore_from` — the connection closed, the current file copied to
   `kingmaker.db.before-restore-<date>.bak`, the file swapped in and reopened through `_open`,
-  so an old save is migrated exactly as at start — then unpacks the images over `assets/`,
-  refusing any member that climbs out of it; `STATE.restore` reloads the kingdom.
+  so an old save is migrated exactly as at start, then stripped of every trigger and view it
+  brought (`_scrub_schema`, the app's own counter triggers made again: a save is trusted for
+  its data, never for code; a virtual table is refused by `inspect` before the copy) — then
+  unpacks the images over `assets/`, refusing any member that climbs out of it
+  (`bundle.safe_asset`, the name judged as Windows and POSIX read it, `bundle.inside` on the
+  resolved target) and keeping only files whose bytes are an image; `STATE.restore` reloads
+  the kingdom.
   `tests/test_backup.py` covers both round trips.
 - **Copies**: `saves/backup-*` are copies made by hand before the big migrations, and
   `kingmaker.db.pre-v27.bak` is the automatic one. `KINGMAKER_DATA_DIR` moves the whole data
