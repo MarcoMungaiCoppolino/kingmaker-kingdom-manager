@@ -8,6 +8,7 @@ import sqlite3
 import sys
 import tempfile
 import time
+import unicodedata
 from pathlib import Path
 
 from fastapi import Request, Response
@@ -20,7 +21,7 @@ from kingmaker.locale import i18n
 from kingmaker.locale.i18n import t, tn
 from kingmaker.state import STATE
 from kingmaker.storage import bundle
-from kingmaker.ui import login, hexmap, theme
+from kingmaker.ui import icons, login, hexmap, theme
 from kingmaker.ui.tabs import city, party, creation, clock, gm_screen, sheet, transport, turn
 
 
@@ -109,6 +110,10 @@ def page_() -> None:
     # compare against them); only the labels are translated.
     # In a narrow window the tabs do not fit: they scroll, and the arrows say
     # so (`mobile-arrows` shows them on touch screens too).
+    # A switch of language or units reloads the page: it leaves the tab it
+    # was on in the session storage (`login.return_here`), so the window
+    # comes back where it was and not on the map.
+    back = app.storage.user.pop("return_to", None) or {}
     with ui.tabs(on_change=lambda e: theme.active_tab(e.value)).classes("w-full") \
             .props("mobile-arrows outside-arrows") as tabs:
         t_map = ui.tab("map", label=t("tabs.map"), icon="map")
@@ -129,7 +134,10 @@ def page_() -> None:
         t_save = ui.tab("save", label=t("tabs.save"), icon="download") \
             if permissions.can(user, permissions.EXPORT_SAVE) else None
 
-    with ui.tab_panels(tabs, value=t_map).classes("w-full").style("background:transparent"):
+    names = (["map", "kingdom", "turn", "city", "party", "transport", "manual"]
+             + (["gm"] if t_gm is not None else []) + (["save"] if t_save is not None else []))
+    start = back.get("tab") if back.get("tab") in names else "map"
+    with ui.tab_panels(tabs, value=start).classes("w-full").style("background:transparent"):
         with ui.tab_panel(t_map):
             hexmap.map_panel()
         with ui.tab_panel(t_kingdom):
@@ -143,7 +151,7 @@ def page_() -> None:
         with ui.tab_panel(t_stable):
             transport.transport_panel()
         with ui.tab_panel(t_data):
-            manual_panel(user)
+            manual_panel(user, back.get("subtab"))
         if t_gm is not None:
             with ui.tab_panel(t_gm):
                 gm_screen.gm_panel()
@@ -151,18 +159,23 @@ def page_() -> None:
             with ui.tab_panel(t_save):
                 save_panel(user)
 
-    theme.active_tab("map")
+    theme.active_tab(start)
 
 
-def manual_panel(user: auth.User) -> None:
-    """Quick reference: structures, activities, feats, tables."""
-    with ui.tabs().classes("w-full").props("mobile-arrows outside-arrows") as sub:
-        s1 = ui.tab(t("main.structures"))
-        s2 = ui.tab(t("main.activities"))
-        s3 = ui.tab(t("main.feats"))
-        s4 = ui.tab(t("main.tables"))
-        s5 = ui.tab(t("main.privacy"))
-    with ui.tab_panels(sub, value=s1).classes("w-full").style("background:transparent"):
+def manual_panel(user: auth.User, start: str | None = None) -> None:
+    """Quick reference: structures, activities, feats, tables. The sub-tabs
+    have language-neutral names, so `start` can bring one back after a
+    reload in the other language."""
+    names = ("structures", "activities", "feats", "tables", "privacy")
+    with ui.tabs(on_change=lambda e: theme.window_state().update(subtab=getattr(e.value, "name", e.value))) \
+            .classes("w-full").props("mobile-arrows outside-arrows") as sub:
+        s1 = ui.tab("structures", label=t("main.structures"))
+        s2 = ui.tab("activities", label=t("main.activities"))
+        s3 = ui.tab("feats", label=t("main.feats"))
+        s4 = ui.tab("tables", label=t("main.tables"))
+        s5 = ui.tab("privacy", label=t("main.privacy"))
+    with ui.tab_panels(sub, value=start if start in names else s1).classes("w-full") \
+            .style("background:transparent"):
         with ui.tab_panel(s1):
             _structures_table()
         with ui.tab_panel(s2):
@@ -186,34 +199,146 @@ def _privacy_page() -> None:
 
 
 def _structures_table() -> None:
-    rows = [{
-        "name": s["name"], "level": s["level"], "lots": s["lots"],
-        "traits": ", ".join(s["traits"]), "cost": s["cost_raw"],
-        "construction": s["construction"]["raw"] if s["construction"] else "—",
-        "bonus": s["item_bonus"] or "—",
-        "effects": s["effects"] or "—",
-    } for s in rules.STRUCTURES]
+    """Every structure of the rules, as the wiki's table: name, level, lots,
+    traits, description, cost, construction, what it upgrades from and to,
+    the item bonus and the effects. A search over every column, and filters
+    on the trait, the level and the lots."""
+    by_id = rules.BY_ID
+    trait_names = {x["id"]: x["name"] for x in rules.KINGDOM["structure_traits"]}
+
+    def names(ids) -> str:
+        return ", ".join(by_id["structure"][x]["name"] for x in ids if x in by_id["structure"])
+
+    def row_of(s: dict) -> dict:
+        ruin = t("main.ruin_prefix", ruin=s["ruin"]) if s["ruin"] else ""
+        return {"id": s["id"], "name": f'{icons.icon(s["id"])} {s["name"]}', "level": s["level"],
+                "lots": s["lots"], "traits": ", ".join(trait_names.get(x, x) for x in s["traits"]),
+                "trait_ids": list(s["traits"]), "description": s["description"], "cost": s["cost_raw"],
+                "construction": s["construction"]["raw"] if s["construction"] else "",
+                "upgrade_of": names(s["upgrade_of"]), "upgrade_to": names(s["upgrade_to"]),
+                "bonus": s["item_bonus"], "effects": " · ".join(x for x in (s["effects"], ruin) if x),
+                "sort_name": s["name"]}
+
+    everything = [row_of(s) for s in rules.STRUCTURES]
+
+    def col(name: str, label: str, share: int, align: str = "left", sortcol: bool = False) -> dict:
+        # Every column has its share of the width, in percent, and the table's
+        # layout is fixed (the `km-fit` rule of the theme): the eleven columns always fit
+        # the page and their texts wrap, so no column hides behind a sideways
+        # scroll on a small or zoomed screen. `sortcol` and `mark` are ours,
+        # read by the header template; Quasar's own sorting is not used.
+        style = f"width:{share}%;white-space:normal;vertical-align:middle"
+        return {"name": name, "label": label, "field": name, "align": align, "style": style,
+                "headerStyle": f"width:{share}%", "sortcol": sortcol, "mark": ""}
+
     columns = [
-        {"name": "name", "label": t("main.structure"), "field": "name", "sortable": True, "align": "left"},
-        {"name": "level", "label": t("main.lvl"), "field": "level", "sortable": True},
-        {"name": "lots", "label": t("main.lots"), "field": "lots", "sortable": True},
-        {"name": "traits", "label": t("main.traits"), "field": "traits", "align": "left"},
-        {"name": "cost", "label": t("main.cost"), "field": "cost", "align": "left"},
-        {"name": "construction", "label": t("main.construction"), "field": "construction", "align": "left"},
-        {"name": "bonus", "label": t("main.item_bonus"), "field": "bonus", "align": "left"},
+        col("name", t("main.structure"), 9, sortcol=True),
+        col("level", t("main.lvl"), 3, "center", sortcol=True),
+        col("lots", t("main.lots"), 3, "center", sortcol=True),
+        col("traits", t("main.traits"), 8),
+        col("description", t("main.description"), 20),
+        col("cost", t("main.cost"), 8),
+        col("construction", t("main.construction"), 9),
+        col("upgrade_of", t("main.upgrade_of"), 6),
+        col("upgrade_to", t("main.upgrade_to"), 7),
+        col("bonus", t("main.item_bonus"), 10),
+        col("effects", t("main.effects"), 17),
     ]
-    table = ui.table(columns=columns, rows=rows, row_key="name", pagination=25) \
-        .classes("w-full km-panel")
-    table.add_slot("body", r'''
-        <q-tr :props="props">
-          <q-td v-for="col in props.cols" :key="col.name" :props="props">{{ col.value }}</q-td>
-        </q-tr>
-        <q-tr v-if="props.row.effetti !== '—'" :props="props">
-          <q-td colspan="100%" style="color:#a2957c;font-size:.78rem;white-space:normal">
-            {{ props.row.effetti }}
-          </q-td>
-        </q-tr>
-    ''')
+    chosen = {"trait": "", "level": "", "lots": "", "text": ""}
+    # The sorts in force, {column: "asc" | "desc"}. A header click cycles its
+    # column through none, ascending, descending. Their precedence is fixed,
+    # whatever the order of the clicks: the level groups the rows, the lots
+    # split a level, the name only breaks the ties that are left; a name
+    # sort followed by a level sort would otherwise order nothing.
+    sorts: dict[str, str] = {}
+    PRECEDENCE = ("level", "lots", "name")
+
+    def sort_key(value):
+        """Numbers as they are; texts folded and stripped of their accents, so
+        «Édificio» sorts with the E in either language."""
+        if isinstance(value, (int, float)):
+            return value
+        folded = unicodedata.normalize("NFKD", str(value)).casefold()
+        return "".join(ch for ch in folded if not unicodedata.combining(ch))
+
+    def ordered(rows: list[dict]) -> list[dict]:
+        # Stable sorts applied from the least significant key to the most.
+        for name in reversed(PRECEDENCE):
+            if name not in sorts:
+                continue
+            field = "sort_name" if name == "name" else name
+            rows = sorted(rows, key=lambda r, f=field: sort_key(r[f]), reverse=sorts[name] == "desc")
+        return rows
+
+    def filtered() -> list[dict]:
+        rows = everything
+        needle = chosen["text"].strip().lower()
+        if needle:
+            rows = [r for r in rows if any(isinstance(v, str) and needle in v.lower() for v in r.values())]
+        if chosen["trait"]:
+            rows = [r for r in rows if chosen["trait"] in r["trait_ids"]]
+        if chosen["level"]:
+            rows = [r for r in rows if r["level"] <= STATE.level]
+        if chosen["lots"]:
+            rows = [r for r in rows if r["lots"] == int(chosen["lots"])]
+        return ordered(rows)
+
+    with ui.card().classes("km-panel w-full"):
+        with ui.row().classes("items-center gap-3 flex-wrap w-full"):
+            ui.input(t("main.search_structures"),
+                     on_change=lambda e: (chosen.update(text=e.value or ""), refill())) \
+                .props("outlined dense clearable debounce=300").classes("w-64")
+            ui.select({"": t("main.any_trait"), **trait_names}, value="", label=t("main.traits"),
+                      on_change=lambda e: (chosen.update(trait=e.value or ""), refill())) \
+                .props("outlined dense").classes("w-44")
+            ui.select({"": t("main.any_level"), "mine": t("main.up_to_level", level=STATE.level)}, value="",
+                      label=t("main.lvl"), on_change=lambda e: (chosen.update(level=e.value or ""), refill())) \
+                .props("outlined dense").classes("w-52")
+            ui.select({"": t("main.any_lots"), "1": "1", "2": "2", "4": "4"}, value="", label=t("main.lots"),
+                      on_change=lambda e: (chosen.update(lots=e.value or ""), refill())) \
+                .props("outlined dense").classes("w-32")
+            count = ui.label().style("font-size:.78rem;color:var(--km-muted)")
+            ui.label(t("main.sort_hint")).style("font-size:.72rem;color:var(--km-muted)")
+        table = ui.table(columns=columns, rows=filtered(), row_key="id", pagination=25) \
+            .props("dense flat wrap-cells").classes("w-full km-fit")
+        # Our own header: a click on a sortable column cycles its sort, the
+        # arrow and the rank are always drawn, and every title sits on one line.
+        table.add_slot("header", r'''
+            <q-tr :props="props">
+              <q-th v-for="col in props.cols" :key="col.name" :props="props"
+                    :style="col.sortcol ? 'cursor:pointer;user-select:none;vertical-align:middle' : 'vertical-align:middle'"
+                    @click="col.sortcol && $parent.$emit('sortcol', col.name)">
+                {{ col.label }}<span v-if="col.mark" style="margin-left:4px;color:var(--km-gold)">{{ col.mark }}</span>
+              </q-th>
+            </q-tr>
+        ''')
+
+        def marks() -> None:
+            for c in columns:
+                direction = sorts.get(c["name"])
+                c["mark"] = "" if direction is None else ("▲" if direction == "asc" else "▼")
+            table.columns = columns      # the table keeps a copy: handed over again
+
+        def toggle(name: str) -> None:
+            if name not in PRECEDENCE:
+                return
+            current = sorts.get(name)
+            if current is None:
+                sorts[name] = "asc"
+            elif current == "asc":
+                sorts[name] = "desc"
+            else:
+                del sorts[name]
+            marks()
+            refill()
+
+        table.on("sortcol", lambda e: toggle(str(e.args)))
+
+        def refill() -> None:
+            table.rows = filtered()
+            count.text = tn("main.structures_count", len(table.rows))
+
+        refill()
 
 
 def _activity_list() -> None:
@@ -240,73 +365,79 @@ def _activity_list() -> None:
 
 
 def _tables(user: auth.User) -> None:
-    with ui.row().classes("w-full items-start gap-4 flex-wrap"):
-        with ui.card().classes("km-panel"):
-            theme.title(t("main.kingdom_size"), 2)
-            ui.table(
-                columns=[{"name": k, "label": lab, "field": k}
-                         for k, lab in (("dim", t("main.size")), ("kind", t("main.nation_type")),
-                                        ("die", t("main.resource_die")), ("dc", t("main.control_dc_mod")),
-                                        ("mag", t("main.storage")))],
-                rows=[{"dim": f'{v["min"]}–{v["max"] if v["max"] < 1000 else "+"}', "kind": v["kind"],
-                       "die": f'1d{v["die"]}', "dc": f'+{v["dc_mod"]}', "mag": v["storage"]}
-                      for v in rules.KINGDOM["size_table"]]).props("dense flat")
-        with ui.card().classes("km-panel"):
-            theme.title(t("main.settlement_types"), 2)
-            ui.table(
-                columns=[{"name": k, "label": lab, "field": k}
-                         for k, lab in (("name", t("main.settlement")), ("blocks", t("main.blocks")),
-                                        ("pop", t("main.population")), ("liv", t("main.level")),
-                                        ("cons", t("city.consumption")), ("bo", t("main.max_item_bonus_short")),
-                                        ("inf", t("city.influence")))],
-                rows=[{"name": t("main.settlement_level", name=st["name"], level=st["kingdom_level"]), "blocks": st["blocks"],
-                       "pop": st["population"], "liv": st["level"], "cons": st["consumption"],
-                       "bo": f'+{st["item_bonus_max"]}', "inf": st["influence"]}
-                      for st in rules.SETTLEMENT_TYPES]).props("dense flat")
-        with ui.card().classes("km-panel"):
-            theme.title(t("main.kingdom_levels"), 2)
-            ui.table(
-                columns=[{"name": "liv", "label": t("main.lvl"), "field": "liv"},
-                         {"name": "dc", "label": t("main.control_dc"), "field": "dc"},
-                         {"name": "cap", "label": t("main.capabilities"), "field": "cap", "align": "left"}],
-                rows=[{"liv": v["level"], "dc": v["control_dc"], "cap": ", ".join(v["capabilities"])}
-                      for v in rules.KINGDOM["level_table"]], pagination=20).props("dense flat")
-        with ui.card().classes("km-panel"):
-            theme.title(t("main.milestone_xp_awards"), 2)
-            ui.table(columns=[{"name": "xp", "label": t("main.xp"), "field": "xp"},
-                              {"name": "d", "label": t("main.milestone"), "field": "d", "align": "left"},
-                              {"name": "ok", "label": t("main.achieved"), "field": "ok"}],
-                     rows=[{"xp": m["xp"], "d": m["desc"],
-                            "ok": "✔" if m["id"] in STATE.k["milestones"] else ""}
-                           for m in rules.MILESTONE_XP]).props("dense flat")
-        with ui.card().classes("km-panel"):
-            theme.title(t("main.building_rugged_terrain"), 2)
-            ui.table(columns=[{"name": "t", "label": t("main.terrain"), "field": "t", "align": "left"},
-                              {"name": "rp", "label": t("main.rp"), "field": "rp"}],
-                     rows=[{"t": terr["name"], "rp": terr["rp_cost"]} for terr in rules.TERRAINS
-                           if not terr.get("legacy")]).props("dense flat")
-        with ui.card().classes("km-panel").style("max-width:520px"):
-            theme.title(t("main.terrain_features"), 2)
-            for e in rules.HEX_FEATURES:
-                # What does not come from the wiki says so here, where one reads
-                # what it does: this is where one checks whether a thing is a rule.
-                mark = t("main.table_addition") if e.get("source") == "table" else ""
-                ui.markdown(t("main.text_2", icon=e["icon"], name=e["name"], mark=mark, desc=e["desc"]))                     .style("font-size:.8rem")
-        with ui.card().classes("km-panel").style("max-width:520px"):
-            theme.title(t("main.borders_between_hexes"), 2)
-            borders = rules.TRAVEL["borders"]
-            ui.markdown(t("main.no_border_marked_land"))                 .style("font-size:.8rem")
-            for entry in borders["kinds"].values():
-                cost = entry.get("extra_activities") or 0
-                extra = (t("main.travel_activities", cost=cost) if cost else "")
-                ui.markdown(t("main.table_addition_2", icon=entry["icon"], name=entry["name"], extra=extra, note=entry["note"]))                     .style("font-size:.8rem")
-            # The note lives here and not in a code comment: this is where one
-            # comes to check whether a thing is a rule or not.
-            ui.markdown(borders["_note"]).style("font-size:.75rem;color:var(--km-gold-dim)")
+    """The rules' tables, laid out like the Kingdom sheet: two columns, every
+    panel the width of its column, the long Kingdom Levels on the left, the
+    wider column on the right, where the terrain features' texts need the room."""
+    with ui.row().classes("w-full items-start gap-4 no-wrap km-split"):
+        with ui.column().classes("gap-4").style("flex:2 1 0;min-width:0"):
+            with ui.card().classes("km-panel w-full"):
+                theme.title(t("main.kingdom_levels"), 2)
+                ui.table(
+                    columns=[{"name": "liv", "label": t("main.lvl"), "field": "liv"},
+                             {"name": "dc", "label": t("main.control_dc"), "field": "dc"},
+                             {"name": "cap", "label": t("main.capabilities"), "field": "cap", "align": "left"}],
+                    rows=[{"liv": v["level"], "dc": v["control_dc"], "cap": ", ".join(v["capabilities"])}
+                          for v in rules.KINGDOM["level_table"]], pagination=20)                     .props("dense flat hide-bottom wrap-cells").classes("w-full")
+            with ui.card().classes("km-panel w-full"):
+                theme.title(t("main.milestone_xp_awards"), 2)
+                ui.table(columns=[{"name": "xp", "label": t("main.xp"), "field": "xp"},
+                                  {"name": "d", "label": t("main.milestone"), "field": "d", "align": "left"},
+                                  {"name": "ok", "label": t("main.achieved"), "field": "ok"}],
+                         rows=[{"xp": m["xp"], "d": m["desc"],
+                                "ok": "✔" if m["id"] in STATE.k["milestones"] else ""}
+                               for m in rules.MILESTONE_XP]).props("dense flat").classes("w-full")
+            with ui.card().classes("km-panel w-full"):
+                theme.title(t("main.borders_between_hexes"), 2)
+                borders = rules.TRAVEL["borders"]
+                ui.markdown(t("main.no_border_marked_land")).style("font-size:.8rem")
+                for entry in borders["kinds"].values():
+                    cost = entry.get("extra_activities") or 0
+                    extra = (t("main.travel_activities", cost=cost) if cost else "")
+                    ui.markdown(t("main.table_addition_2", icon=entry["icon"], name=entry["name"],
+                                  extra=extra, note=entry["note"])).style("font-size:.8rem")
+                # The note lives here and not in a code comment: this is where one
+                # comes to check whether a thing is a rule or not.
+                ui.markdown(borders["_note"]).style("font-size:.75rem;color:var(--km-gold-dim)")
+
+        with ui.column().classes("gap-4").style("flex:3 1 0;min-width:0"):
+            with ui.card().classes("km-panel w-full"):
+                theme.title(t("main.kingdom_size"), 2)
+                ui.table(
+                    columns=[{"name": k, "label": lab, "field": k}
+                             for k, lab in (("dim", t("main.size")), ("kind", t("main.nation_type")),
+                                            ("die", t("main.resource_die")), ("dc", t("main.control_dc_mod")),
+                                            ("mag", t("main.storage")))],
+                    rows=[{"dim": f'{v["min"]}–{v["max"]}' if v["max"] < 1000 else f'{v["min"]}+', "kind": v["kind"],
+                           "die": f'1d{v["die"]}', "dc": f'+{v["dc_mod"]}', "mag": v["storage"]}
+                          for v in rules.KINGDOM["size_table"]]).props("dense flat").classes("w-full")
+            with ui.card().classes("km-panel w-full"):
+                theme.title(t("main.settlement_types"), 2)
+                ui.table(
+                    columns=[{"name": k, "label": lab, "field": k}
+                             for k, lab in (("name", t("main.settlement")), ("blocks", t("main.blocks")),
+                                            ("pop", t("main.population")), ("liv", t("main.level")),
+                                            ("cons", t("city.consumption")), ("bo", t("main.max_item_bonus_short")),
+                                            ("inf", t("city.influence")))],
+                    rows=[{"name": t("main.settlement_level", name=st["name"], level=st["kingdom_level"]),
+                           "blocks": st["blocks"], "pop": st["population"], "liv": st["level"],
+                           "cons": st["consumption"], "bo": f'+{st["item_bonus_max"]}', "inf": st["influence"]}
+                          for st in rules.SETTLEMENT_TYPES]).props("dense flat").classes("w-full")
+            with ui.card().classes("km-panel w-full"):
+                theme.title(t("main.building_rugged_terrain"), 2)
+                ui.table(columns=[{"name": "t", "label": t("main.terrain"), "field": "t", "align": "left"},
+                                  {"name": "rp", "label": t("main.rp"), "field": "rp"}],
+                         rows=[{"t": terr["name"], "rp": terr["rp_cost"]} for terr in rules.TERRAINS
+                               if not terr.get("legacy")]).props("dense flat").classes("w-full")
+            with ui.card().classes("km-panel w-full"):
+                theme.title(t("main.terrain_features"), 2)
+                for e in rules.HEX_FEATURES:
+                    # What does not come from the wiki says so here, where one reads
+                    # what it does: this is where one checks whether a thing is a rule.
+                    mark = t("main.table_addition") if e.get("source") == "table" else ""
+                    ui.markdown(t("main.text_2", icon=e["icon"], name=e["name"], mark=mark, desc=e["desc"]))                         .style("font-size:.8rem")
 
     theme.sep()
-    ui.label(t("main.rules_source_pf2_altervista")) \
-        .style("color:var(--km-muted);font-size:.8rem")
+    ui.label(t("main.rules_source_pf2_altervista"))         .style("color:var(--km-muted);font-size:.8rem")
 
 
 MAX_SAVE_BYTES = 512 * 1024 * 1024

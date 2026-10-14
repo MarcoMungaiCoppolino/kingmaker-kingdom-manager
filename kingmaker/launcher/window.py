@@ -111,6 +111,10 @@ class Launcher:
         self.links: dict[str, str] = {}
         self.port_in_use: int | None = None
         self.release: core.Release | None = None
+        # When the last update check could not reach GitHub: the time of the
+        # next try ("HH:MM"), or None; and that retry's pending `after`.
+        self.check_failed: str | None = None
+        self.check_after_id = None
         self.log_lines: list[str] = []
         self.settings_window: tk.Toplevel | None = None
         # The cloud: the record we hold while hosting, the thread that keeps
@@ -237,7 +241,10 @@ class Launcher:
         self.head = head = ttk.Frame(body)
         head.pack(fill="x", **PAD)
         ttk.Label(head, text=core.APP_NAME, font=("TkDefaultFont", 15, "bold")).pack(side="left")
-        ttk.Label(head, text=t("launcher.version", version=__version__),
+        # Run from the source tree, not from an installer: said beside the
+        # number, so a test window is told apart from the installed app.
+        ttk.Label(head, text=t("launcher.version", version=__version__)
+                  + ("" if core.is_frozen() else " · " + t("launcher.from_source")),
                   foreground=COLOURS["quiet"]).pack(side="left", padx=8, pady=6)
         ttk.Button(head, text=t("launcher.settings"), command=self.open_settings).pack(side="right")
 
@@ -247,6 +254,15 @@ class Launcher:
         self.update_button = ttk.Button(self.update_bar, command=self.download_update)
         self.update_button.pack(side="left", padx=8)
         self.show_release()
+        # The update check that could not reach GitHub, said in a muted line
+        # under the version, with a button to try again now.
+        self.check_line = ttk.Frame(body)
+        self.check_label = ttk.Label(self.check_line, foreground=COLOURS["quiet"])
+        self.check_label.pack(side="left")
+        self.check_button = ttk.Button(self.check_line, text=t("launcher.update_check_now"),
+                                       command=self.check_now)
+        self.check_button.pack(side="left", padx=8)
+        self.show_check_line()
 
         if admin:
             self.build_admin(body)
@@ -2456,9 +2472,47 @@ class Launcher:
 
     # ------------------------------------------------------------- updates
     def check_updates(self) -> None:
-        release = core.latest_release()
-        if release is not None and core.is_newer(release.version):
-            self.post(lambda: self.show_release(release))
+        release, reached = core.check_latest()
+        self.post(lambda: self.after_check(release, reached))
+
+    # A check that could not reach GitHub is tried again after this long.
+    RETRY_CHECK_MS = 30 * 60 * 1000
+
+    def after_check(self, release: core.Release | None, reached: bool) -> None:
+        """What the update check found: the bar when a newer release is out;
+        the muted line, and a retry in half an hour, when GitHub could not be
+        asked at all. «No update» and «could not ask» no longer look alike."""
+        if self.check_after_id is not None:
+            try:
+                self.root.after_cancel(self.check_after_id)
+            except tk.TclError:
+                pass
+            self.check_after_id = None
+        if reached:
+            self.check_failed = None
+            if release is not None and core.is_newer(release.version):
+                self.show_release(release)
+        else:
+            when = time.localtime(time.time() + self.RETRY_CHECK_MS / 1000)
+            self.check_failed = time.strftime("%H:%M", when)
+            self.check_after_id = self.root.after(self.RETRY_CHECK_MS, self.check_now)
+        self.show_check_line()
+
+    def check_now(self) -> None:
+        """«Check now», or the half-hour retry: the check again, in the background."""
+        if not self.settings.check_updates and self.check_failed is None:
+            return
+        self.check_label.config(text=t("launcher.update_checking"))
+        self.check_button.config(state="disabled")
+        threading.Thread(target=self.check_updates, daemon=True).start()
+
+    def show_check_line(self) -> None:
+        if self.check_failed is None:
+            self.check_line.pack_forget()
+            return
+        self.check_label.config(text=t("launcher.update_check_failed", when=self.check_failed))
+        self.check_button.config(state="normal")
+        self.check_line.pack(fill="x", padx=12, pady=(0, 4), after=self.head)
 
     def show_release(self, release: core.Release | None = None) -> None:
         if release is not None:
@@ -2571,6 +2625,9 @@ class Launcher:
         def fill(found: list[core.Release]) -> None:
             if not box.winfo_exists():      # closed before GitHub answered
                 return
+            # Only what can still be installed here: since 2.3.0 an older
+            # patch keeps no installer, and is not offered.
+            found = core.with_installer(found)
             releases[:] = found
             box.delete(0, "end")
             for release in found:
@@ -2579,9 +2636,7 @@ class Launcher:
                     marks.append(t("launcher.versions.current"))
                 if found and release is found[0]:
                     marks.append(t("launcher.versions.latest"))
-                if release.installer() is None:
-                    marks.append(t("launcher.versions.no_installer"))
-                elif not release.signed:
+                if not release.signed:
                     marks.append(t("launcher.versions.unsigned"))
                 line = f"{release.version}    {release.published}    {' · '.join(marks)}"
                 box.insert("end", line)
@@ -2767,10 +2822,13 @@ class Launcher:
             self.stop(wait=True)
         self.drop_record()
         self.gather()
-        try:
-            self.root.after_cancel(self.watch_id)
-        except tk.TclError:
-            pass
+        for pending in (self.watch_id, self.check_after_id):
+            if pending is None:
+                continue
+            try:
+                self.root.after_cancel(pending)
+            except tk.TclError:
+                pass
         self.root.destroy()
 
 

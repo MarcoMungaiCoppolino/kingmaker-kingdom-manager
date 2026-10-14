@@ -10,6 +10,7 @@ import time
 from pathlib import Path
 
 from kingmaker import config, rules
+from kingmaker import turn_memory as memory
 from kingmaker.geometry import hexgrid
 from kingmaker.storage import migrations
 from kingmaker.rules import almanac
@@ -21,6 +22,17 @@ log = logging.getLogger(__name__)
 COMMODITY_IDS = [p["id"] for p in rules.COMMODITIES]
 RUIN_IDS = [r["id"] for r in rules.RUINS]
 ABILITY_IDS = [c["id"] for c in rules.ABILITIES]
+
+# The structure trait whose benefits count once per settlement: PF2e's
+# Edifice (Town Hall, Castle, Palace, Cathedral...). Its id is "building":
+# the ids came from the Italian names, where «Edificio» is the Building
+# trait and «Costruzione» the Edifice one, so the two read crossed.
+EDIFICE = "building"
+
+# The effect kinds that carry no number: applied whatever the row's value
+# (`State.apply_effect`), and drawn without a number field (`turn._effect_rows`).
+_NO_VALUE = {"lockout", "pending_check", "event_mark", "debt", "repay", "penalty",
+             "unclaim", "claim", "relation", "agreement"}
 
 
 # --------------------------------------------------------------------------
@@ -86,6 +98,26 @@ def new_kingdom() -> dict:
         "turn_activities": {},
         "trade_agreements": [],
         "diplomatic_relations": [],
+        # The groups the kingdom deals with, each with the Negotiation DC the
+        # GM gives it (Send Diplomatic Envoy and the activities after it).
+        "partners": [],
+        # The kingdom's ongoing events, named by the GM: the wiki keeps no
+        # list of them, so the app tracks them instead of rolling them.
+        "events": [],
+        # What carries from one turn to the next (`turn_memory`): lock-outs,
+        # repeats, streaks, debts, penalties, pending flat checks.
+        "turn_memory": {"record": [], "last": {}, "streaks": {}, "lockouts": [],
+                        "debts": {}, "penalties": [], "pending": []},
+        # This turn's Leadership activities by leader ({role: {act: n}}) and
+        # Civic activities by settlement ({settlement: n}); reset every turn.
+        "turn_leaders": {},
+        "turn_civic": {},
+        # The leaders' week of downtime this month: {"turn", "ticks", "choices"}.
+        "downtime": {},
+        # Favored Land this turn: {"turn", "hex", "used", "as_one"}.
+        "favored_land": {},
+        # RP gained this turn that does not become XP (Request Foreign Aid).
+        "rp_no_xp": 0,
         "milestones": [],
         "event_dc": 16,
         "hexes": {},
@@ -268,6 +300,7 @@ class State:
         self.k["rp_spent_turn"] = 0
         self.k["bonus_dice"] = 0
         self.k["penalty_dice"] = 0
+        self.k["rp_no_xp"] = 0                 # foreign aid's RP: a new turn's RP
         return n, faces, tot, rolls
 
     def storage(self, commodity: str) -> int:
@@ -277,7 +310,10 @@ class State:
         built = 0
         for sett in self.k["settlements"]:
             for sid, count in self.structures_of(sett).items():
-                built += ((rules.BY_ID["structure"].get(sid) or {}).get("storage") or {}).get(commodity, 0) * count
+                st = rules.BY_ID["structure"].get(sid) or {}
+                if EDIFICE in st.get("traits", ()):
+                    count = 1           # an Edifice counts once per settlement
+                built += (st.get("storage") or {}).get(commodity, 0) * count
         return self.size_entry()["storage"] + built + self.k["storage_extra"].get(commodity, 0)
 
     @property
@@ -340,6 +376,8 @@ class State:
         if "civil_service" in self.k["feats"] and self.feat_choice("civil_service") == rid:
             return False
         data = self.k["roles"][rid]
+        if any(p.get("kind") == "vacancy" for p in memory.active_penalties(self.k, role=rid)):
+            return True         # the week of downtime missed, taken as the vacancy penalty
         return bool(data["absent"] or not (data["name"] or data.get("character_id")))
 
     def feat_choice(self, fid: str, default=None):
@@ -349,9 +387,13 @@ class State:
 
     def _modifiers(self, skill_id: str, activity: str | None, variant: str | None,
                    hex_, settlement: str | None, event: str | None,
-                   fair: bool) -> list[tuple[str, int, str | None]]:
+                   fair: bool, leader: str | None = None, subject: str | None = None,
+                   extra=()) -> list[tuple[str, int, str | None]]:
         """Every modifier to a Kingdom check, as (name, value, type), before
-        the stacking rules (`skill_detail`)."""
+        the stacking rules (`skill_detail`). `leader` is the role acting,
+        `subject` the partner or Ruin the check is about, `extra` the typed
+        bonuses the caller adds (an event's Watchtower, Favored Land), which
+        stack by the same rules as the rest."""
         ability = rules.BY_ID["skills"][skill_id]["ability"]
         feats = set(self.k["feats"])
         out: list[tuple[str, int, str | None]] = [
@@ -425,12 +467,33 @@ class State:
         for m in self.active_modifiers(ability=ability, skills=skill_id):
             kind = {"circostanza": "circumstance"}.get(m.get("kind"), m.get("kind"))
             out.append((m["name"], m["valore"], kind))
+
+        # The kingdom's own map and partners.
+        if hex_ is not None and tuple(hex_) in self.secondary_hexes():
+            out.append((t("state.secondary_territory"), -4, "circumstance"))
+        if skill_id == "trade":
+            cut_off = sum(1 for s in self.k["settlements"] if s.get("hex") and self.no_land_border(s))
+            if cut_off:
+                out.append((t("state.no_land_border", n=cut_off), -cut_off, "item"))
+        if activity == "trade_commodities" and self.related_partners():
+            # «If you trade with a group that you've established diplomatic
+            # relations with, you gain a +1 circumstance bonus» (the activity).
+            out.append((t("state.diplomatic_relations_bonus"), 1, "circumstance"))
+
+        # What the turns remember: a leader's penalty, a partner's bonus.
+        phase = act["phase"] if act else None
+        for p in memory.active_penalties(self.k, role=leader, subject=subject, phase=phase):
+            if p.get("kind") == "vacancy":
+                continue                   # read by `role_vacant`, not a modifier
+            out.append((p.get("reason") or "", p["value"], p.get("kind") or "circumstance"))
+        out.extend(extra)
         return out
 
     def skill_detail(self, skill_id: str, activity: str | None = None,
                      variant: str | None = None, hex_: tuple[int, int] | None = None,
                      settlement: str | None = None, event: str | None = None,
-                     fair: bool = True) -> list[tuple[str, int]]:
+                     fair: bool = True, leader: str | None = None, subject: str | None = None,
+                     extra=()) -> list[tuple[str, int]]:
         """Breakdown of a Kingdom check's modifier, as (name, value): the
         skill alone, or — with `activity` — as that activity attempts it,
         with the structures' item bonus, the vacancy penalties of the roles
@@ -441,7 +504,7 @@ class State:
         best: dict[tuple[str, bool], tuple[str, int]] = {}
         entries: list[tuple[str, int]] = []
         for name, value, kind in self._modifiers(skill_id, activity, variant, hex_,
-                                                 settlement, event, fair):
+                                                 settlement, event, fair, leader, subject, extra):
             if not value:
                 continue
             if kind in self.TYPED:
@@ -458,9 +521,11 @@ class State:
     def check_detail(self, skill_id: str, activity: str | None = None,
                      variant: str | None = None, hex_: tuple[int, int] | None = None,
                      settlement: str | None = None, event: str | None = None,
-                     fair: bool = True) -> list[tuple[str, int]]:
+                     fair: bool = True, leader: str | None = None, subject: str | None = None,
+                     extra=()) -> list[tuple[str, int]]:
         """The breakdown of a Kingdom check: `skill_detail` for an activity."""
-        return self.skill_detail(skill_id, activity, variant, hex_, settlement, event, fair)
+        return self.skill_detail(skill_id, activity, variant, hex_, settlement, event, fair,
+                                 leader, subject, extra)
 
     def item_bonus(self, activity: str, skill: str | None = None, variant: str | None = None,
                    hex_: tuple[int, int] | None = None,
@@ -484,6 +549,8 @@ class State:
             cap = rules.BY_ID["settlement"][sett["kind"]]["item_bonus_max"]
             for sid, count in self.structures_of(sett).items():
                 st = rules.BY_ID["structure"].get(sid)
+                if st and EDIFICE in st.get("traits", ()):
+                    count = 1           # an Edifice counts once per settlement
                 for b in (st or {}).get("item_bonuses", ()):
                     if (b["activity"] != activity
                             or (b.get("skills") and skill not in b["skills"])
@@ -554,11 +621,53 @@ class State:
         if claimed is None:
             claimed = {(h["col"], h["row"]) for h in self.claimed_hexes()}
         radius = rules.BY_ID["settlement"][sett["kind"]]["influence"]
-        if sett.get("water_only") and not sett.get("has_bridge"):
-            radius = 0
+        if self.water_only(sett) and not self.has_bridge(sett):
+            radius = 0          # an island: Influence 0
         origin_ = (sett["hex"][0], sett["hex"][1])
         return {pos for pos in claimed
                 if hexgrid.distance(origin_, pos, self.orientation) <= radius} | {origin_}
+
+    @staticmethod
+    def water_only(sett: dict) -> bool:
+        """Every border of the settlement is water: an island. Derived from the
+        four borders (the stored flag of older saves counts too)."""
+        borders = sett.get("borders") or {}
+        return bool(sett.get("water_only")) or (
+            len(borders) == 4 and all(v == "water" for v in borders.values()))
+
+    @staticmethod
+    def has_bridge(sett: dict) -> bool:
+        """A bridge spans one of the settlement's water borders."""
+        return bool(sett.get("border_bridges")) or bool(sett.get("has_bridge"))
+
+    def no_land_border(self, sett: dict) -> bool:
+        """No land border and no bridged water border: -1 item to Trade."""
+        borders = sett.get("borders") or {}
+        if any(v in ("land", "walls") for v in borders.values()):
+            return False        # a walled border is a land border with walls
+        if not borders:
+            return False        # not drawn yet: the table has not said
+        return not self.has_bridge(sett)
+
+    def secondary_hexes(self) -> set[tuple[int, int]]:
+        """The claimed hexes cut off from the capital's: no path of claimed
+        hexes joins them. Derived, never stored; empty without a capital on
+        the map."""
+        cap = self.capital()
+        if not cap or not cap.get("hex"):
+            return set()
+        claimed = {(h["col"], h["row"]) for h in self.claimed_hexes()}
+        start = (cap["hex"][0], cap["hex"][1])
+        if start not in claimed:
+            return set()
+        seen, todo = {start}, [start]
+        while todo:
+            c, r = todo.pop()
+            for pos in hexgrid.neighbours(c, r, self.orientation):
+                if pos in claimed and pos not in seen:
+                    seen.add(pos)
+                    todo.append(pos)
+        return claimed - seen
 
     # --------------------------------------------------------------- consumption
     def consumption(self) -> dict:
@@ -655,6 +764,63 @@ class State:
             if self.k["capital"]:
                 self.settlement(self.k["capital"])["capital"] = True
         self.record(t("state.settlement_removed", name=sett['name']), "settlement")
+
+    def unclaim_hex(self, col: int, row: int) -> dict | None:
+        """A hex the kingdom loses or abandons: no longer claimed, its farmland
+        and work site gone (roads, fortifications and irrigation stay on the
+        land). Its settlement leaves the kingdom as a freehold that remembers
+        it, so Pledge of Fealty can bring it back as it was. Returns the
+        settlement that left, or None."""
+        h = self.existing_hex(col, row)
+        if not h:
+            return None
+        h["status"] = "cleared"
+        h["farmland"] = False
+        h["work_site"] = None
+        sett = self.settlement(h.get("settlement") or "")
+        if sett:
+            self.k["settlements"] = [s for s in self.k["settlements"] if s["id"] != sett["id"]]
+            if self.k["capital"] == sett["id"]:
+                self.k["capital"] = self.k["settlements"][0]["id"] if self.k["settlements"] else None
+                if self.k["capital"]:
+                    self.settlement(self.k["capital"])["capital"] = True
+            sett["capital"] = False
+            h["settlement"] = None
+            h["features"] = [f for f in h["features"] if f.get("kind") != "settlement"]
+            h["features"].append({"kind": "freehold", "name": sett["name"], "settlement_data": sett})
+        self.record(t("state.hex_unclaimed", col=col, row=row) if not sett
+                    else t("state.hex_unclaimed_freehold", col=col, row=row, name=sett["name"]), "map")
+        return sett
+
+    def claim_freehold(self, col: int, row: int) -> bool:
+        """Pledge of Fealty with a freehold: its hex joins the kingdom, and its
+        settlement too, as it was when the kingdom lost it (or new, with an
+        empty grid). No XP for a hex claimed before. A hex not adjacent to the
+        kingdom is a secondary territory, by `secondary_hexes`."""
+        from kingmaker.settlements import new_settlement
+
+        h = self.existing_hex(col, row)
+        free = next((f for f in (h or {}).get("features", ()) if f.get("kind") == "freehold"), None)
+        if free is None:
+            return False
+        h["status"] = "claimed"
+        if not h.get("ever_claimed"):
+            self.k["xp"] += 10
+        h["ever_claimed"] = True
+        h["features"].remove(free)
+        sett = free.get("settlement_data") or new_settlement(free.get("name") or h.get("name") or f"{col},{row}",
+                                                             (col, row))
+        sett["capital"] = False
+        sett.setdefault("border_walls", {})
+        sett.setdefault("border_bridges", {})
+        self.k["settlements"].append(sett)
+        if not self.k["capital"]:
+            self.k["capital"] = sett["id"]
+            sett["capital"] = True
+        self.link_settlement(sett["id"], col, row)
+        self.check_size_milestones()
+        self.record(t("state.freehold_joined", name=sett["name"], col=col, row=row), "settlement")
+        return True
 
     def lot_detail(self, sett: dict) -> dict:
         """Urban Grid counts: built blocks, Residential lots, occupied and free
@@ -807,7 +973,8 @@ class State:
     def kingdom_check(self, skill_id: str, dc: int, activity: str | None = None,
                       variant: str | None = None, hex_: tuple[int, int] | None = None,
                       settlement: str | None = None, event: str | None = None,
-                      fair: bool = True, worsens_by: int = 0) -> rules.Result:
+                      fair: bool = True, worsens_by: int = 0, leader: str | None = None,
+                      subject: str | None = None, extra=()) -> rules.Result:
         """A Kingdom skill check, with everything that touches one: the
         breakdown (`check_detail`), Anarchy's worsening, and then the feats
         that act on the result — a one-check bonus used up (Focused
@@ -816,7 +983,8 @@ class State:
         Resource Die on a critical success. Every check of the app rolls
         here, so each feat works the same from the sheet, the turn, the map
         and the city."""
-        detail = self.check_detail(skill_id, activity, variant, hex_, settlement, event, fair)
+        detail = self.check_detail(skill_id, activity, variant, hex_, settlement, event, fair,
+                                   leader, subject, extra)
         res = rules.roll_check(sum(v for _n, v in detail), dc, detail,
                                worsens_by + (1 if self.in_anarchy else 0))
         feats = set(self.k["feats"])
@@ -961,8 +1129,13 @@ class State:
         """A choice a feat gives the table right after something happened
         (Crush Dissent, Liquidate Resources): offered, like the Fame ones,
         to whoever caused it."""
-        if all(o["kind"] != offer["kind"] for o in self.feat_offers):
+        pending = next((o for o in self.feat_offers if o["kind"] == offer["kind"]), None)
+        if pending is None:
             self.feat_offers.append(offer)
+        elif offer["kind"] == "rp_shortfall":
+            # Every unpaid expense costs a Ruin point: a second shortfall
+            # before the table answered is one more to choose.
+            pending["count"] = pending.get("count", 1) + 1
 
     def take_feat_offers(self) -> list[dict]:
         offers, self.feat_offers = self.feat_offers, []
@@ -1036,13 +1209,17 @@ class State:
         return min(20, n)
 
     def structures_of(self, sett: dict) -> dict[str, int]:
+        """The structures standing in the settlement, by id, with how many.
+        One being demolished (a lot of it marked `demolishing`) stops working
+        once demolition starts."""
         tally: dict[str, int] = {}
         for grid in sett["grids"]:
             for block_ in grid:
                 seen = set()
+                razing = {lot.get("gid") for lot in block_ if lot.get("demolishing")}
                 for lot in block_:
                     name, gid = lot.get("structure"), lot.get("gid")
-                    if not name:
+                    if not name or (gid and gid in razing):
                         continue
                     key = (name, gid)
                     if key in seen:
@@ -1149,10 +1326,20 @@ class State:
         return False
 
     def _forced_short(self) -> None:
-        """An expense forced by an outcome left the kingdom at 0 RP:
-        Liquidate Resources may cover it."""
+        """An expense forced by an outcome left the kingdom at 0 RP: +1 to a
+        Ruin of the PCs' choice, for every such expense; Liquidate Resources
+        may cover it instead."""
+        self._offer_feat({"kind": "rp_shortfall", "count": 1})
         if "liquidate_resources" in self.k["feats"] and not self.feat_used("liquidate_resources"):
             self._offer_feat({"kind": "liquidate_resources"})
+
+    def rp_shortfall(self, rid: str) -> bool:
+        """The kingdom could not pay an expense: +1 to the Ruin the PCs chose.
+        Every unpaid expense costs its point: nothing limits it to once a turn."""
+        if rid not in self.k["ruins"]:
+            return False
+        self.modify_ruin(rid, 1, t("theme.rp_shortfall_reason"))
+        return True
 
     # -------------------------------------------------------------- anarchy
     @property
@@ -1197,6 +1384,140 @@ class State:
         before = self.k["fame_points"]
         self.k["fame_points"] = max(0, min(self.max_fame, before + delta))
         return self.k["fame_points"] - before
+
+    # ------------------------------------------------- an activity's DC
+    def activity_dc(self, act_id: str, *, subject: str | None = None, base: int | None = None,
+                    extra=()) -> tuple[int, list[tuple[str, int]]]:
+        """An activity's DC and its breakdown, `[(label, value), ...]`, the
+        base first: the Control DC and the activity's modifier, a fixed DC,
+        the partner's Negotiation DC, or `base` (a structure's DC); then what
+        the turns remember (a repeat, a streak); then the caller's `extra`
+        pairs. Every place that rolls an activity reads its DC here."""
+        act = rules.BY_ID["activities"][act_id]
+        cd = act["dc"]
+        cdc = self.control_dc
+        parts: list[tuple[str, int]] = []
+        if cd["kind"] == "control":
+            parts.append((t("turn.control_dc", control_dc=cdc), cdc))
+            if cd.get("mod"):
+                parts.append((cd.get("note") or t("turn.modifier"), cd["mod"]))
+        elif cd["kind"] == "fixed":
+            parts.append((t("turn.fixed_dc", dc=cd["valore"]), cd["valore"]))
+        elif cd["kind"] == "none_":
+            parts.append((cd.get("note") or t("turn.no_check"), 0))
+        elif base is not None:
+            parts.append((t("turn.fixed_dc", dc=base), base))
+        else:
+            partner = self.partner(subject) if subject else None
+            if partner and act_id in ("send_diplomatic_envoy", "pledge_of_fealty"):
+                parts.append((t("turn.dc_negotiation", name=partner["name"],
+                                dc=partner["negotiation_dc"]), partner["negotiation_dc"]))
+            elif partner and act_id == "request_foreign_aid":
+                parts.append((t("turn.dc_negotiation", name=partner["name"],
+                                dc=partner["negotiation_dc"]), partner["negotiation_dc"]))
+                parts.append((t("turn.dc_foreign_aid"), 2))
+            elif partner and act_id == "establish_trade_agreement":
+                higher = max(partner["negotiation_dc"], cdc)
+                parts.append((t("turn.dc_higher", name=partner["name"], dc=partner["negotiation_dc"],
+                                control_dc=cdc), higher))
+            else:
+                parts.append((cd.get("note") or t("turn.dc_gm"), cdc))
+        if act.get("repeat_dc") and self.repeated(act_id):
+            parts.append((t("turn.dc_repeat"), act["repeat_dc"]))
+        streak = memory.streak_dc(self.k, act_id, act.get("streak_dc"))
+        if streak:
+            parts.append((t("turn.dc_streak"), streak))
+        parts.extend(extra)
+        return sum(v for _n, v in parts), parts
+
+    # ------------------------------------------------- what the turns remember
+    def repeated(self, act_id: str) -> bool:
+        return memory.repeated(self.k, act_id)
+
+    def note_grade(self, act_id: str, grade: str) -> None:
+        memory.note_grade(self.k, act_id, grade)
+
+    def debt(self, key: str) -> dict | None:
+        return memory.debt(self.k, key)
+
+    def due_checks(self) -> list[dict]:
+        """The flat checks the activities left for this turn's Event phase."""
+        return memory.due_checks(self.k)
+
+    def clear_pending(self, source: str, hex_) -> int:
+        """A later success takes back a pending check (Irrigation on the same
+        hex). Returns how many were removed."""
+        pending = memory.memory(self.k)["pending"]
+        keep = [e for e in pending if not (e.get("source") == source and e.get("hex")
+                                           and list(e["hex"]) == list(hex_))]
+        removed = len(pending) - len(keep)
+        pending[:] = keep
+        return removed
+
+    def lockout_reason(self, act_id: str, subject: str | None = None) -> str:
+        entry = memory.lockout(self.k, act_id, subject)
+        if not entry:
+            return ""
+        return t("state.locked_out", activity=rules.BY_ID["activities"][act_id]["name"],
+                 until=entry["until_turn"] + 1)
+
+    def worsens_by(self, act_id: str, subject: str | None = None) -> int:
+        """Degrees an activity's result is worsened by what the turns
+        remember: Tap Treasury while the treasury is owed (two), an envoy to
+        a partner at war (one)."""
+        if act_id == "tap_treasury" and self.debt("tap_treasury"):
+            return 2
+        if act_id == "send_diplomatic_envoy" and subject and self.at_war_with(subject):
+            return 1
+        return 0
+
+    def new_turn_memory(self) -> None:
+        memory.new_turn(self.k)
+        # A failed construction's free retry lasts one turn.
+        for sett in self.k["settlements"]:
+            for grid in sett.get("grids") or []:
+                for block_ in grid:
+                    for lot in block_:
+                        failed = lot.get("failed")
+                        if failed and failed.get("turn", 0) < self.k["turn"] - 1:
+                            lot.pop("failed", None)
+
+    # ------------------------------------------------- events
+    def ongoing_events(self) -> list[dict]:
+        return [e for e in self.k["events"] if e.get("ended_turn") is None]
+
+    def event(self, eid: str | None) -> dict | None:
+        return next((e for e in self.k["events"] if e["id"] == eid), None)
+
+    def event_dc(self, ev: dict) -> int:
+        """An event's DC: the Control DC and the event's level modifier."""
+        return self.control_dc + int(ev.get("modifier") or 0)
+
+    # ------------------------------------------------- partners
+    def partner(self, pid: str | None) -> dict | None:
+        return next((p for p in self.k["partners"] if p["id"] == pid), None)
+
+    def relation(self, pid: str | None) -> dict | None:
+        """The latest relation with that partner, or None."""
+        found = [r for r in self.k["diplomatic_relations"] if r.get("partner") == pid]
+        return found[-1] if found else None
+
+    def at_war(self) -> list[dict]:
+        return [r for r in self.k["diplomatic_relations"]
+                if r.get("status") == "war" and r is self.relation(r.get("partner"))]
+
+    def at_war_with(self, pid: str) -> bool:
+        rel = self.relation(pid)
+        return bool(rel and rel.get("status") == "war")
+
+    def related_partners(self) -> list[dict]:
+        """The partners the kingdom has diplomatic relations with now."""
+        return [p for p in self.k["partners"]
+                if (self.relation(p["id"]) or {}).get("status") == "relations"]
+
+    def active_agreements(self) -> list[dict]:
+        return [a for a in self.k["trade_agreements"]
+                if isinstance(a, dict) and a.get("ended_turn") is None]
 
     # ------------------------------------------------- turn activities
     def leader_pc(self) -> int:
@@ -1250,11 +1571,59 @@ class State:
                    if (a := rules.BY_ID["activities"].get(aid))
                    and a["phase"] == phase and a["step"] == step)
 
-    def mark_activity(self, act_id: str) -> None:
+    def mark_activity(self, act_id: str, *, role: str | None = None, character: str | None = None,
+                      settlement: str | None = None, hex_=None, skill: str | None = None,
+                      subject: str | None = None) -> None:
+        """An activity attempted: counted for the turn, for its leader and
+        its settlement, and written in the record the turns remember."""
         self.k["turn_activities"][act_id] = self.activity_uses(act_id) + 1
+        if role:
+            mine = self.k["turn_leaders"].setdefault(role, {})
+            mine[act_id] = mine.get(act_id, 0) + 1
+        if settlement:
+            self.k["turn_civic"][settlement] = self.k["turn_civic"].get(settlement, 0) + 1
+        act = rules.BY_ID["activities"].get(act_id) or {}
+        if act.get("streak_dc"):
+            memory.bump_streak(self.k, act_id, act["streak_dc"])
+        memory.record_activity(self.k, act_id, role=role, character=character, settlement=settlement,
+                               hex_=hex_, skill=skill, subject=subject)
 
-    def activities_block(self, act: dict) -> str:
+    def downtime_choice(self, rid: str) -> str | None:
+        """What an unticked leader chose this turn: "give_up" or "penalty"."""
+        dt = self.k["downtime"]
+        if dt.get("turn") != self.k["turn"]:
+            return None
+        return (dt.get("choices") or {}).get(rid)
+
+    def leader_cap(self, rid: str) -> int:
+        """How many Leadership activities that leader may attempt this turn."""
+        return self.max_leadership_activities() - (1 if self.downtime_choice(rid) == "give_up" else 0)
+
+    def role_label(self, rid: str) -> str:
+        """«Ruler: Aldra», the role and who holds it."""
+        data = self.k["roles"][rid]
+        name = data.get("name") or ""
+        if data.get("character_id"):
+            char = self.archive.character(data["character_id"]) if self.archive else None
+            if char:
+                name = char["name"]
+        role = rules.BY_ID["role"][rid]["name"]
+        return f"{role}: {name}" if name else role
+
+    def lockout_only(self, act: dict, subject: str | None = None, **where) -> bool:
+        """The one reason this activity is refused is a lock-out, which the
+        GM may override."""
+        return bool(self.lockout_reason(act["id"], subject)) and not self._block_reason(act, **where)
+
+    def activities_block(self, act: dict, *, leader: str | None = None, subject: str | None = None,
+                         settlement: str | None = None) -> str:
         """Why this activity cannot be attempted right now — empty string if it can."""
+        return (self._block_reason(act, leader=leader, settlement=settlement)
+                or self.lockout_reason(act["id"], subject))
+
+    def _block_reason(self, act: dict, *, leader: str | None = None,
+                      settlement: str | None = None) -> str:
+        """Every reason but a lock-out."""
         request_ = act.get("min_proficiency")
         if request_ and act["skills"] != ["*"] and not any(
                 rules.meets_proficiency(self.k["proficiencies"].get(a, "untrained"), request_)
@@ -1272,18 +1641,47 @@ class State:
             name = {"leadership": t("state.leadership"), "region": t("state.region"),
                     "civic": t("state.civic")}.get(act["step"], act["step"])
             return t("state.activities_used_up_this", name=name, max=max_, max2=max_)
+        if act.get("subject") == "event" and not any(
+                not e.get("hire_locked") for e in self.ongoing_events()):
+            return t("state.hire_no_event")
+        # One leader, two or three Leadership activities, never the same twice.
+        if leader and act["phase"] == "activity" and act["step"] == "leadership":
+            mine = self.k["turn_leaders"].get(leader, {})
+            label = self.role_label(leader)
+            if act["id"] in mine:
+                return t("state.leader_repeats", name=label, activity=act["name"])
+            cap = self.leader_cap(leader)
+            if sum(mine.values()) >= cap:
+                return t("state.leader_used_up", name=label, n=cap)
+        # One Civic activity per settlement; Civic Planning (12th level) lets
+        # one settlement attempt a second once every other has acted.
+        if settlement and act["phase"] == "activity" and act["step"] == "civic":
+            used = self.k["turn_civic"]
+            if used.get(settlement, 0) >= 1:
+                others = [s["id"] for s in self.k["settlements"] if s["id"] != settlement]
+                if not (self.level >= 12 and used.get(settlement, 0) == 1
+                        and all(used.get(o, 0) >= 1 for o in others)
+                        and not any(n >= 2 for n in used.values())):
+                    sett = self.settlement(settlement)
+                    return t("state.settlement_acted", name=sett["name"] if sett else "")
         return ""
 
     # ------------------------------------------------- activity effects
     def apply_effect(self, entry: dict, value: int, target: str | None = None,
-                     dice: list | None = None) -> str:
+                     dice: list | None = None, context: dict | None = None) -> str:
         """Applies a single effect and returns how to describe it in the journal.
 
         The Resource Dice an effect rolls go into `dice`, when given, as
-        `{"rolls", "faces", "total", "spent"}`: the caller shows them to the table."""
+        `{"rolls", "faces", "total", "spent"}`: the caller shows them to the table.
+        `context` says what the outcome is about: the activity (`act`), its
+        `subject` (a Ruin, a partner, a role), the `event`, the `leader`, the
+        `hex` or `hexes`."""
         kind = entry["t"]
+        context = context or {}
         if kind == "note":
             return ""
+        if kind in _NO_VALUE:
+            return self._apply_marker(entry, target, context)
         if kind != "mod" and value == 0:
             return ""
         if kind == "unrest":
@@ -1307,6 +1705,8 @@ class State:
                     self._forced_short()
             else:
                 self.k["rp"] += value
+                if entry.get("no_xp"):
+                    self.k["rp_no_xp"] = self.k.get("rp_no_xp", 0) + value
         elif kind == "xp":
             self.k["xp"] = max(0, self.k["xp"] + value)
         elif kind == "fame":
@@ -1346,6 +1746,8 @@ class State:
                     self._forced_short()
             else:
                 self.k["rp"] += tot
+                if entry.get("no_xp"):
+                    self.k["rp_no_xp"] = self.k.get("rp_no_xp", 0) + tot
             if dice is not None:
                 dice.append({"rolls": rolls, "faces": self.resource_die, "total": tot,
                              "spent": value < 0})
@@ -1358,6 +1760,116 @@ class State:
             self.add_modifier(entry["name"], entry["v"], entry["dur"],
                                        ability=entry.get("ability"), skills=entry.get("skill"))
         return rules.entry_label(entry, value)
+
+    def _apply_marker(self, entry: dict, target: str | None, context: dict) -> str:
+        """The effect kinds that write what the turns remember, or change the
+        map or the partners, with no number to apply."""
+        kind = entry["t"]
+        act_id = context.get("act")
+        act = rules.BY_ID["activities"].get(act_id) if act_id else None
+        reason = act["name"] if act else (context.get("reason") or "")
+        mem = memory.memory(self.k)
+        turn = self.k["turn"]
+        if kind == "lockout":
+            scope = entry.get("scope", "self")
+            if scope in ("ruin", "target"):
+                subject = target or context.get("subject")
+                if not subject:
+                    return ""
+            else:
+                subject = None
+            memory.add_lockout(self.k, act_id or "", subject, int(entry.get("turns") or 1), reason)
+        elif kind == "pending_check":
+            hex_ = context.get("hex")
+            mem["pending"].append({
+                "due_turn": turn, "phase": "event", "dc": entry.get("dc"),
+                "dc_per_hex": act_id == "irrigation", "source": act_id or "",
+                "hex": list(hex_) if hex_ else None,
+                "remaining": entry.get("repeat"), "then": entry.get("event")})
+        elif kind == "event_mark":
+            ev = self.event(target or context.get("event"))
+            if not ev:
+                return ""
+            mark = entry.get("mark")
+            if mark == "ended":
+                ev["ended_turn"] = turn
+            elif mark == "hire_bonus":
+                ev["hire_bonus"] = turn
+            elif mark == "hire_failed":
+                ev["hire_failed"] = True
+            elif mark == "hire_locked":
+                ev["hire_locked"] = True
+            return rules.entry_label(entry, 0, ev["name"])
+        elif kind == "debt":
+            mem["debts"][entry["key"]] = {"since_turn": turn, "note": reason}
+        elif kind == "repay":
+            if mem["debts"].pop(entry["key"], None) is None:
+                return ""
+        elif kind == "penalty":
+            scope = entry.get("scope", "kingdom")
+            role = subject = None
+            if scope == "leader":
+                role = context.get("subject") if act_id == "new_leadership" else context.get("leader")
+                if not role:
+                    return ""
+            elif scope == "partner":
+                subject = target or context.get("subject")
+                if not subject:
+                    return ""
+            turns = entry.get("turns")
+            mem["penalties"].append({
+                "role": role, "subject": subject, "value": int(entry.get("v") or 0),
+                "kind": entry.get("kind", "circumstance"), "scope": scope, "reason": reason,
+                "until_turn": turn + int(turns) - 1 if turns else None,
+                "clears_on": entry.get("clears_on"), "phase": entry.get("phase"),
+                "since_turn": turn})
+            who = (self.role_label(role) if role else
+                   (self.partner(subject) or {}).get("name", "") if subject else "")
+            return rules.entry_label(entry, 0, who)
+        elif kind == "unclaim":
+            hexes = [tuple(h) for h in context.get("hexes") or ()]
+            if not hexes:
+                return ""
+            for c, r in hexes:
+                self.unclaim_hex(c, r)
+            return rules.entry_label(entry, 0, ", ".join(f"{c},{r}" for c, r in hexes), n=len(hexes))
+        elif kind == "claim":
+            hex_ = context.get("hex")
+            if not hex_ or not self.claim_freehold(*hex_):
+                return ""
+            return rules.entry_label(entry, 0, f"{hex_[0]},{hex_[1]}")
+        elif kind == "relation":
+            pid = target or context.get("subject")
+            partner = self.partner(pid)
+            if not partner:
+                return ""
+            status = entry.get("status", "relations")
+            rel = self.relation(pid)
+            if rel is None or rel.get("status") == "ended":
+                if status == "ended":
+                    return ""
+                self.k["diplomatic_relations"].append({
+                    "partner": pid, "since_turn": turn, "status": status,
+                    "abstract_war": False, "bonus": 0, "note": ""})
+            else:
+                rel["status"] = status
+            return rules.entry_label(entry, 0, partner["name"])
+        elif kind == "agreement":
+            pid = target or context.get("subject")
+            partner = self.partner(pid)
+            if not partner:
+                return ""
+            if entry.get("what", "new") == "new":
+                self.k["trade_agreements"].append({"partner": pid, "since_turn": turn,
+                                                   "ended_turn": None, "note": ""})
+            else:
+                found = [a for a in self.active_agreements() if a.get("partner") == pid]
+                if not found:
+                    return ""
+                for a in found:
+                    a["ended_turn"] = turn
+            return rules.entry_label(entry, 0, partner["name"])
+        return rules.entry_label(entry, 0)
 
 
 STATE = State()

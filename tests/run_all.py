@@ -42,7 +42,8 @@ SUITE = ["test_atoms.py", "test_ring.py", "test_faces.py", "test_redraw.py",
          "test_windows.py", "test_layers.py", "test_screens.py", "test_farmland.py", "test_shared_rolls.py",
          "test_fame.py", "test_feats.py", "test_rules.py", "test_save_formats.py",
          "test_vault.py", "test_ed25519.py", "test_totp.py", "test_updates.py",
-         "test_calendar.py"]
+         "test_calendar.py", "test_events.py", "test_turn_memory.py", "test_leaders.py",
+         "test_city_rules.py", "test_hex_rules.py", "test_diplomacy.py"]
 
 
 # A file that takes longer than this is stuck, not slow: the slowest, the

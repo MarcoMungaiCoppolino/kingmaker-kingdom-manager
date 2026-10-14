@@ -124,8 +124,9 @@ def normalize(data: dict, empty_schema: Callable[[], dict]) -> dict:
     base = empty_schema()
     base.update(data)
     # Nested keys are merged separately, or a "map" block saved before a field
-    # was added would come back without that field.
-    for key in ("map", "clock"):
+    # was added would come back without that field (and a "turn_memory" saved
+    # before one of its lists existed, without that list).
+    for key in ("map", "clock", "turn_memory"):
         merged = empty_schema()[key]
         merged.update(data.get(key, {}))
         base[key] = merged

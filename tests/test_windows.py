@@ -145,7 +145,13 @@ def random_effect_rows() -> list[dict]:
         value = v["v"] if v["t"] == "mod" else rules.signed_value(v.get("q", "0"))[0]
         target = None
         kind = rules.entry_target(v)
-        if kind:
+        if kind in ("partner", "event"):
+            # the first partner or ongoing event; none: the row is skipped
+            listing = STATE.k["partners"] if kind == "partner" else STATE.ongoing_events()
+            if not listing:
+                continue
+            target = listing[0]["id"]
+        elif kind:
             target = {"ruin": rules.RUINS, "skill": rules.SKILLS}.get(kind, rules.COMMODITIES)[0]["id"]
         rows.append({"entry": v, "active": True, "valore": value, "target": target})
     return rows
@@ -183,7 +189,126 @@ def change_calendar() -> None:
     theme.save_and_refresh()
 
 
+def an_event() -> dict:
+    """An ongoing event of the scene, named first when there is none."""
+    from kingmaker.ui.tabs import events
+    found = STATE.ongoing_events()
+    return found[0] if found else events._create("Bandits on the road", modifier=1)
+
+
+def event_check() -> None:
+    """An event's check, its grade fixed, as the Event phase rolls it."""
+    from kingmaker.ui.tabs import events
+    real = rules.roll_check
+    grade = random.choice(rules.GRADES)
+    rules.roll_check = lambda mod, dc, detail=None, worsens_by=0: rules.Result(
+        10, mod, 10 + mod, dc, grade, detail or [])
+    try:
+        events.roll_event(an_event(), random.choice(SKILLS), random.randint(10, 25))
+    finally:
+        rules.roll_check = real
+
+
+def pending_rolled() -> None:
+    """A flat check an activity left, rolled in the Event phase."""
+    from kingmaker.ui.tabs import events
+    pending = STATE.k["turn_memory"]["pending"]
+    pending.append({"due_turn": STATE.k["turn"], "phase": "event", "dc": random.choice([6, 11, None]),
+                    "dc_per_hex": False, "source": "abandon_hex", "hex": [4, 4],
+                    "remaining": 1, "then": "squatters"})
+    events.roll_pending(pending[-1])
+
+
+def lockout_row() -> list[dict]:
+    row = rules.BY_ID["activities"]["supernatural_solution"]["effects"]["critical_failure"][1]
+    return [{"entry": row, "active": True, "valore": 0, "target": None}]
+
+
+class _Dialog:
+    def close(self):
+        pass
+
+
+def a_structure():
+    """(settlement, block index, lot index) of a standing structure of the scene."""
+    from kingmaker.ui.tabs import city
+    sett = STATE.k["settlements"][0]
+    grid = sett["grids"][0]
+    for bi in sett["active_blocks"]:
+        for li, lot in enumerate(grid[bi]):
+            if lot.get("structure") and lot["structure"] != "rubble":
+                return sett, bi, li
+    city.place_free(sett, "inn")
+    return a_structure()
+
+
+def damaged_toggled() -> None:
+    from kingmaker.ui.tabs import city
+    sett, bi, li = a_structure()
+    city._toggle_damaged(sett, sett["grids"][0][bi], sett["grids"][0][bi][li]["gid"])
+
+
+def demolish_fixed() -> None:
+    from kingmaker.ui.tabs import city
+    sett, bi, li = a_structure()
+    STATE.k["turn_civic"] = {}
+    real = rules.roll_check
+    grade = random.choice(rules.GRADES)
+    rules.roll_check = lambda mod, dc, detail=None, worsens_by=0: rules.Result(
+        10, mod, 10 + mod, dc, grade, detail or [])
+    try:
+        city._demolish(sett, 0, bi, li, _Dialog(), lambda: None)
+    finally:
+        rules.roll_check = real
+
+
+def a_claimed_hex() -> dict:
+    claimed = STATE.claimed_hexes()
+    return random.choice(claimed) if claimed else STATE.hex(5, 5)
+
+
+def irrigated_set() -> None:
+    from kingmaker.ui.hexmap import hex_panel
+    hex_panel.irrigate(a_claimed_hex(), random.choice(["river", "lake"]))
+    theme.save_and_refresh()
+
+
+def hex_unclaimed() -> None:
+    h = a_claimed_hex()
+    turn._apply_rows([{"entry": {"t": "unclaim", "auto": True}, "active": True, "valore": 0, "target": None}],
+                     "test", {"hexes": [[h["col"], h["row"]]]})
+
+
+def a_partner() -> dict:
+    from kingmaker.ui.tabs import diplomacy
+    if STATE.k["partners"]:
+        return random.choice(STATE.k["partners"])
+    return diplomacy._add_partner("Swordlords of Restov", 20)
+
+
+def relation_row() -> None:
+    p = a_partner()
+    if p is None:                  # a player's window: no partner made, nothing to change
+        return
+    row = {"t": "relation", "status": random.choice(["relations", "war", "ended"]), "auto": True}
+    turn._apply_rows([{"entry": row, "active": True, "valore": 0, "target": p["id"]}], "test",
+                     {"subject": p["id"]})
+
+
+def agreement_ended() -> None:
+    p = a_partner()
+    if p is None:
+        return
+    what = random.choice(["new", "ended"])
+    turn._apply_rows([{"entry": {"t": "agreement", "what": what, "auto": True}, "active": True,
+                       "valore": 0, "target": p["id"]}], "test", {"subject": p["id"]})
+
+
 def changes() -> list:
+    from kingmaker.ui.hexmap import hex_panel
+    from kingmaker.ui.tabs import diplomacy
+    from kingmaker.ui.tabs import city
+    from kingmaker.ui.tabs import events, leaders
     ruins = list(STATE.k["ruins"])
     goods = list(STATE.k["commodities"])
     return [
@@ -224,6 +349,38 @@ def changes() -> list:
         ("calendar", lambda: change_calendar()),
         ("a foreign feat", lambda: sheet._feat_click("feat.nope")),
         ("a foreign role", lambda: sheet._role_change(["char.nope", "x"])),
+        # 2.3.0: the kingdom's events
+        ("new event", lambda: events._create(random.choice(["Bandits", "Plague", "Monster"]),
+                                             modifier=random.randint(-2, 4), xp=30)),
+        ("event ended", lambda: events._end(an_event())),
+        ("event check", event_check),
+        # 2.3.0: what the turns remember
+        ("lockout row", lambda: turn._apply_rows(lockout_row(), "test", {"act": "supernatural_solution"})),
+        ("pending check rolled", pending_rolled),
+        ("taxes flat check", lambda: turn._taxes_flat_check()),
+        ("ruin split", lambda: turn._apply_ruin_split({random.choice(ruins): random.randint(1, 3)})),
+        ("turn memory new turn", lambda: turn._new_turn()),
+        # 2.3.0: the leaders
+        ("downtime tick", lambda: leaders.set_tick(random.choice(ROLES), random.random() < 0.5)),
+        ("downtime choice", lambda: leaders.set_choice(random.choice(ROLES),
+                                                       random.choice(["give_up", "penalty", None]))),
+        ("favored land tick", lambda: hex_panel.set_favored(STATE.hex(random.randint(3, 8), random.randint(3, 8)),
+                                                            random.random() < 0.7)),
+        # 2.3.0: the city
+        ("damaged toggled", damaged_toggled),
+        ("wall side set", lambda: city._set_border_piece(STATE.k["settlements"][0],
+                                                         rules.BY_ID["structure"]["wooden_wall"],
+                                                         random.choice(city.SIDES))),
+        ("demolish (fixed grade)", demolish_fixed),
+        # 2.3.0: the map
+        ("irrigated set", irrigated_set),
+        ("hex unclaimed", hex_unclaimed),
+        ("secondary unrest", lambda: turn._secondary_unrest()),
+        # 2.3.0: diplomacy
+        ("partner added", lambda: diplomacy._add_partner(random.choice(["Elves", "Trolls", "Brevoy"]),
+                                                         random.randint(14, 25))),
+        ("relation row", relation_row),
+        ("agreement ended", agreement_ended),
     ]
 
 

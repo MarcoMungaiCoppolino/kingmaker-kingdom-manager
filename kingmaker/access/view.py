@@ -18,6 +18,8 @@ from kingmaker.access import permissions
 PUBLIC_FIELDS = (
     "col", "row", "status", "terrains", "features", "roads", "fortified",
     "farmland", "work_site", "settlement", "name", "note",
+    # 2.3.0: the water the kingdom brought with Irrigation, which the players built.
+    "irrigated",
 )
 
 # Hex fields the GM can keep secret one by one, with the value to show in place

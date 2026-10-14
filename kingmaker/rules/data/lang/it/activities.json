@@ -66,15 +66,12 @@
         "success": [
           {
             "name": "Riscuotere Tasse (Circostanza)"
-          },
-          null
+          }
         ],
         "failure": [
           {
             "name": "Riscuotere Tasse (Circostanza)"
-          },
-          null,
-          null
+          }
         ]
       }
     },
@@ -98,6 +95,9 @@
         "critical_success": [
           {
             "text": "Prelevi fondi pari alla voce «Ricchezze per Personaggio Aggiuntivo» al livello del regno, oppure finanzi l'evento inaspettato."
+          },
+          {
+            "text": "Finché Investimento di Capitali non lo ripaga, il prossimo Attingere alla Tesoreria peggiora di due gradi."
           }
         ],
         "success": [
@@ -106,6 +106,9 @@
           },
           {
             "name": "Tesoreria prosciugata (Circostanza)"
+          },
+          {
+            "text": "Finché Investimento di Capitali non lo ripaga, il prossimo Attingere alla Tesoreria peggiora di due gradi."
           }
         ],
         "failure": [
@@ -122,9 +125,7 @@
           },
           {
             "name": "Voci sulla carenza di denaro (Circostanza)"
-          },
-          null,
-          null
+          }
         ]
       }
     },
@@ -166,9 +167,7 @@
         "critical_failure": [
           {
             "name": "Tesoreria sotto sforzo (Circostanza)"
-          },
-          null,
-          null
+          }
         ]
       }
     },
@@ -329,9 +328,7 @@
         "success": [
           {
             "text": "2 Dadi Risorsa in PR — scegli questo oppure i Prodotti di Lusso"
-          },
-          null,
-          null
+          }
         ]
       }
     },
@@ -480,8 +477,7 @@
           null,
           {
             "text": "1 punto in più all'inizio del prossimo Turno di Regno"
-          },
-          null
+          }
         ],
         "critical_failure": [
           null,
@@ -539,6 +535,9 @@
           },
           {
             "text": "Il gruppo entra nel regno. Se rivendichi il suo esagono, segnalo sulla Mappa (Dimensione +1); se non confina col regno diventa territorio secondario."
+          },
+          {
+            "text": "Solo con un Insediamento Indipendente scelto: il suo esagono entra nel regno, e il suo insediamento con esso"
           }
         ],
         "success": [
@@ -621,6 +620,18 @@
           {
             "text": "…oppure 0 PR e Crimine +1"
           }
+        ],
+        "critical_success": [
+          null,
+          {
+            "text": "Usa l'investimento per ripagare la tesoreria invece"
+          }
+        ],
+        "success": [
+          null,
+          {
+            "text": "Usa l'investimento per ripagare la tesoreria invece"
+          }
         ]
       },
       "cost_data": [
@@ -652,6 +663,9 @@
         "critical_success": [
           {
             "text": "Stabilisci relazioni diplomatiche e ottieni +2 Circostanza a tutte le prove con quel gruppo fino al prossimo Turno di Regno."
+          },
+          {
+            "text": "A tutte le prove con quel gruppo fino al prossimo Turno di Regno"
           }
         ],
         "success": [
@@ -661,7 +675,7 @@
         ],
         "failure": [
           {
-            "text": "Nessuna relazione. Se ritenti il prossimo turno hai +2 Circostanza."
+            "text": "Nessuna relazione: per il nuovo tentativo del prossimo turno"
           }
         ],
         "critical_failure": [
@@ -802,8 +816,7 @@
         "critical_success": [
           {
             "name": "Aiuto Estero (Circostanza)"
-          },
-          null
+          }
         ],
         "success": [
           {
@@ -1037,17 +1050,20 @@
         "critical_success": [
           null,
           {
-            "text": "L'accordo commerciale è stabilito: aggiungilo nella scheda del regno."
+            "text": "L'accordo commerciale è in vigore: compare nel riquadro Diplomazia della scheda del regno."
           }
         ],
         "success": [
           {
-            "text": "L'accordo commerciale è stabilito: aggiungilo nella scheda del regno."
+            "text": "L'accordo commerciale è in vigore: compare nel riquadro Diplomazia della scheda del regno."
           }
         ],
         "failure": [
           {
             "text": "Devi pagarli per stabilire l'accordo; se non puoi, il tentativo fallisce"
+          },
+          {
+            "text": "Solo una volta pagati i Dadi Risorsa: altrimenti togli la spunta."
           }
         ],
         "critical_failure": [
@@ -1079,12 +1095,18 @@
         "critical_success": [
           {
             "text": "La capitale si trasferisce senza attriti: cambiala dalla scheda Città."
+          },
+          {
+            "text": "Non puoi tentare di nuovo Trasferire la Capitale per 3 Turni di Regno."
           }
         ],
         "success": [
           null,
           {
             "text": "La capitale si trasferisce: cambiala dalla scheda Città."
+          },
+          {
+            "text": "Non puoi tentare di nuovo Trasferire la Capitale per 3 Turni di Regno."
           }
         ],
         "failure": [
@@ -1097,6 +1119,9 @@
           },
           {
             "text": "La capitale si trasferisce: cambiala dalla scheda Città."
+          },
+          {
+            "text": "Non puoi tentare di nuovo Trasferire la Capitale per 3 Turni di Regno."
           }
         ],
         "critical_failure": [
@@ -1115,6 +1140,9 @@
           },
           {
             "text": "La capitale resta invariata."
+          },
+          {
+            "text": "Non puoi tentare di nuovo Trasferire la Capitale per 3 Turni di Regno."
           }
         ]
       }
@@ -1262,7 +1290,7 @@
       "effects": {
         "critical_success": [
           {
-            "text": "L'esagono guadagna un elemento di terreno fiume o lago: aggiungilo dalla Mappa."
+            "text": "L'esagono è irrigato: disegna il fiume o il lago con gli strumenti dell'acqua della Mappa."
           },
           {
             "text": "Rimborso: metà dei PR spesi (regola la quantità)"
@@ -1270,7 +1298,7 @@
         ],
         "success": [
           {
-            "text": "L'esagono guadagna un elemento di terreno fiume o lago: aggiungilo dalla Mappa."
+            "text": "L'esagono è irrigato: disegna il fiume o il lago con gli strumenti dell'acqua della Mappa."
           }
         ],
         "critical_failure": [
@@ -1362,6 +1390,13 @@
         "success": "Stabilisci un esagono di Terreno Agricolo.",
         "failure": "Non riesci a stabilire un esagono di Terreno Agricolo.",
         "critical_failure": "Non riesci, e il tentativo diffonde potenzialmente una piaga. All'inizio di ognuna delle due successive Fasi Evento tenta una Prova Semplice CD 6: se fallisci, il regno subisce un evento Carestia in questo esagono e in tutti quelli adiacenti."
+      },
+      "effects": {
+        "critical_failure": [
+          {
+            "text": "In ognuna delle prossime 2 fasi Evento tenta una Prova Semplice CD 6: se fallisci, un Raccolto Fallito colpisce questo esagono e quelli attorno."
+          }
+        ]
       }
     },
     {

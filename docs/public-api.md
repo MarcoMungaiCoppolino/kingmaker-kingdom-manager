@@ -24,7 +24,12 @@ The project follows [Semantic Versioning](https://semver.org/). This list was fi
   and, from 2.1.0, the campaign tables' counter `trev`), `tables_rev` and `forked_at`. Other
   `meta` keys are migration marks and internal.
 - The kingdom document (`kingdoms.document`) is JSON. Its keys are listed by `new_kingdom()`
-  in `kingmaker/state.py`, which is the reference for their defaults.
+  in `kingmaker/state.py`, which is the reference for their defaults. 2.3.0 adds `events`,
+  `partners`, `turn_memory`, `turn_leaders`, `turn_civic`, `downtime`, `favored_land` and
+  `rp_no_xp`, and fills the existing `diplomatic_relations` and `trade_agreements`; a hex gains
+  `irrigated`, a settlement's lots `damaged`, `demolishing` and `failed`, its borders `wall`
+  and `bridge`. The schema stays 30: an older 2.x app opens a 2.3.0 save and keeps the new keys
+  unread and unchanged.
 
 **Backups and bundles** (`.zip`): `manifest.json` (app, version, schema, kingdom, date),
 `kingmaker.db`, `kingdom.json` and `assets/`. A bundle made by a version restores in every later
@@ -87,6 +92,11 @@ the signature does not cover. The files are named `Kingmaker-Kingdom-Manager-X.Y
 and `Kingmaker-Kingdom-Manager-X.Y.Z-linux-x86_64.tar.gz`, and the launcher relies on the
 pattern: when GitHub's API refuses, it learns the latest tag from the releases page and
 builds the files' addresses from the tag.
+
+From 2.3.0 a release keeps its installers only when it is an X.Y.0 or the newest patch of the
+newest line; the others keep their notes and tag, and the launcher's versions list leaves them
+out. What a launcher may rely on is the pattern of the files a release *has*, not that every
+release has them.
 
 ## Files the app reads
 

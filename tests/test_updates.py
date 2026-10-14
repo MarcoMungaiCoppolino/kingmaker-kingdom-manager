@@ -135,6 +135,20 @@ results.append(("the API answering: its release, the page never asked",
 results.append(("the release page's tag is read from the redirect's address",
                 core.release_from_tag("v2.0.0").version == "2.0.0" and core.release_from_tag("junk") is None))
 
+# --- 2.3.0: whether GitHub answered at all, and the versions worth listing ---------
+results.append(("check_latest: both refused, (None, False): «could not check»",
+                core.check_latest(api=api_refused, page=page_off) == (None, False)))
+results.append(("the API refused, the page answering with no tag: (None, True), checked",
+                core.check_latest(api=api_refused, page=lambda: "") == (None, True)))
+release, reached = core.check_latest(api=lambda: {"tag_name": "v9.9.9", "html_url": "h", "assets": []},
+                                     page=page_off)
+results.append(("the API answering: (release, True)", reached and release is not None and release.version == "9.9.9"))
+mine = core.installer_name("3.0.0")
+with_file = core.Release(version="3.0.0", page="p", assets=[{"name": mine, "url": "u"}])
+without = core.Release(version="2.9.9", page="p", assets=[])
+results.append(("the versions list keeps only releases with this system's installer",
+                core.with_installer([with_file, without]) == [with_file]))
+
 shutil.rmtree(folder, ignore_errors=True)
 for name, ok in results:
     print(f" {'ok' if ok else 'NO'}  {name}")

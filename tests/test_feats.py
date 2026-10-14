@@ -242,11 +242,23 @@ try:
     k["rp"] = 1
     STATE.apply_effect({"t": "rp", "q": "-3"}, -3)
     offers = STATE.take_feat_offers()
-    results.append(("Liquidate Resources is offered when an outcome cannot be paid",
-                    [o["kind"] for o in offers] == ["liquidate_resources"]))
+    results.append(("Liquidate Resources is offered when an outcome cannot be paid, beside its Ruin",
+                    [o["kind"] for o in offers] == ["rp_shortfall", "liquidate_resources"]))
     results.append(("liquidated: RP at 1, 4 fewer dice next turn",
                     STATE.liquidate() and k["rp"] == 1 and k["penalty_dice"] == 4))
     results.append(("once a turn", not STATE.liquidate()))
+    # Every unpaid expense costs a Ruin point: two shortfalls, two points to choose.
+    k["rp"] = 0
+    STATE.apply_effect({"t": "rp", "q": "-3"}, -3)
+    STATE.apply_effect({"t": "rp", "q": "-2"}, -2)
+    short = [o for o in STATE.take_feat_offers() if o["kind"] == "rp_shortfall"]
+    results.append(("two unpaid expenses: one offer carrying two Ruin points",
+                    len(short) == 1 and short[0].get("count") == 2))
+    crime, decay = k["ruins"]["crime"]["points"], k["ruins"]["decay"]["points"]
+    results.append(("each point is paid, not once a turn",
+                    STATE.rp_shortfall("crime") and STATE.rp_shortfall("decay")
+                    and k["ruins"]["crime"]["points"] == crime + 1
+                    and k["ruins"]["decay"]["points"] == decay + 1))
     take()
 finally:
     STATE.k = saved_kingdom

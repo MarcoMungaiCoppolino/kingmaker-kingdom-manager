@@ -8,6 +8,168 @@ what broke, what was learned — is in [docs/devlog.md](docs/devlog.md).
 The versions before 1.0.0 were never tagged: the app was played from a working copy and the
 numbers below were assigned afterwards, one per day of development, from the session history.
 
+## [2.3.0] — 2026-10-14
+
+The kingdom rules that were still text or done by hand: ongoing events, the rules that carry from
+one turn to the next, the leaders' limits and downtime, the city's upgrades, repairs and
+demolitions, the map's own rules, diplomacy, trade agreements and war. Every effect is still a row
+the table ticks and applies, never applied in silence.
+
+The save format stays at schema 30: everything new lives in the kingdom's document. An older 2.x
+app opens a 2.3.0 save and keeps the new parts unread and untouched.
+
+### Added
+- **The launcher says when it runs from source.** Beside the version, «from source» when
+  the window was started from the repository rather than from an installer, so a test
+  launcher is never mistaken for the installed app.
+- **Ongoing kingdom events.** When the Event phase's check brings an event, the GM names it (the
+  book has the table), with its level modifier, whether it is continuous, harmful or dangerous,
+  the leader it calls for and the settlement it strikes. A random event that happens is worth 30
+  XP, a story event 30 or more, offered as a row once. The resolution step lists the ongoing
+  events: each has its check against the Control DC plus its modifier, with what helps it (a
+  Watchtower in its settlement, Quick Recovery, the leader's bonus when the role is held, Hire
+  Adventurers' +2), an outcome dialog where the GM adds the book's effects as rows, the
+  Cemeteries' reduction on a dangerous event, and «the event ends». *New event…* adds a story
+  event by hand.
+- **Hire Adventurers works on a chosen event.** A critical success ends it, a success gives +2 to
+  its next check, a failure makes the next attempt cost 2 Resource Dice, a critical failure locks
+  the event out of the activity.
+- **What the turns remember.** Rest and Relax and Celebrate Holiday cost 4 more the turn after,
+  Manage Trade Agreements 5 more; Clandestine Business 2 more per consecutive turn and 1 less per
+  turn without, down to the Control DC. The DC shows it before the dialog opens.
+- **Lock-outs.** Repair Reputation on the same Ruin, Send Diplomatic Envoy to the same group,
+  Supernatural Solution, Manage Trade Agreements and Relocate Capital are refused for the turns
+  their outcomes say, with the reason, and the GM may override a lock-out.
+- **Tap Treasury's debt.** Tapping the treasury leaves it owed: the next Tap Treasury is worsened
+  by two degrees until Capital Investment repays it.
+- **Delayed flat checks.** Abandon Hex's Squatters and Bandit Activity, Establish Farmland's Crop
+  Failure and Irrigation's Plague are rolled in the Event phase that follows, and a failure names
+  the event they bring. Irrigation's DC grows with every other hex in the same trouble.
+- **The Commerce phase's own steps.** When the kingdom does not Collect Taxes, a DC 11 flat check
+  takes 1 Unrest off; the trade agreements in force are listed in their step.
+- **Unrest 10 or more: the Ruin points are split** among the four Ruins by the table in one dialog.
+- **An expense the kingdom cannot pay** offers +1 to a Ruin of the PCs' choice, one for every such
+  expense, next to Liquidate Resources when the feat allows it.
+- **Who acts.** A Leadership activity asks which PC leader attempts it: two activities each,
+  three with a Castle, Palace or Town Hall in the capital, never the same twice in a turn. Each
+  settlement attempts one Civic activity a turn; with Civic Planning one of them attempts a
+  second once all the others have acted.
+- **The leaders' week of downtime.** In the roles step, a tick per leader for the seven days of
+  the month (NPC leaders ticked by default), a hint of the free days the PCs' journeys left, and
+  for a leader who did not rest the wiki's two choices: give up one Leadership activity, or take
+  the vacancy penalty until next turn.
+- **New Leadership's failure** puts its -1 on that leader's Activity-phase checks until a
+  Loyalty check, offered in the resolution step, wins the people over.
+- **Favored Land.** In a hex of the heartland's terrain, two Region activities together, each at
+  -2; the pair takes one Region slot, as the wiki reads it, unless the GM unticks that.
+- **Upgrades.** A standing structure offers the structures it upgrades to, at the difference of
+  their costs and only where the block has room.
+- **Damage and repair.** A structure can be marked damaged by an event, and repaired at half its
+  cost with a +2 item bonus; a critical failure while repairing leaves it Rubble. A construction
+  that fails can be tried again on the same lot, this turn or the next, without paying again.
+- **Demolish is a Civic activity with its check:** the whole structure on a critical success
+  (with 1d6 Lumber, Stone or Ore salvaged from a single lot), one lot on a success, Rubble on a
+  failure, and a structure being demolished stops working.
+- **Walls and bridges stand on a border.** Building one asks which; a wall's -1 Unrest counts only
+  for the first of its kind in the settlement, and a stone wall replaces a wooden one. The borders
+  block says which walls and bridges stand where, and when a settlement is an island (Influence
+  0) or has no land border (-1 to Trade).
+- **Claiming a Landmark or a Refuge** proposes their effects: -1d4 Unrest and +2 to Culture and
+  Economy, or a Ruin -1 and +2 to Loyalty and Stability, until the end of next turn.
+- **Irrigation and Abandon Hex from the map's hex panel.** An irrigated hex remembers its water
+  (a river or a lake, drawn with the water tools); Abandon Hex gives up one or more hexes, its
+  DC shown as they are chosen (1 higher for each past the first), with its Unrest doubled when a
+  settlement stands on one.
+- **Ruins and Structure features name their structure.** Ruins halve that structure's cost once
+  in the settlement on the hex; a Structure stands, free, in a settlement founded there.
+- **Losing a hex.** When Unrest's DC 11 flat check fails, the table picks the hex the kingdom
+  loses: Size -1, its farmland and work site lost, and its settlement becomes a freehold that
+  remembers it.
+- **Secondary territories.** A claimed hex cut off from the capital takes -4 to checks there and
+  1 Unrest at Upkeep, and is marked on the map and in its panel.
+- **A kingdom with no hex left** is told how to refound it.
+- **Diplomacy on the kingdom sheet.** The groups the kingdom deals with, each with the Negotiation
+  DC the GM gives it; their relations, with Declare war, Make peace and End relations; the trade
+  agreements in force. Send Diplomatic Envoy, Establish Trade Agreement, Request Foreign Aid and
+  Pledge of Fealty ask for the group and take their DC from it; an envoy's critical success gives
+  +2 with that group until next turn, a failure +2 for the retry; an envoy to an enemy takes -4
+  and a worse result. A trade agreement's failure establishes it too once its 2 Resource Dice of
+  RP are paid.
+- **Pledge of Fealty brings a freehold in:** its hex claimed and its settlement back as it was.
+- **War.** At war, +1 Unrest at Upkeep; a war fought without armies, 1d6 Unrest and +1 Ruin.
+- **The launcher says when it could not check for updates,** with the time of its next try and
+  a *Check now* button, so «no update» and «could not ask» no longer look alike.
+
+### Changed
+- **A switch of language or units keeps the page.** The IT/EN and m/ft buttons reload the
+  window where it was, the tab and the manual's sub-tab included, instead of on the map.
+- **Filled amber buttons read in dark ink,** not in Quasar's white on yellow.
+- **The week of downtime, explained where it is ticked.** The roles step says in two lines what
+  the week is, what a PC leader who skipped it chooses between, and that the days beside a PC
+  come from the map's journeys; the rows line up in three columns of one height (the tick, the
+  days, the choice), two on a narrow panel; the choice is two short round buttons, and hovering
+  «role vacant until next turn» shows that role's own vacancy penalty from the rules. The step's
+  second line, which repeated its first, is gone. The hint shows the days away out of the
+  month's, and counts only the journeys the clock ran or is running, each day once: a journey
+  moved at once never took a day of the calendar, and a table full of such moves showed every
+  PC away all month.
+- **The Kingdom sheet's feats moved under the skills,** on the left, so the Diplomacy block
+  on the right is in view without scrolling past the feats' long list.
+- **The City tab, laid out again.** A third of the page for the settlement's card, titled
+  «Settlement» with a «New…» button that opens the founding form in a window (the form stays
+  on the page only while the kingdom has no settlement), the card in four titled sections
+  (position on the map, figures, lots and blocks, actions); two thirds for the Urban Grid,
+  drawn larger, with the structures built and the grid's borders at its side, where the page
+  was empty. The kingdom's figures are no longer repeated here: they are on the Kingdom Turn
+  tab. Before, everything but the grid was stacked in one column beside an empty page.
+- **A structure's dialog in sections.** Upgrade, Repair and Demolish each under their own title
+  with a line on what they do, and the corrections made by hand (empty the lot, reduce to
+  rubble, apply the effects) apart at the bottom, instead of one row of buttons after another;
+  its lines sit closer, so the window is no taller than it needs.
+- **The Manual's structures table reads like the wiki's.** Name, level, lots, traits (by their
+  names), description, cost, construction, what the structure upgrades from and to, the item
+  bonus and the effects, every text wrapping in its cell; a search over every column, and
+  filters by trait, by level (up to the kingdom's) and by lots, with the count of what is
+  shown. A click on Structure, Lvl or Lots sorts by it, ascending, then descending, then
+  off, the arrow always drawn; switched on together they sort by level, then lots, then
+  name, whatever the order of the clicks, and names sort by their letters in either
+  language, accents folded, not by their icon. The table always fits the page: every column
+  has its share of the width and the texts wrap, so nothing hides behind a sideways scroll
+  on a small or zoomed screen.
+  Everything comes from the rules data already in the app, nothing was added.
+- **The Manual's Tables page is laid out like the Kingdom sheet:** two columns, each table
+  the width of its column, the Kingdom Levels on the left with the milestones and the
+  borders, the shorter tables and the terrain features in the wider column on the right. The cards used to
+  wrap wherever they fit, leaving holes.
+- **Every activity's DC is worked out in one place**, the same in the Turn tab, on the map and
+  in the city, with its breakdown (the base, a repeat, a streak, a group's Negotiation DC).
+- **Work sites read the hex's terrain:** a lumber camp needs forest, a quarry or a mine hills or
+  mountains (the GM can allow it anyway); a critical success doubles the site's yield this turn
+  and the next.
+- **Build Roads over a river** costs double, unless a Bridge already spans it, and a success adds
+  the Bridge feature, with a reminder to draw the travel crossing.
+- **Repair Reputation's skill follows the Ruin chosen.**
+- **Trade Commodities gains +1 while the kingdom has diplomatic relations; Request Foreign Aid's RP
+  does not become XP at the end of the turn.**
+- **An Edifice's benefits count once per settlement** (two Keeps give one Keep's bonus).
+- **A leader's week of downtime is a kingdom rule**, read from the kingdom's rules, not from the
+  calendar.
+- **The launcher's versions list shows only the releases it can install here.**
+- **The Turn tab keeps each phase open or closed** as the table left it when the column redraws.
+
+### Fixed
+- **The size table said «100–+»** for the last row: it says «100+».
+- **Two English structure descriptions carried a site note** of the Archives of Nethys in its
+  raw markup (the Printing House and the Gladiatorial Arena): the note is now a plain sentence
+  at the end of the description.
+- **The structures table showed an empty row under every structure:** its row template read a
+  field that no longer existed, so the second line of each row was always drawn, empty.
+- **Build Roads' critical success reaches a second hex.** It offers the adjacent claimed hex
+  without roads that is no less hospitable, as the outcome says; none, and it counts as a
+  success. The hex panel never offered it before.
+- **A critical success's Fame point reached the quick adjustments late.** A check moved the
+  points without redrawing that block, which showed the old number until something else changed.
+
 ## [2.2.0] — 2026-10-12
 
 The security fixes below were written as a 2.1.3 patch and folded into this release on the

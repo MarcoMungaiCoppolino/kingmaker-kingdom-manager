@@ -30,8 +30,14 @@
         ],
         "failure": [
           {
-            "t": "note",
-            "auto": false
+            "t": "penalty",
+            "v": -1,
+            "kind": "circumstance",
+            "scope": "leader",
+            "turns": null,
+            "clears_on": "loyalty_check",
+            "phase": "activity",
+            "auto": true
           }
         ],
         "critical_failure": [
@@ -46,7 +52,8 @@
           }
         ]
       },
-      "cost_data": []
+      "cost_data": [],
+      "subject": "role"
     },
     {
       "id": "collect_taxes",
@@ -81,7 +88,8 @@
           {
             "t": "unrest",
             "q": "1",
-            "auto": false
+            "auto": false,
+            "only_if": "repeated"
           }
         ],
         "failure": [
@@ -100,7 +108,8 @@
           {
             "t": "unrest",
             "q": "1",
-            "auto": false
+            "auto": false,
+            "only_if": "repeated"
           }
         ],
         "critical_failure": [
@@ -134,6 +143,11 @@
           {
             "t": "note",
             "auto": false
+          },
+          {
+            "t": "debt",
+            "key": "tap_treasury",
+            "auto": true
           }
         ],
         "success": [
@@ -147,6 +161,11 @@
             "dur": 2,
             "auto": true,
             "ability": "economy"
+          },
+          {
+            "t": "debt",
+            "key": "tap_treasury",
+            "auto": true
           }
         ],
         "failure": [
@@ -301,7 +320,8 @@
           {
             "t": "unrest",
             "q": "1",
-            "auto": false
+            "auto": false,
+            "only_if": "repeated"
           }
         ]
       },
@@ -364,8 +384,10 @@
         ],
         "critical_failure": [
           {
-            "t": "note",
-            "auto": false
+            "t": "lockout",
+            "scope": "self",
+            "turns": 1,
+            "auto": true
           }
         ]
       },
@@ -376,7 +398,8 @@
           "auto": true,
           "per": "agreements"
         }
-      ]
+      ],
+      "repeat_dc": 5
     },
     {
       "id": "purchase_commodities",
@@ -507,7 +530,11 @@
           }
         ]
       },
-      "cost_data": []
+      "cost_data": [],
+      "streak_dc": {
+        "per_turn": 2,
+        "decay": 1
+      }
     },
     {
       "id": "hire_adventurers",
@@ -523,26 +550,30 @@
       "effects": {
         "critical_success": [
           {
-            "t": "note",
-            "auto": false
+            "t": "event_mark",
+            "mark": "ended",
+            "auto": true
           }
         ],
         "success": [
           {
-            "t": "note",
-            "auto": false
+            "t": "event_mark",
+            "mark": "hire_bonus",
+            "auto": true
           }
         ],
         "failure": [
           {
-            "t": "note",
-            "auto": false
+            "t": "event_mark",
+            "mark": "hire_failed",
+            "auto": true
           }
         ],
         "critical_failure": [
           {
-            "t": "note",
-            "auto": false
+            "t": "event_mark",
+            "mark": "hire_locked",
+            "auto": true
           }
         ]
       },
@@ -552,7 +583,8 @@
           "q": "-1",
           "auto": true
         }
-      ]
+      ],
+      "subject": "event"
     },
     {
       "id": "focused_attention",
@@ -642,7 +674,8 @@
           }
         ]
       },
-      "cost_data": []
+      "cost_data": [],
+      "repeat_dc": 4
     },
     {
       "id": "create_a_masterpiece",
@@ -768,6 +801,10 @@
           {
             "t": "note",
             "auto": false
+          },
+          {
+            "t": "claim",
+            "auto": true
           }
         ],
         "success": [
@@ -801,7 +838,8 @@
           }
         ]
       },
-      "cost_data": []
+      "cost_data": [],
+      "subject": "partner"
     },
     {
       "id": "infiltration",
@@ -871,6 +909,12 @@
             "t": "resource_die",
             "q": "4",
             "auto": true
+          },
+          {
+            "t": "repay",
+            "key": "tap_treasury",
+            "auto": false,
+            "only_if": "debt:tap_treasury"
           }
         ],
         "success": [
@@ -878,6 +922,12 @@
             "t": "resource_die",
             "q": "2",
             "auto": true
+          },
+          {
+            "t": "repay",
+            "key": "tap_treasury",
+            "auto": false,
+            "only_if": "debt:tap_treasury"
           }
         ],
         "failure": [
@@ -928,8 +978,17 @@
       "effects": {
         "critical_success": [
           {
-            "t": "note",
-            "auto": false
+            "t": "relation",
+            "status": "relations",
+            "auto": true
+          },
+          {
+            "t": "penalty",
+            "v": 2,
+            "kind": "circumstance",
+            "scope": "partner",
+            "turns": 2,
+            "auto": true
           },
           {
             "t": "milestone",
@@ -940,8 +999,9 @@
         ],
         "success": [
           {
-            "t": "note",
-            "auto": false
+            "t": "relation",
+            "status": "relations",
+            "auto": true
           },
           {
             "t": "milestone",
@@ -952,8 +1012,12 @@
         ],
         "failure": [
           {
-            "t": "note",
-            "auto": false
+            "t": "penalty",
+            "v": 2,
+            "kind": "circumstance",
+            "scope": "partner",
+            "turns": 2,
+            "auto": true
           }
         ],
         "critical_failure": [
@@ -973,12 +1037,15 @@
             "auto": false
           },
           {
-            "t": "note",
-            "auto": false
+            "t": "lockout",
+            "scope": "target",
+            "turns": 3,
+            "auto": true
           }
         ]
       },
-      "cost_data": []
+      "cost_data": [],
+      "subject": "partner"
     },
     {
       "id": "provide_care",
@@ -1123,14 +1190,16 @@
           {
             "t": "resource_die",
             "q": "2",
-            "auto": true
+            "auto": true,
+            "no_xp": true
           }
         ],
         "success": [
           {
             "t": "resource_die",
             "q": "1",
-            "auto": false
+            "auto": false,
+            "no_xp": true
           },
           {
             "t": "mod",
@@ -1154,7 +1223,8 @@
           }
         ]
       },
-      "cost_data": []
+      "cost_data": [],
+      "subject": "partner_related"
     },
     {
       "id": "repair_reputation",
@@ -1189,8 +1259,10 @@
         ],
         "failure": [
           {
-            "t": "note",
-            "auto": false
+            "t": "lockout",
+            "scope": "ruin",
+            "turns": 1,
+            "auto": true
           }
         ],
         "critical_failure": [
@@ -1200,12 +1272,21 @@
             "auto": true
           },
           {
-            "t": "note",
-            "auto": false
+            "t": "lockout",
+            "scope": "all",
+            "turns": 3,
+            "auto": true
           }
         ]
       },
-      "cost_data": []
+      "cost_data": [],
+      "subject": "ruin",
+      "subject_skills": {
+        "corruption": "arts",
+        "crime": "trade",
+        "decay": "engineering",
+        "strife": "intrigue"
+      }
     },
     {
       "id": "rest_and_relax",
@@ -1249,7 +1330,8 @@
           }
         ]
       },
-      "cost_data": []
+      "cost_data": [],
+      "repeat_dc": 4
     },
     {
       "id": "quell_unrest",
@@ -1410,8 +1492,10 @@
             "auto": true
           },
           {
-            "t": "note",
-            "auto": false
+            "t": "lockout",
+            "scope": "self",
+            "turns": 2,
+            "auto": true
           }
         ]
       },
@@ -1437,8 +1521,9 @@
             "auto": true
           },
           {
-            "t": "note",
-            "auto": false
+            "t": "agreement",
+            "what": "new",
+            "auto": true
           },
           {
             "t": "milestone",
@@ -1449,8 +1534,9 @@
         ],
         "success": [
           {
-            "t": "note",
-            "auto": false
+            "t": "agreement",
+            "what": "new",
+            "auto": true
           },
           {
             "t": "milestone",
@@ -1463,6 +1549,17 @@
           {
             "t": "resource_die",
             "q": "-2",
+            "auto": true
+          },
+          {
+            "t": "agreement",
+            "what": "new",
+            "auto": true
+          },
+          {
+            "t": "milestone",
+            "m": "first_trade_agreement",
+            "q": "1",
             "auto": true
           }
         ],
@@ -1481,7 +1578,8 @@
           }
         ]
       },
-      "cost_data": []
+      "cost_data": [],
+      "subject": "partner_related"
     },
     {
       "id": "relocate_capital",
@@ -1500,6 +1598,12 @@
           {
             "t": "note",
             "auto": false
+          },
+          {
+            "t": "lockout",
+            "scope": "self",
+            "turns": 3,
+            "auto": true
           }
         ],
         "success": [
@@ -1511,6 +1615,12 @@
           {
             "t": "note",
             "auto": false
+          },
+          {
+            "t": "lockout",
+            "scope": "self",
+            "turns": 3,
+            "auto": true
           }
         ],
         "failure": [
@@ -1532,6 +1642,12 @@
           {
             "t": "note",
             "auto": false
+          },
+          {
+            "t": "lockout",
+            "scope": "self",
+            "turns": 3,
+            "auto": true
           }
         ],
         "critical_failure": [
@@ -1563,6 +1679,12 @@
           {
             "t": "note",
             "auto": false
+          },
+          {
+            "t": "lockout",
+            "scope": "self",
+            "turns": 3,
+            "auto": true
           }
         ]
       },
@@ -1612,8 +1734,11 @@
             "auto": true
           },
           {
-            "t": "note",
-            "auto": false
+            "t": "pending_check",
+            "dc": 6,
+            "event": "squatters",
+            "repeat": 1,
+            "auto": true
           }
         ],
         "critical_failure": [
@@ -1623,12 +1748,16 @@
             "auto": true
           },
           {
-            "t": "note",
-            "auto": false
+            "t": "pending_check",
+            "dc": null,
+            "event": "bandit_activity",
+            "repeat": 1,
+            "auto": true
           }
         ]
       },
-      "cost_data": []
+      "cost_data": [],
+      "reference": "map"
     },
     {
       "id": "go_fishing",
@@ -1782,12 +1911,16 @@
             "auto": true
           },
           {
-            "t": "note",
-            "auto": false
+            "t": "pending_check",
+            "dc": 4,
+            "event": "plague",
+            "repeat": null,
+            "auto": true
           }
         ]
       },
-      "cost_data": []
+      "cost_data": [],
+      "reference": "map"
     },
     {
       "id": "clear_hex",
@@ -1879,7 +2012,17 @@
         "kind": "control",
         "mod": 0
       },
-      "effects": {},
+      "effects": {
+        "critical_failure": [
+          {
+            "t": "pending_check",
+            "dc": 6,
+            "event": "crop_failure",
+            "repeat": 2,
+            "auto": true
+          }
+        ]
+      },
       "cost_data": [],
       "reference": "map"
     },

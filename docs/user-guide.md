@@ -2,7 +2,7 @@
 
 *In italiano: [it/guida-utente.md](it/guida-utente.md) (longer, with the history of every choice).*
 
-This guide describes the app as it is in version 2.2.0, tab by tab, with the reason behind
+This guide describes the app as it is in version 2.3.0, tab by tab, with the reason behind
 each choice where it matters at the table. To install and start it see the
 [README](../README.md); the window of the installed app is the first chapter below. The screenshots in [`manual/img/screenshots/`](manual/img/screenshots/)
 were taken on a real table: the kingdom, the characters and the journeys in them are those of a game
@@ -114,6 +114,12 @@ installed one marked, and installs the one you pick; going back to an older vers
 with a warning, since a save written by a newer version can be refused by an older one. The game is in `saves` and `assets` inside the installed folder: an update
 replaces the program and leaves them, and the uninstaller (in *Add or remove programs*) asks
 whether to delete them too.
+
+**When GitHub cannot be asked.** If the update check finds no network, or GitHub refuses it,
+a muted line under the version says *Could not check for updates* and when the launcher will try
+again (every half hour), with a *Check now* button: no line means GitHub answered and there is
+nothing newer. The versions window lists only the releases that still carry an installer for
+your system: an older patch keeps none, and only every X.Y.0 and the newest patch do.
 
 ## Accounts and roles
 
@@ -307,6 +313,25 @@ attempt the Region activities on the selected hex — Claim, Clear, Establish Wo
 Establish Farmland, Build Roads, Fortify, Establish Settlement — and **Reconnoiter**, which
 costs what the rules say and brings the hex to Reconnoitered, the requirement to claim it.
 Costs in RP, XP and milestone rewards are proposed and applied on confirmation.
+
+**The map's own rules.** Claiming a hex with a Landmark or a Refuge proposes its effects as rows
+(-1d4 Unrest and +2 to Culture and Economy, or a Ruin -1 and +2 to Loyalty and Stability, until
+the end of next turn). A work site needs its ground (a lumber camp a forest, a quarry or a mine
+hills or mountains; the GM can allow it anyway), and its critical success doubles the yield this
+turn and the next. Build Roads' critical success offers a second, adjacent hex that is no less
+hospitable. Build Roads where a river crosses the hex costs double, unless a Bridge
+already spans it, and a success adds the Bridge feature: draw the travel crossing in the
+Crossings box. **Irrigation** and **Abandon hex** are buttons of the hex panel too: an irrigated
+hex keeps its water (a river or a lake, to draw with the water tools, which are what travel
+counts), and Abandon hex gives up one or more claimed hexes, the DC 1 higher for each one past
+the first, its Unrest doubled when a settlement stands on one. Ruins and Structure features name
+a structure when you add them: Ruins halve its cost once in the settlement on that hex, a
+Structure stands, free, in a settlement founded there. A claimed hex cut off from the capital by
+unclaimed ground is a **secondary territory**: -4 to checks there, 1 Unrest at Upkeep, and the
+🏴 mark. When the kingdom loses a hex (the DC 11 flat check of Unrest 10), the table picks which:
+its settlement becomes a freehold that remembers it, and Pledge of Fealty can bring it back as it
+was. **Favored Land**: in a hex of your heartland's terrain, a tick pairs the next two Region
+activities there, each at -2; the pair takes one Region slot unless the GM unticks that.
 
 **Farmland and influence.** A Farmland hex reduces Consumption by 1 only inside a settlement's
 influence: a village influences only its own hex, a town the adjacent ones too, a city two
@@ -650,6 +675,15 @@ the computed modifier and a one-click roll, leadership roles assigned to charact
 vacancy penalty, kingdom feats, commodities with storage limits, RP and Resource Dice,
 Consumption. Every roll shows the d20, the breakdown of the modifier and the degree of success.
 
+**Diplomacy.** Under the feats, the groups the kingdom deals with, each with the Negotiation DC
+the GM gives it. Send Diplomatic Envoy, Establish Trade Agreement, Request Foreign Aid and Pledge
+of Fealty ask for the group and take their DC from it (an agreement's is the higher of the
+group's and the Control DC; foreign aid's is the group's + 2). Relations and agreements come from
+those activities; here you declare war, make peace or end them, each confirmed as a row. At war,
++1 Unrest at Upkeep; a war fought without armies (tick it on the relation), 1d6 Unrest and +1
+Ruin. With diplomatic relations in place Trade Commodities gets +1, and the RP of foreign aid never
+turn into XP.
+
 ## Kingdom Turn
 
 The four phases (Upkeep, Commerce, Activity, Event) with their steps and the activities
@@ -698,6 +732,36 @@ activities an *Attempted in* choice appears when such a settlement exists. Ident
 one settlement add up to that settlement's maximum (+1 for a village or town, +2 for a city, +3
 for a metropolis); different structures do not add up, and the best one counts.
 
+**Ongoing events.** When the random-event check brings one, the GM names it from the book,
+with its level modifier, whether it is continuous, harmful or dangerous, the leader it calls for
+and the settlement it strikes; 30 XP comes with a random event (30 or more for a story event,
+added with *New event…*). The resolution step lists them: *Check…* rolls against the Control DC
+plus the modifier with what helps (a Watchtower there, Quick Recovery, the leader's bonus,
+Hire Adventurers' +2), and the outcome dialog lets the GM add the book's effects as rows, offers
+the Cemeteries' reduction for a dangerous event, and ends the event when it is over. Hire
+Adventurers asks which event it works on.
+
+**What the turns remember.** An activity tried again the turn after can cost more (Rest and
+Relax and Celebrate Holiday +4, Manage Trade Agreements +5), Clandestine Business grows harder
+turn after turn and eases when you stop, and some outcomes lock an activity out for a few turns
+(Repair Reputation on that Ruin, an envoy to that group, Supernatural Solution, Relocate
+Capital): the card says until when, and the GM can override it in the dialog. Tap Treasury
+leaves the treasury owed until Capital Investment repays it. The flat checks an activity leaves
+(Squatters, Bandit Activity, Crop Failure, Plague) wait in the Event phase's first step, and a
+failure names the event. Changing the turn number by hand says what it skips or brings back.
+
+**Who acts.** A Leadership activity asks which PC leader attempts it: two each (three with a
+Castle, Palace or Town Hall in the capital), never the same twice in a turn. Each settlement has
+one Civic activity a turn. In the roles step, tick who spent the week of downtime this month
+(NPC leaders are ticked already); a PC shows how many free days the journeys left, and a leader
+who did not rest gives up one Leadership activity or takes the vacancy penalty until next turn.
+A failed New Leadership's -1 lasts until a Loyalty check in the resolution step.
+
+**Commerce.** When nobody Collects Taxes, a DC 11 flat check takes 1 Unrest off; the agreements
+in force are listed in their step. With Unrest at 10 or more, the 1d10 Ruin points are split in
+one dialog, and an expense the kingdom cannot pay offers +1 to a Ruin of your choice. The first
+turn says which Upkeep steps it skips. Each phase stays open or closed as you left it.
+
 *New turn* only goes forward. To correct the number use the ✏ pencil next to it or the
 *Kingdom Turn* row of the quick adjustments: it is bookkeeping only, it undoes nothing and does
 not move the campaign date (📅 in the clock does that).
@@ -711,6 +775,17 @@ pays the cost and rolls the check; *Place without a check* is for pre-existing s
 (those already in the Stag Lord's fort, for instance). Overcrowding, Rubble, grid borders and
 the expansion Village → Town → City → Metropolis with their requirements are handled, and the
 effects of a built structure are proposed, never applied in silence.
+
+A standing structure's lot offers more: its **upgrades**, at the difference of the two costs and
+where the block has room; **Mark as damaged** for an event, and then **Repair** at half the cost
+with a +2 item bonus (a critical failure leaves Rubble); and **Demolish**, a Civic activity with
+an Engineering check (the whole structure, with salvage from a single lot, on a critical
+success; one lot on a success; Rubble on a failure). A failed construction can be tried again on
+the same lot, this turn or the next, without paying again. Walls and bridges ask which border
+they stand on: a wall's -1 Unrest counts only for the first of its kind, a stone wall replaces a
+wooden one, and the borders block says when a settlement is an island (Influence 0) or has no
+land border (-1 to Trade). An Edifice (the Town Hall, the Keep, the Cathedral...) counts once per
+settlement.
 
 ## Manual
 

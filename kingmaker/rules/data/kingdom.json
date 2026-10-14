@@ -554,11 +554,53 @@
     },
     {
       "id": "landmark",
-      "icon": "🗿"
+      "icon": "🗿",
+      "claim_effects": [
+        {
+          "t": "unrest",
+          "q": "-1d4",
+          "auto": true
+        },
+        {
+          "t": "mod",
+          "v": 2,
+          "dur": 2,
+          "ability": "culture",
+          "auto": true
+        },
+        {
+          "t": "mod",
+          "v": 2,
+          "dur": 2,
+          "ability": "economy",
+          "auto": true
+        }
+      ]
     },
     {
       "id": "refuge",
-      "icon": "🛡️"
+      "icon": "🛡️",
+      "claim_effects": [
+        {
+          "t": "ruin_choice",
+          "q": "-1",
+          "auto": true
+        },
+        {
+          "t": "mod",
+          "v": 2,
+          "dur": 2,
+          "ability": "loyalty",
+          "auto": true
+        },
+        {
+          "t": "mod",
+          "v": 2,
+          "dur": 2,
+          "ability": "stability",
+          "auto": true
+        }
+      ]
     },
     {
       "id": "resource",
@@ -970,5 +1012,20 @@
     {
       "id": "residential"
     }
-  ]
+  ],
+  "forced_events": [
+    {
+      "id": "squatters"
+    },
+    {
+      "id": "bandit_activity"
+    },
+    {
+      "id": "crop_failure"
+    },
+    {
+      "id": "plague"
+    }
+  ],
+  "leader_rest_days": 7
 }

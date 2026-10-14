@@ -263,6 +263,9 @@ def _hex_panel(mine: dict) -> None:
             ui.element("div").style("flex:1")
             badge_ = ui.html(f'<span class="km-chip">{t(_common.HEX_STATUSES[h["status"]][0])}</span>')
             mine["badge"] = badge_
+        if h["status"] == "claimed" and (col, row) in STATE.secondary_hexes():
+            ui.html(f'<span class="km-chip km-fc" style="font-size:.72rem">'
+                    f'{theme.esc(t("map.hex_panel.secondary"))}</span>')
 
         ui.input(t("map.hex_panel.name_reference"), value=h["name"],
                  on_change=lambda e: (_set_field(h, "name", e.value or ""),
@@ -322,18 +325,39 @@ def _hex_panel(mine: dict) -> None:
                         else t("map.hex_panel.now", hex=existing["hex"][0], hex2=existing["hex"][1]))
                 options[f'{_common._SETTLEMENT_PREFIX}{existing["id"]}'] = f'🏘 {existing["name"]} · {where}'
 
-            new = ui.select(options, label=t("map.hex_panel.add_feature")) \
+            form = {"kind": None, "detail": "", "structure": None}
+            ui.select(options, label=t("map.hex_panel.add_feature"),
+                      on_change=lambda e: (form.update(kind=e.value), detail_field.refresh())) \
                 .props("outlined dense").classes("w-56")
-            label = ui.input(t("map.hex_panel.detail_e_g_lumber")).props("outlined dense").classes("w-40")
+
+            @ui.refreshable
+            def detail_field() -> None:
+                # Ruins and a Structure name a structure: the Ruins halve its
+                # cost, the Structure is placed free in a settlement founded here.
+                if form["kind"] in STRUCTURE_FEATURES:
+                    ui.select({s_["id"]: s_["name"] for s_ in rules.all_structures()},
+                              label=t("map.hex_panel.feature_structure"), with_input=True,
+                              on_change=lambda e: form.update(structure=e.value)) \
+                        .props("outlined dense").classes("w-48")
+                else:
+                    ui.input(t("map.hex_panel.detail_e_g_lumber"),
+                             on_change=lambda e: form.update(detail=e.value or "")) \
+                        .props("outlined dense").classes("w-40")
+
+            detail_field()
 
             @theme.requires(permissions.EDIT_KINGDOM)
             def add() -> None:
-                if not new.value:
+                if not form["kind"]:
                     return
-                if str(new.value).startswith(_common._SETTLEMENT_PREFIX):
-                    _link_existing(new.value[len(_common._SETTLEMENT_PREFIX):], col, row, mapping, detail)
+                if str(form["kind"]).startswith(_common._SETTLEMENT_PREFIX):
+                    _link_existing(form["kind"][len(_common._SETTLEMENT_PREFIX):], col, row, mapping, detail)
                     return
-                h["features"].append({"kind": new.value, "name": label.value or ""})
+                entry = {"kind": form["kind"], "name": form["detail"]}
+                st = rules.BY_ID["structure"].get(form["structure"] or "")
+                if form["kind"] in STRUCTURE_FEATURES and st:
+                    entry.update(name=st["name"], structure=st["id"])
+                h["features"].append(entry)
                 refresh()
                 detail.refresh()
 
@@ -350,6 +374,11 @@ def _hex_panel(mine: dict) -> None:
             ui.checkbox(t("map.hex_panel.farmland"), value=h["farmland"],
                         on_change=lambda e: (_set_farmland(h, e.value, refresh_fields),
                                              farm_note.refresh()))
+            ui.select({"": t("map.hex_panel.not_irrigated"), "river": t("map.hex_panel.irrigated_river"),
+                       "lake": t("map.hex_panel.irrigated_lake")}, label=t("map.hex_panel.irrigated"),
+                      value=h.get("irrigated") or "",
+                      on_change=lambda e: (_set_field(h, "irrigated", e.value or None), refresh_fields())) \
+                .props("outlined dense").classes("w-40")
 
         @ui.refreshable
         def farm_note() -> None:
@@ -372,6 +401,9 @@ def _hex_panel(mine: dict) -> None:
             if sl:
                 ui.checkbox(t("map.hex_panel.doubled_resource_hex"), value=sl.get("doubled", False),
                             on_change=lambda e: (_set_field(sl, "doubled", e.value), refresh()))
+                if (sl.get("rich_until_turn") or -1) >= STATE.k["turn"]:
+                    ui.label(t("map.hex_panel.rich_until", turn=sl["rich_until_turn"])) \
+                        .style("font-size:.78rem;color:var(--km-gold)")
 
         ui.textarea(t("map.hex_panel.notes"), value=h["note"],
                     on_change=lambda e: (_set_field(h, "note", e.value or ""),
@@ -880,9 +912,76 @@ def _hex_actions(h: dict, mine: dict) -> None:
                 .props(f'dense outline color=amber {off("fortify_hex")}')
             ui.button(t("map.hex_panel.establish_settlement"), on_click=lambda: _settlement(h, mapping)) \
                 .props(f'dense outline color=amber {off("establish_settlement")}')
-        # Favored Land: a choice at the table, said where it applies.
-        ui.label(t("map.hex_panel.favored_land_hint")) \
-            .style("font-size:.72rem;color:var(--km-muted);white-space:normal")
+            claimed = h["status"] == "claimed"
+            ui.button(rules.BY_ID["activities"]["irrigation"]["name"], on_click=lambda: _irrigation(h, mapping)) \
+                .props(f'dense outline color=amber {"" if claimed and not h.get("irrigated") and not why("irrigation") else "disable"}')
+            ui.button(t("map.hex_panel.abandon"), on_click=lambda: _abandon(h, mine)) \
+                .props(f'dense outline color=red {"" if claimed and not why("abandon_hex") else "disable"}')
+        _favored_land_block(h, mine)
+
+
+# ---------------------------------------------------------------- Favored Land
+def favored_available(h: dict) -> bool:
+    """Favored Land (1st level): two Region activities together in one hex
+    whose main terrain is the heartland's, once a turn."""
+    heart = rules.BY_ID["territory"].get(STATE.k.get("heartland") or "")
+    if not heart or not h.get("terrains") or h["terrains"][0] not in heart.get("terrains", ()):
+        return False
+    fl = STATE.k["favored_land"]
+    if fl.get("turn") != STATE.k["turn"]:
+        return True
+    return list(fl.get("hex") or ()) == [h["col"], h["row"]] and fl.get("used", 0) < 2
+
+
+def favored_here(h: dict) -> bool:
+    fl = STATE.k["favored_land"]
+    return (fl.get("turn") == STATE.k["turn"] and list(fl.get("hex") or ()) == [h["col"], h["row"]])
+
+
+@theme.requires(permissions.EDIT_KINGDOM)
+def set_favored(h: dict, on: bool, as_one: bool | None = None) -> None:
+    fl = STATE.k["favored_land"]
+    if not on:
+        if favored_here(h) and not fl.get("used"):
+            fl.clear()
+    elif favored_available(h):
+        if not favored_here(h):
+            # «Two Region activities at the same time» (the wiki): the pair
+            # takes one Region slot unless the GM says otherwise.
+            fl.clear()
+            fl.update(turn=STATE.k["turn"], hex=[h["col"], h["row"]], used=0, as_one=True)
+        if as_one is not None:
+            fl["as_one"] = bool(as_one)
+    theme.save_and_refresh_panels(("hexmap.actions",))
+
+
+def favored_extra(act_id: str, h: dict) -> list:
+    """The −2 of Favored Land for a Region activity in its hex, used once
+    per activity (two at most); the pair, counted as one, gives a Region
+    slot back."""
+    act = rules.BY_ID["activities"].get(act_id) or {}
+    fl = STATE.k["favored_land"]
+    if act.get("step") != "region" or not favored_here(h) or fl.get("used", 0) >= 2:
+        return []
+    fl["used"] = fl.get("used", 0) + 1
+    if fl.get("as_one") and fl["used"] == 2:
+        STATE.add_region_activity()
+    return [(t("map.hex_panel.favored_land"), -2, "circumstance")]
+
+
+def _favored_land_block(h: dict, mine: dict) -> None:
+    if not (favored_available(h) or favored_here(h)):
+        return
+    fl = STATE.k["favored_land"]
+    here = favored_here(h)
+    with ui.column().classes("gap-1 w-full"):
+        ui.checkbox(t("map.hex_panel.favored_land_tick"), value=here,
+                    on_change=lambda e: set_favored(h, e.value)).props("dense")
+        if here:
+            ui.checkbox(t("map.hex_panel.favored_land_as_one"), value=bool(fl.get("as_one")),
+                        on_change=lambda e: set_favored(h, True, e.value)).props("dense")
+            ui.label(t("map.hex_panel.favored_land_used", n=fl.get("used", 0))) \
+                .style("font-size:.72rem;color:var(--km-muted)")
 
 def _blocked(act_id: str) -> bool:
     """The activity cannot be attempted now (`State.activities_block`): the
@@ -914,10 +1013,14 @@ def _check(h: dict, act_id: str, title, skill: str, cd: int, apply,
     hinders it there) and hands it to `theme.show_check`: the result is
     applied (`apply(res)`) once kept, after the reroll for Fame the table
     may choose. The activity counts as attempted from the first roll."""
-    STATE.mark_activity(act_id)
+    STATE.mark_activity(act_id, hex_=(h["col"], h["row"]), skill=skill)
+    # Favored Land's −2, taken once per activity: a reroll for Fame keeps it.
+    extra = favored_extra(act_id, h)
 
     def roll() -> rules.Result:
-        return STATE.kingdom_check(skill, cd, act_id, variant, hex_=(h["col"], h["row"]))
+        res = STATE.kingdom_check(skill, cd, act_id, variant, hex_=(h["col"], h["row"]), extra=extra)
+        STATE.note_grade(act_id, res.grade)
+        return res
 
     theme.show_check(roll(), title, outcome or (lambda res: _dialog_result(act_id, res)),
                      apply=apply, reroll=roll, where=(h["col"], h["row"]))
@@ -946,6 +1049,7 @@ def _claim(h: dict, mine: dict) -> None:
                 if el["kind"] == "refuge":
                     STATE.award_milestone("first_refuge")
             STATE.record(t("map.hex_panel.claimed_hex_10_xp", col=h['col'], row=h['row']), "map")
+            claim_effects(h)
         if res.grade == "critical_success":
             STATE.add_region_activity()        # «immediately attempt another Region activity»
         elif res.grade == "critical_failure":
@@ -1004,8 +1108,22 @@ def _work_site(h: dict, mapping) -> None:
         resource = any(e["kind"] == "resource" for e in h["features"])
         if resource:
             ui.label(t("map.hex_panel.this_hex_has_resource")).style("color:var(--km-gold-dim);font-size:.8rem")
+        override = {"on": False}
+
+        @ui.refreshable
+        def terrain_row() -> None:
+            if site_terrain_ok(h, kind.value):
+                return
+            ui.label(t("map.hex_panel.work_site_terrain")).style("color:var(--km-red);font-size:.8rem")
+            ui.checkbox(t("map.hex_panel.gm_override"), value=override["on"],
+                        on_change=lambda e: (override.update(on=e.value), buttons.refresh())).props("dense")
+
+        terrain_row()
+        kind.on_value_change(lambda _e: (terrain_row.refresh(), buttons.refresh()))
 
         def go() -> None:
+            if not (site_terrain_ok(h, kind.value) or override["on"]):
+                return
             dlg.close()
             if _blocked("establish_work_site"):
                 return
@@ -1018,6 +1136,9 @@ def _work_site(h: dict, mapping) -> None:
                     # Only the dedicated field: the twin entry among the hex
                     # features doubled the icon on the map and the row in the panel.
                     h["work_site"] = {"commodity": commodity, "doubled": resource}
+                    if res.grade == "critical_success":
+                        # Twice the yield this turn and the next.
+                        h["work_site"]["rich_until_turn"] = STATE.k["turn"] + 1
                     h["features"] = [e for e in h["features"] if e["kind"] != "work_site"]
                     STATE.record(t("map.hex_panel.work_site_2", value=commodity, col=h['col'], row=h['row']), "map")
                 if res.grade == "critical_failure":
@@ -1029,10 +1150,25 @@ def _work_site(h: dict, mapping) -> None:
             _check(h, "establish_work_site", lambda: t("map.hex_panel.establish_work_site_3"),
                    _engineering(), STATE.control_dc, apply, variant=commodity)
 
-        with ui.row():
-            ui.button(t("map.hex_panel.roll_engineering"), on_click=go).props("color=amber")
-            ui.button(t("common.cancel"), on_click=dlg.close).props("flat")
+        @ui.refreshable
+        def buttons() -> None:
+            ok = site_terrain_ok(h, kind.value) or override["on"]
+            with ui.row():
+                ui.button(t("map.hex_panel.roll_engineering"), on_click=go) \
+                    .props(f'color=amber {"" if ok else "disable"}')
+                ui.button(t("common.cancel"), on_click=dlg.close).props("flat")
+
+        buttons()
     dlg.open()
+
+
+# What each work site needs underfoot: a lumber camp a forest, a quarry or a
+# mine hills or mountains.
+SITE_TERRAINS = {"lumber": {"forest"}, "stone": {"hills", "mountains"}, "ore": {"hills", "mountains"}}
+
+
+def site_terrain_ok(h: dict, commodity: str | None) -> bool:
+    return bool(set(h.get("terrains") or ()) & SITE_TERRAINS.get(commodity or "", set()))
 
 @theme.requires(permissions.EDIT_KINGDOM)
 def _farmland(h: dict, mapping) -> None:
@@ -1054,6 +1190,10 @@ def _farmland(h: dict, mapping) -> None:
             _make_farmland(h)
         theme.save_and_refresh()
         mapping.refresh()
+        if res.grade == "critical_failure":
+            _propose(lambda: rules.BY_ID["activities"]["establish_farmland"]["name"],
+                     _rows_of("establish_farmland", res.grade),
+                     {"act": "establish_farmland", "hex": (h["col"], h["row"])})
         if res.grade == "critical_success":
             # Two adjacent Farmland hexes: the second is the table's choice. The
             # choice opens first, so the outcome lies on top of it and is read
@@ -1107,22 +1247,123 @@ def _second_farmland(partners: list[dict], mapping) -> None:
             ui.button(t("map.hex_panel.second_farmland_skip"), on_click=dlg.close).props("flat")
     dlg.open()
 
+def river_cuts(h: dict) -> bool:
+    """A river crosses the hex from side to side (its banks are drawn)."""
+    return (h["col"], h["row"]) in STATE.archive.campaign_banks(STATE.campaign)
+
+
+def roads_cost(h: dict) -> tuple[int, bool]:
+    """Build Roads' RP, doubled over a river unless a Bridge already spans it;
+    and whether the river is there to bridge."""
+    river = river_cuts(h)
+    bridged = any(f.get("kind") == "bridge" for f in h.get("features", ()))
+    return _cost(h) * (2 if river and not bridged else 1), river and not bridged
+
+
 @theme.requires(permissions.EDIT_KINGDOM)
 def _roads(h: dict, mapping) -> None:
     if _blocked("build_roads"):
         return
-    if not STATE.spend_rp(_cost(h)):
+    cost, river = roads_cost(h)
+    if not river:
+        # The plain cost: rolled at once, as always.
+        _roads_roll(h, mapping, cost, river)
+        return
+    # Over a river the cost doubles: said before anything is spent.
+    with theme.dialog() as dlg, ui.card().classes("km-panel").style("min-width:360px;max-width:520px"):
+        theme.title(t("map.hex_panel.build_roads"), 2)
+        ui.label(t("map.hex_panel.roads_cost", cost=cost)).style("color:var(--km-muted)")
+        if river:
+            ui.label(t("map.hex_panel.roads_river")).style("color:var(--km-gold-dim);font-size:.8rem")
+
+        def go() -> None:
+            dlg.close()
+            _roads_roll(h, mapping, cost, river)
+
+        with ui.row():
+            ui.button(t("map.hex_panel.roll"), on_click=go).props("color=amber")
+            ui.button(t("common.cancel"), on_click=dlg.close).props("flat")
+    dlg.open()
+
+
+@theme.requires(permissions.EDIT_KINGDOM)
+def _roads_roll(h: dict, mapping, cost: int, river: bool) -> None:
+    if _blocked("build_roads"):
+        return
+    if not STATE.spend_rp(cost):
         theme.notify(t("map.hex_panel.not_enough_rp_increase"), "warning")
+
     def apply(res: rules.Result) -> None:
         if res.grade in ("success", "critical_success"):
             h["roads"] = True
+            if river and not any(f.get("kind") == "bridge" for f in h["features"]):
+                h["features"].append({"kind": "bridge", "name": ""})
         if res.grade == "critical_failure":
             STATE.modify_unrest(1)
         theme.save_and_refresh()
         mapping.refresh()
+        if res.grade == "critical_success":
+            # «Roads into the target hex and one adjacent claimed hex that
+            # doesn't yet have roads and whose terrain is at least as
+            # hospitable»: the table picks which; none, and it is a Success.
+            partners = road_partners(h)
+            if partners:
+                _second_road(partners, mapping)
+            else:
+                theme.notify(t("map.hex_panel.second_road_none"), "warning")
+        if river and res.grade in ("success", "critical_success"):
+            _propose(lambda: t("map.hex_panel.build_roads"),
+                     [{"t": "note", "text": t("map.hex_panel.crossing_note")}], {"hex": (h["col"], h["row"])})
 
     _check(h, "build_roads", lambda: t("map.hex_panel.build_roads"),
            _engineering(), STATE.control_dc, apply)
+
+
+def road_partners(h: dict) -> list[dict]:
+    """The hexes next to `h` that Build Roads' critical success may reach
+    too: claimed, without roads, and no less hospitable than `h` (their
+    terrain costs no more RP to build on)."""
+    found = []
+    for c, r in hexgrid.neighbours(h["col"], h["row"], STATE.orientation):
+        near = STATE.existing_hex(c, r)
+        if near is None or near["status"] != "claimed" or near.get("roads"):
+            continue
+        if _cost(near) <= _cost(h):
+            found.append(near)
+    return found
+
+
+def _second_road(partners: list[dict], mapping) -> None:
+    """The second hex of a critical success, among the adjacent ones that
+    qualify (`road_partners`)."""
+    def label(p: dict) -> str:
+        terrain = rules.BY_ID["terrain"].get(p["terrains"][0], {}).get("name", "") if p["terrains"] else ""
+        name = f' · {p["name"]}' if p.get("name") else ""
+        return f'{p["col"]},{p["row"]}{name}{" · " + terrain if terrain else ""}'
+
+    options = {f'{p["col"]},{p["row"]}': label(p) for p in partners}
+    with theme.dialog() as dlg, ui.card().classes("km-panel").style("min-width:360px"):
+        theme.title(t("map.hex_panel.second_road_title"), 2)
+        ui.label(t("map.hex_panel.second_road_text")).style("color:var(--km-muted);font-size:.85rem")
+        choice = ui.select(options, value=next(iter(options)), label=t("map.hex_panel.second_road_hex")) \
+            .props("outlined dense").classes("w-full")
+
+        @theme.requires(permissions.EDIT_KINGDOM)
+        def confirm() -> None:
+            # The choice comes from the browser: only a hex that was offered.
+            picked = next((p for p in partners if f'{p["col"]},{p["row"]}' == choice.value), None)
+            dlg.close()
+            if picked is None or picked["status"] != "claimed":
+                return
+            picked["roads"] = True
+            STATE.record(t("map.hex_panel.second_road_journal", col=picked["col"], row=picked["row"]), "map")
+            theme.save_and_refresh()
+            mapping.refresh()
+
+        with ui.row():
+            ui.button(t("map.hex_panel.second_road_confirm"), on_click=confirm).props("color=amber")
+            ui.button(t("map.hex_panel.second_farmland_skip"), on_click=dlg.close).props("flat")
+    dlg.open()
 
 @theme.requires(permissions.EDIT_KINGDOM)
 def _fortify(h: dict, mapping) -> None:
@@ -1197,6 +1438,7 @@ def _settlement(h: dict, mapping) -> None:
                             h["features"].append({"kind": "settlement", "name": village})
                         STATE.award_milestone("first_village")
                         STATE.record(t("map.hex_panel.founded_village_rp", value=village, col=h['col'], row=h['row'], tot=tot), "settlement")
+                        place_structure_features(h, sett)
                 theme.save_and_refresh()
                 mapping.refresh()
 
@@ -1211,4 +1453,192 @@ def _settlement(h: dict, mapping) -> None:
         with ui.row():
             ui.button(t("map.hex_panel.roll"), on_click=go).props("color=amber")
             ui.button(t("common.cancel"), on_click=dlg.close).props("flat")
+    dlg.open()
+
+
+# ---------------------------------------------------------------- 2.3.0: the map's rules
+# The hex features that name a structure: Ruins halve its cost, a Structure is
+# placed free in a settlement founded on the hex.
+STRUCTURE_FEATURES = ("ruins_feature", "structure")
+
+
+def _propose(title, entries: list[dict], context: dict, per_default: int | None = None) -> None:
+    """Rows proposed to the table (`turn.propose_rows`), when there are any."""
+    from kingmaker.ui.tabs import turn
+    if entries:
+        turn.propose_rows(title, entries, context=context, per_default=per_default)
+
+
+def _rows_of(act_id: str, grade: str) -> list[dict]:
+    """The data rows of an activity's outcome, notes left out (said elsewhere)."""
+    return [dict(r) for r in (rules.BY_ID["activities"][act_id].get("effects") or {}).get(grade, [])
+            if r["t"] != "note"]
+
+
+def claim_effects(h: dict) -> None:
+    """A Landmark or a Refuge claimed: their effects, as rows."""
+    for f in h.get("features", ()):
+        feature = rules.BY_ID["feature"].get(f.get("kind"))
+        if feature and feature.get("claim_effects"):
+            kind = f["kind"]
+            _propose(lambda kind=kind: rules.BY_ID["feature"][kind]["name"],
+                     [dict(r) for r in feature["claim_effects"]], {"hex": (h["col"], h["row"])})
+
+
+def place_structure_features(h: dict, sett: dict) -> None:
+    """A settlement founded on a hex with a Structure feature: the structure
+    stands in it from the start, free."""
+    for f in h.get("features", ()):
+        if f.get("kind") == "structure" and f.get("structure"):
+            if city.place_free(sett, f["structure"]):
+                STATE.record(t("map.hex_panel.structure_placed", name=f.get("name") or f["structure"],
+                               settlement=sett["name"]), "settlement")
+
+
+@theme.requires(permissions.EDIT_KINGDOM)
+def _irrigation(h: dict, mapping) -> None:
+    """Irrigation: the hex gains water (a river or a lake, drawn with the water
+    tools); a critical failure leaves a Plague check at every Event phase."""
+    if _blocked("irrigation") or h["status"] != "claimed" or h.get("irrigated"):
+        return
+    cost = _cost(h)
+    with theme.dialog() as dlg, ui.card().classes("km-panel").style("min-width:360px;max-width:520px"):
+        act = rules.BY_ID["activities"]["irrigation"]
+        theme.title(act["name"], 2)
+        water = ui.select({"river": t("map.hex_panel.irrigated_river"), "lake": t("map.hex_panel.irrigated_lake")},
+                          value="river", label=t("map.hex_panel.irrigated")).props("outlined dense").classes("w-48")
+        ui.label(t("map.hex_panel.cost_rp_most_inhospitable", cost=cost)).style("color:var(--km-muted)")
+
+        def go() -> None:
+            dlg.close()
+            if not STATE.spend_rp(cost):
+                theme.notify(t("map.hex_panel.not_enough_rp_increase"), "warning")
+            kind = water.value or "river"
+
+            def apply(res: rules.Result) -> None:
+                where = {"act": "irrigation", "hex": (h["col"], h["row"])}
+                if res.grade in ("success", "critical_success"):
+                    irrigate(h, kind)
+                theme.save_and_refresh()
+                mapping.refresh()
+                if res.grade in ("success", "critical_success"):
+                    rows = [{"t": "note", "text": t("map.hex_panel.draw_water")}]
+                    if res.grade == "critical_success":
+                        rows.append({"t": "rp", "q": str(cost // 2), "auto": True,
+                                     "text": t("map.hex_panel.irrigation_refund")})
+                    _propose(lambda: rules.BY_ID["activities"]["irrigation"]["name"], rows, where)
+                elif res.grade == "critical_failure":
+                    _propose(lambda: rules.BY_ID["activities"]["irrigation"]["name"],
+                             _rows_of("irrigation", res.grade), where)
+
+            _check(h, "irrigation", lambda: rules.BY_ID["activities"]["irrigation"]["name"],
+                   _engineering(), STATE.activity_dc("irrigation")[0], apply)
+
+        with ui.row():
+            ui.button(t("map.hex_panel.roll"), on_click=go).props("color=amber")
+            ui.button(t("common.cancel"), on_click=dlg.close).props("flat")
+    dlg.open()
+
+
+def irrigate(h: dict, kind: str) -> None:
+    """The hex irrigated; a Plague check left by an earlier failure here is gone."""
+    h["irrigated"] = kind
+    removed = STATE.clear_pending("irrigation", (h["col"], h["row"]))
+    STATE.record(t("map.hex_panel.irrigated_journal", col=h["col"], row=h["row"],
+                   water=t(f"map.hex_panel.irrigated_{kind}")), "map")
+    if removed:
+        STATE.record(t("map.hex_panel.plague_check_gone", col=h["col"], row=h["row"]), "map")
+
+
+def abandon_rows(grade: str, hexes: list, act_id: str = "abandon_hex") -> list[dict]:
+    """Abandon Hex's rows for a grade: its data rows, the Unrest doubled when a
+    settlement stands on one of the hexes, and the hexes unclaimed."""
+    with_town = any(STATE.existing_hex(c, r) and STATE.existing_hex(c, r).get("settlement")
+                    for c, r in hexes)
+    rows = []
+    for r in _rows_of(act_id, grade):
+        if r["t"] == "unrest" and with_town:
+            n = int(r["q"])
+            r = dict(r, q=str(2 * n), text=t("map.hex_panel.abandon_doubled"))
+        rows.append(r)
+    rows.append({"t": "unclaim", "auto": True})
+    return rows
+
+
+@theme.requires(permissions.EDIT_KINGDOM)
+def _abandon(h: dict, mine: dict) -> None:
+    """Abandon Hex: one or more claimed hexes given up, the DC +1 for each
+    hex past the first."""
+    if _blocked("abandon_hex") or h["status"] != "claimed":
+        return
+    act = rules.BY_ID["activities"]["abandon_hex"]
+    claimed = {f'{x["col"]},{x["row"]}': f'{x["col"]},{x["row"]}' + (f' · {x["name"]}' if x.get("name") else "")
+               for x in STATE.claimed_hexes()}
+    here = f'{h["col"]},{h["row"]}'
+    with theme.dialog() as dlg, ui.card().classes("km-panel").style("min-width:420px;max-width:560px"):
+        theme.title(act["name"], 2)
+        chosen = ui.select(claimed, value=[here], multiple=True, label=t("map.hex_panel.abandon_hexes")) \
+            .props("outlined dense use-chips").classes("w-full")
+        skill = ui.select({a: rules.BY_ID["skills"][a]["name"] for a in act["skills"]},
+                          value=act["skills"][0], label=t("map.hex_panel.skill")) \
+            .props("outlined dense").classes("w-56")
+
+        def the_dc(n: int) -> tuple[int, list]:
+            return STATE.activity_dc("abandon_hex", extra=[(t("map.hex_panel.extra_hexes"), n - 1)]
+                                     if n > 1 else ())
+
+        # The DC as the hexes are chosen: 1 higher for each one past the first.
+        @ui.refreshable
+        def dc_line() -> None:
+            from kingmaker.ui.tabs import turn
+            dc, breakdown = the_dc(max(1, len(chosen.value or [])))
+            ui.label(f'{t("turn.dc")} {dc} · {turn.dc_text(breakdown)}').classes("text-xs km-fc")
+        dc_line()
+        chosen.on_value_change(lambda _e: dc_line.refresh())
+
+        def go() -> None:
+            picked = [tuple(int(n) for n in p.split(",")) for p in (chosen.value or [])]
+            if not picked:
+                return
+            dlg.close()
+            dc = the_dc(len(picked))[0]
+
+            def apply(res: rules.Result) -> None:
+                where = {"act": "abandon_hex", "hexes": [list(p) for p in picked], "hex": picked[0]}
+                _propose(lambda: rules.BY_ID["activities"]["abandon_hex"]["name"],
+                         abandon_rows(res.grade, picked), where, per_default=len(picked))
+                theme.save_and_refresh()
+                mine["map"].refresh()
+
+            _check(h, "abandon_hex", lambda: rules.BY_ID["activities"]["abandon_hex"]["name"],
+                   skill.value, dc, apply)
+
+        with ui.row():
+            ui.button(t("map.hex_panel.roll"), on_click=go).props("color=amber")
+            ui.button(t("common.cancel"), on_click=dlg.close).props("flat")
+    dlg.open()
+
+
+def lose_hex_dialog() -> None:
+    """Unrest's DC 11 flat check failed: the kingdom loses a hex of the PCs'
+    choice, its settlement becoming a freehold."""
+    claimed = {f'{x["col"]},{x["row"]}': f'{x["col"]},{x["row"]}' + (f' · {x["name"]}' if x.get("name") else "")
+               + (f' · {STATE.settlement(x["settlement"])["name"]}' if x.get("settlement")
+                  and STATE.settlement(x["settlement"]) else "")
+               for x in STATE.claimed_hexes()}
+    if not claimed:
+        return
+    with theme.dialog() as dlg, ui.card().classes("km-panel").style("min-width:420px;max-width:560px"):
+        theme.title(t("map.hex_panel.lose_hex_title"), 2)
+        ui.label(t("map.hex_panel.lose_hex_text")).style("font-size:.85rem;color:var(--km-muted);white-space:normal")
+        choice = ui.select(claimed, value=next(iter(claimed)), label=t("map.hex_panel.lose_hex_pick")) \
+            .props("outlined dense").classes("w-full")
+
+        def confirm() -> None:
+            dlg.close()
+            c, r = (int(n) for n in choice.value.split(","))
+            _propose(lambda: t("map.hex_panel.lose_hex_title"), [{"t": "unclaim", "auto": True}],
+                     {"hexes": [[c, r]]})
+
+        ui.button(t("common.save"), on_click=confirm).props("color=amber")
     dlg.open()

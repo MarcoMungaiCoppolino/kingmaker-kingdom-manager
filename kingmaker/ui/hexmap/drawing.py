@@ -203,7 +203,9 @@ def _ground_layers(sel: dict, view, m: dict, size: float, origin, orient: str,
     chosen: list[str] = []
     party_visible = (STATE.archive.visible_to_party(STATE.campaign)
                        if view.gm else None)
-    veil_fill = (_common._gm_fog(m.get("gm_fog_opacity", 0.35)) if view.gm
+    # The claimed hexes cut off from the capital: computed once for the layer.
+    secondary = STATE.secondary_hexes()
+    veil_fill =(_common._gm_fog(m.get("gm_fog_opacity", 0.35)) if view.gm
                         else _common._player_fog(m.get("fog_opacity", 0.8)))
     # Hexes with the same look end up in a single <path>: a 30x24 grid is 720
     # polygons, and resending them one by one at every redraw weighs.
@@ -281,6 +283,10 @@ def _ground_layers(sel: dict, view, m: dict, size: float, origin, orient: str,
                     mark_("fortification", "🏰", secret="fortified" in covered)
                 if h.get("roads"):
                     mark_("roads", "🛣️", secret="roads" in covered)
+                if h.get("irrigated"):
+                    mark_("irrigated", "💧")
+                if state == "claimed" and (col, row) in secondary:
+                    mark_("secondary", "🏴")
                 for el in h.get("features", []):
                     if el["kind"] == "work_site":
                         mark_(f'sito_lavoro:{el.get("name")}', _common._work_site_icon(el.get("name")))

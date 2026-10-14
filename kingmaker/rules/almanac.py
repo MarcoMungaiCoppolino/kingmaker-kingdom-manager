@@ -21,6 +21,7 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from kingmaker import rules
 from kingmaker.locale.i18n import t
 
 _DATA = json.loads((Path(__file__).parent / "data" / "calendar.json")
@@ -28,7 +29,10 @@ _DATA = json.loads((Path(__file__).parent / "data" / "calendar.json")
 
 MONTHS = _DATA["months"]
 LEAP_YEAR = _DATA["leap_year"]
-LEADER_REST_DAYS = int(_DATA["leader_rest_days"])
+# A leader's week of downtime each month: a kingdom rule, not a property of
+# the calendar, so it lives with the kingdom's rules (since 2.3.0). Every
+# month of a calendar must hold it.
+LEADER_REST_DAYS = int(rules.KINGDOM["leader_rest_days"])
 
 # Start date of the Adventure Path: the campaign begins when the table decides,
 # and this is only the proposal shown the first time.

@@ -66,15 +66,12 @@
         "success": [
           {
             "name": "Collect Taxes (circumstance)"
-          },
-          null
+          }
         ],
         "failure": [
           {
             "name": "Collect Taxes (circumstance)"
-          },
-          null,
-          null
+          }
         ]
       }
     },
@@ -98,6 +95,9 @@
         "critical_success": [
           {
             "text": "You withdraw funds equal to the «Currency per Additional PC» entry for the kingdom's level, or you fund the unexpected event."
+          },
+          {
+            "text": "Until Capital Investment repays it, the next Tap Treasury is worsened by two degrees."
           }
         ],
         "success": [
@@ -106,6 +106,9 @@
           },
           {
             "name": "Drained treasury (circumstance)"
+          },
+          {
+            "text": "Until Capital Investment repays it, the next Tap Treasury is worsened by two degrees."
           }
         ],
         "failure": [
@@ -122,9 +125,7 @@
           },
           {
             "name": "Rumours of a cash shortage (circumstance)"
-          },
-          null,
-          null
+          }
         ]
       }
     },
@@ -166,9 +167,7 @@
         "critical_failure": [
           {
             "name": "Strained treasury (circumstance)"
-          },
-          null,
-          null
+          }
         ]
       }
     },
@@ -326,9 +325,7 @@
         "success": [
           {
             "text": "2 Resource Dice in RP — choose this or the Luxuries"
-          },
-          null,
-          null
+          }
         ]
       },
       "dc": {
@@ -480,8 +477,7 @@
           null,
           {
             "text": "1 extra point at the start of the next Kingdom turn"
-          },
-          null
+          }
         ],
         "critical_failure": [
           null,
@@ -536,6 +532,9 @@
           },
           {
             "text": "The group joins the kingdom. If you claim its hex, mark it on the Map (Size +1); if it does not border the kingdom it becomes secondary territory."
+          },
+          {
+            "text": "Only with a freehold chosen: its hex joins the kingdom, its settlement too"
           }
         ],
         "success": [
@@ -621,6 +620,18 @@
           {
             "text": "…or 0 RP and Crime +1"
           }
+        ],
+        "critical_success": [
+          null,
+          {
+            "text": "Use the investment to repay the treasury instead"
+          }
+        ],
+        "success": [
+          null,
+          {
+            "text": "Use the investment to repay the treasury instead"
+          }
         ]
       },
       "cost_data": [
@@ -649,6 +660,9 @@
         "critical_success": [
           {
             "text": "You establish diplomatic relations and gain a +2 circumstance bonus to all checks with that group until the next Kingdom turn."
+          },
+          {
+            "text": "To every check with that group until the next Kingdom turn"
           }
         ],
         "success": [
@@ -658,7 +672,7 @@
         ],
         "failure": [
           {
-            "text": "No relations. If you try again next turn you have a +2 circumstance bonus."
+            "text": "No relations: for the retry next turn"
           }
         ],
         "critical_failure": [
@@ -799,8 +813,7 @@
         "critical_success": [
           {
             "name": "Foreign Aid (circumstance)"
-          },
-          null
+          }
         ],
         "success": [
           {
@@ -1034,17 +1047,20 @@
         "critical_success": [
           null,
           {
-            "text": "The trade agreement is established: add it on the kingdom sheet."
+            "text": "The trade agreement is in force: it shows in the Diplomacy block of the kingdom sheet."
           }
         ],
         "success": [
           {
-            "text": "The trade agreement is established: add it on the kingdom sheet."
+            "text": "The trade agreement is in force: it shows in the Diplomacy block of the kingdom sheet."
           }
         ],
         "failure": [
           {
             "text": "You must pay them to establish the agreement; if you cannot, the attempt fails"
+          },
+          {
+            "text": "Only once the Resource Dice are paid: untick it otherwise."
           }
         ],
         "critical_failure": [
@@ -1079,12 +1095,18 @@
         "critical_success": [
           {
             "text": "The capital relocates smoothly: change it from the City tab."
+          },
+          {
+            "text": "Relocate Capital cannot be attempted again for 3 Kingdom turns."
           }
         ],
         "success": [
           null,
           {
             "text": "The capital relocates: change it from the City tab."
+          },
+          {
+            "text": "Relocate Capital cannot be attempted again for 3 Kingdom turns."
           }
         ],
         "failure": [
@@ -1097,6 +1119,9 @@
           },
           {
             "text": "The capital relocates: change it from the City tab."
+          },
+          {
+            "text": "Relocate Capital cannot be attempted again for 3 Kingdom turns."
           }
         ],
         "critical_failure": [
@@ -1115,6 +1140,9 @@
           },
           {
             "text": "The capital stays as it is."
+          },
+          {
+            "text": "Relocate Capital cannot be attempted again for 3 Kingdom turns."
           }
         ]
       }
@@ -1262,7 +1290,7 @@
       "effects": {
         "critical_success": [
           {
-            "text": "The hex gains a river or lake terrain feature: add it from the Map."
+            "text": "The hex is irrigated: draw the river or lake with the water tools of the Map."
           },
           {
             "text": "Refund: half the RP spent (adjust the quantity)"
@@ -1270,7 +1298,7 @@
         ],
         "success": [
           {
-            "text": "The hex gains a river or lake terrain feature: add it from the Map."
+            "text": "The hex is irrigated: draw the river or lake with the water tools of the Map."
           }
         ],
         "critical_failure": [
@@ -1362,6 +1390,13 @@
       },
       "dc": {
         "note": "+5 if the hex is mostly Hills"
+      },
+      "effects": {
+        "critical_failure": [
+          {
+            "text": "In each of the next 2 Event phases attempt a DC 6 flat check: if you fail, Crop Failure strikes this hex and those around it."
+          }
+        ]
       }
     },
     {

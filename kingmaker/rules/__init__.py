@@ -397,15 +397,75 @@ def signed_value(q: str) -> tuple[int, str]:
 
 
 def entry_target(entry: dict) -> str | None:
-    """«ruin_choice» and «commodity_choice» ask what to apply the effect to."""
-    return {"ruin_choice": "ruin", "commodity_choice": "commodity", "focus": "skill"}.get(entry["t"])
+    """What an effect row asks the table to pick: a Ruin, a commodity, a
+    skill, a partner, an event."""
+    kind = entry["t"]
+    if kind == "lockout":
+        return {"ruin": "ruin", "target": "partner"}.get(entry.get("scope"))
+    if kind == "penalty" and entry.get("scope") == "partner":
+        return "partner"
+    return {"ruin_choice": "ruin", "commodity_choice": "commodity", "focus": "skill",
+            "event_mark": "event", "relation": "partner", "agreement": "partner"}.get(kind)
 
 
-def entry_label(entry: dict, value: int) -> str:
-    """Short description of an effect, with the value already rolled."""
+def forced_event_name(eid: str | None) -> str:
+    """The name of an event an activity forces (Squatters, Crop Failure, ...)."""
+    found = next((e for e in KINGDOM.get("forced_events", ()) if e["id"] == eid), None)
+    return found["name"] if found else (eid or "")
+
+
+def _penalty_when(entry: dict) -> str:
+    if entry.get("clears_on") == "loyalty_check":
+        return t("rules.until_loyalty_check")
+    if entry.get("clears_on") == "next_turn":
+        return t("rules.until_next_turn")
+    turns = entry.get("turns")
+    if not turns or int(turns) <= 1:
+        return t("rules.rest_turn")
+    return t("rules.turns", dur=turns)
+
+
+def entry_label(entry: dict, value: int, name: str = "", n: int = 0) -> str:
+    """Short description of an effect, with the value already rolled. `name`
+    is what the row is about when the caller knows it (the event, the
+    partner, the leader, the hexes)."""
     kind = entry["t"]
     if kind == "note":
         return entry["text"]
+    if kind == "lockout":
+        return t(f"rules.lockout_{entry.get('scope', 'self')}", n=entry.get("turns", 1))
+    if kind == "pending_check":
+        event = forced_event_name(entry.get("event"))
+        if entry.get("dc") is None:
+            return t("rules.pending_auto", event=event)
+        if entry.get("repeat") is None:
+            return t("rules.pending_check_every", dc=entry["dc"], event=event)
+        if int(entry["repeat"]) > 1:
+            return t("rules.pending_check_repeat", dc=entry["dc"], n=entry["repeat"], event=event)
+        return t("rules.pending_check", dc=entry["dc"], event=event)
+    if kind == "event_mark":
+        return t(f"rules.event_{entry.get('mark', 'ended')}", name=name or t("rules.the_event"))
+    if kind == "debt":
+        return t("rules.debt")
+    if kind == "repay":
+        return t("rules.repay")
+    if kind == "penalty":
+        if entry.get("kind") == "vacancy":
+            return t("rules.penalty_vacancy", who=name or t("rules.the_leader"), when=_penalty_when(entry))
+        who = name or (t("rules.the_partner") if entry.get("scope") == "partner"
+                       else t("rules.the_leader") if entry.get("scope") == "leader"
+                       else t("rules.all_kingdom_checks"))
+        return t("rules.penalty_row", v=int(entry.get("v") or 0),
+                 kind=t(f"rules.kind_{entry.get('kind', 'circumstance')}"), who=who,
+                 when=_penalty_when(entry))
+    if kind == "unclaim":
+        return t("rules.unclaim", hexes=name or "?", n=n or 1)
+    if kind == "claim":
+        return t("rules.claim", hex=name or "?")
+    if kind == "relation":
+        return t(f"rules.relation_{entry.get('status', 'relations')}", name=name or t("rules.the_partner"))
+    if kind == "agreement":
+        return t(f"rules.agreement_{entry.get('what', 'new')}", name=name or t("rules.the_partner"))
     if kind == "unrest":
         return t("rules.unrest", value=value)
     if kind == "ruin":

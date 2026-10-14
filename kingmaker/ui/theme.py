@@ -129,6 +129,10 @@ body, .nicegui-content { background: var(--km-bg); color: var(--km-text);
 .km-icon-btn { font-size: 20px; padding: 4px; border-radius: 50%; cursor: pointer; color: #9e9e9e;
   user-select: none; }
 .km-icon-btn.amber { color: #ffc107; }
+/* A filled amber button: dark ink, not Quasar's white on yellow. On the
+   content, not the button: Quasar's own white is an important rule in a
+   cascade layer, which nothing unlayered beats. */
+.q-btn.bg-amber .q-btn__content { color: #1f1708; }
 .km-icon-btn:hover { background: rgba(255, 255, 255, .08); }
 .km-icons { display: flex; align-items: center; }
 /* As many columns as the panel has room for: two in a wide column, one in a
@@ -201,6 +205,25 @@ body, .nicegui-content { background: var(--km-bg); color: var(--km-text);
    sized by its texts came out wider than its panel in Italian (the activity
    cards of the turn). Nothing inside a panel is wider than the panel. */
 .km-panel > * { max-width: 100%; }
+/* A table that always fits its page: fixed layout, the columns' shares
+   in percent, the words broken rather than a sideways scroll. */
+.km-fit table { table-layout: fixed; width: 100%; }
+.km-fit td, .km-fit th { overflow-wrap: anywhere; }
+/* The roles step's week of downtime: the tick, the days and the choice in
+   three columns, every row the same height; on a narrow panel two columns,
+   the choice under the tick and the days. The vacancy option shows its
+   penalty on hovering: the cursor says so. */
+.km-downtime-box { container-type: inline-size; width: 100%; }
+.km-downtime { display: grid; align-items: center; max-width: 100%;
+  grid-template-columns: max-content max-content minmax(0, 1fr);
+  grid-auto-rows: minmax(30px, auto); column-gap: 14px; row-gap: 0; }
+.km-downtime .q-radio { margin-right: 10px; }
+.km-dt-penalty { cursor: help; text-decoration: underline dotted var(--km-muted); text-underline-offset: 3px; }
+@container (max-width: 800px) {
+  .km-downtime { grid-template-columns: max-content minmax(0, 1fr); grid-auto-rows: auto; }
+  .km-downtime > .km-dt-choice { grid-column: 1 / -1; }
+  .km-downtime > .km-dt-choice:not(:empty) { margin-bottom: 6px; }
+}
 
 /* Smaller screens and narrow windows. Only the stylesheet changes — no
    element more, nothing that runs on a resize, no second layout to draw and
@@ -508,6 +531,19 @@ def _offer_feats() -> None:
         return
     with dialog() as dlg, ui.card().classes("km-panel").style("min-width:380px;max-width:560px"):
         for offer in offers:
+            if offer["kind"] == "rp_shortfall":
+                # Not a feat: the rule of an expense that cannot be paid, one
+                # Ruin point for each such expense.
+                count = int(offer.get("count") or 1)
+                title(t("theme.rp_shortfall_title"), 2)
+                ui.label(t("theme.rp_shortfall_offer")).style("font-size:.88rem;white-space:normal")
+                if count > 1:
+                    ui.label(t("theme.rp_shortfall_count", n=count)).style("font-size:.8rem;color:var(--km-gold-dim)")
+                with ui.row().classes("gap-2 flex-wrap"):
+                    for r in rules.RUINS:
+                        ui.button(r["name"], on_click=lambda _e=None, rid=r["id"], o=offer: _shortfall(rid, o, dlg))                             .props("dense outline color=red")
+                sep()
+                continue
             name = rules.BY_ID["feat"][offer["kind"]]["name"]
             title(name, 2)
             if offer["kind"] == "crush_dissent":
@@ -521,6 +557,21 @@ def _offer_feats() -> None:
             sep()
         ui.button(t("theme.feat_offer_decline"), on_click=dlg.close).props("flat")
     dlg.open()
+
+
+def _shortfall(rid: str, offer: dict, dlg) -> None:
+    """The Ruin the PCs chose for an expense the kingdom could not pay: one
+    point; the next unpaid expense, when there was one, is asked again. (The
+    permission is checked here: `requires` is defined further down.)"""
+    if not permissions.can(user(), permissions.EDIT_KINGDOM):
+        notify(denied_message(), "negative")
+        return
+    dlg.close()
+    if STATE.rp_shortfall(rid):
+        left = int(offer.get("count") or 1) - 1
+        if left > 0:
+            STATE._offer_feat({"kind": "rp_shortfall", "count": left})
+        save_and_refresh_panels(stat_panels("ruins", extra=("turn.journal",)))
 
 
 def _crush(offer: dict, dlg) -> None:

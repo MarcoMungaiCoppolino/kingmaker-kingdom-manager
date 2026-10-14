@@ -893,3 +893,54 @@ moving bar wherever the launcher waits on the cloud, and a seat take says which 
 reading, writes the missing stamp beside an old copy so nobody downloads it again, and reads
 only the new copies on its second pass. The kingdom events, the release's planned content, go
 to 2.3.0 with the rules across turns: the keys would not wait.
+
+
+## 2.3.0 — 14 October 2026 · The whole kingdom
+
+What the wiki's kingdom rules still asked of the table by hand went into the app in one release:
+the ongoing events, the rules that carry from one turn to the next, the leaders' limits and their
+week of downtime, the city's upgrades, repairs and demolitions, the map's own rules, diplomacy,
+trade agreements and war. The armies are the one system left out, for 3.0.0. A plan written
+against the code first, one section after another, each with its tests, kept the release from
+spreading into everything at once.
+
+The data model stayed in the kingdom's document, so the schema did not move and an older 2.x app
+still opens the save: the events, the partners, and a `turn_memory` holding what the turns
+remember (who attempted what, the lock-outs, the streaks, the treasury's debt, penalties bound to
+a leader or a partner, the flat checks still to roll). Only the record of who acted is history;
+everything else is written by the outcome row itself and never rebuilt from the record, so
+trimming three turns of history cannot lose a lock-out. Ten new kinds of effect row carry these
+changes (a lock-out, a pending check, an event's mark, a debt and its repayment, a penalty, a
+hex unclaimed or a freehold claimed, a relation, an agreement), and every one of them is still a
+row the table ticks: the app's first rule held. An activity now says what it is about, a Ruin,
+a role, a group, an event, and its DC is worked out in one place for the Turn tab, the map and
+the city alike.
+
+Two of the plan's assumptions broke on the code. Irrigation was to add a river or a lake to the
+hex's terrains, but those two ids are legacy and stripped at every load since 1.0.0; the hex
+keeps its own `irrigated` field instead, and the water that counts for travel stays the water
+drawn with the tools. The settlement borders were to hold walls and bridges, but the border is a
+plain string a 2.2 app draws in its selects; the walls and bridges went into sibling keys. And
+the rule that an Edifice counts once per settlement nearly landed on the wrong trait: the trait
+ids were made from the Italian names, and «Edificio» is the Building trait, so the id `edifice`
+names fifty-seven ordinary buildings while the real Edifice, the Town Hall, the Castle, the
+Cathedral, sits under `building`. Two Inns stacking, as an old test insisted, gave it away.
+
+The windows test, which plays random changes in eight simulated windows and compares every panel
+with a fresh render, earned its keep again. It found a gap older than this release (a critical
+success moved the Fame points without redrawing the quick adjustments) and every place where a
+new writer forgot a panel: the activity cards depend on the events now, since Hire Adventurers
+waits for one. Redrawing the Turn column folded every phase shut, the Event phase included,
+right where the GM names an event; each window now remembers which phases it keeps open.
+
+The last days before the release were spent on what the rules had made crowded. A review of the
+whole implementation against the Italian wiki and the Archives of Nethys fixed two rules and five
+details, and then the screens were laid out again from screenshots: the City tab in a third and two
+thirds, the structures table with the wiki's columns, a search and filters, and a sort that does
+what a reader expects, the Manual's tables in two columns, the feats under the skills so the
+Diplomacy block is in view. The leaders' week of downtime took three passes to say its rule in two
+lines and line its rows up; the number beside every PC, «30 of 30 days on journeys», turned out to
+be the test table itself: dozens of journeys moved at once, each saved with its planned days from
+the day of the move, summed as if the clock had run through all of them. The count now takes the
+journeys the clock ran, each day once. A rule the app says out loud is only as good as the number
+beside it.

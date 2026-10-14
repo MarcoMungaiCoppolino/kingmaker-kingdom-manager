@@ -6,9 +6,9 @@ from nicegui import ui
 from kingmaker.access import permissions, view as view_mod
 from kingmaker import rules
 from kingmaker.travel import daily
-from kingmaker.state import STATE
+from kingmaker.state import STATE, _NO_VALUE
 from kingmaker.ui import hexmap, theme
-from kingmaker.ui.tabs import sheet
+from kingmaker.ui.tabs import events, leaders, sheet
 from kingmaker.locale.i18n import t
 
 REFERENCES = {
@@ -18,18 +18,14 @@ REFERENCES = {
 
 
 # --------------------------------------------------------------------------
-def _activity_dc(act: dict) -> tuple[int, str]:
-    cd = act["dc"]
-    if cd["kind"] == "control":
-        return STATE.control_dc + cd.get("mod", 0), (
-            t("turn.control_dc", control_dc=STATE.control_dc)
-            + (f" {cd['mod']:+d}" if cd.get("mod") else "")
-            + (f" · {cd['note']}" if cd.get("note") else ""))
-    if cd["kind"] == "fixed":
-        return cd["valore"], t("turn.fixed_dc", dc=cd["valore"])
-    if cd["kind"] == "none_":
-        return 0, cd.get("note") or t("turn.no_check")
-    return STATE.control_dc, cd.get("note") or t("turn.dc_gm")
+def dc_text(breakdown: list[tuple[str, int]]) -> str:
+    """«Control DC 16 · attempted last turn +4»: the base, then the rest."""
+    return " · ".join(f"{label} {v:+d}" if i else label for i, (label, v) in enumerate(breakdown))
+
+
+def _activity_dc(act: dict, subject: str | None = None, extra=()) -> tuple[int, str]:
+    dc, breakdown = STATE.activity_dc(act["id"], subject=subject, extra=extra)
+    return dc, dc_text(breakdown)
 
 
 def outcomes_block(act: dict) -> None:
@@ -41,37 +37,69 @@ def outcomes_block(act: dict) -> None:
                     f'{rules.grade_label(grade)}:</b> {text}</div>')
 
 
-def _effect_rows(entries: list[dict], skill: str | None = None) -> list[dict]:
+# The kinds whose row carries no number to edit.
+_NO_NUMBER = ("mod", "milestone", "focus", *sorted(_NO_VALUE))
+
+
+def _listing(tgt: str) -> list[dict]:
+    """What a row's target is picked from: entries with `id` and `name`."""
+    if tgt == "ruin":
+        return list(rules.RUINS)
+    if tgt == "skill":
+        return list(rules.SKILLS)
+    if tgt == "partner":
+        return list(STATE.k["partners"])
+    if tgt == "event":
+        return STATE.ongoing_events()
+    return list(rules.COMMODITIES)
+
+
+def _effect_rows(entries: list[dict], skill: str | None = None,
+                 context: dict | None = None) -> list[dict]:
     """Draws the entries as tickable, editable rows; returns their state.
     `skill`, the one the check used, is the first choice where an effect
-    asks for a skill (Focused Attention)."""
+    asks for a skill (Focused Attention). `context` says what the outcome
+    is about: its activity (`act`, for the rows that count only when it was
+    attempted last turn), its `subject` and `event`, picked already."""
+    context = context or {}
     rows: list[dict] = []
     for v in entries:
         if v["t"] == "note":
             ui.html(f'<div style="font-size:.78rem;color:var(--km-muted);'
-                    f'border-left:2px solid var(--km-line);padding-left:8px">{v["text"]}</div>')
+                    f'border-left:2px solid var(--km-line);padding-left:8px">{theme.esc(v["text"])}</div>')
             continue
+        only_if = v.get("only_if") or ""
+        if only_if.startswith("debt:") and not STATE.debt(only_if[5:]):
+            continue                    # nothing owed: nothing to repay
         value, explain = ((v["v"], "") if v["t"] == "mod"
                           else rules.signed_value(v.get("q", "0")))
         active = bool(v.get("auto", True))
         # «Lose 1 Fame; if you have none, gain 1d4 Unrest instead»: which of
         # the two applies depends on the points in hand now.
-        if v.get("only_if") in ("fame", "no_fame"):
-            active = (STATE.k["fame_points"] > 0) == (v["only_if"] == "fame")
+        if only_if in ("fame", "no_fame"):
+            active = (STATE.k["fame_points"] > 0) == (only_if == "fame")
+        # «If you attempted it last turn, ...»: ticked when that is so.
+        if only_if == "repeated":
+            active = bool(context.get("act")) and STATE.repeated(context["act"])
         row = {"entry": v, "active": active, "valore": value, "target": None, "base": value}
+        tgt = rules.entry_target(v)
+        listing = _listing(tgt) if tgt else []
+        ids = [x["id"] for x in listing]
+        if tgt:
+            preset = (skill if tgt == "skill" else context.get("event") if tgt == "event"
+                      else context.get("subject"))
+            row["target"] = preset if preset in ids else (ids[0] if ids else None)
+        named = next((x["name"] for x in listing if x["id"] == row["target"]), "")
         with ui.row().classes("items-center gap-2 w-full no-wrap"):
             ui.checkbox(value=row["active"],
                         on_change=lambda e, r=row: r.update(active=e.value)).props("dense")
-            ui.label(rules.entry_label(v, value)).style("font-size:.82rem;flex:1;min-width:0")
-            if v["t"] not in ("mod", "milestone", "focus"):
+            ui.label(rules.entry_label(v, value, named if v["t"] in _NO_VALUE else "")) \
+                .style("font-size:.82rem;flex:1;min-width:0")
+            if v["t"] not in _NO_NUMBER:
                 row["field"] = ui.number(value=value, format="%d",
                                          on_change=lambda e, r=row: r.update(valore=int(e.value or 0))) \
                     .props("outlined dense").classes("w-20")
-            tgt = rules.entry_target(v)
-            if tgt:
-                listing = {"ruin": rules.RUINS, "skill": rules.SKILLS}.get(tgt, rules.COMMODITIES)
-                ids = [x["id"] for x in listing]
-                row["target"] = skill if tgt == "skill" and skill in ids else ids[0]
+            if tgt and ids:
                 ui.select({x["id"]: x["name"] for x in listing}, value=row["target"],
                           on_change=lambda e, r=row: r.update(target=e.value)) \
                     .props("outlined dense").classes("w-32")
@@ -82,12 +110,14 @@ def _effect_rows(entries: list[dict], skill: str | None = None) -> list[dict]:
     return rows
 
 
-def _per_count(entries: list[dict], rows_of) -> None:
+def _per_count(entries: list[dict], rows_of, default: int | None = None):
     """«1 per trade agreement», «2 per point spent», «1 RP per hex»: a count
-    that multiplies those rows. `rows_of()` gives the rows, drawn after it."""
+    that multiplies those rows. `rows_of()` gives the rows, drawn after it.
+    Returns the recount, for a `default` other than 1 to be applied once
+    the rows exist (None when the entries have no such count)."""
     per = next((v["per"] for v in entries if v.get("per")), None)
     if not per:
-        return
+        return None
 
     def recount(n) -> None:
         n = max(0, int(n or 0))
@@ -96,12 +126,16 @@ def _per_count(entries: list[dict], rows_of) -> None:
                 row["valore"] = row["base"] * n
                 row["field"].value = row["valore"]
 
-    ui.number(t(f"turn.per_{per}"), value=1, min=0, format="%d",
+    start = 1 if default is None else max(0, int(default))
+    ui.number(t(f"turn.per_{per}"), value=start, min=0, format="%d",
               on_change=lambda e: recount(e.value)).props("outlined dense").classes("w-48")
+    return (lambda: recount(start)) if start != 1 else None
 
 
 # Which figures an effect kind touches (`State.apply_effect`); a kind not
-# listed — a modifier, or a kind added later — redraws everything.
+# listed — a modifier, or a kind added later — redraws everything. The kinds
+# of 2.3.0 (lock-outs, events, partners, the map) are left out on purpose:
+# they change lists, not figures, and the whole redraw is what they need.
 _EFFECT_FIELDS = {
     "unrest": ("unrest",), "ruin": ("ruins",), "ruin_choice": ("ruins",),
     "rp": ("rp",), "rp_next": (), "xp": ("xp",), "fame": ("fame_points",), "fame_next": ("fame_points",), "milestone": ("xp",),
@@ -112,13 +146,14 @@ _EFFECT_FIELDS = {
 
 
 @theme.requires(permissions.EDIT_KINGDOM)
-def _apply_rows(rows: list[dict], title: str) -> list[str]:
+def _apply_rows(rows: list[dict], title: str, context: dict | None = None,
+                category: str = "activities") -> list[str]:
     active = [r for r in rows if r["active"]]
     dice: list[dict] = []
     done_ones = [d for r in active
-             for d in [STATE.apply_effect(r["entry"], r["valore"], r["target"], dice)] if d]
+             for d in [STATE.apply_effect(r["entry"], r["valore"], r["target"], dice, context)] if d]
     if done_ones:
-        STATE.record(f"{title}: " + "; ".join(done_ones), "activities")
+        STATE.record(f"{title}: " + "; ".join(done_ones), category)
         fields = [_EFFECT_FIELDS.get(r["entry"]["t"]) for r in active]
         if any(f is None for f in fields):
             theme.save_and_refresh()
@@ -133,6 +168,50 @@ def _apply_rows(rows: list[dict], title: str) -> list[str]:
     return done_ones
 
 
+def _rows_section(entries: list[dict], skill: str | None = None, context: dict | None = None,
+                  per_default: int | None = None) -> list[dict]:
+    """The rows to apply, with the «untick what does not apply» line and the
+    count of a «per» row: the lower half of an outcome, for any dialog."""
+    theme.title(t("turn.effects_apply"), 3)
+    ui.label(t("turn.untick_what_does_not")) \
+        .style("color:var(--km-muted);font-size:.75rem")
+    holder: dict = {"rows": []}
+    start = _per_count(entries, lambda: holder["rows"], per_default)
+    holder["rows"] = _effect_rows(entries, skill, context)
+    if start:
+        start()
+    return holder["rows"]
+
+
+def propose_rows(title, entries: list[dict], *, skill: str | None = None,
+                 context: dict | None = None, per_default: int | None = None,
+                 on_applied=None, category: str = "activities") -> None:
+    """Rows proposed to the table from anywhere (an event's outcome, a
+    claim's effects, a hex lost): a dialog with the rows, applied only when
+    the table confirms. `title` is a text or a function giving one, read in
+    the window's language."""
+    def text() -> str:
+        return title() if callable(title) else title
+
+    with theme.dialog() as dlg, ui.card().classes("km-panel") \
+            .style("min-width:480px;max-width:680px;max-height:85vh;overflow-y:auto"):
+        theme.title(text(), 2)
+        rows = _rows_section(entries, skill, context, per_default)
+
+        def apply() -> None:
+            dlg.close()
+            done_ones = _apply_rows(rows, text(), context, category)
+            theme.notify(t("turn.applied", list="; ".join(done_ones)) if done_ones
+                         else t("turn.no_effect_applied"), "positive" if done_ones else "info")
+            if on_applied:
+                on_applied(done_ones)
+
+        with ui.row().classes("gap-2 flex-wrap"):
+            ui.button(t("turn.apply_effects"), on_click=apply).props("color=amber")
+            ui.button(t("turn.skip"), on_click=dlg.close).props("flat")
+    dlg.open()
+
+
 def _reference_dialog(act: dict) -> None:
     icon, text = REFERENCES[act["reference"]]
     text = t(text)
@@ -145,6 +224,64 @@ def _reference_dialog(act: dict) -> None:
     dlg.open()
 
 
+def _subject_options(act: dict) -> dict:
+    """What the activity is about, to pick in its dialog: {id: label}."""
+    kind = act.get("subject")
+    if kind == "ruin":
+        return {r["id"]: r["name"] for r in rules.RUINS}
+    if kind == "role":
+        return {rid: STATE.role_label(rid) for rid in STATE.k["roles"]}
+    if kind == "partner":
+        return {p["id"]: p["name"] for p in STATE.k["partners"]}
+    if kind == "partner_related":
+        return {p["id"]: p["name"] for p in STATE.k["partners"]
+                if (STATE.relation(p["id"]) or {}).get("status") in ("relations", "war")}
+    if kind == "event":
+        return {e["id"]: e["name"] for e in STATE.ongoing_events() if not e.get("hire_locked")}
+    return {}
+
+
+def _leader_options() -> dict:
+    """The PC leaders who may attempt a Leadership activity: a held role,
+    not vacant, a PC's."""
+    return {rid: STATE.role_label(rid) for rid, data in STATE.k["roles"].items()
+            if data.get("pc") and not STATE.role_vacant(rid)
+            and (data.get("name") or data.get("character_id"))}
+
+
+def activity_extra(act_id: str, subject: str | None) -> list:
+    """Typed bonuses and penalties an activity's check takes from its subject:
+    an envoy to a group at war with the kingdom, -4 circumstance."""
+    if act_id == "send_diplomatic_envoy" and subject and STATE.at_war_with(subject):
+        return [(t("turn.envoy_enemy"), -4, "circumstance")]
+    return []
+
+
+def activity_cost(act: dict, subject: str | None = None) -> list[dict]:
+    """An activity's cost rows. Hire Adventurers: 1 RP with Practical Magic,
+    else 1 Resource Die, 2 when trying again on an event after a Failure."""
+    cost_data = act.get("cost_data") or []
+    if act["id"] == "hire_adventurers":
+        if "practical_magic" in STATE.k["feats"]:
+            return [{"t": "rp", "q": "-1", "auto": True,
+                     "text": rules.BY_ID["feat"]["practical_magic"]["name"]}]
+        ev = STATE.event(subject)
+        if ev and ev.get("hire_failed"):
+            return [dict(row, q="-2") if row["t"] == "resource_die" else row for row in cost_data]
+    return list(cost_data)
+
+
+def _freeholds() -> dict:
+    """The hexes with a freehold, for Pledge of Fealty: {"c,r": label}."""
+    out = {}
+    for h in STATE.k["hexes"].values():
+        for f in h.get("features") or ():
+            if f.get("kind") == "freehold":
+                out[f"{h['col']},{h['row']}"] = t("turn.freehold_at", col=h["col"], row=h["row"],
+                                                   name=f.get("name") or h.get("name") or "")
+    return out
+
+
 @theme.requires(permissions.EDIT_KINGDOM)
 def run_activity(act: dict) -> None:
     """Generic dialog to attempt a Kingdom activity."""
@@ -152,7 +289,6 @@ def run_activity(act: dict) -> None:
         _reference_dialog(act)
         return
 
-    default_dc, dc_note = _activity_dc(act)
     options = [a for a in act["skills"] if a != "*"]
     if act["skills"] == ["*"]:
         options = [a["id"] for a in rules.SKILLS]
@@ -164,7 +300,34 @@ def run_activity(act: dict) -> None:
     # Practical Magic: Magic in place of Engineering.
     if "practical_magic" in STATE.k["feats"] and "engineering" in options and "magic" not in options:
         options.append("magic")
-    block = STATE.activities_block(act)
+
+    subjects = _subject_options(act)
+    optional_subject = act["id"] == "pledge_of_fealty"
+    leaders = _leader_options() if (act["phase"] == "activity" and act["step"] == "leadership") else None
+    freeholds = _freeholds() if act["id"] == "pledge_of_fealty" else {}
+    choice = {"skills": options[0] if options else None, "dc": 0, "settlement": None,
+              "subject": None if optional_subject else next(iter(subjects), None),
+              "leader": next(iter(leaders), None) if leaders else None,
+              "freehold": None, "override": False}
+    # Repair Reputation: the Ruin decides the skill (Arts reduces Corruption, ...).
+    linked = act.get("subject_skills") or {}
+    if linked.get(choice["subject"]) in options:
+        choice["skills"] = linked[choice["subject"]]
+
+    def event_extra() -> list:
+        ev = STATE.event(choice["subject"]) if act.get("subject") == "event" else None
+        return [(ev["name"], int(ev.get("modifier") or 0))] if ev and ev.get("modifier") else []
+
+    def check_extra() -> list:
+        return activity_extra(act["id"], choice["subject"])
+
+    def compute_dc() -> tuple[int, str]:
+        return _activity_dc(act, subject=choice["subject"], extra=event_extra())
+
+    choice["dc"], dc_note = compute_dc()
+
+    def blocked_by() -> str:
+        return STATE.activities_block(act, leader=choice["leader"], subject=choice["subject"])
 
     with theme.dialog() as dlg, ui.card().classes("km-panel") \
             .style("min-width:600px;max-width:760px;max-height:85vh;overflow-y:auto"):
@@ -181,9 +344,10 @@ def run_activity(act: dict) -> None:
                 outcomes_block(act)
 
         theme.sep()
-        if block:
-            ui.html(f'<div class="km-chip km-fc" style="white-space:normal">{block}</div>')
         if not options:
+            block = blocked_by()
+            if block:
+                ui.html(f'<div class="km-chip km-fc" style="white-space:normal">{theme.esc(block)}</div>')
             ui.label(dc_note).style("color:var(--km-muted)")
             ui.button(t("common.close"), on_click=dlg.close).props("flat color=amber")
             dlg.open()
@@ -196,30 +360,73 @@ def run_activity(act: dict) -> None:
                 .props("dense")
             ui.html(f'<div style="font-size:.78rem;color:var(--km-muted);margin-left:34px;'
                     f'white-space:normal">{act["requirements"]}</div>')
+        if act["id"] == "tap_treasury" and STATE.debt("tap_treasury"):
+            ui.html(f'<div class="km-chip km-fc" style="white-space:normal">'
+                    f'{theme.esc(t("turn.treasury_owed"))}</div>')
 
-        cost_rows: list[dict] = []
-        cost_data = act.get("cost_data")
-        if act["id"] == "hire_adventurers" and "practical_magic" in STATE.k["feats"]:
-            cost_data = [{"t": "rp", "q": "-1", "auto": True,
-                          "text": rules.BY_ID["feat"]["practical_magic"]["name"]}]
-        if cost_data:
-            theme.title(t("turn.cost"), 3)
-            _per_count(cost_data, lambda: cost_rows)
-            cost_rows = _effect_rows(cost_data)
-        elif act["cost"]:
-            ui.html(t("turn.div_style_font_size", cost=act["cost"]))
+        cost = {"rows": []}
+
+        @ui.refreshable
+        def cost_block() -> None:
+            cost_data = activity_cost(act, choice["subject"])
+            if cost_data:
+                theme.title(t("turn.cost"), 3)
+                holder = {"rows": []}
+                _per_count(cost_data, lambda: holder["rows"])
+                holder["rows"] = _effect_rows(cost_data)
+                cost["rows"] = holder["rows"]
+            elif act["cost"]:
+                cost["rows"] = []
+                ui.html(t("turn.div_style_font_size", cost=act["cost"]))
+
+        cost_block()
 
         theme.sep()
-        choice = {"skills": options[0], "dc": default_dc, "settlement": None}
+
+        def subject_changed(value) -> None:
+            choice["subject"] = value or None
+            choice["dc"], note = compute_dc()
+            dc_field.value = choice["dc"]
+            dc_label.text = note
+            if linked.get(choice["subject"]) in options:
+                skill_select.value = linked[choice["subject"]]     # its on_change redraws the modifier
+            cost_block.refresh()
+            mod_row.refresh()
+
+        if act.get("subject") or optional_subject:
+            with ui.row().classes("items-center gap-3 flex-wrap"):
+                if subjects or optional_subject:
+                    opts = ({"": t("turn.no_partner_chosen"), **subjects} if optional_subject else subjects)
+                    ui.select(opts, value=choice["subject"] or ("" if optional_subject else None),
+                              label=t(f"turn.subject_{act.get('subject') or 'partner'}"),
+                              on_change=lambda e: subject_changed(e.value)) \
+                        .props("outlined dense").classes("w-64")
+                else:
+                    ui.label(t("events.none_ongoing") if act.get("subject") == "event"
+                             else t("turn.no_partner")).style("font-size:.8rem;color:var(--km-muted)")
+                if freeholds:
+                    ui.select({"": t("turn.no_freehold"), **freeholds}, value="",
+                              label=t("turn.freehold"),
+                              on_change=lambda e: choice.update(freehold=e.value or None)) \
+                        .props("outlined dense").classes("w-64")
+        if leaders is not None:
+            with ui.row().classes("items-center gap-3 flex-wrap"):
+                if leaders:
+                    ui.select(leaders, value=choice["leader"], label=t("turn.leader"),
+                              on_change=lambda e: (choice.update(leader=e.value), mod_row.refresh())) \
+                        .props("outlined dense").classes("w-64")
+                else:
+                    ui.label(t("turn.no_pc_leader")).style("font-size:.8rem;color:var(--km-muted)")
+
         with ui.row().classes("items-center gap-3 flex-wrap"):
-            ui.select({a: rules.BY_ID["skills"][a]["name"] for a in options},
-                      value=options[0], label=t("turn.skill"),
-                      on_change=lambda e: (choice.update(skills=e.value), mod_row.refresh())) \
+            skill_select = ui.select({a: rules.BY_ID["skills"][a]["name"] for a in options},
+                                     value=choice["skills"], label=t("turn.skill"),
+                                     on_change=lambda e: (choice.update(skills=e.value), mod_row.refresh())) \
                 .props("outlined dense").classes("w-52")
-            ui.number(t("turn.dc"), value=default_dc, format="%d",
-                      on_change=lambda e: choice.update(dc=int(e.value or 0))) \
+            dc_field = ui.number(t("turn.dc"), value=choice["dc"], format="%d",
+                                 on_change=lambda e: choice.update(dc=int(e.value or 0))) \
                 .props("outlined dense").classes("w-28")
-            ui.label(dc_note).style("font-size:.78rem;color:var(--km-muted)")
+            dc_label = ui.label(dc_note).style("font-size:.78rem;color:var(--km-muted)")
         if banned:
             ui.label(t("turn.quell_same_skill", skill=rules.BY_ID["skills"][banned]["name"])) \
                 .style("font-size:.78rem;color:var(--km-muted)")
@@ -236,47 +443,83 @@ def run_activity(act: dict) -> None:
         @ui.refreshable
         def mod_row() -> None:
             aid = choice["skills"]
-            detail = STATE.check_detail(aid, act["id"], settlement=choice["settlement"])
+            detail = STATE.check_detail(aid, act["id"], settlement=choice["settlement"],
+                                        leader=choice["leader"], subject=choice["subject"],
+                                        extra=check_extra())
             mod = sum(v for _n, v in detail)
             with ui.row().classes("items-center gap-2 flex-wrap"):
                 ui.html(f'<span class="km-mod">{mod:+d}</span>')
                 for name, val in detail:
                     ui.html(f'<span class="km-chip" style="font-size:.7rem">{theme.esc(name)} {val:+d}</span>')
+                worse = STATE.worsens_by(act["id"], choice["subject"])
+                if worse:
+                    ui.html(f'<span class="km-chip km-fc" style="font-size:.7rem">'
+                            f'{theme.esc(t("turn.worsened_by", n=worse))}</span>')
             if "buttons" in drawn:
                 buttons.refresh()
 
         drawn: set[str] = set()
 
+        def context() -> dict:
+            out = {"act": act["id"], "subject": choice["subject"], "leader": choice["leader"]}
+            if act.get("subject") == "event":
+                out["event"] = choice["subject"]
+            if choice["freehold"]:
+                out["hex"] = [int(n) for n in choice["freehold"].split(",")]
+            return out
+
         def roll(assurance: bool = False) -> None:
             dlg.close()
-            spent = _apply_rows(cost_rows, t("turn.cost_2", name=act['name']))
+            spent = _apply_rows(cost["rows"], t("turn.cost_2", name=act['name']))
             if spent:
                 theme.notify(t("turn.cost_paid") + "; ".join(spent), "info")
-            STATE.mark_activity(act["id"])
             check = dict(choice)
+            leader = check["leader"]
+            character = (STATE.k["roles"][leader].get("character_id") if leader else None)
+            STATE.mark_activity(act["id"], role=leader, character=character,
+                                settlement=check["settlement"], skill=check["skills"],
+                                subject=check["subject"])
             if act["id"] == "quell_unrest":
                 STATE.k["feat_turns"]["quell_skill"] = {"turn": STATE.k["turn"], "skill": check["skills"]}
+            ctx = context()
+            overridden = t("turn.lockout_overridden") if check["override"] else ""
 
             def attempt(fair: bool = True) -> rules.Result:
                 return sheet.roll_skill(check["skills"], check["dc"], act["name"], show=False,
-                                        activity=act["id"], settlement=check["settlement"], fair=fair)
+                                        activity=act["id"], settlement=check["settlement"], fair=fair,
+                                        worsens_by=STATE.worsens_by(act["id"], check["subject"]),
+                                        leader=leader, subject=check["subject"],
+                                        extra=check_extra(), detail=overridden)
 
             if assurance:
                 # Kingdom Assurance: no die, so nothing to reroll.
                 res = STATE.assurance_result(check["skills"], check["dc"])
                 STATE.record(t("sheet.vs_dc", label=f'{act["name"]} · {rules.BY_ID["skills"][check["skills"]]["name"]}',
-                               label2=res.label, total=res.total, cd=check["dc"]), "check")
+                               label2=res.label, total=res.total, cd=check["dc"]), "check", overridden)
+                STATE.note_grade(act["id"], res.grade)
                 theme.save_and_refresh_panels(("turn.journal", "sheet.identita"))
-                theme.refresh_panels(("turn.uses",))
-                _outcome_dialog(act, res, None, skill=check["skills"])
+                theme.refresh_panels(("turn.uses", "turn.steps"))
+                _outcome_dialog(act, res, None, skill=check["skills"], context=ctx)
                 return
             res = attempt()
-            theme.refresh_panels(("turn.uses",))
-            _outcome_dialog(act, res, attempt, skill=check["skills"])
+            STATE.note_grade(act["id"], res.grade)
+            theme.refresh_panels(("turn.uses", "turn.steps"))
+            _outcome_dialog(act, res, attempt, skill=check["skills"], context=ctx)
 
         @ui.refreshable
         def buttons() -> None:
-            blocked = "disable" if block or not ready["requirements"] else ""
+            block = blocked_by()
+            lockout = STATE.lockout_only(act, choice["subject"], leader=choice["leader"])
+            if block:
+                ui.html(f'<div class="km-chip km-fc" style="white-space:normal">{theme.esc(block)}</div>')
+            if lockout:
+                ui.checkbox(t("turn.override_lockout"), value=choice["override"],
+                            on_change=lambda e: (choice.update(override=e.value), buttons.refresh())) \
+                    .props("dense")
+            waiting = ((act.get("subject") and not optional_subject and not choice["subject"])
+                       or (leaders is not None and not choice["leader"]))
+            stopped = (block and not (lockout and choice["override"])) or not ready["requirements"] or waiting
+            blocked = "disable" if stopped else ""
             with ui.row().classes("gap-2 items-center"):
                 ui.button(t("turn.roll_check"), on_click=lambda: roll()) \
                     .props(f'color=amber {blocked}')
@@ -298,7 +541,7 @@ def run_activity(act: dict) -> None:
 
 
 def _outcome_dialog(act: dict, res: rules.Result, reroll=None, rerolled: bool = False,
-                    share: bool = True, skill: str | None = None) -> None:
+                    share: bool = True, skill: str | None = None, context: dict | None = None) -> None:
     """Outcome of the activity with the proposed effects, to confirm before applying.
 
     The effects wait for the table, so the reroll for 1 Fame/Infamy point
@@ -324,12 +567,13 @@ def _outcome_dialog(act: dict, res: rules.Result, reroll=None, rerolled: bool = 
             # Spent meanwhile from another window: the same roll, back on
             # screen without the reroll — and not sent to the others again.
             theme.notify(t("theme.fame_none_left", fame=STATE.fame_name), "warning")
-            _outcome_dialog(act, res, None, rerolled, share=False, skill=skill)
+            _outcome_dialog(act, res, None, rerolled, share=False, skill=skill, context=context)
             return
         theme.record_reroll(lambda: rules.BY_ID["activities"][act["id"]]["name"], res)
         new = reroll()
+        STATE.note_grade(act["id"], new.grade)
         theme.save_and_refresh_panels(theme.stat_panels("fame_points", extra=("turn.journal",)))
-        _outcome_dialog(act, new, reroll, rerolled=True, skill=skill)
+        _outcome_dialog(act, new, reroll, rerolled=True, skill=skill, context=context)
 
     # Free and Fair: a failed New Leadership or Pledge of Fealty with a
     # Loyalty skill may be rerolled for 2 RP, without the feat's +2. A
@@ -344,14 +588,15 @@ def _outcome_dialog(act: dict, res: rules.Result, reroll=None, rerolled: bool = 
         dlg.close()
         if STATE.k["rp"] < 2:
             theme.notify(t("turn.free_and_fair_no_rp"), "warning")
-            _outcome_dialog(act, res, None, rerolled=True, share=False, skill=skill)
+            _outcome_dialog(act, res, None, rerolled=True, share=False, skill=skill, context=context)
             return
         STATE.spend_rp(2)
         STATE.record(t("turn.free_and_fair_journal", name=act["name"], grade=res.label, total=res.total),
                      "check")
         new = reroll(fair=False)
+        STATE.note_grade(act["id"], new.grade)
         theme.save_and_refresh_panels(theme.stat_panels("rp", extra=("turn.journal",)))
-        _outcome_dialog(act, new, reroll, rerolled=True, skill=skill)
+        _outcome_dialog(act, new, reroll, rerolled=True, skill=skill, context=context)
 
     def reroll_button() -> None:
         if reroll is not None and theme.can_reroll(res, rerolled):
@@ -378,16 +623,14 @@ def _outcome_dialog(act: dict, res: rules.Result, reroll=None, rerolled: bool = 
             dlg.open()
             return
 
-        theme.title(t("turn.effects_apply"), 3)
-        ui.label(t("turn.untick_what_does_not")) \
-            .style("color:var(--km-muted);font-size:.75rem")
-        rows: list[dict] = []
-        _per_count(entries, lambda: rows)
-        rows = _effect_rows(entries, skill)
+        per_default = (len(STATE.active_agreements()) if act["id"] == "manage_trade_agreements"
+                       else None)
+        rows = _rows_section(entries, skill, context or {"act": act["id"]}, per_default)
 
         def apply() -> None:
             dlg.close()
-            done_ones = _apply_rows(rows, f"{act['name']} ({rules.grade_label(res.grade)})")
+            done_ones = _apply_rows(rows, f"{act['name']} ({rules.grade_label(res.grade)})",
+                                    context or {"act": act["id"]})
             theme.notify(t("turn.applied", list="; ".join(done_ones)) if done_ones else t("turn.no_effect_applied"),
                            "positive" if done_ones else "info")
 
@@ -496,14 +739,17 @@ def quick_adjustments(compact: bool = False) -> None:
 
 # --------------------------------------------------------------------------
 @theme.requires(permissions.EDIT_KINGDOM)
-def _simple_check(cd: int, title, on_success="", on_failure="") -> None:
+def _simple_check(cd: int, title, on_success="", on_failure="", *, then=None) -> None:
     """A flat check: a d20 against `cd`, on screen for everybody. The texts
-    may be functions, so each window reads them in its own language."""
+    may be functions, so each window reads them in its own language.
+    `then(ok)` runs after the dice, in this window (a hex to choose)."""
     tot, rolls = rules.roll(1, 20)
     ok = tot >= cd
     STATE.record(t("turn.d20_vs_dc", title=theme._text(title), tot=tot, cd=cd, v=rules.grade_label('success' if ok else 'failure')), "check")
     theme.save_and_refresh()
     theme.show_dice(title, rolls, 20, on_success if ok else on_failure, dc=cd)
+    if then:
+        then(ok)
 
 
 # --------------------------------------------------------------------------
@@ -518,8 +764,17 @@ def overcrowded_chip(over: list[dict]) -> str:
     return f'<div class="km-chip km-fc">{t("turn.overcrowded", details=details)}</div>'
 
 
+def _first_turn_chip(step: dict) -> None:
+    """The first Kingdom turn skips Adjust Unrest and Pay Consumption: said,
+    with the buttons still usable (the table may have its reasons)."""
+    if STATE.k["turn"] == 0 and step["id"] in ("unrest", "consumption"):
+        ui.html(f'<span class="km-chip" style="font-size:.7rem;color:var(--km-muted)">'
+                f'{theme.esc(t("turn.skipped_first_turn"))}</span>')
+
+
 def _upkeep_step(step: dict) -> None:
     k = STATE.k
+    _first_turn_chip(step)
     if step["id"] == "unrest":
         with ui.row().classes("gap-2 flex-wrap"):
             over = STATE.overcrowded_settlements()
@@ -536,9 +791,16 @@ def _upkeep_step(step: dict) -> None:
                           on_click=lambda: _simple_check(
                               11, lambda: t("turn.loss_hex"),
                               lambda: t("turn.kingdom_loses_no_hex"),
-                              lambda: t("turn.kingdom_loses_hex_pcs"))).props("dense outline color=red")
+                              lambda: t("turn.kingdom_loses_hex_pcs"),
+                              then=lambda ok: None if ok else hexmap.hex_panel.lose_hex_dialog())) \
+                    .props("dense outline color=red")
             if STATE.in_anarchy:
                 ui.html(t("turn.div_class_km_chip"))
+            secondary = len(STATE.secondary_hexes())
+            if secondary:
+                ui.button(t("turn.secondary_unrest", n=secondary), on_click=_secondary_unrest) \
+                    .props(f'dense outline color=red {"disable" if STATE.feat_used("secondary_unrest") else ""}')
+            _war_buttons()
 
     elif step["id"] == "resources":
         with ui.row().classes("gap-2 flex-wrap items-center"):
@@ -563,7 +825,6 @@ def _upkeep_step(step: dict) -> None:
                 .props("dense outline color=red")
 
     elif step["id"] == "roles":
-        ui.label(t("turn.assign_change_leaders_from")).style("color:var(--km-muted)")
         absent = [rules.BY_ID["role"][rid]["name"] for rid in k["roles"] if STATE.role_vacant(rid)]
         if absent:
             ui.html(t("turn.div_class_km_chip_2", join=", ".join(absent)))
@@ -571,6 +832,7 @@ def _upkeep_step(step: dict) -> None:
             # The Ruler's vacancy: 1d4 Unrest at the start of every turn.
             ui.button(t("turn.ruler_vacant_unrest"), on_click=_ruler_vacancy) \
                 .props(f'dense outline color=red {"disable" if STATE.feat_used("ruler_vacancy") else ""}')
+        leaders.downtime_block()
 
 
 @theme.requires(permissions.EDIT_KINGDOM)
@@ -583,6 +845,54 @@ def _ruler_vacancy() -> None:
     theme.save_and_refresh()
     theme.show_dice(lambda: t("turn.ruler_vacant"), rolls, 4,
                     lambda: t("turn.ruler_vacant_outcome", tot=tot))
+
+
+@theme.requires(permissions.EDIT_KINGDOM)
+def _secondary_unrest() -> None:
+    """Hexes cut off from the capital: +1 Unrest at Upkeep, once a turn."""
+    n = len(STATE.secondary_hexes())
+    if not n or STATE.feat_used("secondary_unrest"):
+        return
+    STATE.use_feat("secondary_unrest")
+    STATE.modify_unrest(1, t("turn.secondary_reason", n=n))
+    theme.save_and_refresh_panels(theme.stat_panels("unrest", extra=("turn.journal",)))
+
+
+def _war_buttons() -> None:
+    """At war: +1 Unrest each turn; a war fought without armies, 1d6 Unrest
+    and a Ruin as well (Regni/Guerra's introduction)."""
+    wars = STATE.at_war()
+    if not wars:
+        return
+    ui.button(t("turn.war_unrest"), on_click=_war_unrest) \
+        .props(f'dense outline color=red {"disable" if STATE.feat_used("war_unrest") else ""}')
+    if any(r.get("abstract_war") for r in wars):
+        ui.button(t("turn.abstract_war"), on_click=_abstract_war) \
+            .props(f'dense outline color=red {"disable" if STATE.feat_used("abstract_war") else ""}')
+
+
+@theme.requires(permissions.EDIT_KINGDOM)
+def _war_unrest() -> None:
+    if not STATE.at_war() or STATE.feat_used("war_unrest"):
+        return
+    STATE.use_feat("war_unrest")
+    STATE.modify_unrest(1, t("turn.war_reason"))
+    theme.save_and_refresh_panels(theme.stat_panels("unrest", extra=("turn.journal",)))
+
+
+@theme.requires(permissions.EDIT_KINGDOM)
+def _abstract_war() -> None:
+    if STATE.feat_used("abstract_war"):
+        return
+
+    def applied(done) -> None:
+        if done:
+            STATE.use_feat("abstract_war")
+            theme.save_and_refresh_panels(("turn.steps",))
+
+    propose_rows(lambda: t("turn.abstract_war"),
+                 [{"t": "unrest", "q": "1d6", "auto": True}, {"t": "ruin_choice", "q": "1", "auto": True}],
+                 on_applied=applied)
 
 
 @theme.requires(permissions.EDIT_KINGDOM)
@@ -601,6 +911,48 @@ def _ruin_from_unrest() -> None:
     theme.save_and_refresh()
     theme.show_dice(lambda: t("turn.unrest_ruin_title"), rolls, 10,
                     lambda: t("turn.1d10_ruin_points_distribute", tot=tot))
+    _ruin_split_dialog(tot)
+
+
+def _ruin_split_dialog(tot: int) -> None:
+    """The Ruin points of Unrest 10+, split among the four Ruins by the table:
+    applied only when every point has a Ruin."""
+    split = {r["id"]: 0 for r in rules.RUINS}
+    with theme.dialog() as dlg, ui.card().classes("km-panel").style("min-width:420px;max-width:560px"):
+        theme.title(t("turn.ruin_split_title", tot=tot), 2)
+
+        @ui.refreshable
+        def left() -> None:
+            rest = tot - sum(split.values())
+            ui.label(t("turn.ruin_split_left", n=rest)) \
+                .style(f"font-size:.85rem;color:var({'--km-gold' if rest else '--km-muted'})")
+            ui.button(t("turn.apply_effects"), on_click=apply) \
+                .props(f'color=amber {"" if rest == 0 else "disable"}')
+
+        with ui.row().classes("items-center gap-2 flex-wrap"):
+            for r in rules.RUINS:
+                ui.number(r["name"], value=0, min=0, max=tot, format="%d",
+                          on_change=lambda e, rid=r["id"]: (split.update({rid: max(0, int(e.value or 0))}),
+                                                            left.refresh())) \
+                    .props("outlined dense").classes("w-28")
+
+        def apply() -> None:
+            if sum(split.values()) != tot:
+                return
+            dlg.close()
+            _apply_ruin_split(split)
+
+        left()
+        ui.button(t("common.close"), on_click=dlg.close).props("flat")
+    dlg.open()
+
+
+@theme.requires(permissions.EDIT_KINGDOM)
+def _apply_ruin_split(split: dict) -> None:
+    for rid, n in split.items():
+        if n and rid in STATE.k["ruins"]:
+            STATE.modify_ruin(rid, n, t("turn.unrest_ruin_reason"))
+    theme.save_and_refresh_panels(theme.stat_panels("ruins", extra=("turn.journal",)))
 
 
 @theme.requires(permissions.EDIT_KINGDOM)
@@ -614,6 +966,12 @@ def _roll_resources() -> None:
                     lambda: t("theme.resource_dice_outcome", tot=tot))
 
 
+def site_yield(sl: dict) -> int:
+    """A work site's commodities this turn: two on a resource hex, or after
+    its critical success (that turn and the next); one otherwise."""
+    return 2 if sl.get("doubled") or (sl.get("rich_until_turn") or -1) >= STATE.k["turn"] else 1
+
+
 @theme.requires(permissions.EDIT_KINGDOM)
 def _collect_sites() -> None:
     gains: dict[str, int] = {}
@@ -622,7 +980,7 @@ def _collect_sites() -> None:
         sl = h.get("work_site")
         if not sl:
             continue
-        q = 2 if sl.get("doubled") else 1
+        q = site_yield(sl)
         p = STATE.add_commodity(sl["commodity"], q)
         gains[sl["commodity"]] = gains.get(sl["commodity"], 0) + q
         if p:
@@ -706,9 +1064,55 @@ def _pay_consumption(mode: str) -> None:
 
 
 # --------------------------------------------------------------------------
+def _commerce_step(step: dict) -> None:
+    """The Commerce phase: the flat check when no taxes were collected, the
+    trade agreements in force."""
+    k = STATE.k
+    if step["id"] == "taxes":
+        if (k.get("turn_memory") or {}).get("last", {}).get("collect_taxes") == k["turn"]:
+            return              # taxes collected this turn: no flat check
+        done = STATE.feat_used("taxes_flat")
+        with ui.row().classes("gap-2 items-center flex-wrap"):
+            ui.button(t("turn.taxes_flat_check"), on_click=_taxes_flat_check) \
+                .props(f'dense outline color=amber {"disable" if done else ""}')
+            ui.label(t("turn.taxes_flat_hint")).style("font-size:.78rem;color:var(--km-muted)")
+    elif step["id"] == "agreements":
+        agreements = STATE.active_agreements()
+        if not agreements:
+            ui.label(t("turn.no_agreements")).style("font-size:.8rem;color:var(--km-muted)")
+            return
+        with ui.row().classes("gap-2 flex-wrap"):
+            for a in agreements:
+                partner = STATE.partner(a.get("partner")) or {}
+                ui.html(f'<span class="km-chip" style="font-size:.72rem">'
+                        f'{theme.esc(t("turn.agreement_chip", name=partner.get("name", "?"), since=a.get("since_turn", 0)))}'
+                        f'</span>')
+
+
+@theme.requires(permissions.EDIT_KINGDOM)
+def _taxes_flat_check() -> None:
+    """No Collect Taxes this turn: a DC 11 flat check takes 1 Unrest off."""
+    if STATE.feat_used("taxes_flat"):
+        return
+    STATE.use_feat("taxes_flat")
+    tot, rolls = rules.roll(1, 20)
+    ok = tot >= 11
+    if ok:
+        # A flat check, not a kingdom activity: Endure Anarchy's extra point
+        # off («a kingdom activity that decreases Unrest») does not apply.
+        STATE.modify_unrest(-1, t("turn.taxes_flat_reason"))
+    STATE.record(t("turn.d20_vs_dc", title=t("turn.taxes_flat_title"), tot=tot, cd=11,
+                   v=rules.grade_label("success" if ok else "failure")), "check")
+    theme.save_and_refresh()
+    theme.show_dice(lambda: t("turn.taxes_flat_title"), rolls, 20,
+                    (lambda: t("turn.taxes_flat_ok")) if ok else (lambda: t("turn.taxes_flat_no")), dc=11)
+
+
+# --------------------------------------------------------------------------
 def _event_step(step: dict) -> None:
     k = STATE.k
     if step["id"] == "control":
+        events.pending_block()
         with ui.row().classes("gap-2 items-center flex-wrap"):
             ui.button(t("turn.check_random_event_dc", event_dc=k['event_dc']),
                       on_click=_check_event).props("dense color=amber")
@@ -733,7 +1137,12 @@ def _event_step(step: dict) -> None:
     elif step["id"] == "resolution":
         ui.label(t("turn.resolve_events_here_use", control_dc=STATE.control_dc)) \
             .style("color:var(--km-muted)")
-        ui.button(t("turn.close_turn"), on_click=_new_turn).props("dense color=amber")
+        events.ongoing_list()
+        leaders.pending_loyalty()
+        with ui.row().classes("gap-2 flex-wrap"):
+            ui.button(t("events.new"), on_click=lambda: events.new_event_dialog(kind="story")) \
+                .props("dense outline color=amber")
+            ui.button(t("turn.close_turn"), on_click=_new_turn).props("dense color=amber")
 
 
 @theme.requires(permissions.EDIT_KINGDOM)
@@ -756,6 +1165,9 @@ def _check_event() -> None:
                     else (lambda: t("turn.next_turn_s_dc", event_dc=next_dc)),
                     dc=dc,
                     verdict=lambda: t("turn.div_class_km_s") if ok else t("turn.div_class_km_f"))
+    if ok:
+        # The event comes: the GM names it, on top of the dice, in this window.
+        events.new_event_dialog(kind="random")
 
 
 @theme.requires(permissions.EDIT_KINGDOM)
@@ -767,10 +1179,17 @@ def _xp(n: int) -> None:
     quick_adjustments.refresh()
 
 
+def convertible_rp() -> int:
+    """The unspent RP that become XP at the end of the turn: up to 120, and
+    never the RP of foreign aid (Request Foreign Aid)."""
+    k = STATE.k
+    return min(120, max(0, k["rp"] - int(k.get("rp_no_xp") or 0)))
+
+
 @theme.requires(permissions.EDIT_KINGDOM)
 def _convert_rp() -> None:
     k = STATE.k
-    gain = min(120, k["rp"])
+    gain = convertible_rp()
     k["xp"] += gain
     STATE.record(t("turn.unspent_rp_converted_into", gain=gain), "xp")
     k["rp"] = 0
@@ -881,6 +1300,7 @@ def _set_turn(new: int, reason: str = "") -> None:
     # valid again, and forward they would vanish silently. We say so.
     returned = [m["name"] for m in k["modifiers"]
                if m.get("expiry") is not None and before > m["expiry"] >= new]
+    skipped = _turn_skips(before, new)
     STATE.record(t("turn.kingdom_turn_corrected_from", before=before, new=new), "turn", reason)
     theme.save_and_refresh()
     _turn_column.refresh()
@@ -889,6 +1309,30 @@ def _set_turn(new: int, reason: str = "") -> None:
     if returned:
         theme.notify(t("turn.temporary_modifiers_become_valid")
                        + ", ".join(sorted(set(returned))), "warning")
+    if skipped:
+        theme.notify(t("turn.turn_number_skips", list="; ".join(skipped)), "warning")
+
+
+def _turn_skips(before: int, new: int) -> list[str]:
+    """What a corrected turn number skips or revives in what the turns
+    remember: lock-outs and penalties ending, flat checks falling due,
+    between the two numbers. Nothing is replayed or deleted: it is said."""
+    low, high = sorted((before, new))
+    mem = STATE.k.get("turn_memory") or {}
+    out = []
+    for e in mem.get("lockouts", ()):
+        if low <= e["until_turn"] < high:
+            act = rules.BY_ID["activities"].get(e["act"])
+            out.append(t("turn.skips_lockout", name=act["name"] if act else e["act"],
+                         until=e["until_turn"] + 1))
+    for e in mem.get("pending", ()):
+        if e.get("due_turn") is not None and low <= e["due_turn"] < high:
+            out.append(t("turn.skips_pending", event=rules.forced_event_name(e.get("then")),
+                         turn=e["due_turn"]))
+    for e in mem.get("penalties", ()):
+        if e.get("until_turn") is not None and low <= e["until_turn"] < high:
+            out.append(t("turn.skips_penalty", reason=e.get("reason") or "", until=e["until_turn"] + 1))
+    return out
 
 
 @theme.requires(permissions.EDIT_KINGDOM)
@@ -935,6 +1379,11 @@ def advance_turn(reason: str = "") -> None:
     k["rp_spent_turn"] = 0
     k["turn_activities"] = {}
     STATE.clean_modifiers()
+    # What the turns remember: the record trimmed, expired lock-outs and
+    # penalties dropped; pending flat checks wait to be rolled.
+    STATE.new_turn_memory()
+    k["turn_leaders"] = {}
+    k["turn_civic"] = {}
     STATE.record(t("turn.start_kingdom_turn", turn=k['turn']), "turn", reason)
 
 
@@ -987,6 +1436,8 @@ def _step_body(phase_id: str, step_id: str) -> None:
     step = next(s for s in phase["steps"] if s["id"] == step_id)
     if phase_id == "upkeep":
         _upkeep_step(step)
+    elif phase_id == "commerce":
+        _commerce_step(step)
     else:
         _event_step(step)
 
@@ -1032,17 +1483,24 @@ def _turn_column() -> None:
             ui.button(icon="edit", on_click=_turn_dialog)                         .props("dense flat round size=sm color=grey")                         .tooltip(t("turn.correct_turn_number"))
         ui.label(t("turn.start_every_turn_you", v=t("turn.fame") if k["reputation"] == "fame" else t("turn.infamy"))) \
             .style("font-size:.8rem;color:var(--km-muted)")
+        if k.get("created") and STATE.size_ == 0:
+            ui.html(f'<div class="km-chip km-fc" style="white-space:normal">'
+                    f'{theme.esc(t("turn.no_hex_warning"))}</div>')
 
     journeys_in_progress()
 
     for phase in rules.TURN_PHASES:
-        with ui.expansion(phase["name"], value=(phase["id"] in ("upkeep", "activity"))) \
+        # Which phases this window has open, kept across the column's redraws:
+        # naming an event in the Event phase must not fold the phase shut.
+        opened = theme.window_state().setdefault("turn_open", {"upkeep": True, "activity": True})
+        with ui.expansion(phase["name"], value=opened.get(phase["id"], False),
+                          on_value_change=lambda e, pid=phase["id"], o=opened: o.update({pid: e.value})) \
                 .classes("km-panel w-full"):
             for step in phase["steps"]:
                 with ui.card().classes("km-panel w-full").style("padding:10px 14px"):
                     ui.html(f'<b class="km-title">{theme.esc(step["name"])}</b>')
                     ui.label(step["desc"]).style("font-size:.82rem;color:var(--km-muted)")
-                    if phase["id"] in ("upkeep", "event"):
+                    if phase["id"] in ("upkeep", "commerce", "event"):
                         _step_body(phase["id"], step["id"])
 
                     atts = rules.activities_for_step(phase["id"], step["id"])

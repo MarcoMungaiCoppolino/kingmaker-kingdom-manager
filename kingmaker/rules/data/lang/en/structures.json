@@ -981,7 +981,7 @@
   {
     "id": "printing_house",
     "name": "Printing House",
-    "description": "_Nethys note: This structure requires the completion of Linzi's companion quest._\n\nA printing house gives your citizens—and the PCs themselves—a place to create newspapers and books.",
+    "description": "A printing house gives your citizens—and the PCs themselves—a place to create newspapers and books. (Archives of Nethys notes that this structure requires the completion of Linzi's companion quest.)",
     "cost_raw": "48 RP, 12 Lumber, 12 Luxuries",
     "construction": {
       "raw": "Industry (master) DC 27"
@@ -1033,7 +1033,7 @@
   {
     "id": "gladiatorial_arena",
     "name": "Gladiatorial Arena",
-    "description": "_Nethys note: This structure requires that Amiri is a member of your kingdom._\n\nA gladiatorial arena is a sprawling open-air field surrounded by seating and viewing areas. It also includes extensive underground barracks and training facilities for gladiators to use.",
+    "description": "A gladiatorial arena is a sprawling open-air field surrounded by seating and viewing areas. It also includes extensive underground barracks and training facilities for gladiators to use. (Archives of Nethys notes that this structure requires that Amiri is a member of your kingdom.)",
     "cost_raw": "58 RP, 10 Lumber, 30 Stone",
     "construction": {
       "raw": "Warfare (master) DC 34"

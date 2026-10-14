@@ -133,6 +133,13 @@ def units_for(user: auth.User | None) -> str:
     return units.resolve(preferred or app.storage.user.get("units"), theme.language())
 
 
+def return_here() -> None:
+    """Before a reload: the tab (and the manual's sub-tab) this window is on,
+    for the main page to open again there instead of on the map."""
+    data = theme.window_state()
+    app.storage.user["return_to"] = {"tab": data.get("tab"), "subtab": data.get("subtab")}
+
+
 def units_button(user: auth.User | None) -> None:
     """The m/ft toggle next to the language: shows the unit it switches to."""
     target = units.other()
@@ -141,6 +148,7 @@ def units_button(user: auth.User | None) -> None:
         app.storage.user["units"] = target
         if user is not None:
             STATE.archive.update_user(user.id, units=target)
+        return_here()
         ui.navigate.reload()
 
     ui.button(target, on_click=switch).props("flat dense size=sm") \
@@ -156,6 +164,7 @@ def language_button(user: auth.User | None) -> None:
         app.storage.user["lang"] = target
         if user is not None:
             STATE.archive.update_user(user.id, language=target)
+        return_here()
         ui.navigate.reload()
 
     ui.button(target.upper(), on_click=switch).props("flat dense size=sm") \

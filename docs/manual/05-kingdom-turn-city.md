@@ -58,6 +58,32 @@ parse from the Italian prose).
 `pc_leaders()` counts **distinct characters** (`character_id`), not names: two roles of the
 same PC count as one.
 
+**What the turns remember (2.3.0).** `kingmaker/turn_memory.py` holds pure functions over
+`k["turn_memory"]`: `record` (who attempted what, trimmed to three turns by `new_turn`), `last`
+(the turn each activity was last attempted: the repeat rules read this), `streaks`
+(Clandestine Business), `lockouts` (`{act, subject, until_turn}`), `debts` (Tap Treasury),
+`penalties` (`{role, scope, value, phase, clears_on}`) and `pending` (the delayed flat checks).
+Every structure but `record` is written by an outcome row and never rebuilt from the record, so
+trimming cannot lose a lock-out. On `State`:
+
+| Method | Rule |
+|---|---|
+| `activity_dc(act, subject, base, extra)` | **the** DC of an activity, used by the Turn tab, the map and the city: the Control DC or the written one, plus `repeat_dc` when attempted last turn, `streak_dc`, a partner's Negotiation DC (`special`; foreign aid +2; an agreement the higher of the two). Returns `(dc, breakdown)` |
+| `mark_activity(act, role, character, settlement, hex_, skill, subject)` | counts the activity (`turn_activities`, `turn_leaders`, `turn_civic`), bumps the streak and writes the record |
+| `activities_block(act, leader, subject, settlement)` | `_block_reason` (proficiency, per-turn limit, anarchy, step used up, a leader's two or three activities and no repeat, one Civic per settlement with Civic Planning) then `lockout_reason`; the dialog offers the GM an override of a lock-out only |
+| `worsens_by(act, subject)` | Tap Treasury's debt (2 degrees), an envoy to an enemy (1) |
+| `apply_effect(entry, value, target, ..., context)` | the new kinds `lockout`, `pending_check`, `event_mark`, `debt`, `repay`, `penalty`, `unclaim`, `claim`, `relation`, `agreement` go through `_apply_marker`: they carry no number (`_NO_VALUE`) and read the activity's subject, hex and settlement from `context` |
+| `new_turn_memory()` | called by `advance_turn`: trims, drops expired lock-outs and penalties |
+| `ongoing_events`, `event_dc`, `due_checks`, `clear_pending` | the events of `k["events"]` and the pending checks, rolled from `ui/tabs/events.py` |
+| `secondary_hexes()` | claimed hexes not connected to the capital's hex (a BFS), derived, never stored: −4 through `_modifiers(hex_=…)`, 1 Unrest at Upkeep |
+| `unclaim_hex`, `claim_freehold` | a lost or abandoned hex (its settlement kept in the freehold feature's `settlement_data`) and Pledge of Fealty bringing it back (`kingmaker/settlements.new_settlement` for one never the kingdom's) |
+| `partner`, `relation`, `at_war`, `active_agreements` | diplomacy: `k["partners"]`, `k["diplomatic_relations"]`, `k["trade_agreements"]` |
+
+`_modifiers` also adds the active penalties (a failed New Leadership's −1, the vacancy penalty
+taken for a leader who did not rest), the envoy's +2 with one partner, the +1 to Trade
+Commodities while diplomatic relations stand (`related_partners`) and −1 per settlement with no land border. Request Foreign Aid's RP are
+counted in `rp_no_xp`, which `_convert_rp` leaves out.
+
 ## The Kingdom sheet — `ui/tabs/sheet.py`
 
 ![The Kingdom sheet: identity, abilities, skills, resources, leadership roles, feats.](img/screenshots/regno.jpg)
@@ -98,7 +124,19 @@ flowchart LR
   Masterpiece's critical failure: lose 1 point, or 1d4 Unrest if there is none). `fame_next`
   owes points for the next turn (`k["fame_next_turn"]`), which `advance_turn` adds.
 
-- `_activity_dc`: the Control DC, or the one written on the activity.
+- `_activity_dc`: a thin wrapper of `STATE.activity_dc`.
+- `run_activity` asks for the activity's **subject** (`_subject_options`: an event, a Ruin, a
+  partner), the **leader** of a Leadership activity (`_leader_options`) and the freehold of
+  Pledge of Fealty; the DC, the cost (`activity_cost`: Hire Adventurers' 2 Resource Dice after a
+  failure) and the modifiers (`activity_extra`) redraw when they change. `propose_rows(title,
+  entries, skill, context, …)` is the shared dialog of effect rows that the map, the city and
+  the events also use.
+- `ui/tabs/events.py` draws the ongoing events (`ongoing_list`, `check_dialog`,
+  `outcome_dialog`) and the pending checks (`pending_block`) in the Event phase;
+  `ui/tabs/leaders.py` the downtime ticks of the roles step (`downtime_block`) and the Loyalty
+  check of a failed New Leadership; `ui/tabs/diplomacy.py` the Diplomacy block of the sheet.
+- `_commerce_step` gives the Commerce phase its body: the DC 11 flat check when nobody collected
+  taxes, the agreements in force. `_ruin_split_dialog` splits Unrest 10's 1d10 Ruin points.
 - `_effect_rows(entries)` draws every entry as a tickable row with an editable value; dice are
   rolled on the spot (`rules.signed_value`). `entry_target` asks whom to apply it to («ruin of
   your choice», «commodity of your choice»).
@@ -129,6 +167,16 @@ or infamous structure, then `_effects_dialog` proposes Unrest and Ruins from the
 effects. The roll goes through `theme.show_check`, so the reroll for Fame comes before any of
 it; *Place without a check* moves no points. `_can_expand` / `_expand` follow the table
 of the settlement types (village → town → city → metropolis).
+
+From 2.3.0 `_build` takes a `cost` (`build_cost`: half with a Ruins feature on the hex, nothing
+for a failed construction retried, `retry_free`), a `replace_gid` (an upgrade: `upgrade_cost`
+is the difference of the two costs, `upgrade_room` the block's space) and `repairing` (half the
+cost, +2 item, a critical failure leaves Rubble). A lot carries `damaged`, `demolishing` and
+`failed: {structure, turn}`; `structures_of` skips a structure being demolished, and an Edifice
+counts once in `storage` and `item_bonus`. Demolish is a Civic check (`_demolish`,
+`demolish_result`). Walls and bridges stand on a border: `borders[side]` gains `wall` and
+`bridge` (`_border_side_dialog`, `wall_sides`, `bridge_sides`), and the first wall of a kind
+gives the −1 Unrest.
 
 The city↔hex link is two-way: `STATE.link_settlement(sid, col, row)` writes `ins["hex"]` **and**
 `h["settlement"]` and the terrain feature; `unlink_settlement` undoes everything. From the map

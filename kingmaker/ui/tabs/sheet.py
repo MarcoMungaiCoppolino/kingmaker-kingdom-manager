@@ -11,6 +11,7 @@ from kingmaker import rules
 from kingmaker.locale import units
 from kingmaker.state import STATE
 from kingmaker.ui import theme
+from kingmaker.ui.tabs import diplomacy
 from kingmaker.locale.i18n import t
 
 
@@ -19,22 +20,29 @@ from kingmaker.locale.i18n import t
 def roll_skill(skill_id: str, cd: int, extra_title: str = "", outcome_text: str = "",
                  worsens_by: int = 0, show: bool = True, activity: str | None = None,
                  settlement: str | None = None, event: str | None = None,
-                 fair: bool = True) -> rules.Result:
+                 fair: bool = True, leader: str | None = None, subject: str | None = None,
+                 extra=(), detail: str = "", category: str = "check") -> rules.Result:
     """A Kingdom skill check (`State.kingdom_check`). With `activity`, what
     helps or hinders that activity counts too — the structures' item bonus,
     from the capital and from `settlement`, the vacant roles, the feats;
     `event` is the kind of event the check is about, for the feats that
-    help with those."""
+    help with those; `leader` the role acting, `subject` the partner or Ruin
+    it is about, `extra` typed bonuses the caller adds. `detail` goes under
+    the journal's line."""
     res = STATE.kingdom_check(skill_id, cd, activity, settlement=settlement, event=event,
-                              fair=fair, worsens_by=worsens_by)
+                              fair=fair, worsens_by=worsens_by, leader=leader, subject=subject,
+                              extra=extra)
     name = rules.BY_ID["skills"][skill_id]["name"]
 
     label = f"{extra_title} · {name}" if extra_title else name
-    STATE.record(t("sheet.vs_dc", label=label, label2=res.label, total=res.total, cd=cd), "check")
-    # A roll writes a line in the journal and, on a critical, moves the fame;
-    # it may use up a one-check bonus (Focused Attention), which the skills
-    # show: those panels, not the whole interface of every window.
-    theme.save_and_refresh_panels(("turn.journal", "sheet.identita", "sheet.abilita", "main.header"))
+    STATE.record(t("sheet.vs_dc", label=label, label2=res.label, total=res.total, cd=cd), category,
+                 detail)
+    # A roll writes a line in the journal and, on a critical, moves the fame
+    # (shown in the quick adjustments too); it may use up a one-check bonus
+    # (Focused Attention), which the skills show: those panels, not the whole
+    # interface of every window.
+    theme.save_and_refresh_panels(("turn.journal", "sheet.identita", "sheet.abilita", "main.header",
+                                   "turn.adjustments"))
     if show:
         # The skill's name again in each window's language, for the others;
         # a reroll for Fame is the same check again, never shown twice.
@@ -43,7 +51,8 @@ def roll_skill(skill_id: str, cd: int, extra_title: str = "", outcome_text: str 
             lambda _res: outcome_text,
             reroll=lambda: roll_skill(skill_id, cd, extra_title, outcome_text, worsens_by,
                                       show=False, activity=activity, settlement=settlement,
-                                      event=event, fair=fair))
+                                      event=event, fair=fair, leader=leader, subject=subject,
+                                      extra=extra, category=category))
     return res
 
 
@@ -798,10 +807,13 @@ def sheet_panel() -> None:
             identity_block()
             abilities_block()
             skills_block()
+            # The feats under the skills: the left column ended well above the
+            # right one, and the Diplomacy block sat below a long scroll.
+            feats_block()
         with ui.column().classes("gap-4").style("flex:2 1 0;min-width:520px"):
             resources_block()
             roles_block()
-            feats_block()
+            diplomacy.diplomacy_block()
 
 
 # --------------------------------------------------------------------------
@@ -835,5 +847,6 @@ for _name, _ref, _inputs in (("sheet.identita", identity_block, _identity_inputs
                              ("sheet.abilita", skills_block, _skills_inputs),
                              ("sheet.risorse", resources_block, _resources_inputs),
                              ("sheet.ruoli", roles_block, _roles_inputs),
-                             ("sheet.talenti", feats_block, _feats_inputs)):
+                             ("sheet.talenti", feats_block, _feats_inputs),
+                             ("sheet.diplomacy", diplomacy.diplomacy_block, diplomacy.diplomacy_inputs)):
     theme.register_refresh(_name, _ref, depends=_inputs)

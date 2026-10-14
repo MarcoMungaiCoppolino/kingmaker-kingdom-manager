@@ -108,6 +108,16 @@ Linux it opens the release page. *Settings → Versions on GitHub…* (`window.o
 `core.list_releases`: the releases API, drafts skipped, sorted by version tuple) installs any
 release the same way, an older one after a warning.
 
+From 2.3.0 the head's version label adds «from source» when `core.is_frozen()` is false, so a
+launcher started from the repository (the test table, the previews) is never mistaken for the
+installed app. From 2.3.0 `core.check_latest` returns `(release, reached)`: `reached` is False when neither the
+API nor the releases page answered, and `latest_release` is a wrapper that keeps the old
+signature. `window.after_check` then shows the muted check line under the head (*Could not
+check for updates*, the time of the next try, *Check now*) and retries every
+`RETRY_CHECK_MS` (30 minutes); a check that reaches GitHub hides it. The versions window
+filters its list through `core.with_installer`, because since 2.3.0 only every X.Y.0 and the
+newest patch keep their installers (`private/tools/hide_installers.py`, run after a release).
+
 **A save from elsewhere.** *Load a save file…* (`window.load_save`, server stopped) goes
 through `core.inspect_save` — `bundle.inspect`, the same check as the Save tab's upload, for
 the zip or a bare database — a confirmation with the kingdom's name, the accounts and the

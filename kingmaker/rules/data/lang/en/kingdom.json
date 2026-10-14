@@ -536,12 +536,30 @@
     {
       "id": "landmark",
       "name": "Landmark",
-      "desc": "When you add it to the kingdom reduce Unrest by 1d4 and, until the end of the next Kingdom turn, all Culture and Economy checks gain a +2 circumstance bonus. The first Landmark claimed is worth 40 XP."
+      "desc": "When you add it to the kingdom reduce Unrest by 1d4 and, until the end of the next Kingdom turn, all Culture and Economy checks gain a +2 circumstance bonus. The first Landmark claimed is worth 40 XP.",
+      "claim_effects": [
+        null,
+        {
+          "name": "Landmark (circumstance)"
+        },
+        {
+          "name": "Landmark (circumstance)"
+        }
+      ]
     },
     {
       "id": "refuge",
       "name": "Refuge",
-      "desc": "When you claim it reduce one Ruin by 1 and, until the end of the next Kingdom turn, all Loyalty and Stability checks gain a +2 circumstance bonus. The first Refuge claimed is worth 40 XP."
+      "desc": "When you claim it reduce one Ruin by 1 and, until the end of the next Kingdom turn, all Loyalty and Stability checks gain a +2 circumstance bonus. The first Refuge claimed is worth 40 XP.",
+      "claim_effects": [
+        null,
+        {
+          "name": "Refuge (circumstance)"
+        },
+        {
+          "name": "Refuge (circumstance)"
+        }
+      ]
     },
     {
       "id": "resource",
@@ -898,6 +916,28 @@
     {
       "id": "residential",
       "name": "Residential"
+    }
+  ],
+  "forced_events": [
+    {
+      "id": "squatters",
+      "name": "Squatters",
+      "desc": "Settlers move into the abandoned land without the kingdom's leave."
+    },
+    {
+      "id": "bandit_activity",
+      "name": "Bandit Activity",
+      "desc": "Bandits prey on the kingdom from the land it gave up."
+    },
+    {
+      "id": "crop_failure",
+      "name": "Crop Failure",
+      "desc": "Blight or bad weather ruins the harvest of the hex and those around it."
+    },
+    {
+      "id": "plague",
+      "name": "Plague",
+      "desc": "Disease spreads from the badly irrigated land."
     }
   ]
 }

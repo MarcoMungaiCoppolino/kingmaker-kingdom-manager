@@ -34,6 +34,7 @@ from kingmaker.launcher import core, screen, sync, window, wizard  # noqa: E402
 # launcher showed no update.
 asked_github: list = []
 core.latest_release = lambda *_a, **_k: asked_github.append(1)     # type: ignore[assignment]
+core.check_latest = lambda *_a, **_k: (asked_github.append(1), (None, True))[1]  # type: ignore[assignment]
 from kingmaker.locale import i18n  # noqa: E402
 
 results = []
@@ -148,6 +149,18 @@ else:
                 app = tallest_launcher(root, lang)
                 screen.present(root)
                 check(f"{tag} main window", root, area)
+
+                # GitHub out of reach: the muted line and «Check now» under
+                # the version; gone once GitHub answers (2.3.0).
+                if area == AREAS[0] and lang == "en":
+                    app.after_check(None, False)
+                    root.update()
+                    failed = (app.check_line.winfo_manager() == "pack"
+                              and "Could not check for updates" in app.check_label.cget("text"))
+                    app.after_check(None, True)
+                    root.update()
+                    results.append(("could not check for updates: the line and Check now show, "
+                                    "and go once GitHub answers", failed and app.check_line.winfo_manager() == ""))
 
                 app.open_settings()
                 check(f"{tag} settings", app.settings_window, area)

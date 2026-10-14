@@ -448,25 +448,43 @@ def release_from_tag(tag: str) -> Release | None:
                            for name in names])
 
 
-def latest_release(timeout: float = 5.0, api: Callable[[], dict] | None = None,
-                   page: Callable[[], str] | None = None) -> Release | None:
-    """The latest release on GitHub, or None when there is no network or no
-    release: the launcher must work offline. The API first; when it refuses
-    (sixty unauthenticated calls an hour per internet address, which a shared
-    network spends) or fails, the releases page names the latest tag instead
-    and the files follow from it (`release_from_tag`). `api` and `page` are
-    the tests' hooks."""
+def check_latest(timeout: float = 5.0, api: Callable[[], dict] | None = None,
+                 page: Callable[[], str] | None = None) -> tuple[Release | None, bool]:
+    """The latest release on GitHub, and whether GitHub answered at all:
+    `(release, True)` when the API or the releases page answered (with a
+    release or without one), `(None, False)` when neither could be asked,
+    which the window says («could not check for updates»). The API first;
+    when it refuses (sixty unauthenticated calls an hour per internet
+    address, which a shared network spends) or fails, the releases page
+    names the latest tag instead and the files follow from it
+    (`release_from_tag`). `api` and `page` are the tests' hooks."""
+    answered = False
     try:
         release = parse_release((api or (lambda: _github_json(RELEASES_API, timeout)))())
+        answered = True
         if release is not None:
-            return release
+            return release, True
     except Exception:
         pass
     try:
         tag = (page or (lambda: latest_tag_from_page(timeout)))()
     except Exception:
-        return None
-    return release_from_tag(tag) if tag else None
+        return None, answered
+    return (release_from_tag(tag) if tag else None), True
+
+
+def latest_release(timeout: float = 5.0, api: Callable[[], dict] | None = None,
+                   page: Callable[[], str] | None = None) -> Release | None:
+    """The latest release on GitHub, or None when there is no network or no
+    release: the launcher must work offline (`check_latest` says which)."""
+    return check_latest(timeout, api, page)[0]
+
+
+def with_installer(releases: list[Release]) -> list[Release]:
+    """The releases that still carry this platform's installer: since 2.3.0
+    only an X.Y.0 and the newest patch keep theirs, and a release without one
+    is not offered in the versions list."""
+    return [r for r in releases if r.installer() is not None]
 
 
 def parse_release(data: dict) -> Release | None:

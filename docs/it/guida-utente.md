@@ -2,7 +2,7 @@
 
 *In English: [../user-guide.md](../user-guide.md).*
 
-Questa guida descrive l'app com'è alla versione 2.2.0, scheda per scheda, con il perché di ogni
+Questa guida descrive l'app com'è alla versione 2.3.0, scheda per scheda, con il perché di ogni
 scelta. Per installarla e avviarla vedi il [README.it.md](../../README.it.md); la finestra
 dell'app installata è il primo capitolo qui sotto. Le schermate in
 [`manual/img/screenshots/it/`](../manual/img/screenshots/it/) sono dell'interfaccia italiana, prese
@@ -124,6 +124,13 @@ a una versione più vecchia è permesso, con un avviso, perché un salvataggio s
 versione più nuova può essere rifiutato da una più vecchia. La partita sta in `saves` e `assets` dentro la cartella
 installata: un aggiornamento sostituisce il programma e le lascia, e la disinstallazione (in
 *App installate*) chiede se cancellare anche loro.
+
+**Quando GitHub non si può interrogare.** Se il controllo degli aggiornamenti non trova la rete,
+o GitHub lo rifiuta, una riga attenuata sotto la versione dice *Impossibile controllare gli
+aggiornamenti* e quando il launcher riproverà (ogni mezz'ora), con un pulsante *Controlla ora*:
+nessuna riga vuol dire che GitHub ha risposto e non c'è niente di più nuovo. La finestra delle
+versioni elenca solo le release che hanno ancora un installatore per il tuo sistema: una patch
+vecchia non ne ha più, e lo tengono solo ogni X.Y.0 e la patch più recente.
 
 ## Giocare da più PC (il cloud)
 
@@ -634,6 +641,29 @@ Terreni Agricoli e Siti di Lavoro. Dal pannello laterale tiri direttamente le At
 Regione sull'esagono selezionato: Rivendicare, Liberare, Stabilire un Sito di Lavoro,
 Stabilire Terreno Agricolo, Costruire Strade, Fortificare, Stabilire un Insediamento.
 Costi in PR, PE e Ricompense Miliari sono applicati automaticamente.
+
+**Le regole della mappa.** Rivendicare un esagono con un Punto di Riferimento o un Rifugio
+propone i suoi effetti come righe (-1d4 Malcontento e +2 a Cultura ed Economia, oppure una
+Rovina -1 e +2 a Lealtà e Stabilità, fino alla fine del turno successivo). Un Sito di Lavoro
+vuole il suo terreno (un Campo di Legname una foresta, una cava o una miniera colline o
+montagne; il GM può consentirlo comunque), e il suo successo critico raddoppia la resa per
+questo turno e il prossimo. Il successo critico di Costruire Strade offre un secondo esagono
+adiacente non meno ospitale. Costruire Strade dove un fiume attraversa l'esagono costa il doppio,
+a meno che un Ponte lo attraversi già, e un successo aggiunge l'elemento Ponte: disegna
+l'attraversamento nel riquadro Attraversamenti. **Irrigare** e **Abbandona l'esagono** sono
+pulsanti del pannello dell'esagono: un esagono irrigato tiene la sua acqua (un fiume o un lago,
+da disegnare con gli strumenti dell'acqua, che sono ciò che conta per i viaggi), e Abbandona
+l'esagono rinuncia a uno o più esagoni rivendicati, con la CD più alta di 1 per ognuno oltre il
+primo e il Malcontento raddoppiato se vi sorge un insediamento. Gli elementi Rovine e Struttura
+nominano una struttura quando li aggiungi: le Rovine ne dimezzano il costo una volta
+nell'insediamento su quell'esagono, una Struttura sorge, gratis, in un insediamento fondato lì.
+Un esagono rivendicato separato dalla capitale da terre non rivendicate è un **territorio
+secondario**: -4 alle prove lì, 1 Malcontento al Mantenimento e il segno 🏴. Quando il regno
+perde un esagono (la Prova Semplice CD 11 del Malcontento 10), il tavolo sceglie quale: il suo
+insediamento diventa un Insediamento Indipendente che se ne ricorda, e un Giuramento di Fedeltà
+può riportarlo com'era. **Terra Prediletta**: in un esagono del terreno del tuo Territorio
+Centrale, una spunta abbina le prossime due attività di Regione lì, ognuna a -2; la coppia occupa
+uno slot di Regione, a meno che il GM non tolga la spunta.
 
 **Terreni Agricoli e influenza.** Un esagono di Terreno Agricolo riduce il Consumo di 1 solo
 nell'area di influenza di un insediamento: un villaggio influenza solo il proprio esagono, un
@@ -1772,6 +1802,16 @@ Regno con il modificatore calcolato e il tiro con un click, Ruoli di Governo ass
 personaggi e con la Penalità di Assenza, Talenti di Regno, Prodotti con i limiti di magazzino, PR e Dadi Risorsa, Consumo.
 Ogni tiro mostra il d20, la scomposizione del modificatore e il grado di successo.
 
+**Diplomazia.** Sotto i talenti, i gruppi con cui il regno tratta, ognuno con la CD di
+Negoziazione che gli dà il GM. Inviare un Delegato Diplomatico, Stabilire un Accordo
+Commerciale, Richiedere Aiuto Estero e il Giuramento di Fedeltà chiedono il gruppo e ne prendono
+la CD (quella di un accordo è la più alta tra quella del gruppo e la CD di Controllo; quella
+dell'aiuto estero è quella del gruppo + 2). Relazioni e accordi nascono da quelle attività; qui
+dichiari guerra, fai la pace o li concludi, ognuno confermato come riga. In guerra, +1
+Malcontento al Mantenimento; una guerra combattuta senza eserciti (spuntala sulla relazione),
+1d6 Malcontento e +1 Rovina. Con relazioni diplomatiche in corso, Commerciare Prodotti ha +1, e i PR
+dell'aiuto estero non diventano mai PE.
+
 ### Turno di Regno
 Le quattro fasi (Gestione, Commercio, Attività, Eventi) con i loro passi e le attività
 disponibili in ciascuno. Pulsanti dedicati per i passi automatici: tirare i Dadi Risorsa,
@@ -1824,6 +1864,41 @@ così esiste. Strutture uguali nello stesso insediamento si sommano fino al mass
 dell'insediamento (+1 per villaggio e paese, +2 per città, +3 per metropoli); strutture diverse
 non si sommano, e conta la migliore.
 
+**Eventi in corso.** Quando il controllo degli eventi casuali ne porta uno, il GM gli dà il
+nome dal manuale, con il modificatore di livello, se è continuo, dannoso o pericoloso, il leader
+che richiede e l'insediamento che colpisce; con un evento casuale arrivano 30 PE (30 o più per
+un evento di trama, aggiunto con *Nuovo evento…*). Il passo della risoluzione li elenca: *Prova…*
+tira contro la CD di Controllo più il modificatore con ciò che aiuta (una Torre di Guardia lì,
+Recupero Rapido, il bonus del leader, il +2 di Assoldare Avventurieri), e la finestra dell'esito
+permette al GM di aggiungere gli effetti del manuale come righe, propone la riduzione dei
+Cimiteri per un evento pericoloso, e chiude l'evento quando è finito. Assoldare Avventurieri
+chiede su quale evento lavora.
+
+**Quello che i turni ricordano.** Un'attività ritentata il turno dopo può costare di più
+(Riposare e Rilassarsi e Celebrare Festività +4, Gestire gli Accordi Commerciali +5), gli Affari
+Clandestini diventano più difficili turno dopo turno e si allentano quando smetti, e alcuni esiti
+bloccano un'attività per qualche turno (Riparare Reputazione su quella Rovina, un delegato a
+quel gruppo, Soluzione Sovrannaturale, Trasferire la Capitale): la scheda dice fino a quando, e
+il GM può ignorare il blocco nella finestra. Attingere alla Tesoreria lascia la tesoreria in
+debito finché Investimento di Capitali non lo ripaga. Le Prove Semplici che un'attività lascia
+(Occupanti Abusivi, Attività dei Banditi, Raccolto Fallito, Pestilenza) aspettano nel primo
+passo della fase Evento, e un fallimento dà il nome all'evento. Cambiare a mano il numero del
+turno dice cosa salta o riporta.
+
+**Chi agisce.** Un'attività di Governo chiede quale leader PG la tenta: due a testa (tre con un
+Castello, un Palazzo o un Municipio nella capitale), mai la stessa due volte nello stesso turno.
+Ogni insediamento ha una sola attività Civica per turno. Nel passo dei ruoli spunta chi ha
+trascorso la settimana di pausa questo mese (i leader PNG sono già spuntati); un PG mostra quanti
+giorni liberi hanno lasciato i viaggi, e un leader che non si è riposato rinuncia a un'attività
+di Governo o subisce la penalità di posto vacante fino al prossimo turno. Il -1 di una Nuova
+Direzione fallita dura finché una prova di Lealtà nel passo della risoluzione non riesce.
+
+**Commercio.** Quando nessuno Riscuote le Tasse, una Prova Semplice CD 11 toglie 1 Malcontento;
+gli accordi in vigore sono elencati nel loro passo. Con il Malcontento a 10 o più, i punti
+Rovina dell'1d10 si ripartiscono in una sola finestra, e una spesa che il regno non può pagare
+propone +1 a una Rovina a tua scelta. Il primo turno dice quali passi del Mantenimento salta.
+Ogni fase resta aperta o chiusa come l'hai lasciata.
+
 Il pulsante *Nuovo turno* sa solo andare avanti. Se lo hai premuto una volta di troppo, o stai
 provando qualcosa e vuoi tornare indietro, il numero si corregge dalla matita ✏ lì accanto,
 oppure dalla riga **Turno di Regno** in cima alle *Regolazioni rapide*: −/+ per un passo,
@@ -1840,6 +1915,18 @@ Oggetto ed Effetti. «Costruisci» paga il costo e tira la prova; «Piazza senza
 le strutture preesistenti (per esempio quelle già presenti nel forte del Signore Cervo).
 Sono gestiti anche Sovrappopolamento, Macerie, confini della griglia ed espansione
 Villaggio → Paese → Città → Metropoli con i relativi requisiti.
+
+Il lotto di una struttura costruita offre di più: i suoi **miglioramenti**, alla differenza dei
+due costi e dove l'isolato ha spazio; **Segna come danneggiata** per un evento, e poi **Ripara**
+a metà del costo con un bonus di oggetto +2 (un fallimento critico lascia Macerie); e
+**Demolisci**, un'attività Civica con una prova di Ingegneria (l'intera struttura, con il
+recupero da un lotto solo, su un successo critico; un lotto su un successo; Macerie su un
+fallimento). Una costruzione fallita si ritenta sullo stesso lotto, in questo turno o nel
+prossimo, senza pagare di nuovo. Mura e ponti chiedono su quale confine sorgono: il -1
+Malcontento delle mura vale solo per le prime del loro tipo, mura di pietra sostituiscono quelle
+di legno, e il riquadro dei confini dice quando un insediamento è un'isola (Influenza 0) o non
+ha confini di terra (-1 al Commercio). Un Edificio (il Municipio, la Rocca, la Cattedrale...)
+conta una volta sola per insediamento.
 
 ### Manuale
 Consultazione rapida: tabella delle 76 strutture, tutte le attività con i quattro esiti,

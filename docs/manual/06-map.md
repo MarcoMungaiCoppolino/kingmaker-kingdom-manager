@@ -147,6 +147,24 @@ corresponding activity (`_claim`, `_free` → `turn.run_activity`); «Reconnoite
 (`_reconnoiter`) costs what `travel.reconnaissance_cost` says and brings the hex to
 Reconnoitered, the requirement to claim it.
 
+**The map's rules (2.3.0).** Every effect goes through `_propose`, which opens the Turn tab's
+`propose_rows`:
+- `_claim` adds the Landmark and Refuge `claim_effects` of `kingdom.json`;
+- `_work_site` checks `SITE_TERRAINS` (`site_terrain_ok`, a GM override), and a critical
+  success writes `rich_until` on the site, which `_collect_sites` doubles;
+- `_roads` doubles the cost when `river_cuts` finds a river crossing the hex and no Bridge
+  feature, and a success adds the feature;
+- `_irrigation` and `_abandon` are the two new actions: `irrigated` on the hex (a new public
+  field, the 💧 mark), the pending Plague, Squatters or Bandit Activity, `unclaim_hex`;
+- the features form names the structure of a Ruins or Structure feature (`STRUCTURE_FEATURES`),
+  read by `city.build_cost` and `place_structure_features`;
+- `_favored_land_block` pairs two Region activities in the heartland's terrain;
+- `lose_hex_dialog` (from the Upkeep Unrest step) picks the hex a failed DC 11 flat check
+  loses.
+
+`drawing.py` marks the secondary territories (🏴, `STATE.secondary_hexes()` computed once per
+layer) beside the irrigated hexes.
+
 ## The fog
 
 ![The GM Screen tab: the GM's commands on the whole map, the queue of hexes ready to reveal.](img/screenshots/regia.jpg)

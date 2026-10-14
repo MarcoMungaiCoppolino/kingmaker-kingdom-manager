@@ -536,12 +536,30 @@
     {
       "id": "landmark",
       "name": "Punto di Riferimento",
-      "desc": "Quando lo aggiungi al regno riduci Malcontento di 1d4 e, fino alla fine del prossimo Turno di Regno, tutte le prove di Cultura ed Economia ottengono un Bonus di Circostanza +2. Il primo Punto di Riferimento rivendicato vale 40 PE."
+      "desc": "Quando lo aggiungi al regno riduci Malcontento di 1d4 e, fino alla fine del prossimo Turno di Regno, tutte le prove di Cultura ed Economia ottengono un Bonus di Circostanza +2. Il primo Punto di Riferimento rivendicato vale 40 PE.",
+      "claim_effects": [
+        null,
+        {
+          "name": "Punto di Riferimento (Circostanza)"
+        },
+        {
+          "name": "Punto di Riferimento (Circostanza)"
+        }
+      ]
     },
     {
       "id": "refuge",
       "name": "Rifugio",
-      "desc": "Quando lo rivendichi riduci di 1 una Rovina e, fino alla fine del Turno di Regno successivo, tutte le prove di Lealtà e Stabilità ottengono un Bonus di Circostanza +2. Il primo Rifugio rivendicato vale 40 PE."
+      "desc": "Quando lo rivendichi riduci di 1 una Rovina e, fino alla fine del Turno di Regno successivo, tutte le prove di Lealtà e Stabilità ottengono un Bonus di Circostanza +2. Il primo Rifugio rivendicato vale 40 PE.",
+      "claim_effects": [
+        null,
+        {
+          "name": "Rifugio (Circostanza)"
+        },
+        {
+          "name": "Rifugio (Circostanza)"
+        }
+      ]
     },
     {
       "id": "resource",
@@ -898,6 +916,28 @@
     {
       "id": "residential",
       "name": "Residenziale"
+    }
+  ],
+  "forced_events": [
+    {
+      "id": "squatters",
+      "name": "Occupanti Abusivi",
+      "desc": "Coloni si stabiliscono nelle terre abbandonate senza il permesso del regno."
+    },
+    {
+      "id": "bandit_activity",
+      "name": "Attività dei Banditi",
+      "desc": "Banditi depredano il regno dalle terre a cui ha rinunciato."
+    },
+    {
+      "id": "crop_failure",
+      "name": "Raccolto Fallito",
+      "desc": "Malattie o maltempo rovinano il raccolto dell'esagono e di quelli attorno."
+    },
+    {
+      "id": "plague",
+      "name": "Pestilenza",
+      "desc": "Una malattia si diffonde dalle terre irrigate male."
     }
   ]
 }

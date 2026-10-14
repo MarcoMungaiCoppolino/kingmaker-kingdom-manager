@@ -49,13 +49,18 @@ values. The most important:
 | `map` | image, orientation, `size`, `origin_x/y`, `columns/rows`, `image_width/image_height`, zoom, veil, fog |
 | `clock` | start date, days passed, clock running, seconds per day |
 | `waters` | whether the table uses the water model (`hexmap.waters_active`) |
+| `events` | the ongoing and ended kingdom events (2.2.0's random and story events, tracked from 2.3.0) |
+| `turn_memory` | what the turns remember: record, last, streaks, lock-outs, debts, penalties, pending checks; deep-merged by `normalize` like `map` and `clock` |
+| `turn_leaders`, `turn_civic`, `downtime` | this turn's Leadership activities per leader, Civic activities per settlement, the leaders' downtime ticks |
+| `partners`, `diplomatic_relations`, `trade_agreements` | diplomacy (2.3.0) |
+| `favored_land`, `rp_no_xp` | the Favored Land pair in use; the RP that will not become XP (foreign aid) |
 
 The journal is not in the document: it is the `log` table (`STATE.record`, `STATE.journal`);
 the `journal_into_table` migration moved the old rows once.
 
 A hex (`state.hex(col, row)` creates it at the first touch) has `status` (unknown |
 reconnoitered | cleared | claimed), `terrains`, `features`, `roads`, `fortified`, `farmland`,
-`work_site`, `settlement`, `name`, `note`. The table columns are `HEX_COLUMNS`; a new key ends
+`work_site`, `settlement`, `name`, `note`, and from 2.3.0 `irrigated`. The table columns are `HEX_COLUMNS`; a new key ends
 up in `extra` (JSON) without touching the schema.
 
 ## The life cycle
